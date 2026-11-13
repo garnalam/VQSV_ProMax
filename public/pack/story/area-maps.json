@@ -1,0 +1,972 @@
+{
+ "schema": "vqsv-webnative-area-maps-v1",
+ "source": "Original game state 4 (game/l.java): aS/aR/aT/aP/aQ/as/v constants, petRide.mid column 4 for each room's area, chs.mid rows for the names. Exported by scripts/export-area-maps.mjs.",
+ "noMapScenes": [
+  9,
+  10,
+  11
+ ],
+ "roomArea": {
+  "0:0": 0,
+  "0:1": 0,
+  "1:0": 0,
+  "1:1": 0,
+  "1:2": 0,
+  "1:3": 0,
+  "1:4": 0,
+  "1:5": 0,
+  "1:6": 0,
+  "2:0": 1,
+  "2:1": 1,
+  "2:2": 1,
+  "2:3": 1,
+  "2:4": 1,
+  "2:5": 1,
+  "2:6": 1,
+  "2:7": 1,
+  "3:0": 2,
+  "3:1": 2,
+  "3:2": 2,
+  "3:3": 2,
+  "3:4": 2,
+  "3:5": 2,
+  "3:6": 2,
+  "3:7": 2,
+  "4:0": 3,
+  "4:1": 3,
+  "4:2": 3,
+  "4:3": 3,
+  "4:4": 3,
+  "4:5": 3,
+  "4:6": 3,
+  "4:7": 3,
+  "4:8": 3,
+  "4:9": 3,
+  "4:10": 3,
+  "4:11": 3,
+  "4:12": 3,
+  "5:0": 4,
+  "5:1": 4,
+  "5:2": 4,
+  "5:3": 4,
+  "5:4": 4,
+  "5:5": 4,
+  "5:6": 4,
+  "6:0": 5,
+  "6:1": 5,
+  "7:0": 6,
+  "7:1": 6,
+  "7:2": 6,
+  "7:3": 6,
+  "7:4": 6,
+  "7:5": 6,
+  "7:6": 6,
+  "7:7": 6,
+  "7:8": 6,
+  "7:9": 6,
+  "7:10": 6,
+  "7:11": 6,
+  "7:12": 6,
+  "8:0": 7,
+  "8:1": 7,
+  "8:2": 7,
+  "8:3": 7,
+  "8:4": 7,
+  "8:5": 7,
+  "8:6": 7,
+  "9:0": -1,
+  "9:1": -1,
+  "9:2": -1,
+  "9:3": -1,
+  "9:4": -1,
+  "9:5": -1,
+  "9:6": -1,
+  "9:7": -1,
+  "10:0": -1,
+  "10:1": -1,
+  "10:2": -1,
+  "10:3": -1,
+  "10:4": -1,
+  "10:5": -1,
+  "10:6": -1,
+  "10:7": -1,
+  "10:8": -1,
+  "10:9": -1,
+  "10:10": -1,
+  "10:11": -1,
+  "10:12": -1,
+  "10:13": -1,
+  "10:14": -1,
+  "11:0": -1,
+  "11:1": -1,
+  "11:2": -1,
+  "11:3": -1,
+  "11:4": -1,
+  "11:5": -1,
+  "11:6": -1,
+  "11:7": -1,
+  "11:8": -1,
+  "11:9": -1,
+  "11:10": -1,
+  "11:11": -1,
+  "11:12": -1,
+  "11:13": -1,
+  "11:14": -1,
+  "11:15": -1,
+  "11:16": -1,
+  "11:17": -1,
+  "11:18": -1,
+  "11:19": -1,
+  "11:20": -1,
+  "11:21": -1,
+  "11:22": -1,
+  "11:23": -1,
+  "11:24": -1,
+  "11:25": -1,
+  "11:26": -1,
+  "11:27": -1,
+  "11:28": -1
+ },
+ "areas": [
+  {
+   "fill": 16735795,
+   "text": 5708544,
+   "blocksX": 3,
+   "blocksY": 5,
+   "rooms": [
+    {
+     "x": 0,
+     "y": 0,
+     "scene": 1,
+     "room": 0,
+     "nameRow": 386,
+     "name": "Phượng Chi Thủ Hộ Hương",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 5,
+     "y": 0,
+     "scene": 1,
+     "room": 1,
+     "nameRow": 387,
+     "name": "Đường nhỏ phía Đông",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 0,
+     "y": 5,
+     "scene": 1,
+     "room": 2,
+     "nameRow": 388,
+     "name": "Đường nhỏ phía Nam",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 0,
+     "y": 10,
+     "scene": 1,
+     "room": 3,
+     "nameRow": 389,
+     "name": "Truy Ức Chi Sâm",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 5,
+     "y": 10,
+     "scene": 1,
+     "room": 4,
+     "nameRow": 390,
+     "name": "Rừng rậm sương mù",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 10,
+     "y": 10,
+     "scene": 1,
+     "room": 5,
+     "nameRow": 391,
+     "name": "Bến tàu phía nam",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 10,
+     "y": 15,
+     "scene": 1,
+     "room": 6,
+     "nameRow": 392,
+     "name": "Cầu nhỏ bên suối",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 10,
+     "y": 20,
+     "scene": -1,
+     "room": -1,
+     "nameRow": 518,
+     "name": "Bích Thủy",
+     "w": 5,
+     "h": 5
+    }
+   ]
+  },
+  {
+   "fill": 5693667,
+   "text": 28273,
+   "blocksX": 2,
+   "blocksY": 6,
+   "rooms": [
+    {
+     "x": 0,
+     "y": 0,
+     "scene": -1,
+     "room": -1,
+     "nameRow": 517,
+     "name": "Thôn Làng Thơ Ấu",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 0,
+     "y": 5,
+     "scene": 2,
+     "room": 0,
+     "nameRow": 393,
+     "name": "Đường vòng Bích Thủy",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 0,
+     "y": 10,
+     "scene": 2,
+     "room": 1,
+     "nameRow": 394,
+     "name": "Trung tâm Bích Thủy",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 0,
+     "y": 15,
+     "scene": 2,
+     "room": 2,
+     "nameRow": 395,
+     "name": "Bích Thủy Đạp Sa",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 5,
+     "y": 10,
+     "scene": 2,
+     "room": 3,
+     "nameRow": 396,
+     "name": "Bích Thủy Đinh Châu",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 5,
+     "y": 5,
+     "scene": 2,
+     "room": 4,
+     "nameRow": 397,
+     "name": "Bích Thủy Quan Hà",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 5,
+     "y": 15,
+     "scene": 2,
+     "room": 5,
+     "nameRow": 398,
+     "name": "Suối nhỏ Bích Thủy",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 5,
+     "y": 20,
+     "scene": 2,
+     "room": 6,
+     "nameRow": 399,
+     "name": "Đường nhỏ Thủy Mộc",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 5,
+     "y": 25,
+     "scene": 2,
+     "room": 7,
+     "nameRow": 400,
+     "name": "Quặng mỏ Nguyên Mộc",
+     "w": 5,
+     "h": 5
+    }
+   ]
+  },
+  {
+   "fill": 7796622,
+   "text": 1924393,
+   "blocksX": 4,
+   "blocksY": 5,
+   "rooms": [
+    {
+     "x": 15,
+     "y": 0,
+     "scene": -1,
+     "room": -1,
+     "nameRow": 518,
+     "name": "Bích Thủy",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 15,
+     "y": 5,
+     "scene": 3,
+     "room": 0,
+     "nameRow": 401,
+     "name": "Đường nhỏ Mộc Thủy",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 15,
+     "y": 10,
+     "scene": 3,
+     "room": 1,
+     "nameRow": 402,
+     "name": "Di Vong Chi Sâm",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 10,
+     "y": 10,
+     "scene": 3,
+     "room": 2,
+     "nameRow": 403,
+     "name": "Đường nhỏ phía Bắc",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 10,
+     "y": 15,
+     "scene": 3,
+     "room": 3,
+     "nameRow": 404,
+     "name": "Trung tâm Nguyên Mộc",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 5,
+     "y": 15,
+     "scene": 3,
+     "room": 4,
+     "nameRow": 405,
+     "name": "Đường nhỏ phía Tây",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 0,
+     "y": 15,
+     "scene": 3,
+     "room": 5,
+     "nameRow": 406,
+     "name": "Bình nguyên phía Tây",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 15,
+     "y": 15,
+     "scene": 3,
+     "room": 6,
+     "nameRow": 407,
+     "name": "Bến tàu phía Đông",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 15,
+     "y": 20,
+     "scene": 3,
+     "room": 7,
+     "nameRow": 408,
+     "name": "Đấu trường Lục Hành Điểu",
+     "w": 5,
+     "h": 5
+    }
+   ]
+  },
+  {
+   "fill": 16774529,
+   "text": 7760896,
+   "blocksX": 5,
+   "blocksY": 5,
+   "rooms": [
+    {
+     "x": 0,
+     "y": 15,
+     "scene": 4,
+     "room": 0,
+     "nameRow": 409,
+     "name": "Bến tàu phía Tây",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 5,
+     "y": 15,
+     "scene": 4,
+     "room": 1,
+     "nameRow": 410,
+     "name": "Di tích phía Tây",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 10,
+     "y": 15,
+     "scene": 4,
+     "room": 5,
+     "nameRow": 414,
+     "name": "Trung tâm Niêm Thổ",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 10,
+     "y": 20,
+     "scene": 4,
+     "room": 6,
+     "nameRow": 415,
+     "name": "Khu chợ phía Nam",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 15,
+     "y": 20,
+     "scene": 4,
+     "room": 7,
+     "nameRow": 416,
+     "name": "Niêm Thổ Bình Sa",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 20,
+     "y": 20,
+     "scene": 4,
+     "room": 8,
+     "nameRow": 417,
+     "name": "Căn cứ Phi Không Đĩnh",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 15,
+     "y": 15,
+     "scene": 4,
+     "room": 9,
+     "nameRow": 418,
+     "name": "Phía đông Niêm Thổ",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 20,
+     "y": 15,
+     "scene": 4,
+     "room": 10,
+     "nameRow": 419,
+     "name": "Lối vào di tích",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 15,
+     "y": 10,
+     "scene": 4,
+     "room": 11,
+     "nameRow": 420,
+     "name": "Đường nhỏ Thổ Thạch",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 15,
+     "y": 5,
+     "scene": 4,
+     "room": 12,
+     "nameRow": 421,
+     "name": "Mỏ quặng phía Bắc",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 0,
+     "y": 10,
+     "scene": 4,
+     "room": 2,
+     "nameRow": 411,
+     "name": "Mỏ quặng phía Đông 1",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 5,
+     "y": 10,
+     "scene": 4,
+     "room": 3,
+     "nameRow": 412,
+     "name": "Mỏ quặng phía Đông 2",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 10,
+     "y": 10,
+     "scene": 4,
+     "room": 4,
+     "nameRow": 413,
+     "name": "Mỏ quặng phía Đông 3",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 15,
+     "y": 0,
+     "scene": -1,
+     "room": -1,
+     "nameRow": 524,
+     "name": "Hắc Thạch",
+     "w": 5,
+     "h": 5
+    }
+   ]
+  },
+  {
+   "fill": 3291479,
+   "text": 10268671,
+   "blocksX": 5,
+   "blocksY": 3,
+   "rooms": [
+    {
+     "x": 10,
+     "y": 5,
+     "scene": 5,
+     "room": 0,
+     "nameRow": 422,
+     "name": "Nam Hắc Thạch Thành",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 5,
+     "y": 5,
+     "scene": 5,
+     "room": 1,
+     "nameRow": 423,
+     "name": "Cửa Hắc Thạch Thành",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 0,
+     "y": 5,
+     "scene": 5,
+     "room": 2,
+     "nameRow": 424,
+     "name": "Hắc Thạch Mã Đầu",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 5,
+     "y": 0,
+     "scene": 5,
+     "room": 3,
+     "nameRow": 425,
+     "name": "Cứ điểm Thánh Điện",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 15,
+     "y": 5,
+     "scene": 5,
+     "room": 4,
+     "nameRow": 426,
+     "name": "Lối vào địa lao",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 20,
+     "y": 5,
+     "scene": 5,
+     "room": 5,
+     "nameRow": 427,
+     "name": "Hắc Thạch Đông Thành",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 18,
+     "y": 0,
+     "scene": 5,
+     "room": 6,
+     "nameRow": 428,
+     "name": "Địa lao Hắc Thạch",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 10,
+     "y": 10,
+     "scene": -1,
+     "room": -1,
+     "nameRow": 522,
+     "name": "Niêm Thổ",
+     "w": 5,
+     "h": 5
+    }
+   ]
+  },
+  {
+   "fill": 2038828,
+   "text": 13341951,
+   "blocksX": 1,
+   "blocksY": 2,
+   "rooms": [
+    {
+     "x": 0,
+     "y": 5,
+     "scene": 6,
+     "room": 0,
+     "nameRow": 429,
+     "name": "Thần Điện Mã Đầu",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 0,
+     "y": 0,
+     "scene": 6,
+     "room": 1,
+     "nameRow": 430,
+     "name": "Hắc Long Thần Điện",
+     "w": 5,
+     "h": 5
+    }
+   ]
+  },
+  {
+   "fill": 4443391,
+   "text": 16777215,
+   "blocksX": 4,
+   "blocksY": 4,
+   "rooms": [
+    {
+     "x": 5,
+     "y": 15,
+     "scene": 7,
+     "room": 0,
+     "nameRow": 431,
+     "name": "Bạch Long Thánh Điện",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 5,
+     "y": 10,
+     "scene": 7,
+     "room": 1,
+     "nameRow": 432,
+     "name": "Ánh nắng chan hòa",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 5,
+     "y": 5,
+     "scene": 7,
+     "room": 2,
+     "nameRow": 433,
+     "name": "Vĩnh Hằng Kinh Phiên",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 0,
+     "y": 5,
+     "scene": 7,
+     "room": 3,
+     "nameRow": 434,
+     "name": "Khiết Bạch Môn Phi",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 0,
+     "y": 0,
+     "scene": 7,
+     "room": 4,
+     "nameRow": 435,
+     "name": "Phiêu Phi Vũ Linh",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 0,
+     "y": 10,
+     "scene": 7,
+     "room": 5,
+     "nameRow": 436,
+     "name": "Dây may mắn",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 0,
+     "y": 15,
+     "scene": 7,
+     "room": 6,
+     "nameRow": 437,
+     "name": "Thời gian bình yên",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 10,
+     "y": 5,
+     "scene": 7,
+     "room": 7,
+     "nameRow": 438,
+     "name": "Tia nắng ban mai",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 10,
+     "y": 0,
+     "scene": 7,
+     "room": 8,
+     "nameRow": 439,
+     "name": "Tội ác được tha thứ",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 15,
+     "y": 0,
+     "scene": 7,
+     "room": 9,
+     "nameRow": 440,
+     "name": "Chòm Sao Ân Diệu",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 15,
+     "y": 5,
+     "scene": 7,
+     "room": 10,
+     "nameRow": 441,
+     "name": "Ôn Nhu Sơ Vân",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 10,
+     "y": 10,
+     "scene": 7,
+     "room": 11,
+     "nameRow": 442,
+     "name": "Khu vui chơi",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 10,
+     "y": 15,
+     "scene": 7,
+     "room": 12,
+     "nameRow": 443,
+     "name": "Không gian minh tưởng",
+     "w": 5,
+     "h": 5
+    }
+   ]
+  },
+  {
+   "fill": 1862959,
+   "text": 13886935,
+   "blocksX": 2,
+   "blocksY": 4,
+   "rooms": [
+    {
+     "x": 5,
+     "y": 10,
+     "scene": 8,
+     "room": 0,
+     "nameRow": 444,
+     "name": "Thử tạo bộ lạc",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 5,
+     "y": 15,
+     "scene": 8,
+     "room": 1,
+     "nameRow": 445,
+     "name": "Bộ lạc thất bại phẩm",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 0,
+     "y": 15,
+     "scene": 8,
+     "room": 2,
+     "nameRow": 446,
+     "name": "Thử tạo Vũ lâm",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 0,
+     "y": 10,
+     "scene": 8,
+     "room": 3,
+     "nameRow": 447,
+     "name": "Thử tạo khu vực săn bắn",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 0,
+     "y": 5,
+     "scene": 8,
+     "room": 4,
+     "nameRow": 448,
+     "name": "Vũ lâm Thất bại phẩm",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 5,
+     "y": 5,
+     "scene": 8,
+     "room": 5,
+     "nameRow": 449,
+     "name": "Khu vực săn bắn",
+     "w": 5,
+     "h": 5
+    },
+    {
+     "x": 5,
+     "y": 0,
+     "scene": 8,
+     "room": 6,
+     "nameRow": 450,
+     "name": "Nguyên Thủy Ngự Tọa",
+     "w": 5,
+     "h": 5
+    }
+   ]
+  }
+ ],
+ "gymDoors": [
+  {
+   "scene": 2,
+   "room": 1,
+   "x": 73,
+   "y": 158
+  },
+  {
+   "scene": 3,
+   "room": 3,
+   "x": 216,
+   "y": 165
+  },
+  {
+   "scene": 4,
+   "room": 5,
+   "x": 161,
+   "y": 338
+  },
+  {
+   "scene": 5,
+   "room": 3,
+   "x": 111,
+   "y": 385
+  },
+  {
+   "scene": 5,
+   "room": 5,
+   "x": 112,
+   "y": 124
+  },
+  {
+   "scene": 6,
+   "room": 1,
+   "x": 140,
+   "y": 100
+  },
+  {
+   "scene": 7,
+   "room": 2,
+   "x": 48,
+   "y": 58
+  }
+ ],
+ "docks": [
+  {
+   "scene": 1,
+   "room": 5,
+   "x": 265,
+   "y": 113
+  },
+  {
+   "scene": 3,
+   "room": 6,
+   "x": 281,
+   "y": 192
+  },
+  {
+   "scene": 4,
+   "room": 0,
+   "x": 24,
+   "y": 144
+  },
+  {
+   "scene": 5,
+   "room": 2,
+   "x": 88,
+   "y": 175
+  },
+  {
+   "scene": 6,
+   "room": 0,
+   "x": 55,
+   "y": 190
+  }
+ ]
+}

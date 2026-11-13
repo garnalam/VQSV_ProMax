@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" />
+    <link rel="icon" href="data:," />
+    <title>VQSV</title>
+    <style>
+      /* The frame the game code has not run yet: the stage hugs the canvas so the sheet above
+         it covers exactly the game box, and the geometry mirrors the source map-loading bar
+         (150x5 frame at 45,272 of 240x320, 148x3 track at 46,273). */
+      #stage {
+        position: relative;
+      }
+      #boot {
+        position: absolute;
+        inset: 0;
+        background: #000;
+        color: #fff;
+        font: 12px/1.4 monospace;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        padding-bottom: 8%;
+      }
+      #boot[hidden] {
+        display: none;
+      }
+      #boot-label {
+        margin: 0 0 6% 0;
+      }
+      #boot-track {
+        width: 62.5%;
+        height: 1.5625%;
+        background: #783322;
+      }
+      #boot-fill {
+        height: 100%;
+        width: 0;
+        background: #feee84;
+      }
+    </style>
+  </head>
+  <body>
+    <main id="app">
+      <div id="stage">
+        <canvas id="game" width="240" height="320" aria-label="VQSV"></canvas>
+        <div id="boot">
+          <p id="boot-label">Đang tải mã game</p>
+          <div id="boot-track"><div id="boot-fill"></div></div>
+        </div>
+      </div>
+    </main>
+    <script>
+      // Classic script on purpose: the game modules are still being downloaded at this point, so
+      // this is the only code that can report that phase. It counts the script and style requests
+      // the browser has finished and stops as soon as main.ts hides the sheet.
+      (function () {
+        var sheet = document.getElementById("boot"),
+          label = document.getElementById("boot-label"),
+          fill = document.getElementById("boot-fill");
+        if (!sheet) return;
+        var timer = setInterval(update, 120),
+          widest = 0;
+        function update() {
+          if (!document.getElementById("boot")) {
+            clearInterval(timer);
+            return;
+          }
+          var entries = performance.getEntriesByType("resource"),
+            done = 0,
+            total = 0;
+          for (var i = 0; i < entries.length; i++) {
+            if (!/\.(?:js|mjs|css)(?:\?|$)/.test(entries[i].name)) continue;
+            total++;
+            if (entries[i].responseEnd > 0) done++;
+          }
+          label.textContent = "Đang tải mã game " + done + "/" + total;
+          // The module graph is discovered while it loads, so the total grows: the bar only ever
+          // moves forward, is capped below full (this sheet is never the end of the load), and the
+          // count tells the truth about both numbers.
+          if (total > 0) widest = Math.min(95, Math.max(widest, Math.round((100 * done) / total)));
+          fill.style.width = widest + "%";
+        }
+        update();
+      })();
+    </script>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

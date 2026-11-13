@@ -1,0 +1,202 @@
+{
+ "schema": "vqsv-webnative-main-tasks-v1",
+ "source": "modules/script/decoded/data__script__mTask.mid.json: the first half of the rows are the main task names, the second half their descriptions (#2[..]#0 marks a highlighted place)",
+ "tasks": [
+  {
+   "name": "Vòng loại sơ khảo",
+   "description": "Đến #2[Dường nhỏ phía Đông]#0 bắt Thỏ Di Lặc Bunny giao cho Trưởng thôn."
+  },
+  {
+   "name": "Thử thách của Trưởng thôn",
+   "description": "Chọn một sủng vật tham gia giao chiến với Trưởng thôn."
+  },
+  {
+   "name": "Đến Bích Thủy Thành",
+   "description": "Nhấn #2[Đường nhỏ phía Nam] đi Bích Thủy Thành."
+  },
+  {
+   "name": "Trợ giúp Harry",
+   "description": "Trợ giúp Harry đánh đuổi binh lính Hắc Long."
+  },
+  {
+   "name": "Đến tiếp tế cho Thương Điếm",
+   "description": "Đến Thương Điếm mua một sức phẩm."
+  },
+  {
+   "name": "Bắt Uy Qua Đệ Đệ",
+   "description": "Đến #2[Bích Thủy Đạp Sa]#0 dùng Tất Trung Cầu bắt được #1Uy Qua Đệ Đệ."
+  },
+  {
+   "name": "Tìm Abra đạo sư",
+   "description": "Đến #2[Trung tâm Bích Thủy] góc hướng đông bắc #0 trong căn phòng nhỏ gặp #1 Abra đạo sư."
+  },
+  {
+   "name": "Lẻn vào Bích Thủy Đạo Quán",
+   "description": "Lẻn vào #2[Bích Thủy Đạo Quán]."
+  },
+  {
+   "name": "Giải cứu quán chủ",
+   "description": "Đến #2[Bích Thủy Đạo Quán]#0 giải cứu quán chủ."
+  },
+  {
+   "name": "Giải cứu Trưởng thôn",
+   "description": "Đến #2[con suối nhỏ ở Bích Thủy] trong phòng nhỏ #0 tìm #1 giải cứu #0 Trưởng thôn."
+  },
+  {
+   "name": "Trở lại Bích Thủy Thành",
+   "description": "Đưa Trưởng thôn về #2Trung tâm Bích Thủy."
+  },
+  {
+   "name": "Đến Nguyên Mộc Thành",
+   "description": "Theo [Đường nhỏ Mộc Thủy] đi #2Nguyên Mộc Thành."
+  },
+  {
+   "name": "Bao vây Nguyên Mộc Thành",
+   "description": "Đến #2[Nguyên Mộc đạo quán]#0 thăm dò tình hình."
+  },
+  {
+   "name": "Lẻn vào Dinh thự Trưởng thôn",
+   "description": "Nhấn #2 địa đạo trong Đồ Thư Quán #0 để lẻn vào dinh thự Trưởng thôn."
+  },
+  {
+   "name": "Chuẩn bị cuộc chiến",
+   "description": "Đến Nguyên Mộc Thương Điếm mua chút đồ chuẩn bị."
+  },
+  {
+   "name": "Giải cứu người tại Dinh thự Trưởng thôn",
+   "description": "Theo địa đạo trong Đồ Thư Quán tiến vào Dinh thự Trưởng thôn cứu người."
+  },
+  {
+   "name": "Từ biệt",
+   "description": "Tiến vào #2[Nguyên Mộc đạo quán]."
+  },
+  {
+   "name": "Thăm dò Nguyên Mộc Thành",
+   "description": "Đến #2[Bình nguyên phía Tây]#0 bắt sủng vật hiếm."
+  },
+  {
+   "name": "Hội ngộ Yafei",
+   "description": "Đến #2[bến tàu phía đông thành]#0 Hội ngộ Yafei."
+  },
+  {
+   "name": "Trợ giúp Jones thực hiện một việc",
+   "description": "Đến #2[Trung tâm Niêm Thổ] tìm Jones."
+  },
+  {
+   "name": "Trao đổi trứng sủng vật",
+   "description": "Đến #2[Khu chợ phía Nam]#0 bắt #1 Tiên Nhân Cầu Bảo Bảo #0 giao cho Jones."
+  },
+  {
+   "name": "Ở Niêm Thổ thành",
+   "description": "Đến #2[Niêm Thổ đạo quán]#0 xem xét tình hình."
+  },
+  {
+   "name": "Kiểm tra Phi Không Đĩnh",
+   "description": "Đến #2[Căn cứ Phi Không Đĩnh]#0 tìm Yafei."
+  },
+  {
+   "name": "Trở lại Trung tâm Niêm Thổ",
+   "description": "Trở lại #2[Trung tâm Niêm Thổ]."
+  },
+  {
+   "name": "Đến Hắc Thạch Thành",
+   "description": "Cùng Yafei đến #2Hắc Thạch Thành."
+  },
+  {
+   "name": "Thăm dò Hắc Thạch Thành",
+   "description": "Đến #2[Hắc Thạch đạo quán]#0 xem xét tình hình."
+  },
+  {
+   "name": "Hội ngộ Yafei",
+   "description": "Đến #2[Cứ điểm Thánh Điện] tìm Yafei."
+  },
+  {
+   "name": "Huy hiêu đá",
+   "description": "Đến #2[Đông Hắc Thạch Thành]#0 đạo quán bắt được #1 Đại Địa Chương."
+  },
+  {
+   "name": "Hắc Tinh Thạch",
+   "description": "Tiến vào #2[địa lao Hắc Thạch] lấy Hắc Tinh Thạch."
+  },
+  {
+   "name": "Liệt Hỏa gia hộ",
+   "description": "Đến #2[Truy Ức Chi Sâm]#0 [Phượng Hoàng Di Tích] mời Hỏa Phượng Hoàng."
+  },
+  {
+   "name": "Câu chuyện Trần Phong",
+   "description": "Đến #2[Phượng Chi Thủ Hộ Hương] hướng Trưởng thôn #0 hỏi thăm thân thế thực sự của Sophie."
+  },
+  {
+   "name": "Sophie và Hỏa Tinh Thạch",
+   "description": "Đến #2[Hắc Long Thần điện]#0 tìm Sophie."
+  },
+  {
+   "name": "Phá hư Phi Không Đĩnh",
+   "description": "Đuổi tới #2[Căn cứ Phi Không Đĩnh] tại Niêm Thổ thành#0, ngăn cản Phi Không Đĩnh bay lên."
+  },
+  {
+   "name": "Thiên Không Chi Thành",
+   "description": "Tìm kiếm Sophie bị mất tích."
+  },
+  {
+   "name": "Đến Thánh Điện",
+   "description": "Đến #2[Vĩnh Hằng Kinh Phiên]#0 hỏi thăm tin tức."
+  },
+  {
+   "name": "Thượng cùng bích lạc 1",
+   "description": "Đến #2[Phiêu Phi Vũ Linh]#0 đánh thức lôi Kỳ Lân."
+  },
+  {
+   "name": "Đôi cánh của trời xanh",
+   "description": "Trở lại #2Thánh Điện#0 tìm #1Tomas."
+  },
+  {
+   "name": "Thượng cùng bích lạc 2",
+   "description": "Đến #2[Không Gian Minh Tưởng] thức tỉnh #1Minh vương Long."
+  },
+  {
+   "name": "Thượng cùng bích lạc 3",
+   "description": "Đến #2[Chòm Sao Ân Diệu] đánh thức #1Tinh Vân Hạc."
+  },
+  {
+   "name": "Thiên không gia hộ",
+   "description": "Trở lại #2[Vĩnh Hằng Kinh Phiên] Thánh Điện #0tìm Tomas."
+  },
+  {
+   "name": "U Linh Chương",
+   "description": "Đến #2[Thiên Không Đạo Quán]#0 lấy U Linh Chương."
+  },
+  {
+   "name": "Thiên Địa truyền tống",
+   "description": "Đến #2[Bạch Long Thánh Điện] tìm Tomas #0 truyền quay lại Địa Giới."
+  },
+  {
+   "name": "Xuống hoàng tuyền 1",
+   "description": "Đến #2Bích Thủy Thành [Nguyên Mộc quặng mỏ]#0 đánh thức #1 Linh Quang Lộc."
+  },
+  {
+   "name": "Xuống hoàng tuyền 2",
+   "description": "Đến #2Niêm Thổ thành [Lối vào di tích]#0 thức tỉnh #1 Chiến Thần Đà."
+  },
+  {
+   "name": "Xuống hoàng tuyền 3",
+   "description": "Đến #2Niêm Thổ thành [Mỏ quặng phía Đông 3]#0 thức tỉnh Tương Quân Giải."
+  },
+  {
+   "name": "Thời gian truyền tống",
+   "description": "Trở lại #2Thiên Giới#0 tìm #1Tomas#0 truyền quay lại Thiên Địa chi sơ."
+  },
+  {
+   "name": "Thiên Địa chi sơ",
+   "description": "Tại #2[Vĩnh Hằng Kinh Phiên]#0 mời #1Tomas#0 tiến hành nghi thức truyền tống."
+  },
+  {
+   "name": "Bắt đầu và kết thúc",
+   "description": "Đến #2[Nguyên Thủy Ngự Tọa]#0 tìm được Sophie và Silia."
+  },
+  {
+   "name": "Huấn luyện sư xuất sắc",
+   "description": "Tập hợp đủ tất cả các sủng vật sau đó tìm sứ giả liên minh đạt được Hoàng Kim Chương."
+  }
+ ]
+}

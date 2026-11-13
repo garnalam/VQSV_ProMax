@@ -1,0 +1,13 @@
+{
+  "schema": "vqsv-badge-catalog-v1",
+  "source": [
+    {"id": 0, "name": "Liệt Hỏa Chương", "description": "Gia tăng tầm nhìn trong bóng tối.", "enhancedDescription": "Sau khi chiến đấu chỉ số sinh mạng sẽ được khôi phục nhất định."},
+    {"id": 1, "name": "Mộc Quỳ Chương", "description": "Có khả năng loại bỏ những cây cối chướng ngại trên đường đi.", "enhancedDescription": "Gia tăng thuộc tính của rừng cây."},
+    {"id": 2, "name": "Đại Địa Chương", "description": "Có khả năng phá tan đá gây chướng ngại trên đường đi.", "enhancedDescription": "Gia tăng thuộc tính khu nham thạch."},
+    {"id": 3, "name": "Thủy Lam Chương", "description": "Có thể đi vào vùng thủy vực.", "enhancedDescription": "Gia tăng thuộc tính của Thuỷ vực."},
+    {"id": 4, "name": "Hòa Phong Chương", "description": "Gia tăng khả năng phòng ngự 5%", "enhancedDescription": "Cải thiện tốc độ chiến đấu của bản thân."},
+    {"id": 5, "name": "U Linh Chương", "description": "Có thể dùng bùa chú làm cho hạt giống sinh trưởng.", "enhancedDescription": "Mỗi hiệp thuộc tính Gia tăng 1%, cao nhất 20%."},
+    {"id": 6, "name": "Lôi Điện Chương", "description": "Gia tăng tỷ lệ thương tổn 5%", "enhancedDescription": "Duy trì liên tục tính hiệu quả có thể làm sự ảnh hưởng bất lợi của thời hạn được giảm một nửa."},
+    {"id": 7, "name": "Hoàng Kim Chương", "description": "Mang theo tất cả sủng vật tuy không tham chiến cũng có thể lấy được giá trị kinh nghiệm.", "enhancedDescription": "Không thể cường hóa."}
+  ]
+}

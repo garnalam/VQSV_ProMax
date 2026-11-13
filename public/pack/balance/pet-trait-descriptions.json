@@ -1,0 +1,38 @@
+{
+  "schema": "vqsv-webnative-balance-pet-trait-descriptions-v1",
+  "source": {
+    "balanceVersion": "user-burn-and-poison-folded-20261103-v1",
+    "decided": "2026-11-03",
+    "javaExports": [
+      "public/pack/data/battle/pet-physical-traits.json",
+      "public/pack/data/battle/pet-species-traits.json"
+    ],
+    "note": "The user cut Thiêu Đốt as a duplicate of Gieo Hạt and Độc as a duplicate of Hủ Thực, so the battle logic now carries two damage-over-time identities instead of four: canonical BURN resolves to Gieo Hạt through the engine's own seeded_damage alias and canonical poison aliases to corrosion, both in DesignTraits. This table renames the two trait descriptions that still spell the cut names, and substitutions records the rule so PetTraitDescriptionBalance.test.ts can prove each value is that edit of the Java sentence and nothing more. parametersJson keeps the engine enum names burn and poison, which golden-physical-traits.json byte-compares. The Java exports stay untouched, as the balance domain requires."
+  },
+  "substitutions": [
+    {
+      "from": "Thiêu Đốt, Hủ Thực hoặc Độc",
+      "to": "Gieo Hạt hoặc Hủ Thực"
+    },
+    {
+      "from": "Thiêu Đốt",
+      "to": "Gieo Hạt"
+    }
+  ],
+  "overrides": [
+    {
+      "table": "battle/pet-physical-traits.json",
+      "stableKey": "TC-10",
+      "field": "description",
+      "java": "Cuối lượt hồi 2% Sinh mệnh tối đa; tạm ngừng khi đang Thiêu Đốt hoặc Hủ Thực; tổng hồi thụ động bị chặn ở 4% mỗi lượt.",
+      "value": "Cuối lượt hồi 2% Sinh mệnh tối đa; tạm ngừng khi đang Gieo Hạt hoặc Hủ Thực; tổng hồi thụ động bị chặn ở 4% mỗi lượt."
+    },
+    {
+      "table": "battle/pet-species-traits.json",
+      "stableKey": "TV-04",
+      "field": "description",
+      "java": "Skill gây Thiêu Đốt, Hủ Thực hoặc Độc được cộng 5 điểm phần trăm xác suất, tối đa 95%.",
+      "value": "Skill gây Gieo Hạt hoặc Hủ Thực được cộng 5 điểm phần trăm xác suất, tối đa 95%."
+    }
+  ]
+}

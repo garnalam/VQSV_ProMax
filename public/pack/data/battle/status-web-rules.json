@@ -1,0 +1,69 @@
+{
+  "schema": "vqsv-web-status-rules-v1",
+  "note": "Hand-authored. The buff/debuff behaviour the web build adds or changes on top of the Java-baked tables (statuses, status-mechanics, debuff-producers). Every rule here follows the status's own description; where the description is silent the rule is a design decision and says so in its note.",
+  "roundPasses": {
+    "note": "When a status is counted down and does its per-round work, by the tickPhase statuses.json gives it: ACTIVE_OWNER_ROUND at the start of its owner's turn (before it acts), OWNER_TURN_END at the end of its owner's turn. ACTION_TRIGGER and CHARGE statuses are spent by actions, INSTANT ones never stay. Characteristic-owned instances (sourceSkill >= 1000) keep their own lifecycle."
+  },
+  "sucLuc": {
+    "buffId": 0,
+    "note": "Súc Lực: the next damaging skill hits with at least the stored Power (190). A skill that already has more Power keeps its own: a buff never lowers a hit."
+  },
+  "electricPp": {
+    "buffId": 8,
+    "ppPerSkill": 2,
+    "note": "Điện áp: every skill used while it lasts costs 2 PP instead of 1."
+  },
+  "followUpHit": {
+    "buffId": 12,
+    "note": "Gia Tốc: each of the next two damaging skills hits a second time with the Power stored on the buff (60); the second hit carries no effect. One charge is spent per damaging skill."
+  },
+  "selfHit": {
+    "note": "Quỷ Mị (8) and Hỗn Loạn (9) are spent by their owner's next action. The chance a damaging skill turns on its user comes from status-mechanics debuffActionSelfHitChance. Hỗn Loạn also replaces the chosen skill with a random usable one. A self-hit deals the skill's damage to its user and applies none of its effects."
+  },
+  "turnSkip": [
+    {
+      "bank": 1,
+      "id": 10,
+      "chance": 25,
+      "name": "Tê Liệt",
+      "note": "Design decision (the description only says it lasts 2 turns): besides its −20% agility, each action has a 25% chance to be lost to the paralysis."
+    }
+  ],
+  "rainbowDebuffs": [
+    {
+      "id": 0,
+      "name": "Hóa Đá",
+      "skipsNextAction": true,
+      "damageTakenPercent": -30,
+      "note": "Mất hành động kế tiếp và giảm 30% sát thương nhận; hết khi hành động bị mất. Khác buff Thạch Hóa (0:13)."
+    },
+    { "id": 3, "name": "Mị Hoặc", "damageDealtPercent": -15, "note": "Giảm 15% damage gây ra." },
+    {
+      "id": 4,
+      "name": "Giam Cầm",
+      "locksSwitchAndItems": true,
+      "note": "Không đổi pet, không dùng item; vẫn đánh được. Linh xảo −primary% (15) qua projectAgility."
+    },
+    {
+      "id": 5,
+      "name": "Hủ Thực",
+      "rampPercent": 3,
+      "note": "Đầu mỗi lượt của chủ: mất 3%, rồi 6%, rồi 9% HP tối đa."
+    },
+    {
+      "id": 7,
+      "name": "Xé Rách",
+      "note": "Cuối mỗi vòng mất primary% (4) HP tối đa; đã chạy qua tickVqsv4BleedingRoundEnd."
+    },
+    {
+      "id": 8,
+      "name": "Ngủ",
+      "skipsNextAction": true,
+      "wakesOnDirectDamage": true,
+      "note": "Mất 1 hành động; nhận damage trực tiếp thì tỉnh ngay."
+    }
+  ],
+  "lietHoaUndescribed": {
+    "note": "Mê Muội (1:1): the description only names it, so it keeps the −20% agility (primary) the data already stores. Design decision, change here if a different effect is wanted."
+  }
+}

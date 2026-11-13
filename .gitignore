@@ -1,0 +1,12 @@
+node_modules/
+dist/
+*.tsbuildinfo
+
+oracle/traces/*.web.json
+
+# Local scratch: tool output, browser profiles, javac output (build/java-tools), screenshots
+build/
+.vitest/
+vitest-report.json
+*.log
+/*.png

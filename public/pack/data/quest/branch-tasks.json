@@ -1,0 +1,935 @@
+{
+ "schema": "vqsv-webnative-branch-tasks-v1",
+ "source": "modules/script/decoded: bTask.mid (30 names then 30 descriptions), bqTask.mid (first: the [scene,room,group] that offers each task through op43, second: the group that completes it); terms from quest/task-offers.json",
+ "status": {
+  "none": -1,
+  "active": 1,
+  "complete": 3
+ },
+ "tasks": [
+  {
+   "id": 0,
+   "name": "Bắt sủng vật 1",
+   "description": "Đến [Đường nhỏ phía Đông] bắt Khốc Tị Mộc Linh giao cho Dodo tại [Phượng Chi Thủ Hộ Hương].",
+   "offer": {
+    "scene": 1,
+    "room": 0,
+    "group": 7
+   },
+   "completion": {
+    "scene": 1,
+    "room": 0,
+    "group": 8
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 1,
+      "quantity": 3,
+      "type": "RewardType.ITEM"
+     }
+    ],
+    "taskId": 0
+   }
+  },
+  {
+   "id": 1,
+   "name": "Bắt sủng vật 2",
+   "description": "Trên đường đi Bích Thủy Thành bắt Điện Miêu giao cho Eliza [Trung tâm Bích Thủy].",
+   "offer": {
+    "scene": 1,
+    "room": 0,
+    "group": 9
+   },
+   "completion": {
+    "scene": 2,
+    "room": 1,
+    "group": 6
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 1,
+      "quantity": 3,
+      "type": "RewardType.ITEM"
+     }
+    ],
+    "taskId": 1
+   }
+  },
+  {
+   "id": 2,
+   "name": "Bắt sủng vật 3",
+   "description": "Trên đường đi Nguyên Mộc Thành bắt La Phục Thảo giao cho Kate tại [Trung tâm Nguyên Mộc].",
+   "offer": {
+    "scene": 2,
+    "room": 1,
+    "group": 7
+   },
+   "completion": {
+    "scene": 3,
+    "room": 3,
+    "group": 1
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 5,
+      "quantity": 2,
+      "type": "RewardType.ITEM"
+     }
+    ],
+    "taskId": 2
+   }
+  },
+  {
+   "id": 3,
+   "name": "Đưa công cụ",
+   "description": "Đem công cụ khảo cổ giao cho Senta ở [Mỏ quặng 1].",
+   "offer": {
+    "scene": 3,
+    "room": 3,
+    "group": 2
+   },
+   "completion": {
+    "scene": 4,
+    "room": 2,
+    "group": 0
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 2,
+      "quantity": 1,
+      "type": "RewardType.ITEM"
+     }
+    ],
+    "taskId": 3
+   }
+  },
+  {
+   "id": 4,
+   "name": "Tiến hóa sủng vật",
+   "description": "Đem Nham Nham quy tiến hóa thành kiếm Giáp Hạn Quy giao cho Al tại [Trung tâm Niêm Thổ].",
+   "offer": {
+    "scene": 4,
+    "room": 2,
+    "group": 1
+   },
+   "completion": {
+    "scene": 4,
+    "room": 5,
+    "group": 0
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 14,
+      "quantity": 1,
+      "type": "RewardType.ITEM"
+     }
+    ],
+    "taskId": 4
+   }
+  },
+  {
+   "id": 5,
+   "name": "Sự quan tâm lặng lẽ",
+   "description": "Hỏi thăm [Trung tâm Niêm Thổ] bất kỳ vấn đề gì liên quan đến Moose.",
+   "offer": {
+    "scene": 4,
+    "room": 5,
+    "group": 1
+   },
+   "completion": {
+    "scene": 4,
+    "room": 5,
+    "group": 2
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 11,
+      "quantity": 2,
+      "type": "RewardType.ITEM"
+     }
+    ],
+    "taskId": 5
+   }
+  },
+  {
+   "id": 6,
+   "name": "Ấp trứng sủng vật",
+   "description": "Ấp trứng giao cho Moose tại [Trung tâm Niêm Thổ].",
+   "offer": {
+    "scene": 4,
+    "room": 5,
+    "group": 3
+   },
+   "completion": {
+    "scene": 4,
+    "room": 5,
+    "group": 4
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 9,
+      "quantity": 2,
+      "type": "RewardType.ITEM"
+     }
+    ],
+    "taskId": 6
+   }
+  },
+  {
+   "id": 7,
+   "name": "Truyền tải thông tin",
+   "description": "Đem tư liệu đưa cho Fisher tại Hắc Thạch [Chính Điện].",
+   "offer": {
+    "scene": 4,
+    "room": 5,
+    "group": 5
+   },
+   "completion": {
+    "scene": 5,
+    "room": 3,
+    "group": 1
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 15,
+      "quantity": 1,
+      "type": "RewardType.MATERIAL"
+     }
+    ],
+    "taskId": 7
+   }
+  },
+  {
+   "id": 8,
+   "name": "Dị hoá sủng vật",
+   "description": "Đem Đại Quỷ dị hoá thành Thi Đại Quỷ giao cho Kate tại [Trung tâm Nguyên Mộc].",
+   "offer": {
+    "scene": 5,
+    "room": 3,
+    "group": 2
+   },
+   "completion": {
+    "scene": 3,
+    "room": 3,
+    "group": 3
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 12,
+      "quantity": 2,
+      "type": "RewardType.ITEM"
+     }
+    ],
+    "taskId": 8
+   }
+  },
+  {
+   "id": 9,
+   "name": "Nghiên cứu mới",
+   "description": "Đến Niêm Thổ [Mỏ quặng phía Đông 1] hỏi thăm Senta có tiến triển gì mới.",
+   "offer": {
+    "scene": 3,
+    "room": 3,
+    "group": 4
+   },
+   "completion": {
+    "scene": 4,
+    "room": 2,
+    "group": 2
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 74,
+      "quantity": 1,
+      "type": "RewardType.PET_SPECIES"
+     }
+    ],
+    "taskId": 9
+   }
+  },
+  {
+   "id": 10,
+   "name": "Niềm vui trong ăn uống",
+   "description": "Đem chiếc hộp tiện dụng giao tại giao giới giữa Niêm Thổ và Hắc Thạch cho Mu tại [Mỏ quặng phía Bắc].",
+   "offer": {
+    "scene": 11,
+    "room": 19,
+    "group": 0
+   },
+   "completion": {
+    "scene": 4,
+    "room": 12,
+    "group": 0
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 5,
+      "quantity": 2,
+      "type": "RewardType.ITEM"
+     }
+    ],
+    "taskId": 10
+   }
+  },
+  {
+   "id": 11,
+   "name": "Như những kẻ chuyên ức hiếp kẻ khác",
+   "description": "Đến phía bắc Bích Thủy Thành [Cây cầu nhỏ] bắt Lắc Lắc.",
+   "offer": {
+    "scene": 11,
+    "room": 11,
+    "group": 0
+   },
+   "completion": {
+    "scene": 11,
+    "room": 11,
+    "group": 1
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 4,
+      "quantity": 3,
+      "type": "RewardType.ITEM"
+     }
+    ],
+    "taskId": 11
+   }
+  },
+  {
+   "id": 12,
+   "name": "Mất vòng tay",
+   "description": "Tìm [Trung tâm Niêm Thổ] Gottardo mang về chiếc vòng tay của Jahila.",
+   "offer": {
+    "scene": 11,
+    "room": 21,
+    "group": 0
+   },
+   "completion": {
+    "scene": 11,
+    "room": 21,
+    "group": 1
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 10,
+      "quantity": 5,
+      "type": "RewardType.ITEM"
+     }
+    ],
+    "taskId": 12
+   }
+  },
+  {
+   "id": 13,
+   "name": "Ứng cứu khẩn cấp",
+   "description": "Đem y phẩm, tài liệu cho Arnold tại [Trung tâm Nguyên Mộc].",
+   "offer": {
+    "scene": 11,
+    "room": 10,
+    "group": 0
+   },
+   "completion": {
+    "scene": 3,
+    "room": 3,
+    "group": 8
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "Nguồn cung cấp vật tư",
+    "grantedWorldFlag": 0,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 4,
+      "quantity": 3,
+      "type": "RewardType.ITEM"
+     }
+    ],
+    "taskId": 13
+   }
+  },
+  {
+   "id": 14,
+   "name": "Không nói gì thủ hộ 1",
+   "description": "Đến [Bình nguyên phía Tây] Nguyên Mộc bắt Bạch Châm Bảo Bảo giao cho Amocxi tại [Bến tàu phía Đông] Nguyên Mộc.",
+   "offer": {
+    "scene": 3,
+    "room": 6,
+    "group": 0
+   },
+   "completion": {
+    "scene": 3,
+    "room": 6,
+    "group": 1
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [],
+    "taskId": 14
+   }
+  },
+  {
+   "id": 15,
+   "name": "Không nói gì thủ hộ 2",
+   "description": "Tìm được Bạch Châm Bảo Bảo lỗ tai có lỗ hổng giao cho Amocxi tại Nguyên Mộc [Bến tàu phía Đông].",
+   "offer": {
+    "scene": 3,
+    "room": 3,
+    "group": 6
+   },
+   "completion": {
+    "scene": 3,
+    "room": 6,
+    "group": 2
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 2,
+      "quantity": 2,
+      "type": "RewardType.ITEM"
+     }
+    ],
+    "taskId": 15
+   }
+  },
+  {
+   "id": 16,
+   "name": "Viện trợ Sủng vật",
+   "description": "Tại Thương Điếm mua 3 khôi phục dược tề giao cho Slavic tại [Bích Thủy Đạp Sa].",
+   "offer": {
+    "scene": 2,
+    "room": 2,
+    "group": 1
+   },
+   "completion": {
+    "scene": 2,
+    "room": 2,
+    "group": 2
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 5,
+      "quantity": 5,
+      "type": "RewardType.ITEM"
+     }
+    ],
+    "taskId": 16
+   }
+  },
+  {
+   "id": 17,
+   "name": "Đoạt lại Hành lý",
+   "description": "Tại [Trung tâm Niêm Thổ] tìm binh lính Hắc Long lấy lại gói hành lý Nailuo.",
+   "offer": {
+    "scene": 4,
+    "room": 5,
+    "group": 7
+   },
+   "completion": {
+    "scene": 4,
+    "room": 5,
+    "group": 9
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 0,
+      "quantity": 1000,
+      "type": "RewardType.MONEY"
+     }
+    ],
+    "taskId": 17
+   }
+  },
+  {
+   "id": 18,
+   "name": "Giao thư mật 1",
+   "description": "Đem thư mật giao cho Hughes tại [Trung tâm Niêm Thổ].",
+   "offer": {
+    "scene": 3,
+    "room": 3,
+    "group": 7
+   },
+   "completion": {
+    "scene": 4,
+    "room": 5,
+    "group": 10
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 6,
+      "quantity": 5,
+      "type": "RewardType.ITEM"
+     }
+    ],
+    "taskId": 18
+   }
+  },
+  {
+   "id": 19,
+   "name": "Giao thư mật 2",
+   "description": "Tại [Trung tâm Niêm Thổ] tìm Locke chuyển thư nhà.",
+   "offer": {
+    "scene": 4,
+    "room": 5,
+    "group": 11
+   },
+   "completion": {
+    "scene": 11,
+    "room": 22,
+    "group": 0
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 1,
+      "quantity": 5,
+      "type": "RewardType.ITEM"
+     }
+    ],
+    "taskId": 19
+   }
+  },
+  {
+   "id": 20,
+   "name": "Giao thư mật 3",
+   "description": "Đem thư mật giao cho JaniLa tại [Phía đông Hắc Thạch Thành].",
+   "offer": {
+    "scene": 11,
+    "room": 22,
+    "group": 1
+   },
+   "completion": {
+    "scene": 5,
+    "room": 5,
+    "group": 0
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 2,
+      "quantity": 2,
+      "type": "RewardType.ITEM"
+     }
+    ],
+    "taskId": 20
+   }
+  },
+  {
+   "id": 21,
+   "name": "Cứu",
+   "description": "Đến [Địa lao Hắc Thạch] cứu Edern.",
+   "offer": {
+    "scene": 5,
+    "room": 5,
+    "group": 1
+   },
+   "completion": {
+    "scene": 5,
+    "room": 5,
+    "group": 2
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 2,
+      "quantity": 1,
+      "type": "RewardType.SPECIAL_REWARD"
+     }
+    ],
+    "taskId": 21
+   }
+  },
+  {
+   "id": 22,
+   "name": "Thể hiện sủng vật Địa Giới",
+   "description": "Tại Thiên Giới [Khiết Bạch Môn Phi] cho Zuzu xem bốn thuộc tính của sủng vật Địa Giới.",
+   "offer": {
+    "scene": 7,
+    "room": 3,
+    "group": 0
+   },
+   "completion": {
+    "scene": 7,
+    "room": 3,
+    "group": 1
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 1,
+      "quantity": 3,
+      "type": "RewardType.ITEM"
+     }
+    ],
+    "taskId": 22
+   }
+  },
+  {
+   "id": 23,
+   "name": "Nghi vấn",
+   "description": "Tại Thiên Giới [Ôn Nhu Sơ Vân] trả lời các câu hỏi của YaQila.",
+   "offer": {
+    "scene": 7,
+    "room": 10,
+    "group": 0
+   },
+   "completion": {
+    "scene": 7,
+    "room": 10,
+    "group": 1
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 4,
+      "quantity": 5,
+      "type": "RewardType.ITEM"
+     }
+    ],
+    "taskId": 23
+   }
+  },
+  {
+   "id": 24,
+   "name": "Dây may mắn 1",
+   "description": "Đem quả may mắn dâng cho DoranRule tại [Thánh Điện].",
+   "offer": {
+    "scene": 7,
+    "room": 6,
+    "group": 0
+   },
+   "completion": {
+    "scene": 11,
+    "room": 3,
+    "group": 0
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 5,
+      "quantity": 3,
+      "type": "RewardType.ITEM"
+     }
+    ],
+    "taskId": 24
+   }
+  },
+  {
+   "id": 25,
+   "name": "Dây may mắn 2",
+   "description": "Đem quả may mắn dâng cho Camille tại [Thánh Điện].",
+   "offer": {
+    "scene": 7,
+    "room": 6,
+    "group": 1
+   },
+   "completion": {
+    "scene": 11,
+    "room": 3,
+    "group": 1
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 2,
+      "quantity": 2,
+      "type": "RewardType.ITEM"
+     }
+    ],
+    "taskId": 25
+   }
+  },
+  {
+   "id": 26,
+   "name": "Dây may mắn 3",
+   "description": "Đem quả may mắn dâng cho AimiDe tại [Khoan thứ tội ác].",
+   "offer": {
+    "scene": 7,
+    "room": 6,
+    "group": 2
+   },
+   "completion": {
+    "scene": 7,
+    "room": 8,
+    "group": 0
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 11,
+      "quantity": 2,
+      "type": "RewardType.ITEM"
+     }
+    ],
+    "taskId": 26
+   }
+  },
+  {
+   "id": 27,
+   "name": "Dây may mắn 4",
+   "description": "Đem quả may mắn dâng cho Tomas tại [Thánh Điện].",
+   "offer": {
+    "scene": 7,
+    "room": 6,
+    "group": 3
+   },
+   "completion": {
+    "scene": 11,
+    "room": 3,
+    "group": 6
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 13,
+      "quantity": 2,
+      "type": "RewardType.ITEM"
+     }
+    ],
+    "taskId": 27
+   }
+  },
+  {
+   "id": 28,
+   "name": "Sứ giả thần linh",
+   "description": "Đến [Khu rừng mưa] diệt trừ dã thú ăn thịt người.",
+   "offer": {
+    "scene": 8,
+    "room": 0,
+    "group": 0
+   },
+   "completion": {
+    "scene": 8,
+    "room": 0,
+    "group": 1
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 5,
+      "quantity": 3,
+      "type": "RewardType.ITEM"
+     }
+    ],
+    "taskId": 28
+   }
+  },
+  {
+   "id": 29,
+   "name": "Long kỵ sĩ",
+   "description": "Cho Kay 20 chocolate.",
+   "offer": {
+    "scene": 8,
+    "room": 0,
+    "group": 2
+   },
+   "completion": {
+    "scene": 8,
+    "room": 0,
+    "group": 3
+   },
+   "terms": {
+    "grantedQuestTokenLabel": "",
+    "grantedWorldFlag": -1,
+    "options": [
+     "Tiếp nhận",
+     "Từ chối"
+    ],
+    "rewards": [
+     {
+      "id": 4,
+      "quantity": 1,
+      "type": "RewardType.SPECIAL_REWARD"
+     }
+    ],
+    "taskId": 29
+   }
+  }
+ ]
+}

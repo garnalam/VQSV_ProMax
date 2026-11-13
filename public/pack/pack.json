@@ -1,0 +1,2015 @@
+{
+  "schema": "vqsv-webnative-pack-v1",
+  "baseUrl": "/pack",
+  "description": "Canonical game resource pack for web-native. Every image, audio, JSON and sprite file the runtime loads is declared here and is reachable only through src/pack/Pack.ts. Producers write into the domain roots below, so re-running a producer refreshes the pack in place.",
+  "preload": {
+    "introSprites": [
+      0,
+      84,
+      85,
+      101,
+      117,
+      133,
+      149,
+      161,
+      173,
+      185,
+      257,
+      262,
+      264,
+      266,
+      267,
+      269,
+      327
+    ]
+  },
+  "domains": [
+    {
+      "id": "fashion-ui",
+      "kind": "image",
+      "resolution": "entries",
+      "producer": {
+        "kind": "copy",
+        "what": "JavaSE unified fashion-ui-v1 generated design assets"
+      },
+      "entries": [
+        {
+          "name": "blind-bag",
+          "file": "fashion-ui/icon_blind_bag.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/fashion/fashion-ui-v1/assets/icon_blind_bag.png",
+          "provenance": "generated_unified_design"
+        },
+        {
+          "name": "fashion",
+          "file": "fashion-ui/icon_fashion.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/fashion/fashion-ui-v1/assets/icon_fashion.png",
+          "provenance": "generated_unified_design"
+        },
+        {
+          "name": "blind-bag-open",
+          "file": "fashion-ui/blind_bag_open_sheet.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/fashion/fashion-ui-v1/assets/blind_bag_open_sheet.png",
+          "provenance": "generated_unified_design"
+        }
+      ]
+    },
+    {
+      "id": "fashion-preview",
+      "kind": "image",
+      "resolution": "root",
+      "root": "fashion-preview",
+      "producer": {
+        "kind": "java-tool",
+        "what": "rebuild_game/tools/ExportWebFashionPreviews.java",
+        "command": "javac -cp build/classes -d <tool> tools/ExportWebFashionPreviews.java && java -cp <tool>;build/classes;src/main/resources ExportWebFashionPreviews VQSV-WebNative/web-native/public/pack/fashion-preview"
+      },
+      "shapes": [
+        {
+          "name": "preview",
+          "path": "{key}.png"
+        }
+      ]
+    },
+    {
+      "id": "brand",
+      "kind": "image",
+      "resolution": "entries",
+      "producer": {
+        "kind": "copy",
+        "what": "decoded source art, renamed for the pack"
+      },
+      "entries": [
+        {
+          "name": "logo",
+          "file": "brand/logo.png",
+          "from": "modules/logo/custom/vqsvlogo.png",
+          "provenance": "source_normalized"
+        },
+        {
+          "name": "title-background",
+          "file": "brand/title-background.png",
+          "from": "modules/tex/decoded/data__tex__menu.mid.png",
+          "provenance": "decoded_source"
+        },
+        {
+          "name": "title-particles",
+          "file": "brand/title-particles.png",
+          "from": "modules/img/decoded/data__img__img_833.mid.png",
+          "provenance": "decoded_source"
+        }
+      ]
+    },
+    {
+      "id": "backpic",
+      "kind": "image",
+      "resolution": "entries",
+      "producer": {
+        "kind": "copy",
+        "what": "decoded img bank strips NguyenMocRoutePresentationPolicy.backgroundImage tiles behind a room's map (VqsvSceneView.renderSourceBackPic)"
+      },
+      "entries": [
+        {
+          "name": "sky",
+          "file": "backpic/sky.png",
+          "from": "modules/img/decoded/data__img__img_19.mid.png",
+          "provenance": "decoded_source"
+        },
+        {
+          "name": "abyss",
+          "file": "backpic/abyss.png",
+          "from": "modules/img/decoded/data__img__img_20.mid.png",
+          "provenance": "decoded_source"
+        }
+      ]
+    },
+    {
+      "id": "audio",
+      "kind": "audio",
+      "resolution": "entries",
+      "producer": {
+        "kind": "java-tool",
+        "what": "vqsv RenderMidiToWav (JDK Gervill 44.1kHz stereo) + ffmpeg loudness match and encode",
+        "command": "java RenderMidiToWav modules/sound/original/{n}.mid music-{n}.wav; ffmpeg -t <midi length> -af volume=<gainDb> -c:a libopus -b:a 96k music-{n}.ogg (and -c:a aac -b:a 128k music-{n}.m4a)",
+        "note": "music.json carries each track's loop length and gain, and media.mid's room music table"
+      },
+      "entries": [
+        {
+          "name": "menu-0",
+          "file": "audio/menu-0.wav",
+          "from": "modules/sound/original/0.mid",
+          "provenance": "generated_from_decoded_source",
+          "renderer": "JDK Gervill 44.1kHz stereo",
+          "sourceDurationMicros": 109396942,
+          "tempoMap": "global PPQ"
+        },
+        {
+          "name": "music-0-ogg",
+          "file": "audio/music-0.ogg",
+          "from": "modules/sound/original/0.mid",
+          "provenance": "generated_from_decoded_source",
+          "renderer": "JDK Gervill 44.1kHz stereo, Opus 96k",
+          "sourceDurationMicros": 109396942
+        },
+        {
+          "name": "music-0-m4a",
+          "file": "audio/music-0.m4a",
+          "from": "modules/sound/original/0.mid",
+          "provenance": "generated_from_decoded_source",
+          "renderer": "JDK Gervill 44.1kHz stereo, AAC 128k",
+          "sourceDurationMicros": 109396942
+        },
+        {
+          "name": "music-1-ogg",
+          "file": "audio/music-1.ogg",
+          "from": "modules/sound/original/1.mid",
+          "provenance": "generated_from_decoded_source",
+          "renderer": "JDK Gervill 44.1kHz stereo, Opus 96k",
+          "sourceDurationMicros": 81168100
+        },
+        {
+          "name": "music-1-m4a",
+          "file": "audio/music-1.m4a",
+          "from": "modules/sound/original/1.mid",
+          "provenance": "generated_from_decoded_source",
+          "renderer": "JDK Gervill 44.1kHz stereo, AAC 128k",
+          "sourceDurationMicros": 81168100
+        },
+        {
+          "name": "music-2-ogg",
+          "file": "audio/music-2.ogg",
+          "from": "modules/sound/original/2.mid",
+          "provenance": "generated_from_decoded_source",
+          "renderer": "JDK Gervill 44.1kHz stereo, Opus 96k",
+          "sourceDurationMicros": 50660544
+        },
+        {
+          "name": "music-2-m4a",
+          "file": "audio/music-2.m4a",
+          "from": "modules/sound/original/2.mid",
+          "provenance": "generated_from_decoded_source",
+          "renderer": "JDK Gervill 44.1kHz stereo, AAC 128k",
+          "sourceDurationMicros": 50660544
+        },
+        {
+          "name": "music-3-ogg",
+          "file": "audio/music-3.ogg",
+          "from": "modules/sound/original/3.mid",
+          "provenance": "generated_from_decoded_source",
+          "renderer": "JDK Gervill 44.1kHz stereo, Opus 96k",
+          "sourceDurationMicros": 33363035
+        },
+        {
+          "name": "music-3-m4a",
+          "file": "audio/music-3.m4a",
+          "from": "modules/sound/original/3.mid",
+          "provenance": "generated_from_decoded_source",
+          "renderer": "JDK Gervill 44.1kHz stereo, AAC 128k",
+          "sourceDurationMicros": 33363035
+        },
+        {
+          "name": "music-4-ogg",
+          "file": "audio/music-4.ogg",
+          "from": "modules/sound/original/4.mid",
+          "provenance": "generated_from_decoded_source",
+          "renderer": "JDK Gervill 44.1kHz stereo, Opus 96k",
+          "sourceDurationMicros": 25846128
+        },
+        {
+          "name": "music-4-m4a",
+          "file": "audio/music-4.m4a",
+          "from": "modules/sound/original/4.mid",
+          "provenance": "generated_from_decoded_source",
+          "renderer": "JDK Gervill 44.1kHz stereo, AAC 128k",
+          "sourceDurationMicros": 25846128
+        },
+        {
+          "name": "music-5-ogg",
+          "file": "audio/music-5.ogg",
+          "from": "modules/sound/original/5.mid",
+          "provenance": "generated_from_decoded_source",
+          "renderer": "JDK Gervill 44.1kHz stereo, Opus 96k",
+          "sourceDurationMicros": 12800000
+        },
+        {
+          "name": "music-5-m4a",
+          "file": "audio/music-5.m4a",
+          "from": "modules/sound/original/5.mid",
+          "provenance": "generated_from_decoded_source",
+          "renderer": "JDK Gervill 44.1kHz stereo, AAC 128k",
+          "sourceDurationMicros": 12800000
+        },
+        {
+          "name": "music-6-ogg",
+          "file": "audio/music-6.ogg",
+          "from": "modules/sound/original/6.mid",
+          "provenance": "generated_from_decoded_source",
+          "renderer": "JDK Gervill 44.1kHz stereo, Opus 96k",
+          "sourceDurationMicros": 59996327
+        },
+        {
+          "name": "music-6-m4a",
+          "file": "audio/music-6.m4a",
+          "from": "modules/sound/original/6.mid",
+          "provenance": "generated_from_decoded_source",
+          "renderer": "JDK Gervill 44.1kHz stereo, AAC 128k",
+          "sourceDurationMicros": 59996327
+        },
+        {
+          "name": "music-8-ogg",
+          "file": "audio/music-8.ogg",
+          "from": "rebuild_game/src/main/resources/vqsv/data/cau-vong/music/8.mid",
+          "provenance": "generated_from_decoded_source",
+          "renderer": "JDK Gervill 44.1kHz stereo, Opus 96k",
+          "sourceDurationMicros": 45359257
+        },
+        {
+          "name": "music-8-m4a",
+          "file": "audio/music-8.m4a",
+          "from": "rebuild_game/src/main/resources/vqsv/data/cau-vong/music/8.mid",
+          "provenance": "generated_from_decoded_source",
+          "renderer": "JDK Gervill 44.1kHz stereo, AAC 128k",
+          "sourceDurationMicros": 45359257
+        },
+        {
+          "name": "music",
+          "file": "audio/music.json",
+          "kind": "json",
+          "from": "modules/script/original/media.mid",
+          "provenance": "generated_from_decoded_source",
+          "producer": {
+            "kind": "mixed",
+            "what": "media.mid room table + render levels"
+          }
+        }
+      ]
+    },
+    {
+      "id": "font",
+      "kind": "image",
+      "resolution": "entries",
+      "producer": {
+        "kind": "java-tool",
+        "what": "vqsv ExportJavaPanelFont",
+        "command": "java -cp <classes> vqsv ExportJavaPanelFont VQSV-WebNative/web-native/public/pack/font",
+        "note": "writes panel.png and panel.json into the domain root"
+      },
+      "entries": [
+        {
+          "name": "panel-glyphs",
+          "file": "font/panel.png",
+          "from": "modules/root_misc/original/font.bin"
+        },
+        {
+          "name": "panel-metrics",
+          "file": "font/panel.json",
+          "kind": "json",
+          "from": "modules/root_misc/original/font.bin"
+        },
+        {
+          "name": "source",
+          "file": "font/font.bin",
+          "kind": "binary",
+          "from": "modules/root_misc/original/font.bin",
+          "producer": {
+            "kind": "copy",
+            "what": "original game bitmap font; decoded at runtime by src/rendering/font/SourceFont.ts",
+            "command": "npm run export:font"
+          }
+        },
+        {
+          "name": "text-metrics",
+          "file": "font/text-metrics.json",
+          "kind": "json",
+          "from": "Tahoma 9 as measured by vqsv.ui.text.UiFont.charWidth",
+          "producer": {
+            "kind": "java-tool",
+            "what": "vqsv.ui.text.ExportTextMetrics (needs Tahoma installed)",
+            "command": "java -cp <classes> vqsv.ui.text.ExportTextMetrics VQSV-WebNative/web-native/public/pack VQSV-WebNative/web-native/public/pack/font/text-metrics.json"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ui-layout",
+      "kind": "json",
+      "resolution": "template",
+      "template": "ui/layout/{name}.json",
+      "producer": {
+        "kind": "java-tool",
+        "what": "vqsv ExportWebUiLayoutContract",
+        "command": "java -cp <classes> vqsv ExportWebUiLayoutContract VQSV-WebNative/web-native/public/pack/ui/layout <name>"
+      },
+      "names": [
+        "battle",
+        "npcEnemy",
+        "dialog",
+        "choice",
+        "choiceskill",
+        "petstate",
+        "msgwarm",
+        "smsInfo",
+        "levelUp",
+        "skill",
+        "shopbuy",
+        "world",
+        "gamemenu",
+        "gamesystem",
+        "msgtip",
+        "task",
+        "petsetting",
+        "msgconfirm",
+        "help1",
+        "help",
+        "option",
+        "record",
+        "petmap",
+        "badge",
+        "ride",
+        "shop",
+        "msgRecover",
+        "wharf2",
+        "wharf1",
+        "taskOption"
+      ]
+    },
+    {
+      "id": "ui-cell",
+      "kind": "image",
+      "resolution": "cells",
+      "template": "ui/cell/{sprite}/cell-{index}.png",
+      "producer": {
+        "kind": "java-tool",
+        "what": "vqsv ExportWebUiCells",
+        "command": "java -cp <classes> vqsv ExportWebUiCells VQSV-WebNative/web-native/public/pack/ui/cell <spriteId>"
+      },
+      "sets": [
+        {
+          "sprite": 257,
+          "available": {
+            "start": 0,
+            "count": 176
+          },
+          "used": {
+            "start": 0,
+            "count": 176
+          }
+        },
+        {
+          "sprite": 258,
+          "available": {
+            "start": 0,
+            "count": 56
+          },
+          "used": {
+            "start": 0,
+            "count": 56
+          }
+        },
+        {
+          "sprite": 296,
+          "available": {
+            "start": 0,
+            "count": 9
+          },
+          "used": {
+            "start": 0,
+            "count": 9
+          }
+        },
+        {
+          "sprite": 325,
+          "available": {
+            "start": 0,
+            "count": 27
+          },
+          "used": {
+            "start": 1,
+            "count": 26
+          }
+        },
+        {
+          "sprite": 260,
+          "available": {
+            "start": 0,
+            "count": 12
+          },
+          "used": {
+            "start": 0,
+            "count": 12
+          }
+        }
+      ]
+    },
+    {
+      "id": "effect",
+      "kind": "image",
+      "resolution": "entries",
+      "producer": {
+        "kind": "copy",
+        "what": "decoded tex effect tiles, renamed without the data__tex__ prefix"
+      },
+      "entries": [
+        {
+          "name": "fire-0",
+          "file": "effect/fire-0.png",
+          "from": "modules/tex/decoded/data__tex__fire0.png"
+        },
+        {
+          "name": "fire-1",
+          "file": "effect/fire-1.png",
+          "from": "modules/tex/decoded/data__tex__fire1.png"
+        },
+        {
+          "name": "fire-2",
+          "file": "effect/fire-2.png",
+          "from": "modules/tex/decoded/data__tex__fire2.png"
+        },
+        {
+          "name": "star-0",
+          "file": "effect/star-0.png",
+          "from": "modules/tex/decoded/data__tex__star0.png"
+        },
+        {
+          "name": "star-1",
+          "file": "effect/star-1.png",
+          "from": "modules/tex/decoded/data__tex__star1.png"
+        },
+        {
+          "name": "star-2",
+          "file": "effect/star-2.png",
+          "from": "modules/tex/decoded/data__tex__star2.png"
+        },
+        {
+          "name": "star-3",
+          "file": "effect/star-3.png",
+          "from": "modules/tex/decoded/data__tex__star3.png"
+        },
+        {
+          "name": "ikon-1",
+          "file": "effect/ikon-1.png",
+          "from": "modules/tex/decoded/data__tex__ikon_1.png"
+        },
+        {
+          "name": "ikon-2",
+          "file": "effect/ikon-2.png",
+          "from": "modules/tex/decoded/data__tex__ikon_2.png"
+        },
+        {
+          "name": "down-0",
+          "file": "effect/down-0.png",
+          "from": "modules/tex/decoded/data__tex__down0.png"
+        },
+        {
+          "name": "down-1",
+          "file": "effect/down-1.png",
+          "from": "modules/tex/decoded/data__tex__down1.png"
+        },
+        {
+          "name": "down-2",
+          "file": "effect/down-2.png",
+          "from": "modules/tex/decoded/data__tex__down2.png"
+        },
+        {
+          "name": "down-3",
+          "file": "effect/down-3.png",
+          "from": "modules/tex/decoded/data__tex__down3.png"
+        }
+      ]
+    },
+    {
+      "id": "status-icon",
+      "kind": "image",
+      "resolution": "entries",
+      "producer": {
+        "kind": "copy",
+        "what": "the Cầu Vồng status icons VqsvBattleRenderer.rainbowStatusIcon opens off the Java classpath; only the paths that tree has bytes for are shipped, and the byte digest the bake records for each is checked against the shipped file by scripts/status-icons.test.mjs"
+      },
+      "entries": [
+        {
+          "name": "e0",
+          "file": "status/rainbow/e0.png",
+          "from": "rebuild_game/src/main/resources/vqsv/status/rainbow/icons/e0.png",
+          "provenance": "java_resource"
+        },
+        {
+          "name": "e3",
+          "file": "status/rainbow/e3.png",
+          "from": "rebuild_game/src/main/resources/vqsv/status/rainbow/icons/e3.png",
+          "provenance": "java_resource"
+        },
+        {
+          "name": "e4",
+          "file": "status/rainbow/e4.png",
+          "from": "rebuild_game/src/main/resources/vqsv/status/rainbow/icons/e4.png",
+          "provenance": "java_resource"
+        },
+        {
+          "name": "e5",
+          "file": "status/rainbow/e5.png",
+          "from": "rebuild_game/src/main/resources/vqsv/status/rainbow/icons/e5.png",
+          "provenance": "java_resource"
+        },
+        {
+          "name": "e6",
+          "file": "status/rainbow/e6.png",
+          "from": "rebuild_game/src/main/resources/vqsv/status/rainbow/icons/e6.png",
+          "provenance": "java_resource"
+        }
+      ]
+    },
+    {
+      "id": "skill-fx",
+      "kind": "image",
+      "resolution": "entries",
+      "producer": {
+        "kind": "ts-exporter",
+        "what": "the Cầu Vồng skill effects VqsvBattleRenderer draws (RainbowSkillAnimationCatalog): the atlas PNGs and the CV-SKILL-32 sheet copied from the Java resources, their binary frame tables and the sheet timing turned into animations.json; the 258 signature effects (SignatureSkillAnimationCatalog) from data/pet-design-v1/signature-vfx.tsv into signatures.json",
+        "command": "node scripts/bake-skill-fx.mjs VQSV-WebNative/rebuild_game/src/main/resources/vqsv"
+      },
+      "entries": [
+        {
+          "name": "rainbow-s0",
+          "file": "skill-fx/rainbow-s0.png",
+          "from": "rebuild_game/src/main/resources/vqsv/status/rainbow/battle/s0.png",
+          "provenance": "java_resource"
+        },
+        {
+          "name": "rainbow-s1",
+          "file": "skill-fx/rainbow-s1.png",
+          "from": "rebuild_game/src/main/resources/vqsv/status/rainbow/battle/s1.png",
+          "provenance": "java_resource"
+        },
+        {
+          "name": "rainbow-s2",
+          "file": "skill-fx/rainbow-s2.png",
+          "from": "rebuild_game/src/main/resources/vqsv/status/rainbow/battle/s2.png",
+          "provenance": "java_resource"
+        },
+        {
+          "name": "rainbow-s3",
+          "file": "skill-fx/rainbow-s3.png",
+          "from": "rebuild_game/src/main/resources/vqsv/status/rainbow/battle/s3.png",
+          "provenance": "java_resource"
+        },
+        {
+          "name": "rainbow-s4",
+          "file": "skill-fx/rainbow-s4.png",
+          "from": "rebuild_game/src/main/resources/vqsv/status/rainbow/battle/s4.png",
+          "provenance": "java_resource"
+        },
+        {
+          "name": "rainbow-s5",
+          "file": "skill-fx/rainbow-s5.png",
+          "from": "rebuild_game/src/main/resources/vqsv/status/rainbow/battle/s5.png",
+          "provenance": "java_resource"
+        },
+        {
+          "name": "sheet-32",
+          "file": "skill-fx/sheet-32.png",
+          "from": "rebuild_game/src/main/resources/vqsv/status/vqsv4/skill-animations/32.png",
+          "provenance": "java_resource"
+        },
+        {
+          "name": "animations",
+          "file": "skill-fx/animations.json",
+          "kind": "json",
+          "from": "rebuild_game/src/main/resources/vqsv/status/rainbow/battle/s0..s5.data + status/vqsv4/skill-animations/32.properties",
+          "provenance": "baked"
+        },
+        {
+          "name": "signatures",
+          "file": "skill-fx/signatures.json",
+          "kind": "json",
+          "from": "rebuild_game/src/main/resources/vqsv/data/pet-design-v1/signature-vfx.tsv",
+          "provenance": "baked"
+        }
+      ]
+    },
+    {
+      "id": "world",
+      "kind": "root",
+      "resolution": "root",
+      "root": "world",
+      "producer": {
+        "kind": "java-bake",
+        "what": "vqsv.game.ExportWorldWebAssets (rebuild_game/tools)",
+        "command": "javac -cp <classes> -d <tools> rebuild_game/tools/ExportWorldWebAssets.java && java -cp <classes>:<tools>:rebuild_game/src/main/resources vqsv.game.ExportWorldWebAssets VQSV-WebNative/web-native/public/pack/world (cwd rebuild_game); then npm run export:map-collision",
+        "guard": "pack-provenance.json",
+        "note": "Every room WorldRoomCatalog loads: the opening variants (7:2, -1:-1, 5:3), Liệt Hỏa scenes 1..11 (a room whose key the opening already uses is written as scene:room#world), Cầu Vồng 98:0..67 and the online plaza 99:0. Cầu Vồng maps 201..268 and the plaza (200) are image-backed: layer 1 = background.png, layer 3 = foreground.png."
+      },
+      "indexes": [
+        {
+          "name": "rooms",
+          "file": "world/rooms.json"
+        },
+        {
+          "name": "sprites",
+          "file": "world/sprites.json"
+        }
+      ],
+      "shapeNote": "shapes are bake-relative; Pack prefixes them with the domain root. sprites.json frame paths use the sprite-frame shape.",
+      "shapes": [
+        {
+          "name": "map-meta",
+          "path": "maps/{mapId}/meta.json"
+        },
+        {
+          "name": "map-layer",
+          "path": "maps/{mapId}/layer-{layer}.png"
+        },
+        {
+          "name": "map-collision",
+          "path": "maps/{mapId}/collision.json",
+          "producer": {
+            "kind": "ts-exporter",
+            "what": "scripts/export-map-collision.mjs",
+            "command": "npm run export:map-collision"
+          }
+        },
+        {
+          "name": "sprite-frame",
+          "path": "sprites/{sprite}/{state}/{frame}.png"
+        }
+      ]
+    },
+    {
+      "id": "story",
+      "kind": "json",
+      "resolution": "entries",
+      "producer": {
+        "kind": "mixed",
+        "what": "see per entry"
+      },
+      "entries": [
+        {
+          "name": "meta-systems",
+          "file": "story/meta-systems.json",
+          "kind": "json",
+          "from": "VQSV-WebNative/rebuild_game (SourceFashionCatalog, RegionalChallengeService, BattlePassCatalog)",
+          "provenance": "generated_from_java_catalog",
+          "producer": {
+            "kind": "java-tool",
+            "what": "rebuild_game/tools/ExportWebMetaSystems.java",
+            "command": "java -cp <tool>;build/classes ExportWebMetaSystems VQSV-WebNative/web-native/public/pack/story/meta-systems.json"
+          }
+        },
+        {
+          "name": "gift-codes",
+          "file": "story/gift-codes.json",
+          "kind": "json",
+          "from": "VQSV-WebNative/rebuild_game GiftCodeCatalog unified-giftcode-v9",
+          "provenance": "generated_from_java_catalog",
+          "producer": {
+            "kind": "java-tool",
+            "what": "rebuild_game/tools/ExportWebGiftCodes.java",
+            "command": "java -cp <tool>;build/classes vqsv.game.ExportWebGiftCodes VQSV-WebNative/web-native/public/pack/story/gift-codes.json"
+          }
+        },
+        {
+          "name": "campaign-systems",
+          "file": "story/campaign-systems.json",
+          "kind": "json",
+          "from": "VQSV-WebNative/rebuild_game egg (pools, tiers, bag rows; the Cầu Vồng species eggs of CauVongEggCatalog as cauVong rows with their CauVongSourceEggRecipe, and the five-slot incubator size), ride and Rainbow-charm catalogs",
+          "provenance": "generated_from_java_catalog",
+          "producer": {
+            "kind": "java-tool",
+            "what": "rebuild_game/tools/ExportWebCampaignSystems.java",
+            "command": "javac -cp build/classes -d <tool> tools/ExportWebCampaignSystems.java && java -cp <tool>;build/classes;src/main/resources vqsv.game.ExportWebCampaignSystems VQSV-WebNative/web-native/public/pack/story/campaign-systems.json VQSV-WebNative/web-native/public/pack/egg-icons"
+          }
+        },
+        {
+          "name": "event-scenes",
+          "file": "story/event-scenes.json",
+          "producer": {
+            "kind": "ts-exporter",
+            "what": "scripts/export-event-scenes.mjs",
+            "command": "npm run export:story-data"
+          }
+        },
+        {
+          "name": "routes",
+          "file": "story/routes.json",
+          "producer": {
+            "kind": "hand-authored",
+            "what": "composed from the Java route constants"
+          }
+        },
+        {
+          "name": "world-contract",
+          "file": "story/world-contract.json",
+          "producer": {
+            "kind": "java-tool",
+            "what": "vqsv ExportScene1QuestWebData",
+            "command": "java -cp <classes> vqsv ExportScene1QuestWebData VQSV-WebNative/web-native/public/pack/story/world-contract.json"
+          }
+        },
+        {
+          "name": "pet-species",
+          "file": "story/pet-species.json",
+          "kind": "json",
+          "from": "modules/script/decoded/data__script__db.mid.json",
+          "provenance": "generated_from_decoded_source",
+          "producer": {
+            "kind": "ts-exporter",
+            "what": "scripts/export-pet-species.mjs (db.mid group 0, chs.mid)",
+            "command": "npm run export:pet-species"
+          }
+        },
+        {
+          "name": "pet-skill-pools",
+          "file": "story/pet-skill-pools.json",
+          "kind": "json",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/skills/unified-skill-v5 (learnsets.tsv, learnset-evolutions.tsv)",
+          "provenance": "generated_from_java_catalog",
+          "producer": {
+            "kind": "java-tool",
+            "what": "rebuild_game/tools/ExportWebSkillPools.java (UnifiedSkillLearnsetCatalog.familyEntries/isAncestor, PetDesignSkillCatalog.canonicalId)",
+            "command": "java -cp <tool>;build/classes ExportWebSkillPools VQSV-WebNative/web-native/public/pack/story/pet-skill-pools.json"
+          }
+        },
+        {
+          "name": "pet-taxonomy",
+          "file": "story/pet-taxonomy.json",
+          "kind": "json",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-traits/unified-pet-traits-v2/taxonomy.csv",
+          "provenance": "generated_from_java_catalog",
+          "producer": {
+            "kind": "java-tool",
+            "what": "rebuild_game/tools/ExportWebPetTaxonomy.java (PetTaxonomyCatalog)",
+            "command": "java -cp <tool>;build/classes ExportWebPetTaxonomy VQSV-WebNative/web-native/public/pack/story/pet-taxonomy.json"
+          }
+        },
+        {
+          "name": "pet-evolutions",
+          "file": "story/pet-evolutions.json",
+          "kind": "json",
+          "from": "VQSV-WebNative/rebuild_game (VqsvBattlePetStateView.evolutionText, VqsvSourceEvolutionRuntime.noticeForSpecies over the unified, V4 and hand-authored evolution catalogs)",
+          "provenance": "generated_from_java_catalog",
+          "producer": {
+            "kind": "java-tool",
+            "what": "rebuild_game/tools/ExportWebPetEvolutionText.java (every evolution/mutation branch, the Pet State Hóa text and the petsetting.ui label per species)",
+            "command": "java -cp <tool>;build/classes ExportWebPetEvolutionText VQSV-WebNative/web-native/public/pack/story/pet-evolutions.json"
+          }
+        },
+        {
+          "name": "bag-items",
+          "file": "story/bag-items.json",
+          "kind": "json",
+          "from": "modules/script/decoded/data__script__db.mid.json",
+          "provenance": "generated_from_decoded_source",
+          "producer": {
+            "kind": "ts-exporter",
+            "what": "scripts/export-bag-items.mjs (db.mid groups 3/4/5, chs.mid)",
+            "command": "npm run export:bag-items"
+          }
+        },
+        {
+          "name": "area-maps",
+          "file": "story/area-maps.json",
+          "kind": "json",
+          "from": "modules/source_code/decoded/decompiled_source_cfr/game/l.java",
+          "provenance": "generated_from_decoded_source",
+          "producer": {
+            "kind": "ts-exporter",
+            "what": "scripts/export-area-maps.mjs (original game.l state 4 tables, petRide.mid, chs.mid)",
+            "command": "npm run export:area-maps"
+          }
+        },
+        {
+          "name": "room-names",
+          "file": "story/room-names.json",
+          "kind": "json",
+          "from": "modules/script/decoded/data__script__chs.mid.json",
+          "provenance": "generated_from_decoded_source",
+          "producer": {
+            "kind": "hand-authored",
+            "what": "rows 384 + scene offset + room of the source text table, as vqsv.world.VqsvSourceRoomNames reads them"
+          }
+        },
+        {
+          "name": "main-tasks",
+          "file": "story/main-tasks.json",
+          "kind": "json",
+          "from": "modules/script/decoded/data__script__mTask.mid.json",
+          "provenance": "generated_from_decoded_source",
+          "producer": {
+            "kind": "hand-authored",
+            "what": "mTask.mid rows split into the 49 main task names and their descriptions"
+          }
+        },
+        {
+          "name": "story-graph",
+          "file": "story/story-graph.json",
+          "producer": {
+            "kind": "hand-authored",
+            "what": "storyline nodes over main tasks, routes and event groups; checked by validateStoryGraph"
+          }
+        },
+        {
+          "name": "cau-vong-opcodes",
+          "file": "story/cau-vong-opcodes.json",
+          "producer": {
+            "kind": "hand-authored",
+            "what": "Cầu Vồng opcode table: argument layout, meaning, evidence level and runtime policy per /event opcode, from the patched Java build (CauVongAcademySourceScenes, chapter drivers) and the rebuild_game/docs JAR audits"
+          }
+        },
+        {
+          "name": "cau-vong-event-scenes",
+          "file": "story/cau-vong-event-scenes.json",
+          "from": "rebuild_game/src/main/resources/vqsv/data/cau-vong/jar-source-index.json",
+          "producer": {
+            "kind": "java-tool",
+            "what": "vqsv.game.ExportCauVongEventScenes (rebuild_game/tools)",
+            "command": "javac -cp <classes> -d <tools> rebuild_game/tools/ExportCauVongEventScenes.java && java -cp <classes>:<tools>:rebuild_game/src/main/resources vqsv.game.ExportCauVongEventScenes VQSV-WebNative/web-native/public/pack/story/cau-vong-opcodes.json VQSV-WebNative/web-native/public/pack/story/cau-vong-event-scenes.json (cwd rebuild_game)"
+          }
+        },
+        {
+          "name": "badge-catalog",
+          "file": "story/badge-catalog.json",
+          "kind": "json",
+          "from": "VQSV-WebNative/rebuild_game (VqsvBattleTables.badge, BadgeRow name/description)",
+          "provenance": "generated_from_java_catalog",
+          "producer": {
+            "kind": "java-tool",
+            "what": "rebuild_game/tools/ExportWebBadgeCatalog.java (the eight source badges badge.ui names and describes)",
+            "command": "java -cp <tool>;build/classes ExportWebBadgeCatalog VQSV-WebNative/web-native/public/pack/story/badge-catalog.json"
+          }
+        },
+        {
+          "name": "world-encounters",
+          "file": "story/world-encounters.json",
+          "kind": "json",
+          "from": "VQSV-WebNative/rebuild_game (VqsvWorldEncounterTable petArea.mid + Cầu Vồng mN.d, UnifiedWorldAcquisitionCatalog, CauVongV4EncounterCatalog)",
+          "provenance": "generated_from_java_catalog",
+          "producer": {
+            "kind": "java-tool",
+            "what": "rebuild_game/tools/ExportWebWorldEncounters.java (the pools WorldEncounterEngine draws a random wild encounter from)",
+            "command": "java -cp <tool>;build/classes;src/main/resources ExportWebWorldEncounters VQSV-WebNative/web-native/public/pack/story/world-encounters.json"
+          }
+        },
+        {
+          "name": "ride-rooms",
+          "file": "story/ride-rooms.json",
+          "kind": "json",
+          "from": "VQSV-WebNative/rebuild_game egg, ride and Rainbow-charm catalogs",
+          "provenance": "generated_from_java_catalog",
+          "producer": {
+            "kind": "java-tool",
+            "what": "vqsv.game.ExportWebRideRooms (VqsvRideRuntime.applyRoomPolicy restrictions over petRide.mid + Cầu Vồng room rules)",
+            "command": "java -cp <tool>;build/classes;src/main/resources vqsv.game.ExportWebRideRooms VQSV-WebNative/web-native/public/pack/story/ride-rooms.json"
+          }
+        },
+        {
+          "name": "rainbow-charms",
+          "file": "story/rainbow-charms.json",
+          "kind": "json",
+          "from": "VQSV-WebNative/rebuild_game RainbowCharmCatalog, RainbowCharmService recipes, PetTaxonomyCatalog species",
+          "provenance": "generated_from_java_catalog",
+          "producer": {
+            "kind": "java-tool",
+            "what": "rebuild_game/tools/ExportWebRainbowCharms.java",
+            "command": "javac -cp build/classes -d <tool> tools/ExportWebRainbowCharms.java && java -cp <tool>;build/classes;src/main/resources vqsv.game.ExportWebRainbowCharms VQSV-WebNative/web-native/public/pack/story/rainbow-charms.json VQSV-WebNative/web-native/public/pack/charm-icons"
+          }
+        },
+        {
+          "name": "npc-services",
+          "file": "story/npc-services.json",
+          "kind": "json",
+          "from": "VQSV-WebNative/rebuild_game VqsvSourceNpcDispatchFlow Entry tables of the chapter runtimes",
+          "provenance": "generated_from_java_catalog",
+          "producer": {
+            "kind": "java-tool",
+            "what": "rebuild_game/tools/ExportWebNpcServices.java",
+            "command": "javac -cp build/classes -d <tool> tools/ExportWebNpcServices.java && java -cp <tool>;build/classes;src/main/resources vqsv.game.ExportWebNpcServices VQSV-WebNative/web-native/public/pack/story/npc-services.json"
+          }
+        },
+        {
+          "name": "shop-stock",
+          "file": "story/shop-stock.json",
+          "kind": "json",
+          "from": "VQSV-WebNative/rebuild_game VqsvPanelRuntime.portableShopSourceItem / portableShopPrice for tables 4,0 and 3,2",
+          "provenance": "generated_from_java_catalog",
+          "producer": {
+            "kind": "java-tool",
+            "what": "rebuild_game/tools/ExportWebShopStock.java",
+            "command": "javac -cp build/classes -d <tool> tools/ExportWebShopStock.java && java -cp <tool>;build/classes;src/main/resources vqsv.game.ExportWebShopStock VQSV-WebNative/web-native/public/pack/story/shop-stock.json VQSV-WebNative/web-native/public/pack/shop-icons"
+          }
+        }
+      ]
+    },
+    {
+      "id": "data",
+      "kind": "json",
+      "resolution": "root",
+      "root": "data",
+      "producer": {
+        "kind": "java-tool",
+        "what": "vqsv.game.ExportWebDataCatalogs",
+        "command": "javac -encoding UTF-8 -cp VQSV-WebNative/rebuild_game/build/classes -d VQSV-WebNative/web-native/build/java-tools VQSV-WebNative/rebuild_game/tools/ExportWebDataCatalogs.java && java -Dvqsv.modules=<modules> -cp VQSV-WebNative/web-native/build/java-tools;VQSV-WebNative/rebuild_game/build/classes vqsv.game.ExportWebDataCatalogs VQSV-WebNative/web-native/public/pack/data",
+        "guard": "pack-provenance.json",
+        "note": "Prints the catalogs the Java engine has already loaded and validated, so the Web client never re-parses .java constants or picks a data version itself. A new table is added by adding a registry line to the harness, not by hand in TypeScript."
+      },
+      "shapeNote": "One file per catalog dump; story text is a data/text file so it cannot be confused with the story domain's scene exports.",
+      "shapes": [
+        {
+          "name": "battle-golden",
+          "path": "battle/golden-{name}.json",
+          "producer": {
+            "kind": "java-tool",
+            "what": "vqsv.game.ProbeWebBattleMath",
+            "command": "javac -encoding UTF-8 -cp VQSV-WebNative/rebuild_game/build/classes -d VQSV-WebNative/web-native/build/java-tools VQSV-WebNative/rebuild_game/tools/ExportWebDataCatalogs.java VQSV-WebNative/rebuild_game/tools/ProbeWebBattleMath.java && java -Dvqsv.modules=<modules> -cp VQSV-WebNative/web-native/build/java-tools;VQSV-WebNative/rebuild_game/build/classes vqsv.game.ProbeWebBattleMath VQSV-WebNative/web-native/public/pack/data/battle",
+            "note": "Calls the Java battle engines' own functions over fixed input grids and records what they returned. golden-battle-ai.json is the same probe applied to the decision path instead of the arithmetic: one row per enemy decision point of the production 1v1 turn, carrying the scripted public memory, the source-v1 answer, the observation the utility pass actually saw, the ranked candidates with their score breakdown, the shadow-boundary invariant and the decision the canary adapter committed. The Web port reimplements the rules and is graded against these rows; a row is never copied into TypeScript arithmetic, and these tables carry answers only."
+          }
+        },
+        {
+          "name": "battle-species",
+          "path": "battle/species.json",
+          "producer": {
+            "kind": "java-tool",
+            "what": "vqsv.game.ExportWebDataCatalogs",
+            "command": "see the data domain producer",
+            "note": "The one home for a Pet species: identity, metadata, the quality the source row authors, the stat-growth path the engine actually reads, that path's numbers, and the ancestors whose stats floor them. Covers every id the engine can resolve, including boss, evolution, mutation and V4 forms, so no species data is read from a golden table. The anchors a record class kept as private constants are exported as growth tables too, replayed against the engine over every level and quality before the bake."
+          }
+        },
+        {
+          "name": "battle-exp-presentation",
+          "path": "battle/exp-presentation.json",
+          "producer": {
+            "kind": "java-tool",
+            "what": "vqsv.game.ExportWebDataCatalogs",
+            "command": "see the data domain producer",
+            "note": "How long the win panel holds a level-up, how far the experience bar moves per tick, and how long it rests after reaching its target. The runtime keeps these as literals inside tickWinExpLevelUp, where reflection has nothing to read, so the harness takes them out of that method's own source and refuses the dump unless each pattern matches exactly once there. The Web guard re-reads the same method and refuses these bytes if a number moves."
+          }
+        },
+        {
+          "name": "battle-ai-v2-catalog",
+          "path": "battle/ai-v2-catalog.json",
+          "producer": {
+            "kind": "java-tool",
+            "what": "vqsv.game.ExportWebDataCatalogs",
+            "command": "see the data domain producer",
+            "note": "The enemy decision catalog, printed as the Java decision path reads it rather than as the nine TSVs behind it: each encounter's authored policy row, its roster, items and phase list, the persona-plus-phase projection the utility pass consumes, the source lock that maps a runtime descriptor to the encounter identity, the B1 activation review that gates a Leader/Boss canary, and the weights BattleAiUtilityWeights.forProfile returns for each intelligence profile. The Web port reimplements scoring and selection and is graded against the golden decision rows; this file is the input those rules resolve, so no weight, bias set or modifier is restated in TypeScript."
+          }
+        },
+        {
+          "name": "battle-status-web-rules",
+          "path": "battle/status-web-rules.json",
+          "producer": {
+            "kind": "hand-authored",
+            "what": "the buff/debuff rules the web build adds or changes on top of the Java-baked status tables; each rule follows its status description"
+          }
+        },
+        {
+          "name": "battle-source-skill-animations",
+          "path": "battle/source-skill-animations.json",
+          "producer": {
+            "kind": "java-tool",
+            "what": "VqsvBattleAnimationTables effect.mid/speffect.mid rows, P7 actor-effect mapping and SpriteAnimator frame timing",
+            "command": "see the data domain producer",
+            "note": "Exports all seven columns of every source skill chunk plus every special-effect row, and bloodRow 0/1 (the per-tick float of the damage text and of the miss or status-name text). Actor sprite ids and frame durations are resolved through the same Java owners used by P7; the Web runtime contains no per-skill sprite table."
+          }
+        },
+        {
+          "name": "battle-catalog",
+          "path": "battle/{name}.json",
+          "producer": {
+            "kind": "java-tool",
+            "what": "vqsv.game.ExportWebDataCatalogs",
+            "command": "see the data domain producer",
+            "note": "Each file is one table the engine has already resolved, so a Web number can be traced to the Java code path that produced it. The damage inputs are skill-rows (what each skill id resolves to after the three competing skill sources, plus which damage branch that id takes), element-chart (the element pairs the engine's own relation check answers true for), debuff-producers (which skill can put which status on a target, with what chance) and pet-level plus cau-vong-pet-level (the two ceilings an encounter level is clamped to). The status inputs are statuses (the identity, kind and lifetime policy of every status the engine can hold) and status-mechanics (how strong each buff is, the value each buff actually writes onto the unit when it is applied, which skill overrides that strength, which route a finished skill takes to apply a status, and which statuses the round-start pass shows an effect for). The written values are the one table here that the engine does not hand over: it computes them in a switch of its own, so they are declared in the harness and then replayed against that switch over a species by level grid before the bake is allowed to write the file, and a row the grid could not have caught fails the bake instead of shipping."
+          }
+        },
+        {
+          "name": "flags-catalog",
+          "path": "flags/{name}.json"
+        },
+        {
+          "name": "npc-catalog",
+          "path": "npc/{name}.json"
+        },
+        {
+          "name": "quest-catalog",
+          "path": "quest/{name}.json"
+        },
+        {
+          "name": "text-catalog",
+          "path": "text/{name}.json"
+        },
+        {
+          "name": "world-catalog",
+          "path": "world/{name}.json"
+        }
+      ]
+    },
+    {
+      "id": "balance",
+      "kind": "json",
+      "resolution": "entries",
+      "producer": {
+        "kind": "hand-authored",
+        "what": "the user's balance workbooks, layered over the Java catalog dumps in the data domain",
+        "note": "Deliberately not under data/: pack-provenance.mjs gives the data-java-harness bake owns() over that whole root, so a hand-authored file there would read as a stale Java output. A table here states which Java row it overrides and the guard test proves every field it does not."
+      },
+      "entries": [
+        {
+          "name": "pet-design-traits",
+          "file": "balance/pet-design-traits.json",
+          "producer": {
+            "kind": "hand-authored",
+            "what": "transcribed from dac-tinh-tat-ca-pet-2026-10-22.xlsx (sha256 recorded inside the file), overriding value, unit and description of data/battle/pet-design-traits.json for all 280 traits",
+            "note": "51 rows in six families change meaning, not just size: the workbook authors flat Power added to the skill's own powerPercent while Java multiplies the computed damage by a percent capped at 40. Java has no flat-Power path, so it cannot referee those magnitudes; the divergence and the unresolved buff-0 interaction are recorded in the file's powerRule block."
+          }
+        },
+        {
+          "name": "pet-trait-descriptions",
+          "file": "balance/pet-trait-descriptions.json",
+          "producer": {
+            "kind": "hand-authored",
+            "what": "applies the rename rule recorded in its substitutions block to the description of data/battle/pet-physical-traits.json TC-10 and data/battle/pet-species-traits.json TV-04, recording the Java sentence each one replaces",
+            "note": "The user cut Thiêu Đốt as a duplicate of Gieo Hạt and Độc as a duplicate of Hủ Thực on 2026-11-03, leaving two damage-over-time identities in the battle logic: canonical BURN resolves to Gieo Hạt in DesignTraits.synchronizeTraitCanonicalStatuses and canonical poison aliases to corrosion. Text only - parametersJson still says burn and poison, the names in the engine PetTraitCanonicalStatus enum, which golden-physical-traits.json byte-compares. PetTraitDescriptionBalance.test.ts proves each override is that rule applied to the Java sentence and nothing else."
+          }
+        },
+        {
+          "name": "data-cuts",
+          "file": "balance/data-cuts.json",
+          "producer": {
+            "kind": "hand-authored",
+            "what": "the rows the web game decided to drop - statuses.json CV-EFFECT-11-06 (Phong Bế) and pet-physical-traits.json plus pet-trait-mechanics.json HV-01 and TL-01 - which GameData strips from those three tables as it reads them",
+            "note": "The Java engine still exports all five, so the dump stays honest and the decision lives here instead of in hand-edited bytes inside data/: re-running the harness can neither resurrect a cut row nor lose the cut. withoutCuts() refuses a cut whose Java row no longer exists or no longer matches the identity recorded here, and DataCuts.test.ts proves the filtered tables differ from the Java files by exactly these rows."
+          }
+        }
+      ]
+    },
+    {
+      "id": "quality-fx",
+      "kind": "image",
+      "resolution": "entries",
+      "producer": {
+        "kind": "copy",
+        "what": "JavaSE PetQualityUpgradeAssets frames (generated unified design), renamed by role"
+      },
+      "entries": [
+        {
+          "name": "star-state-0",
+          "file": "quality-fx/star-state-0.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-star-assets-v1/assets/states/empty-gray.png"
+        },
+        {
+          "name": "star-state-1",
+          "file": "quality-fx/star-state-1.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-star-assets-v1/assets/states/normal-gold.png"
+        },
+        {
+          "name": "star-state-2",
+          "file": "quality-fx/star-state-2.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-star-assets-v1/assets/states/prepare-glow.png"
+        },
+        {
+          "name": "star-state-3",
+          "file": "quality-fx/star-state-3.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-star-assets-v1/assets/states/new-success.png"
+        },
+        {
+          "name": "star-state-4",
+          "file": "quality-fx/star-state-4.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-star-assets-v1/assets/states/failed-crack.png"
+        },
+        {
+          "name": "star-glow-00",
+          "file": "quality-fx/star-glow-00.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-star-assets-v1/assets/glow/glow-00.png"
+        },
+        {
+          "name": "star-glow-01",
+          "file": "quality-fx/star-glow-01.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-star-assets-v1/assets/glow/glow-01.png"
+        },
+        {
+          "name": "star-glow-02",
+          "file": "quality-fx/star-glow-02.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-star-assets-v1/assets/glow/glow-02.png"
+        },
+        {
+          "name": "star-glow-03",
+          "file": "quality-fx/star-glow-03.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-star-assets-v1/assets/glow/glow-03.png"
+        },
+        {
+          "name": "star-glow-04",
+          "file": "quality-fx/star-glow-04.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-star-assets-v1/assets/glow/glow-04.png"
+        },
+        {
+          "name": "energy-core-00",
+          "file": "quality-fx/energy-core-00.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/energy-core-v1/assets/frames/energy-core-00.png"
+        },
+        {
+          "name": "energy-core-01",
+          "file": "quality-fx/energy-core-01.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/energy-core-v1/assets/frames/energy-core-01.png"
+        },
+        {
+          "name": "energy-core-02",
+          "file": "quality-fx/energy-core-02.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/energy-core-v1/assets/frames/energy-core-02.png"
+        },
+        {
+          "name": "energy-core-03",
+          "file": "quality-fx/energy-core-03.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/energy-core-v1/assets/frames/energy-core-03.png"
+        },
+        {
+          "name": "energy-core-04",
+          "file": "quality-fx/energy-core-04.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/energy-core-v1/assets/frames/energy-core-04.png"
+        },
+        {
+          "name": "energy-core-05",
+          "file": "quality-fx/energy-core-05.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/energy-core-v1/assets/frames/energy-core-05.png"
+        },
+        {
+          "name": "energy-core-06",
+          "file": "quality-fx/energy-core-06.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/energy-core-v1/assets/frames/energy-core-06.png"
+        },
+        {
+          "name": "energy-stream-00",
+          "file": "quality-fx/energy-stream-00.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/energy-stream-v1/assets/frames/energy-stream-00.png"
+        },
+        {
+          "name": "energy-stream-01",
+          "file": "quality-fx/energy-stream-01.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/energy-stream-v1/assets/frames/energy-stream-01.png"
+        },
+        {
+          "name": "energy-stream-02",
+          "file": "quality-fx/energy-stream-02.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/energy-stream-v1/assets/frames/energy-stream-02.png"
+        },
+        {
+          "name": "energy-stream-03",
+          "file": "quality-fx/energy-stream-03.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/energy-stream-v1/assets/frames/energy-stream-03.png"
+        },
+        {
+          "name": "energy-stream-04",
+          "file": "quality-fx/energy-stream-04.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/energy-stream-v1/assets/frames/energy-stream-04.png"
+        },
+        {
+          "name": "energy-stream-05",
+          "file": "quality-fx/energy-stream-05.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/energy-stream-v1/assets/frames/energy-stream-05.png"
+        },
+        {
+          "name": "success-00",
+          "file": "quality-fx/success-00.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-success-effect-v1/assets/frames/success-00.png"
+        },
+        {
+          "name": "success-01",
+          "file": "quality-fx/success-01.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-success-effect-v1/assets/frames/success-01.png"
+        },
+        {
+          "name": "success-02",
+          "file": "quality-fx/success-02.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-success-effect-v1/assets/frames/success-02.png"
+        },
+        {
+          "name": "success-03",
+          "file": "quality-fx/success-03.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-success-effect-v1/assets/frames/success-03.png"
+        },
+        {
+          "name": "success-04",
+          "file": "quality-fx/success-04.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-success-effect-v1/assets/frames/success-04.png"
+        },
+        {
+          "name": "success-05",
+          "file": "quality-fx/success-05.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-success-effect-v1/assets/frames/success-05.png"
+        },
+        {
+          "name": "success-06",
+          "file": "quality-fx/success-06.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-success-effect-v1/assets/frames/success-06.png"
+        },
+        {
+          "name": "success-07",
+          "file": "quality-fx/success-07.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-success-effect-v1/assets/frames/success-07.png"
+        },
+        {
+          "name": "success-08",
+          "file": "quality-fx/success-08.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-success-effect-v1/assets/frames/success-08.png"
+        },
+        {
+          "name": "success-09",
+          "file": "quality-fx/success-09.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-success-effect-v1/assets/frames/success-09.png"
+        },
+        {
+          "name": "failure-00",
+          "file": "quality-fx/failure-00.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-failure-effect-v1/assets/frames/failure-00.png"
+        },
+        {
+          "name": "failure-01",
+          "file": "quality-fx/failure-01.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-failure-effect-v1/assets/frames/failure-01.png"
+        },
+        {
+          "name": "failure-02",
+          "file": "quality-fx/failure-02.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-failure-effect-v1/assets/frames/failure-02.png"
+        },
+        {
+          "name": "failure-03",
+          "file": "quality-fx/failure-03.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-failure-effect-v1/assets/frames/failure-03.png"
+        },
+        {
+          "name": "failure-04",
+          "file": "quality-fx/failure-04.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-failure-effect-v1/assets/frames/failure-04.png"
+        },
+        {
+          "name": "failure-05",
+          "file": "quality-fx/failure-05.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-failure-effect-v1/assets/frames/failure-05.png"
+        },
+        {
+          "name": "failure-06",
+          "file": "quality-fx/failure-06.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-failure-effect-v1/assets/frames/failure-06.png"
+        },
+        {
+          "name": "failure-07",
+          "file": "quality-fx/failure-07.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/pet-quality-upgrade/quality-failure-effect-v1/assets/frames/failure-07.png"
+        }
+      ]
+    },
+    {
+      "id": "custom-boss",
+      "kind": "image",
+      "resolution": "entries",
+      "producer": {
+        "kind": "copy",
+        "what": "JavaSE custom boss art: TanNguyetLongMaWorldDecorationRenderer nameplate and TanNguyetLongMaDefeatCutscene card, copied unchanged"
+      },
+      "entries": [
+        {
+          "name": "tan-nguyet-nameplate",
+          "file": "custom-boss/tan-nguyet-nameplate.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/custom-bosses/TAN-NGUYET-LONG-MA/nameplate.png"
+        },
+        {
+          "name": "tan-nguyet-defeat",
+          "file": "custom-boss/tan-nguyet-defeat.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/custom-cutscenes/tan-nguyet-defeat/skill-issue.png"
+        }
+      ]
+    },
+    {
+      "id": "badge-icons",
+      "kind": "image",
+      "resolution": "entries",
+      "producer": {
+        "kind": "copy",
+        "what": "JavaSE unified-badge-v4 icons (UnifiedBadgeIconRenderer), named by badge stable key"
+      },
+      "entries": [
+        {
+          "name": "UD-BADGE-DIEN-MIEU",
+          "file": "badge-icons/UD-BADGE-DIEN-MIEU.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/badges/unified-badge-v4/assets/UD-BADGE-DIEN-MIEU.png"
+        },
+        {
+          "name": "UD-BADGE-TUYET-CAU-BAO-BAO",
+          "file": "badge-icons/UD-BADGE-TUYET-CAU-BAO-BAO.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/badges/unified-badge-v4/assets/UD-BADGE-TUYET-CAU-BAO-BAO.png"
+        },
+        {
+          "name": "UD-BADGE-BA-TUOC-CANH-CUT",
+          "file": "badge-icons/UD-BADGE-BA-TUOC-CANH-CUT.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/badges/unified-badge-v4/assets/UD-BADGE-BA-TUOC-CANH-CUT.png"
+        },
+        {
+          "name": "UD-BADGE-YEU-TAC-KINH",
+          "file": "badge-icons/UD-BADGE-YEU-TAC-KINH.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/badges/unified-badge-v4/assets/UD-BADGE-YEU-TAC-KINH.png"
+        },
+        {
+          "name": "UD-BADGE-TIEU-BACH-LONG",
+          "file": "badge-icons/UD-BADGE-TIEU-BACH-LONG.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/badges/unified-badge-v4/assets/UD-BADGE-TIEU-BACH-LONG.png"
+        },
+        {
+          "name": "UD-BADGE-LOI-QUANG-HAU",
+          "file": "badge-icons/UD-BADGE-LOI-QUANG-HAU.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/badges/unified-badge-v4/assets/UD-BADGE-LOI-QUANG-HAU.png"
+        },
+        {
+          "name": "UD-BADGE-HOA-MAN-DA-LA",
+          "file": "badge-icons/UD-BADGE-HOA-MAN-DA-LA.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/badges/unified-badge-v4/assets/UD-BADGE-HOA-MAN-DA-LA.png"
+        },
+        {
+          "name": "UD-BADGE-NHAM-NHAM-QUY",
+          "file": "badge-icons/UD-BADGE-NHAM-NHAM-QUY.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/badges/unified-badge-v4/assets/UD-BADGE-NHAM-NHAM-QUY.png"
+        },
+        {
+          "name": "UD-BADGE-DOC-BA-LOI",
+          "file": "badge-icons/UD-BADGE-DOC-BA-LOI.png",
+          "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/badges/unified-badge-v4/assets/UD-BADGE-DOC-BA-LOI.png"
+        }
+      ]
+    },
+    {
+      "id": "charm-icons",
+      "kind": "image",
+      "resolution": "entries",
+      "producer": {
+        "kind": "java-tool",
+        "what": "rebuild_game/tools/ExportWebRainbowCharms.java: each team charm item icon (UnifiedItemRecord.iconResource), named by charm runtime id",
+        "command": "javac -cp build/classes -d <tool> tools/ExportWebRainbowCharms.java && java -cp <tool>;build/classes;src/main/resources vqsv.game.ExportWebRainbowCharms VQSV-WebNative/web-native/public/pack/story/rainbow-charms.json VQSV-WebNative/web-native/public/pack/charm-icons"
+      },
+      "entries": [
+        {
+          "name": "5037",
+          "file": "charm-icons/5037.png"
+        },
+        {
+          "name": "5039",
+          "file": "charm-icons/5039.png"
+        },
+        {
+          "name": "5040",
+          "file": "charm-icons/5040.png"
+        },
+        {
+          "name": "5041",
+          "file": "charm-icons/5041.png"
+        },
+        {
+          "name": "5042",
+          "file": "charm-icons/5042.png"
+        },
+        {
+          "name": "5043",
+          "file": "charm-icons/5043.png"
+        },
+        {
+          "name": "5044",
+          "file": "charm-icons/5044.png"
+        },
+        {
+          "name": "5047",
+          "file": "charm-icons/5047.png"
+        },
+        {
+          "name": "5048",
+          "file": "charm-icons/5048.png"
+        },
+        {
+          "name": "5050",
+          "file": "charm-icons/5050.png"
+        },
+        {
+          "name": "5051",
+          "file": "charm-icons/5051.png"
+        },
+        {
+          "name": "5057",
+          "file": "charm-icons/5057.png"
+        }
+      ]
+    },
+    {
+      "id": "shop-icons",
+      "kind": "image",
+      "resolution": "entries",
+      "producer": {
+        "kind": "java-tool",
+        "what": "rebuild_game/tools/ExportWebShopStock.java: the unified item icons (ItemDefinition.iconResource) the shop rows draw",
+        "command": "javac -cp build/classes -d <tool> tools/ExportWebShopStock.java && java -cp <tool>;build/classes;src/main/resources vqsv.game.ExportWebShopStock VQSV-WebNative/web-native/public/pack/story/shop-stock.json VQSV-WebNative/web-native/public/pack/shop-icons"
+      },
+      "entries": [
+        {
+          "name": "0",
+          "file": "shop-icons/0.png"
+        },
+        {
+          "name": "1",
+          "file": "shop-icons/1.png"
+        },
+        {
+          "name": "2",
+          "file": "shop-icons/2.png"
+        },
+        {
+          "name": "3",
+          "file": "shop-icons/3.png"
+        },
+        {
+          "name": "4",
+          "file": "shop-icons/4.png"
+        },
+        {
+          "name": "5",
+          "file": "shop-icons/5.png"
+        },
+        {
+          "name": "6",
+          "file": "shop-icons/6.png"
+        },
+        {
+          "name": "7",
+          "file": "shop-icons/7.png"
+        },
+        {
+          "name": "8",
+          "file": "shop-icons/8.png"
+        },
+        {
+          "name": "9",
+          "file": "shop-icons/9.png"
+        },
+        {
+          "name": "10",
+          "file": "shop-icons/10.png"
+        },
+        {
+          "name": "11",
+          "file": "shop-icons/11.png"
+        },
+        {
+          "name": "12",
+          "file": "shop-icons/12.png"
+        },
+        {
+          "name": "13",
+          "file": "shop-icons/13.png"
+        },
+        {
+          "name": "14",
+          "file": "shop-icons/14.png"
+        },
+        {
+          "name": "15",
+          "file": "shop-icons/15.png"
+        },
+        {
+          "name": "16",
+          "file": "shop-icons/16.png"
+        },
+        {
+          "name": "17",
+          "file": "shop-icons/17.png"
+        },
+        {
+          "name": "18",
+          "file": "shop-icons/18.png"
+        },
+        {
+          "name": "19",
+          "file": "shop-icons/19.png"
+        },
+        {
+          "name": "20",
+          "file": "shop-icons/20.png"
+        },
+        {
+          "name": "21",
+          "file": "shop-icons/21.png"
+        },
+        {
+          "name": "22",
+          "file": "shop-icons/22.png"
+        },
+        {
+          "name": "23",
+          "file": "shop-icons/23.png"
+        },
+        {
+          "name": "24",
+          "file": "shop-icons/24.png"
+        }
+      ]
+    },
+    {
+      "id": "egg-icons",
+      "kind": "image",
+      "resolution": "entries",
+      "producer": {
+        "kind": "java-tool",
+        "what": "rebuild_game/tools/ExportWebCampaignSystems.java: the unified icons of the Cầu Vồng eggs (VqsvSourceOps.sourceSpecialRewardItem iconResource)",
+        "command": "javac -cp build/classes -d <tool> tools/ExportWebCampaignSystems.java && java -cp <tool>;build/classes;src/main/resources vqsv.game.ExportWebCampaignSystems VQSV-WebNative/web-native/public/pack/story/campaign-systems.json VQSV-WebNative/web-native/public/pack/egg-icons"
+      },
+      "entries": [
+        {
+          "name": "6058",
+          "file": "egg-icons/6058.png"
+        },
+        {
+          "name": "6060",
+          "file": "egg-icons/6060.png"
+        },
+        {
+          "name": "6062",
+          "file": "egg-icons/6062.png"
+        },
+        {
+          "name": "6063",
+          "file": "egg-icons/6063.png"
+        },
+        {
+          "name": "6064",
+          "file": "egg-icons/6064.png"
+        },
+        {
+          "name": "8059",
+          "file": "egg-icons/8059.png"
+        },
+        {
+          "name": "8060",
+          "file": "egg-icons/8060.png"
+        },
+        {
+          "name": "8065",
+          "file": "egg-icons/8065.png"
+        },
+        {
+          "name": "8066",
+          "file": "egg-icons/8066.png"
+        },
+        {
+          "name": "8067",
+          "file": "egg-icons/8067.png"
+        },
+        {
+          "name": "8068",
+          "file": "egg-icons/8068.png"
+        },
+        {
+          "name": "8069",
+          "file": "egg-icons/8069.png"
+        }
+      ]
+    },
+    {
+      "id": "ride-sprites",
+      "kind": "root",
+      "resolution": "root",
+      "root": "ride-sprites",
+      "producer": {
+        "kind": "java-tool",
+        "what": "rebuild_game/tools/ExportWebRideSprites.java (vqsv.game): the mounted player, sprites 1..4 (Liệt Hỏa rides) and 9004..9008 (Cầu Vồng rides 4..8, SpriteAnimator.loadRainbowRideForPlayer), in the world sprites.json format; icons/r0..r4.png are the ride.ui Cầu Vồng card thumbnails (CauVongRideIcons.image)",
+        "command": "javac -cp build/classes -d <tool> tools/ExportWebRideSprites.java && java -cp <tool>;build/classes;src/main/resources vqsv.game.ExportWebRideSprites VQSV-WebNative/web-native/public/pack/ride-sprites",
+        "note": "Separate from the world bake so the recorded world provenance stays unchanged."
+      },
+      "indexes": [
+        {
+          "name": "sprites",
+          "file": "ride-sprites/sprites.json"
+        }
+      ],
+      "shapes": [
+        {
+          "name": "sprite-frame",
+          "path": "sprites/{sprite}/{state}/{frame}.png"
+        },
+        {
+          "name": "ride-icon",
+          "path": "icons/r{index}.png"
+        }
+      ]
+    },
+    {
+      "id": "cau-vong-world",
+      "kind": "root",
+      "resolution": "root",
+      "root": "cau-vong-world",
+      "producer": {
+        "kind": "java-tool",
+        "what": "rebuild_game/tools/ExportWebCauVongActors.java (vqsv.game): each Cầu Vồng room 98:0..67 loaded on a fresh session (main task 48) through VqsvSceneLoaders.loadWorldRoom, which runs CauVongChapterRuntime.applyNpcVisuals; actors.json records every actor it dressed (sprite, anim state, mirror, (10,19) anchor, visibility, layer, sourceOrder) and sprites.json the visuals in the world sprites.json format: npc0 n -> 10000+n (SpriteAnimator.loadRainbowNpc), npc2 g -> 11000+g (loadRainbowPetActor), Sai Kỳ -> 12000 (loadRainbowChampion); collision.json records, for every room actor, the WorldEngine.ActorSnapshot VqsvFreeWorldRuntime.actorLookup builds on that load (kind, behaviour, anchor offset from the actor, mask) and its CauVongNpcGeometry role (owns = npc, prop = prop); square.json is CauVongChapterRuntime INTRO_LINES and SQUARE_NPCS (names and lines resolved through CauVongNpcTextCatalog); cues.json is the opening cutscenes of CauVongOpeningSourceRuntime: every Part (and the applyCast castOnly ranges 47:0, 47:1, 6:3) walked with CauVongAcademySourceScenes.steps filters by tools/WebCauVongCues.java and written as data (actor ids, lines, speakers, portraits resolved through the Java functions; each range checked against the real steps(...) count), plus the actors those cues create; hall.json is CauVongChapterRuntime.tickTournament spectators (CauVongSourceNpcVisualCatalog.forRoom(47), names and lines through CauVongNpcTextCatalog) and Linh (CauVongAcademySourceScenes.actorId(47, 19)); locke.json is CauVongLockeChainRuntime (WebCauVongCues.locke): every Part walked the same way (op18 rewards as CauVongAcademyTransactions.gift data with their \"Nhận được\" notice), request(room, rematch) encounter triples, the rival actor ids and the flags it reads from other chapters; opening.json is the manor-to-ruins route (CV0 room 54 and CV1, tools/WebCauVongOpening.java): CauVongOpeningStory family/announcement, the city arrivalSequence, CauVongLunchQuestRuntime gift/delivery, CauVongSourceRouteGuards CITY_SOUTH/ACADEMY_EARLY, CauVongAmbientSourceRuntime CITY_GATHERING/LUNCH_SEARCH/RUINS_ENTRANCE, CauVongSwitchMechanisms (three ruins switches and the inner one), CauVongOpeningSideQuests merchant and Thiết Đầu boy scenes and the CauVongOpeningDialogue replies, each walked the same way and checked against the Java builder; plus the roster and household lines, the switch gates (door, flanks, closed/open movement snapshots), the lunch item and drink reward, and the boy trade; prep.json is main quest CV2 (tools/WebCauVongPrep.java): CauVongOpeningStory's Jess and Rom lessons, CauVongOpeningSideQuests' hatchery, CauVongMissingBranchesRuntime's Đông Phương and café parts with their castOnly restores, CauVongSummoningRuntime's hub arrival and CauVongAcademySourceRuntime's arrival, tuition and registration, each walked the same way and checked against the Java builder; plus the hatchery, café and academy lines, the room rosters, the two pet grants and the academy pass; academy.json is main quest CV3 (tools/WebCauVongAcademy.java): CauVongMissingBranchesRuntime's academy hatchery and preliminary arena parts, CauVongAcademySourceRuntime's middle arena, tour, ceremony, principal, dorm night, lesson and Tứ Môn, CauVongAcademySideRuntime's Lạc Khắc duel, dorm report and alliance (with its replays), each walked the same way (the academy gifts as receipt-flagged award data) and checked against the Java builder; plus their castOnly restores, the battle encounter triples (preliminaries, arena rounds, Lạc Khắc, the two roster trainers), the extraDoors destinations, the room 3/4 rosters, the 7/8 passives, the dorm lines, the runtimes' own lines (read off the Java owners by ticking them), the alliance rank/medal templates, the menus and the ceremony medal; and, for the leftovers of CV3, CauVongAcademyShopRuntime (the campus shop 43: every Part, the clerks' replies and farewells, the ghost merchant, the Harry/Potter egg battles, the room NPCs by canonicalIndex, the offers' menus and the owner's own refusal lines), the arena merchant's greeting and farewell (4:5) and CauVongAcademyLaterPrincipal (4:3, 4:4); shops.json is CauVongShopCatalog (tools/WebCauVongShops.java): stock(0..2, false), mutationDocument() and the sale prices sellable lists, each offer resolved through UnifiedItemCatalog (stable key, inventory kind, runtime id, charm), plus the room-43 mutation result lines; four-gates.json is main quest CV4 (tools/WebCauVongFourGates.java): every CauVongFourGateSourceRuntime Part walked the same way (op18 rewards as CauVongFourGateTransactions.gift award data with receipt 40000+event*100+item, op26 pets as receipt-flagged pet data) with its castOnly restore, the CauVongFourGateDialogue replies the owner replays, the merchants' shop events, the actors it asks for, the room passives, request(room, event) encounter triples and the masked pair's, the owner's menus, CauVongFourGateRoutes portals and native doors, the owner's and CauVongWestGateRuntime's own lines (read by ticking them), CauVongRuinsMaskedCutscene before/after, the south lever and the quest items; forest.json is main quest CV4b and CV5b (tools/WebCauVongForest.java): CauVongDarkForestSourceRuntime Parts of rooms 38–42 walked the same way with their castOnly restores, CauVongAcademyLaboratoryRuntime DEPART (60:0), CauVongNorthRescueCutscene confront/explosion (26:0) and CauVongNorthRecoveryCutscene (59:4, with its position/face/camera prefix), each checked against the Java builder; plus the actors the forest owner asks for, CauVongNorthSeaNpcRuntime passives of 38–40, the forest door tables, request(b) encounter triples for battles 0–5 and the rescue fight (with enemyQuality, the CauVongEnemySkillDecks/EarthPetrificationPriority decks and the AI tier), CauVongAcademyLaboratoryRuntime phases as LAB_* (2's door, 62's switches and betrayal, 60's farewell and advice), the switches and props of 62, RAFAEL's resetCast, cue-made talkers and their native twins, the owners' own lines (read by ticking them) and CauVongRockObstacles' rocks of every room (prop, canonicalIndex, anim state, hint); lab.json is main quest CV4c (tools/WebCauVongLab.java): CauVongAcademyExpansionRuntime INTRO/CONFRONTATION/RELEASE_PLAN (3:4, 3:5), CauVongBirdTrailCutscenes (17:0, 19:0, 57:0, 58:2), CauVongGuardEscapeRuntime (57:1), CauVongLabPrologueCutscene (58:0 with its resetCast as place/show/pose cues), CauVongLabRescueRuntime (58:1, the broken apparatus writing 58:112), CauVongLabReturnCutscene (59:6 with its position/face/camera prefix), CauVongFourGateExamStaging (9:11 before/after each round) and CauVongDormPetQuest (59:8/9, 11:6/7, 5:12, op26 pets with receipt 5:28000+species), each walked the same way with its castOnly restore and checked against the Java builder; plus the actors they name, their encounter triples, their own lines (read by ticking them), the return menu and their flags; academy.json also carries CauVongAcademySideRuntime ANGEL (2:8) and NIGHT (59:5); opening.json also carries the 52 switch gate and the four-gate quest row's fourGateQuestDetail variants (when/unless flag sets, each checked against Java on a list of flag states); north-sea.json is main quest CV5 and CV6 (tools/WebCauVongNorthSea.java; CV6: the FINAL_NOTICE/OFFER/1/2/3/AWARD/DECLINE Continuation Parts in room 30, battles 5-7 on CauVongFinalBattleBalance.tournament, trophy 9008 through the questOnce cue, and divine = the DivinePetSeal species with the 30/120 percents): every CauVongNorthSeaSourceRuntime Part and the CauVongNorthSeaContinuation Parts CV5 plays (old school 35, key, hidden classroom 61, prison 37, base 36, return, switch and truth, sea entrance 29, the 34/36/53/27/48 branches and the 45/56 shops; op18 gifts as silent award data with receipt 53000+event*100+item, op26 pets with receipt 52000+event*100+species, the dolphins also the water mount) walked the same way with their castOnly restores and text-only replies, CauVongSourceRouteGuards OLD_SCHOOL_RETURN/HIDDEN_CLASS and CauVongAmbientSourceRuntime SUMMONING_HINT/CAMPUS_PORTAL, CauVongNorthSeaBoat routes (jar-boats.properties) with their gates and offers, the dock merchants, the North Sea residents (CauVongNorthSeaNpcRuntime.passives), the native doors with their terrain and 56's return entries, the friendly match and battleRequest(b) encounter triples, the menus, 61's props before/after the switch, the owners' own lines (read by ticking them), the items and flags they read, and the talkers CauVongNpcGeometry.requested reads beyond collision.json (cue actors' snapshots with their npc role; props' displayed rectangles for propActivation); opening.json also carries the North Sea quest row's detail variants; city.json is the city's side rooms (tools/WebCauVongCity.java): CauVongOpeningSideQuests' Lisa (46: request, accepted, materials and reward scenes read back from the owner's own scene and walked the same way, her replies, menus, pet option template and refusals as the boxes Java opens, the trade, materials, document and Mộc pet) and the shop gift and five clerks of 56, tickSideRoom's residents of 45/46/56 (their lines read by ticking it), and citySideEntrance/sideRoomExit, each rectangle checked against Java; cue actors of later bundles are written grouped by room Every trainer request in academy/four-gates/forest/lab/north-sea/locke carries what VqsvBattleRuntime.enterBattle makes of the roster (WebCauVongCues.enemy): enemyQuality (5), each member's deck after CauVongEnemySkillDecks.apply and EarthPetrificationPriority.ensureDeck, and the RuntimeProfile.aiProfile tier.; branches.json (WebCauVongBranches: the rest of CauVongMissingBranchesRuntime, the aux room 67 with Nhất Hôi and Tiểu Mỹ, its doors to 27, the hub lift 50 ↔ 67, the 43 quest scroll for 7 badges and its egg trade, and CauVongBranchTreasures: every room's source treasure table with the reward and the line grant returns, checked by granting it in Java); north-sea.json also carries CV0's vines (VINE_*), Tiểu Song's trade (SKY_*), 49's merchant, alliance clerk and residents, and the native doors of 49, 50 and the summon rooms (skyDoors); summoning.json (WebCauVongSummoning: CV0' CauVongSummoningRuntime, the game hosts with their three text stages, the summoners' challenge/victory parts, casts, replies, battle requests (51 at +15 levels, Kim Diễm Long Vương 280 at 150), prerequisites, requiredGames and the award each grants (read from op26/op18/op21 and checked by granting it in Java), the first scenes 66:0/63:7/51:6, Miro 50:9, the portals 50:10/50:13 (portalSteps, checked against Java), 51's services and alliance, the menus and the runtime's own lines read by ticking it, the gold room's streak pet, Long Vương's world actor and the CauVongSummoningMinigame tables); sprites.json also carries 3007, Kim Diễm Long Vương's world projection (CustomBossSpriteCatalog.kimDiemWorld)); area-map.json is the Cầu Vồng area map written by rebuild_game/tools/ExportWebCauVongAreaMap.java from CauVongWorldMap (the JAR's data/map.d groups and nodes, data.d room names)",
+        "command": "javac -encoding UTF-8 -cp build/classes -d <tool> tools/ExportWebCauVongActors.java tools/WebCauVongCues.java tools/WebCauVongOpening.java tools/WebCauVongPrep.java tools/WebCauVongAcademy.java tools/WebCauVongShops.java tools/WebCauVongFourGates.java && java -cp <tool>;build/classes;src/main/resources vqsv.game.ExportWebCauVongActors VQSV-WebNative/web-native/public/pack/cau-vong-world (cwd rebuild_game)",
+        "note": "Separate from the world bake so the recorded world provenance stays unchanged. The room actors stay on sprite 223 in world/rooms.json; GameAssets lays this file over them."
+      },
+      "indexes": [
+        {
+          "name": "actors",
+          "file": "cau-vong-world/actors.json"
+        },
+        {
+          "name": "collision",
+          "file": "cau-vong-world/collision.json"
+        },
+        {
+          "name": "square",
+          "file": "cau-vong-world/square.json"
+        },
+        {
+          "name": "sprites",
+          "file": "cau-vong-world/sprites.json"
+        },
+        {
+          "name": "cues",
+          "file": "cau-vong-world/cues.json"
+        },
+        {
+          "name": "hall",
+          "file": "cau-vong-world/hall.json"
+        },
+        {
+          "name": "locke",
+          "file": "cau-vong-world/locke.json"
+        },
+        {
+          "name": "opening",
+          "file": "cau-vong-world/opening.json"
+        },
+        {
+          "name": "prep",
+          "file": "cau-vong-world/prep.json"
+        },
+        {
+          "name": "academy",
+          "file": "cau-vong-world/academy.json"
+        },
+        {
+          "name": "shops",
+          "file": "cau-vong-world/shops.json"
+        },
+        {
+          "name": "four-gates",
+          "file": "cau-vong-world/four-gates.json"
+        },
+        {
+          "name": "forest",
+          "file": "cau-vong-world/forest.json"
+        },
+        {
+          "name": "lab",
+          "file": "cau-vong-world/lab.json"
+        },
+        {
+          "name": "north-sea",
+          "file": "cau-vong-world/north-sea.json"
+        },
+        {
+          "name": "city",
+          "file": "cau-vong-world/city.json"
+        },
+        {
+          "name": "branches",
+          "file": "cau-vong-world/branches.json"
+        },
+        {
+          "name": "summoning",
+          "file": "cau-vong-world/summoning.json"
+        },
+        {
+          "name": "hd",
+          "file": "cau-vong-world/hd.json"
+        },
+        {
+          "name": "area-map",
+          "file": "cau-vong-world/area-map.json"
+        }
+      ],
+      "shapes": [
+        {
+          "name": "sprite-frame",
+          "path": "sprites/{sprite}/{state}/{frame}.png"
+        },
+        {
+          "name": "hd-frame",
+          "path": "hd/{sprite}/{state}/{frame}.png"
+        }
+      ]
+    },
+    {
+      "id": "items",
+      "kind": "root",
+      "resolution": "root",
+      "root": "items",
+      "producer": {
+        "kind": "java-tool",
+        "what": "rebuild_game/tools/ExportWebUnifiedItems.java (vqsv.game): the JavaSE unified Item catalog read through vqsv.data.UnifiedItemCatalog (unified-item-v1): catalog.json holds the 87 active records (52 Liệt Hỏa + 35 Cầu Vồng: key, inventory kind, runtime id, name, description, category, mechanic, frame, icon, implemented, rainbowImported, effect parameters), the 25 aliases as requireActive resolves them, the 10 ordinary-shop alias rows and the 10 removed decisions; icons/<key>.png are the icon resources records and aliases name. The bag, the evolution overlay and the Cầu Vồng gifts read items from here, as VqsvSourceOps / UnifiedItemInventoryGateway do.",
+        "command": "javac -encoding UTF-8 -cp build/classes -d <tool> tools/ExportWebUnifiedItems.java && java -cp <tool>;build/classes;src/main/resources vqsv.game.ExportWebUnifiedItems VQSV-WebNative/web-native/public/pack/items (cwd rebuild_game)",
+        "note": "Replaces story/evolution-material-icons.json and the evolution-icons images (ExportWebEvolutionMaterialIcons), which were a view of this same catalog."
+      },
+      "indexes": [
+        {
+          "name": "catalog",
+          "file": "items/catalog.json"
+        }
+      ],
+      "shapes": [
+        {
+          "name": "icon",
+          "path": "icons/{key}.png"
+        }
+      ]
+    },
+    {
+      "id": "cau-vong-art",
+      "kind": "root",
+      "resolution": "root",
+      "root": "cau-vong-art",
+      "producer": {
+        "kind": "java-tool",
+        "what": "rebuild_game/tools/ExportWebCauVongArt.java (vqsv.game): the Cầu Vồng art and tables JavaSE reads straight from /vqsv/data/cau-vong, through the same loaders. portraits/0..6 (TextBox.withRainbowPortrait); sprites.json banks 13000 expressions (loadRainbowExpression), 13100+g opcode-49 effects (loadRainbowEffect, battle/s0..s5), 13200+i source rides r0..r4 (loadRainbowRide), 13205 boat (loadRainbowBoat), 13302 minigame bird (loadRainbowMinigameBird); minigame/banks.json the finish line 13300 and arena 13301 composition banks by cell and raw region; minigame/*.png + icons.json (RainbowMinigameArt images and its ui_m.d / item_m.d region tables); boss.json (CauVongSourceBattleCatalog boss.d rows: member index i fights species 100 + rows[i][0])",
+        "command": "javac -encoding UTF-8 -cp build/classes -d <tool> tools/ExportWebCauVongActors.java tools/ExportWebCauVongArt.java && java -cp <tool>;build/classes;src/main/resources vqsv.game.ExportWebCauVongArt VQSV-WebNative/web-native/public/pack/cau-vong-art (cwd rebuild_game)",
+        "note": "Replaces the raw public/pack/data/cau-vong copies. The jar tables (tsv/properties/json) stay Java-side: the catalogs that read them are baked by the slice that needs them (event scenes, encounters, rides already are)."
+      },
+      "indexes": [
+        {
+          "name": "sprites",
+          "file": "cau-vong-art/sprites.json"
+        },
+        {
+          "name": "banks",
+          "file": "cau-vong-art/minigame/banks.json"
+        },
+        {
+          "name": "icons",
+          "file": "cau-vong-art/minigame/icons.json"
+        },
+        {
+          "name": "boss",
+          "file": "cau-vong-art/boss.json"
+        }
+      ],
+      "shapes": [
+        {
+          "name": "sprite-frame",
+          "path": "sprites/{sprite}/{state}/{frame}.png"
+        },
+        {
+          "name": "portrait",
+          "path": "portraits/{index}.png"
+        },
+        {
+          "name": "minigame-image",
+          "path": "minigame/{name}.png"
+        },
+        {
+          "name": "minigame-piece",
+          "path": "minigame/{bank}/{piece}.png"
+        }
+      ]
+    },
+    {
+      "id": "v4-sprites",
+      "kind": "root",
+      "resolution": "root",
+      "root": "v4-sprites",
+      "producer": {
+        "kind": "java-tool",
+        "what": "rebuild_game/tools/ExportWebV4PetSprites.java (vqsv.game): the 72 V4 pets, visual ids 2000.., through SpriteAnimator.load / V4PetSpriteCatalog (unified-v4-pet-v1/sprites.tsv, profile vqsv4-cute-registered-v1: the art/v4-cute set), in the world sprites.json format",
+        "command": "javac -cp build/classes -d <tool> tools/ExportWebV4PetSprites.java && java -cp <tool>;build/classes;src/main/resources vqsv.game.ExportWebV4PetSprites VQSV-WebNative/web-native/public/pack/v4-sprites",
+        "note": "Separate from the world bake so the recorded world provenance stays unchanged."
+      },
+      "indexes": [
+        {
+          "name": "sprites",
+          "file": "v4-sprites/sprites.json"
+        }
+      ],
+      "shapes": [
+        {
+          "name": "sprite-frame",
+          "path": "sprites/{sprite}/{state}/{frame}.png"
+        }
+      ]
+    },
+    {
+      "id": "pet-sprites",
+      "kind": "root",
+      "resolution": "root",
+      "root": "pet-sprites",
+      "producer": {
+        "kind": "java-tool",
+        "what": "rebuild_game/tools/ExportWebPetSprites.java (vqsv.game): the battle visual of every species the world bake lacks (NPC rosters, lent companions, Cầu Vồng 1000.., custom bosses 3000..), through SpriteAnimator.load, in the world sprites.json format; V4 visuals stay with ExportWebV4PetSprites",
+        "command": "javac -cp build/classes -d <tool> tools/ExportWebV4PetSprites.java tools/ExportWebPetSprites.java && java -cp <tool>;build/classes;src/main/resources vqsv.game.ExportWebPetSprites VQSV-WebNative/web-native/public/pack/pet-sprites VQSV-WebNative/web-native/public/pack/world/sprites.json",
+        "note": "Separate from the world bake so the recorded world provenance stays unchanged."
+      },
+      "indexes": [
+        {
+          "name": "sprites",
+          "file": "pet-sprites/sprites.json"
+        }
+      ],
+      "shapes": [
+        {
+          "name": "sprite-frame",
+          "path": "sprites/{sprite}/{state}/{frame}.png"
+        }
+      ]
+    },
+    {
+      "id": "shiny",
+      "kind": "root",
+      "resolution": "root",
+      "root": "shiny",
+      "producer": {
+        "kind": "java-tool",
+        "what": "rebuild_game/tools/ExportWebShinyPalette.java (vqsv.game): vqsv.render.PetShinyPalette, the nature 7..9 palette swap. palette.json carries the visuals with their own profile (120, 1036..1039, 3001) and the Bạch Long ramps read from the class; sample.json up to 2000 colours per profile from every species visual's rendered cells with what PetShinyPalette.image turns each into (the check src/rendering/PetShinyPalette.ts is tested against); n<nature>/ the whole frames of Hỏa Diễm Hầu Vương 3002, whose swap masks by sheet position, through SpriteAnimator with setPaletteNature",
+        "command": "javac -cp build/classes -d <tool> tools/ExportWebShinyPalette.java tools/ExportWebV4PetSprites.java && java -cp <tool>;build/classes;src/main/resources vqsv.game.ExportWebShinyPalette VQSV-WebNative/web-native/public/pack/shiny"
+      },
+      "indexes": [
+        {
+          "name": "palette",
+          "file": "shiny/palette.json"
+        },
+        {
+          "name": "sample",
+          "file": "shiny/sample.json"
+        },
+        {
+          "name": "sprites-7",
+          "file": "shiny/n7/sprites.json"
+        },
+        {
+          "name": "sprites-8",
+          "file": "shiny/n8/sprites.json"
+        },
+        {
+          "name": "sprites-9",
+          "file": "shiny/n9/sprites.json"
+        }
+      ],
+      "shapes": [
+        {
+          "name": "shiny-frame",
+          "path": "n{nature}/sprites/{sprite}/{state}/{frame}.png"
+        }
+      ]
+    },
+    {
+      "id": "l-effect",
+      "kind": "root",
+      "resolution": "root",
+      "root": "l-effect",
+      "producer": {
+        "kind": "java-tool",
+        "what": "rebuild_game/tools/ExportWebStateOneLEffect.java (vqsv.game): the state-1 L effect of VqsvBattleRuntime.tickP7LEffect / VqsvDoubleBattleRuntime.tickActionLEffect. l-effect.json lists every species with one (state1LEffectSpeffectId, read by reflection) with its speffect id, visual, drawAfter (species 10) and the visual's state-1 frame durations; <visual>.png is VqsvBattleRenderer.renderSpriteAnimationFrameImage(visual, 0, 0, 0), the picture every L type copies",
+        "command": "javac -cp build/classes -d <tool> tools/ExportWebStateOneLEffect.java && java -Djava.awt.headless=true -cp <tool>;build/classes;src/main/resources vqsv.game.ExportWebStateOneLEffect VQSV-WebNative/web-native/public/pack/l-effect"
+      },
+      "indexes": [
+        {
+          "name": "l-effect",
+          "file": "l-effect/l-effect.json"
+        }
+      ],
+      "shapes": [
+        {
+          "name": "l-effect-picture",
+          "path": "{visual}.png"
+        }
+      ]
+    },
+    {
+      "id": "wharf",
+      "kind": "root",
+      "resolution": "root",
+      "root": "wharf",
+      "producer": {
+        "kind": "java-tool",
+        "what": "rebuild_game/tools/ExportWebWharfTravel.java: VqsvWharfTravelRuntime's ocean (map 101) and boat (sprite 343), which no room loads, through ExportWorldWebAssets' own map, sprite and cell writers",
+        "command": "javac -encoding UTF-8 -cp build/classes -d <tool> tools/ExportWebWharfTravel.java && java -cp <tool>;build/classes;src/main/resources ExportWebWharfTravel VQSV-WebNative/web-native/public/pack/wharf (cwd rebuild_game)",
+        "note": "Separate from the world bake so the recorded world provenance stays unchanged."
+      },
+      "indexes": [
+        {
+          "name": "sprites",
+          "file": "wharf/sprites.json"
+        }
+      ],
+      "shapes": [
+        {
+          "name": "map-meta",
+          "path": "maps/{mapId}/meta.json"
+        },
+        {
+          "name": "map-layer",
+          "path": "maps/{mapId}/layer-{layer}.png"
+        },
+        {
+          "name": "sprite-frame",
+          "path": "sprites/{sprite}/{state}/{frame}.png"
+        }
+      ]
+    },
+    {
+      "id": "double-battle",
+      "kind": "json",
+      "resolution": "entries",
+      "producer": {
+        "kind": "java-tool",
+        "what": "rebuild_game/tools/ProbeWebDoubleBattle.java (vqsv.game)",
+        "command": "javac -cp build/classes -d <tool> tools/ProbeWebDoubleBattle.java && java -cp <tool>;build/classes;src/main/resources vqsv.game.ProbeWebDoubleBattle VQSV-WebNative/web-native/public/pack/double-battle"
+      },
+      "entries": [
+        {
+          "name": "skill-scopes",
+          "file": "double-battle/skill-scopes.json",
+          "kind": "json",
+          "from": "VQSV-WebNative/rebuild_game DoubleBattleSkillScopeCatalog (double-skill-scopes-v1)",
+          "provenance": "generated_from_java_catalog",
+          "producer": {
+            "kind": "java-tool",
+            "what": "rebuild_game/tools/ProbeWebDoubleBattle.java (vqsv.game)",
+            "command": "javac -cp build/classes -d <tool> tools/ProbeWebDoubleBattle.java && java -cp <tool>;build/classes;src/main/resources vqsv.game.ProbeWebDoubleBattle VQSV-WebNative/web-native/public/pack/double-battle"
+          }
+        },
+        {
+          "name": "golden",
+          "file": "double-battle/golden-double-battle.json",
+          "kind": "json",
+          "from": "VQSV-WebNative/rebuild_game VqsvDoubleBattleRuntime run headless: 5 fights, fixed battle and fallback seeds, pinned enemy talents, scripted player",
+          "provenance": "generated_from_java_runtime",
+          "producer": {
+            "kind": "java-tool",
+            "what": "rebuild_game/tools/ProbeWebDoubleBattle.java (vqsv.game)",
+            "command": "javac -cp build/classes -d <tool> tools/ProbeWebDoubleBattle.java && java -cp <tool>;build/classes;src/main/resources vqsv.game.ProbeWebDoubleBattle VQSV-WebNative/web-native/public/pack/double-battle"
+          }
+        }
+      ]
+    },
+    {
+      "id": "sprite-collision",
+      "kind": "json",
+      "resolution": "entries",
+      "producer": {
+        "kind": "java-tool",
+        "what": "rebuild_game/tools/ExportWebSpriteCollision.java: SpriteAnimator.currentCollisionMask for every state and frame of every world sprite",
+        "command": "javac -encoding UTF-8 -cp build/classes -d <tool> tools/ExportWebSpriteCollision.java && java -cp <tool>;build/classes;src/main/resources vqsv.tools.ExportWebSpriteCollision VQSV-WebNative/web-native/public/pack/sprite-collision/masks.json (cwd rebuild_game)"
+      },
+      "entries": [
+        {
+          "name": "masks",
+          "file": "sprite-collision/masks.json",
+          "kind": "json",
+          "from": "VQSV-WebNative/rebuild_game vqsv.render.SpriteData collision masks (sprite cell -> [x, y, width, height])",
+          "provenance": "generated_from_java_catalog",
+          "producer": {
+            "kind": "java-tool",
+            "what": "rebuild_game/tools/ExportWebSpriteCollision.java",
+            "command": "javac -encoding UTF-8 -cp build/classes -d <tool> tools/ExportWebSpriteCollision.java && java -cp <tool>;build/classes;src/main/resources vqsv.tools.ExportWebSpriteCollision VQSV-WebNative/web-native/public/pack/sprite-collision/masks.json (cwd rebuild_game)"
+          }
+        }
+      ]
+    }
+  ]
+}

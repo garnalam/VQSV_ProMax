@@ -1,0 +1,763 @@
+{
+ "schema": "vqsv-webnative-music-v1",
+ "source": {
+  "music": "modules/sound/original/{n}.mid rendered by JDK Gervill (tools/RenderMidiToWav), loudness-matched to -18 LUFS (true peak <= -1 dBTP), encoded Opus 96k (.ogg) and AAC 128k (.m4a), trimmed to the MIDI length",
+  "rooms": "modules/script/original/media.mid (game.l: ay[v[scene]+room] = [?, music, ?, overrideCount, (group, eventMusic, battleMusic)*]); battle music defaults to track 4",
+  "cauVong": "rebuild_game resources vqsv/data/cau-vong/music/8.mid (source data.d room music8), same render chain; VqsvMusicPlayer plays it through the Cầu Vồng minigame rooms"
+ },
+ "battleMusic": 4,
+ "menuMusic": 0,
+ "tracks": {
+  "0": {
+   "loopMicros": 109396942,
+   "gainDb": 11.37,
+   "sourceLufs": -29.37
+  },
+  "1": {
+   "loopMicros": 81168100,
+   "gainDb": -5.38,
+   "sourceLufs": -12.62
+  },
+  "2": {
+   "loopMicros": 50660544,
+   "gainDb": -8.45,
+   "sourceLufs": -9.55
+  },
+  "3": {
+   "loopMicros": 33363035,
+   "gainDb": 0.72,
+   "sourceLufs": -21.25
+  },
+  "4": {
+   "loopMicros": 25846128,
+   "gainDb": -1.62,
+   "sourceLufs": -16.38
+  },
+  "5": {
+   "loopMicros": 12800000,
+   "gainDb": -1.36,
+   "sourceLufs": -16.64
+  },
+  "6": {
+   "loopMicros": 59996327,
+   "gainDb": -5.7,
+   "sourceLufs": -12.3
+  },
+  "8": {
+   "loopMicros": 45359257,
+   "gainDb": 8.08,
+   "sourceLufs": -26.08
+  }
+ },
+ "rooms": {
+  "0:0": {
+   "music": 1,
+   "overrides": []
+  },
+  "0:1": {
+   "music": 0,
+   "overrides": []
+  },
+  "1:0": {
+   "music": 3,
+   "overrides": [
+    {
+     "group": 10,
+     "event": 0,
+     "battle": -1
+    }
+   ]
+  },
+  "1:1": {
+   "music": 3,
+   "overrides": []
+  },
+  "1:2": {
+   "music": 3,
+   "overrides": []
+  },
+  "1:3": {
+   "music": 0,
+   "overrides": [
+    {
+     "group": 0,
+     "event": -1,
+     "battle": 0
+    }
+   ]
+  },
+  "1:4": {
+   "music": 3,
+   "overrides": []
+  },
+  "1:5": {
+   "music": 3,
+   "overrides": []
+  },
+  "1:6": {
+   "music": 3,
+   "overrides": []
+  },
+  "2:0": {
+   "music": 3,
+   "overrides": [
+    {
+     "group": 1,
+     "event": 2,
+     "battle": 4
+    }
+   ]
+  },
+  "2:1": {
+   "music": 3,
+   "overrides": [
+    {
+     "group": 0,
+     "event": 1,
+     "battle": -1
+    },
+    {
+     "group": 1,
+     "event": 1,
+     "battle": 4
+    },
+    {
+     "group": 5,
+     "event": 2,
+     "battle": -1
+    },
+    {
+     "group": 9,
+     "event": 2,
+     "battle": -1
+    }
+   ]
+  },
+  "2:2": {
+   "music": 3,
+   "overrides": []
+  },
+  "2:3": {
+   "music": 3,
+   "overrides": []
+  },
+  "2:4": {
+   "music": 3,
+   "overrides": []
+  },
+  "2:5": {
+   "music": 3,
+   "overrides": [
+    {
+     "group": 0,
+     "event": 2,
+     "battle": 4
+    }
+   ]
+  },
+  "2:6": {
+   "music": 3,
+   "overrides": []
+  },
+  "2:7": {
+   "music": 5,
+   "overrides": []
+  },
+  "3:0": {
+   "music": 3,
+   "overrides": []
+  },
+  "3:1": {
+   "music": 3,
+   "overrides": []
+  },
+  "3:2": {
+   "music": 3,
+   "overrides": []
+  },
+  "3:3": {
+   "music": 3,
+   "overrides": [
+    {
+     "group": 0,
+     "event": 1,
+     "battle": -1
+    },
+    {
+     "group": 6,
+     "event": 0,
+     "battle": -1
+    }
+   ]
+  },
+  "3:4": {
+   "music": 3,
+   "overrides": []
+  },
+  "3:5": {
+   "music": 3,
+   "overrides": []
+  },
+  "3:6": {
+   "music": 3,
+   "overrides": [
+    {
+     "group": 0,
+     "event": 0,
+     "battle": -1
+    },
+    {
+     "group": 1,
+     "event": 0,
+     "battle": -1
+    },
+    {
+     "group": 2,
+     "event": 0,
+     "battle": -1
+    }
+   ]
+  },
+  "3:7": {
+   "music": 4,
+   "overrides": []
+  },
+  "4:0": {
+   "music": 3,
+   "overrides": []
+  },
+  "4:1": {
+   "music": 5,
+   "overrides": []
+  },
+  "4:2": {
+   "music": 5,
+   "overrides": []
+  },
+  "4:3": {
+   "music": 5,
+   "overrides": []
+  },
+  "4:4": {
+   "music": 5,
+   "overrides": []
+  },
+  "4:5": {
+   "music": 3,
+   "overrides": []
+  },
+  "4:6": {
+   "music": 3,
+   "overrides": []
+  },
+  "4:7": {
+   "music": 5,
+   "overrides": [
+    {
+     "group": 0,
+     "event": 3,
+     "battle": 4
+    }
+   ]
+  },
+  "4:8": {
+   "music": 1,
+   "overrides": [
+    {
+     "group": 1,
+     "event": 2,
+     "battle": 4
+    }
+   ]
+  },
+  "4:9": {
+   "music": 5,
+   "overrides": []
+  },
+  "4:10": {
+   "music": 5,
+   "overrides": []
+  },
+  "4:11": {
+   "music": 5,
+   "overrides": []
+  },
+  "4:12": {
+   "music": 5,
+   "overrides": [
+    {
+     "group": 0,
+     "event": 3,
+     "battle": 4
+    }
+   ]
+  },
+  "5:0": {
+   "music": 1,
+   "overrides": []
+  },
+  "5:1": {
+   "music": 1,
+   "overrides": []
+  },
+  "5:2": {
+   "music": 1,
+   "overrides": []
+  },
+  "5:3": {
+   "music": 1,
+   "overrides": [
+    {
+     "group": 0,
+     "event": 2,
+     "battle": -1
+    },
+    {
+     "group": 4,
+     "event": 3,
+     "battle": -1
+    }
+   ]
+  },
+  "5:4": {
+   "music": 1,
+   "overrides": []
+  },
+  "5:5": {
+   "music": 1,
+   "overrides": [
+    {
+     "group": 0,
+     "event": 0,
+     "battle": -1
+    },
+    {
+     "group": 1,
+     "event": 0,
+     "battle": -1
+    },
+    {
+     "group": 2,
+     "event": 0,
+     "battle": -1
+    }
+   ]
+  },
+  "5:6": {
+   "music": 5,
+   "overrides": [
+    {
+     "group": 1,
+     "event": 0,
+     "battle": -1
+    }
+   ]
+  },
+  "6:0": {
+   "music": 1,
+   "overrides": []
+  },
+  "6:1": {
+   "music": 1,
+   "overrides": []
+  },
+  "7:0": {
+   "music": 6,
+   "overrides": []
+  },
+  "7:1": {
+   "music": 6,
+   "overrides": []
+  },
+  "7:2": {
+   "music": 6,
+   "overrides": [
+    {
+     "group": 0,
+     "event": 1,
+     "battle": -1
+    },
+    {
+     "group": 3,
+     "event": 0,
+     "battle": -1
+    },
+    {
+     "group": 4,
+     "event": 0,
+     "battle": -1
+    }
+   ]
+  },
+  "7:3": {
+   "music": 6,
+   "overrides": [
+    {
+     "group": 2,
+     "event": 0,
+     "battle": -1
+    }
+   ]
+  },
+  "7:4": {
+   "music": 6,
+   "overrides": []
+  },
+  "7:5": {
+   "music": 6,
+   "overrides": []
+  },
+  "7:6": {
+   "music": 6,
+   "overrides": []
+  },
+  "7:7": {
+   "music": 6,
+   "overrides": []
+  },
+  "7:8": {
+   "music": 6,
+   "overrides": []
+  },
+  "7:9": {
+   "music": 6,
+   "overrides": []
+  },
+  "7:10": {
+   "music": 6,
+   "overrides": []
+  },
+  "7:11": {
+   "music": 6,
+   "overrides": []
+  },
+  "7:12": {
+   "music": 6,
+   "overrides": []
+  },
+  "8:0": {
+   "music": 3,
+   "overrides": []
+  },
+  "8:1": {
+   "music": 3,
+   "overrides": []
+  },
+  "8:2": {
+   "music": 3,
+   "overrides": []
+  },
+  "8:3": {
+   "music": 3,
+   "overrides": []
+  },
+  "8:4": {
+   "music": 3,
+   "overrides": []
+  },
+  "8:5": {
+   "music": 2,
+   "overrides": []
+  },
+  "8:6": {
+   "music": 1,
+   "overrides": [
+    {
+     "group": 0,
+     "event": -1,
+     "battle": 2
+    },
+    {
+     "group": 1,
+     "event": 0,
+     "battle": -1
+    },
+    {
+     "group": 2,
+     "event": 0,
+     "battle": -1
+    }
+   ]
+  },
+  "9:0": {
+   "music": 3,
+   "overrides": []
+  },
+  "9:1": {
+   "music": 3,
+   "overrides": []
+  },
+  "9:2": {
+   "music": 5,
+   "overrides": []
+  },
+  "9:3": {
+   "music": 5,
+   "overrides": []
+  },
+  "9:4": {
+   "music": 2,
+   "overrides": []
+  },
+  "9:5": {
+   "music": 2,
+   "overrides": []
+  },
+  "9:6": {
+   "music": 2,
+   "overrides": []
+  },
+  "9:7": {
+   "music": 6,
+   "overrides": []
+  },
+  "10:0": {
+   "music": 5,
+   "overrides": [
+    {
+     "group": 1,
+     "event": -1,
+     "battle": 1
+    }
+   ]
+  },
+  "10:1": {
+   "music": 6,
+   "overrides": []
+  },
+  "10:2": {
+   "music": 6,
+   "overrides": []
+  },
+  "10:3": {
+   "music": 6,
+   "overrides": []
+  },
+  "10:4": {
+   "music": 6,
+   "overrides": [
+    {
+     "group": 3,
+     "event": -1,
+     "battle": 1
+    }
+   ]
+  },
+  "10:5": {
+   "music": 6,
+   "overrides": []
+  },
+  "10:6": {
+   "music": 6,
+   "overrides": []
+  },
+  "10:7": {
+   "music": 6,
+   "overrides": [
+    {
+     "group": 0,
+     "event": -1,
+     "battle": 1
+    }
+   ]
+  },
+  "10:8": {
+   "music": 5,
+   "overrides": [
+    {
+     "group": 0,
+     "event": -1,
+     "battle": 1
+    }
+   ]
+  },
+  "10:9": {
+   "music": 5,
+   "overrides": []
+  },
+  "10:10": {
+   "music": 5,
+   "overrides": []
+  },
+  "10:11": {
+   "music": 6,
+   "overrides": [
+    {
+     "group": 0,
+     "event": -1,
+     "battle": 1
+    }
+   ]
+  },
+  "10:12": {
+   "music": 5,
+   "overrides": [
+    {
+     "group": 1,
+     "event": 3,
+     "battle": 1
+    }
+   ]
+  },
+  "10:13": {
+   "music": 5,
+   "overrides": []
+  },
+  "10:14": {
+   "music": 5,
+   "overrides": [
+    {
+     "group": 0,
+     "event": 1,
+     "battle": 1
+    }
+   ]
+  },
+  "11:0": {
+   "music": 5,
+   "overrides": [
+    {
+     "group": 0,
+     "event": 2,
+     "battle": -1
+    }
+   ]
+  },
+  "11:1": {
+   "music": 3,
+   "overrides": []
+  },
+  "11:2": {
+   "music": 2,
+   "overrides": [
+    {
+     "group": 3,
+     "event": 0,
+     "battle": -1
+    }
+   ]
+  },
+  "11:3": {
+   "music": 6,
+   "overrides": [
+    {
+     "group": 2,
+     "event": 1,
+     "battle": -1
+    }
+   ]
+  },
+  "11:4": {
+   "music": 3,
+   "overrides": []
+  },
+  "11:5": {
+   "music": 3,
+   "overrides": []
+  },
+  "11:6": {
+   "music": 3,
+   "overrides": []
+  },
+  "11:7": {
+   "music": 3,
+   "overrides": []
+  },
+  "11:8": {
+   "music": 3,
+   "overrides": []
+  },
+  "11:9": {
+   "music": 3,
+   "overrides": [
+    {
+     "group": 0,
+     "event": 1,
+     "battle": -1
+    },
+    {
+     "group": 1,
+     "event": 1,
+     "battle": -1
+    }
+   ]
+  },
+  "11:10": {
+   "music": 3,
+   "overrides": []
+  },
+  "11:11": {
+   "music": 3,
+   "overrides": []
+  },
+  "11:12": {
+   "music": 3,
+   "overrides": []
+  },
+  "11:13": {
+   "music": 2,
+   "overrides": []
+  },
+  "11:14": {
+   "music": 2,
+   "overrides": []
+  },
+  "11:15": {
+   "music": 2,
+   "overrides": []
+  },
+  "11:16": {
+   "music": 3,
+   "overrides": []
+  },
+  "11:17": {
+   "music": 3,
+   "overrides": []
+  },
+  "11:18": {
+   "music": 3,
+   "overrides": []
+  },
+  "11:19": {
+   "music": 3,
+   "overrides": []
+  },
+  "11:20": {
+   "music": 3,
+   "overrides": []
+  },
+  "11:21": {
+   "music": 3,
+   "overrides": []
+  },
+  "11:22": {
+   "music": 3,
+   "overrides": []
+  },
+  "11:23": {
+   "music": 3,
+   "overrides": []
+  },
+  "11:24": {
+   "music": 3,
+   "overrides": []
+  },
+  "11:25": {
+   "music": 3,
+   "overrides": []
+  },
+  "11:26": {
+   "music": 3,
+   "overrides": []
+  },
+  "11:27": {
+   "music": 3,
+   "overrides": []
+  },
+  "11:28": {
+   "music": 6,
+   "overrides": []
+  }
+ },
+ "cauVongMinigameMusic": 8
+}

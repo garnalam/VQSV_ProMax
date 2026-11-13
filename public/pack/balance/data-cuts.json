@@ -1,0 +1,76 @@
+{
+  "schema": "vqsv-webnative-balance-data-cuts-v1",
+  "source": {
+    "balanceVersion": "user-cut-rows-20261105-v1",
+    "javaExports": [
+      "public/pack/data/battle/statuses.json",
+      "public/pack/data/battle/pet-physical-traits.json",
+      "public/pack/data/battle/pet-trait-mechanics.json"
+    ],
+    "note": "Rows the web game decided to drop while the Java engine still exports them. The Java dump stays honest, so this file is the cut: GameData runs each of those three tables through withoutCuts(), which removes exactly these stable keys and refuses a cut whose Java row is gone or no longer says what this file claims. Deciding a cut here means a harness re-run can neither resurrect the row nor lose the decision, which hand-edited bytes inside data/ could not do. This is the row-level counterpart of pet-trait-descriptions.json, which overrides two descriptions the same way."
+  },
+  "cuts": [
+    {
+      "reader": "physicalTraits",
+      "table": "battle/pet-physical-traits.json",
+      "stableKey": "HV-01",
+      "displayName": "Hỏa Tế Đoạt Tiên",
+      "javaIdentity": {
+        "runtimeId": 19,
+        "rollWeight": 0
+      },
+      "decided": "2026-11-05, recorded in balance/pet-design-traits.json source.exclusiveTraits.",
+      "reason": "A characteristic, not a talent. Species 274 Hỏa Vu Mộc Linh fights with it through the design-trait path (type agility_outrank_priority, cooldownTurns 2) that BattleRules.webTraitCatalog installs, so it must not sit in the rollable talent table. Java gives it rollWeight 0 for the same reason; the web takes it out of the table instead of relying on a zero weight.",
+      "guardTests": [
+        "src/data/PetDesignTraitBalance.test.ts",
+        "src/data/DataCuts.test.ts"
+      ]
+    },
+    {
+      "reader": "physicalTraits",
+      "table": "battle/pet-physical-traits.json",
+      "stableKey": "TL-01",
+      "displayName": "Thiên Luân Kim Thân",
+      "javaIdentity": {
+        "runtimeId": 20,
+        "rollWeight": 0
+      },
+      "decided": "2026-11-05, recorded in balance/pet-design-traits.json source.exclusiveTraits.",
+      "reason": "The other characteristic, for species 275 Thiên Luân Di Lặc, running as type hard_control_immunity with immuneStatuses and the -25% direct-damage rule from the same balance row.",
+      "guardTests": [
+        "src/data/PetDesignTraitBalance.test.ts",
+        "src/data/DataCuts.test.ts"
+      ]
+    },
+    {
+      "reader": "physicalTraitMechanics",
+      "table": "battle/pet-trait-mechanics.json",
+      "stableKey": "HV-01",
+      "displayName": "Hỏa Tế Đoạt Tiên",
+      "javaIdentity": {
+        "runtimeId": 19,
+        "slotType": "physical"
+      },
+      "decided": "2026-11-05, with the two rows above.",
+      "reason": "PetTraitMechanicRegistry refuses the physical table and the talent table at different lengths, so the cut has to reach the mechanic rows beside the talent rows. Ids 19 and 20 answer no spec, which is what Java's own gate already says of them: PetTraitCatalog.isPhysicalTraitAllowed is false for a zero weight and the two are reachable only as a form characteristic.",
+      "guardTests": [
+        "src/data/DataCuts.test.ts"
+      ]
+    },
+    {
+      "reader": "physicalTraitMechanics",
+      "table": "battle/pet-trait-mechanics.json",
+      "stableKey": "TL-01",
+      "displayName": "Thiên Luân Kim Thân",
+      "javaIdentity": {
+        "runtimeId": 20,
+        "slotType": "physical"
+      },
+      "decided": "2026-11-05, with the two rows above.",
+      "reason": "The second characteristic's mechanic row, cut for the same registry reason.",
+      "guardTests": [
+        "src/data/DataCuts.test.ts"
+      ]
+    }
+  ]
+}

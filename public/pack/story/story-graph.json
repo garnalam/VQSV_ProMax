@@ -1,0 +1,1622 @@
+{
+  "schema": "vqsv-webnative-story-graph-v1",
+  "source": "Hand-authored from the Java rebuild's runtime behaviour (the patched build is the reference when it disagrees with the source event data): Scene0IntroScript, Scene1 room scripts, WorldRuntime's bunny capture and Scene1Room0Group2ElderScript. Main task indices are mTask.mid rows (story/main-tasks.json).",
+  "start": "opening",
+  "chapters": [
+    {
+      "id": "liet-hoa",
+      "title": "Liệt Hỏa",
+      "scenes": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+      "mainTasks": [0, 48],
+      "note": "Scene 0 is the opening script (Scene0IntroScript); it plays in the intro rooms -1:-1, 7:2 and 5:3, not in a world room."
+    },
+    {
+      "id": "cau-vong",
+      "title": "Cầu Vồng",
+      "scenes": [98],
+      "mainTasks": []
+    }
+  ],
+  "nodes": [
+    {
+      "id": "opening",
+      "chapter": "liet-hoa",
+      "title": "Mở đầu: Thần thú và ngôi đền",
+      "enter": [
+        {
+          "do": "cutscene",
+          "route": "opening-intro"
+        }
+      ],
+      "exits": [
+        {
+          "on": {
+            "kind": "worldEnter"
+          },
+          "to": "bunny-capture"
+        }
+      ]
+    },
+    {
+      "id": "bunny-capture",
+      "chapter": "liet-hoa",
+      "title": "Vòng loại sơ khảo: bắt Thỏ Di Lặc",
+      "mainTask": 0,
+      "activeTask": "BUNNY_CAPTURE",
+      "checkpoint": {
+        "scene": 1,
+        "room": 1,
+        "x": 55,
+        "y": 279,
+        "direction": 2
+      },
+      "enter": [
+        {
+          "do": "startMain",
+          "task": 0
+        }
+      ],
+      "exits": [
+        {
+          "on": {
+            "kind": "battleWon",
+            "scene": 1,
+            "room": 1,
+            "group": 0
+          },
+          "do": [
+            {
+              "do": "token",
+              "name": "scene1.bunnyCaught"
+            }
+          ],
+          "to": "return-to-elder"
+        }
+      ]
+    },
+    {
+      "id": "return-to-elder",
+      "chapter": "liet-hoa",
+      "title": "Vòng loại sơ khảo: mang thỏ về cho Trưởng thôn",
+      "mainTask": 0,
+      "activeTask": "RETURN_TO_ELDER",
+      "checkpoint": {
+        "scene": 1,
+        "room": 1,
+        "x": 350,
+        "y": 210,
+        "direction": 3
+      },
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 1,
+            "room": 0,
+            "group": 2
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 0
+            },
+            {
+              "do": "startMain",
+              "task": 1
+            }
+          ],
+          "to": "elder-challenge"
+        }
+      ]
+    },
+    {
+      "id": "elder-challenge",
+      "chapter": "liet-hoa",
+      "title": "Thử thách của Trưởng thôn",
+      "mainTask": 1,
+      "activeTask": "SCENE1_COMPLETE",
+      "checkpoint": {
+        "scene": 1,
+        "room": 0,
+        "x": 392,
+        "y": 273,
+        "direction": 3
+      },
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 1,
+            "room": 0,
+            "group": 6
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 1
+            },
+            {
+              "do": "startMain",
+              "task": 2
+            }
+          ],
+          "to": "road-to-bich-thuy"
+        }
+      ]
+    },
+    {
+      "id": "road-to-bich-thuy",
+      "chapter": "liet-hoa",
+      "title": "Đường nhỏ phía Nam: đi Bích Thủy Thành",
+      "mainTask": 2,
+      "checkpoint": {
+        "scene": 1,
+        "room": 0,
+        "x": 200,
+        "y": 318,
+        "direction": 2
+      },
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 2,
+            "room": 0,
+            "group": 0
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 2
+            },
+            {
+              "do": "startMain",
+              "task": 3
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "help-harry"
+        }
+      ]
+    },
+    {
+      "id": "help-harry",
+      "chapter": "liet-hoa",
+      "title": "Trợ giúp Harry",
+      "mainTask": 3,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 11,
+            "room": 9,
+            "group": 0
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 3
+            },
+            {
+              "do": "startMain",
+              "task": 4
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "supply-shop"
+        }
+      ]
+    },
+    {
+      "id": "supply-shop",
+      "chapter": "liet-hoa",
+      "title": "Đến tiếp tế cho Thương Điếm",
+      "mainTask": 4,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 11,
+            "room": 8,
+            "group": 1
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 4
+            },
+            {
+              "do": "startMain",
+              "task": 5
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "capture-uy-qua"
+        }
+      ]
+    },
+    {
+      "id": "capture-uy-qua",
+      "chapter": "liet-hoa",
+      "title": "Bắt Uy Qua Đệ Đệ",
+      "mainTask": 5,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 2,
+            "room": 2,
+            "group": 0
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 5
+            },
+            {
+              "do": "startMain",
+              "task": 6
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "find-abra"
+        }
+      ]
+    },
+    {
+      "id": "find-abra",
+      "chapter": "liet-hoa",
+      "title": "Tìm Abra đạo sư",
+      "mainTask": 6,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 11,
+            "room": 9,
+            "group": 1
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 6
+            },
+            {
+              "do": "startMain",
+              "task": 7
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "enter-bich-thuy-gym"
+        }
+      ]
+    },
+    {
+      "id": "enter-bich-thuy-gym",
+      "chapter": "liet-hoa",
+      "title": "Lẻn vào Bích Thủy Đạo Quán",
+      "mainTask": 7,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 2,
+            "room": 1,
+            "group": 5
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 7
+            },
+            {
+              "do": "startMain",
+              "task": 8
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "rescue-gym-leader"
+        }
+      ]
+    },
+    {
+      "id": "rescue-gym-leader",
+      "chapter": "liet-hoa",
+      "title": "Giải cứu quán chủ",
+      "mainTask": 8,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 2,
+            "room": 1,
+            "group": 9
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 8
+            },
+            {
+              "do": "startMain",
+              "task": 9
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "rescue-village-elder"
+        }
+      ]
+    },
+    {
+      "id": "rescue-village-elder",
+      "chapter": "liet-hoa",
+      "title": "Giải cứu Trưởng thôn",
+      "mainTask": 9,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 11,
+            "room": 14,
+            "group": 0
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 9
+            },
+            {
+              "do": "startMain",
+              "task": 10
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "return-to-bich-thuy"
+        }
+      ]
+    },
+    {
+      "id": "return-to-bich-thuy",
+      "chapter": "liet-hoa",
+      "title": "Trở lại Bích Thủy",
+      "mainTask": 10,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 11,
+            "room": 9,
+            "group": 2
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 10
+            },
+            {
+              "do": "startMain",
+              "task": 11
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "road-to-nguyen-moc"
+        }
+      ]
+    },
+    {
+      "id": "road-to-nguyen-moc",
+      "chapter": "liet-hoa",
+      "title": "Đến Nguyên Mộc",
+      "mainTask": 11,
+      "exits": [
+        {
+          "on": {
+            "kind": "roomEnter",
+            "scene": 3,
+            "room": 3
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 11
+            },
+            {
+              "do": "startMain",
+              "task": 12
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "nguyen-moc-frontier"
+        }
+      ]
+    },
+    {
+      "id": "nguyen-moc-frontier",
+      "chapter": "liet-hoa",
+      "title": "Bao vây Nguyên Mộc",
+      "mainTask": 12,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 9,
+            "room": 1,
+            "group": 1
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 12
+            },
+            {
+              "do": "startMain",
+              "task": 13
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "infiltrate-nguyen-moc-manor"
+        }
+      ]
+    },
+    {
+      "id": "infiltrate-nguyen-moc-manor",
+      "chapter": "liet-hoa",
+      "title": "Lẻn vào Dinh thự Trưởng thôn",
+      "mainTask": 13,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 11,
+            "room": 13,
+            "group": 0
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 13
+            },
+            {
+              "do": "startMain",
+              "task": 14
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "prepare-nguyen-moc-rescue"
+        }
+      ]
+    },
+    {
+      "id": "prepare-nguyen-moc-rescue",
+      "chapter": "liet-hoa",
+      "title": "Chuẩn bị cuộc chiến",
+      "mainTask": 14,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 11,
+            "room": 12,
+            "group": 0
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 14
+            },
+            {
+              "do": "startMain",
+              "task": 15
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "rescue-nguyen-moc-manor"
+        }
+      ]
+    },
+    {
+      "id": "rescue-nguyen-moc-manor",
+      "chapter": "liet-hoa",
+      "title": "Giải cứu người tại Dinh thự Trưởng thôn",
+      "mainTask": 15,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 11,
+            "room": 0,
+            "group": 0
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 15
+            },
+            {
+              "do": "startMain",
+              "task": 16
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "farewell-nguyen-moc"
+        }
+      ]
+    },
+    {
+      "id": "farewell-nguyen-moc",
+      "chapter": "liet-hoa",
+      "title": "Từ biệt",
+      "mainTask": 16,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 9,
+            "room": 1,
+            "group": 2
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 16
+            },
+            {
+              "do": "startMain",
+              "task": 17
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "explore-west-nguyen-moc"
+        }
+      ]
+    },
+    {
+      "id": "explore-west-nguyen-moc",
+      "chapter": "liet-hoa",
+      "title": "Thăm dò Nguyên Mộc Thành",
+      "mainTask": 17,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 3,
+            "room": 5,
+            "group": 0
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 17
+            },
+            {
+              "do": "startMain",
+              "task": 18
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "rejoin-yafei"
+        }
+      ]
+    },
+    {
+      "id": "rejoin-yafei",
+      "chapter": "liet-hoa",
+      "title": "Hội ngộ Yafei",
+      "mainTask": 18,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 3,
+            "room": 6,
+            "group": 3
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 18
+            },
+            {
+              "do": "startMain",
+              "task": 19
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "niem-tho-frontier"
+        }
+      ]
+    },
+    {
+      "id": "niem-tho-frontier",
+      "chapter": "liet-hoa",
+      "title": "Trợ giúp Jones thực hiện một việc",
+      "mainTask": 19,
+      "checkpoint": {
+        "scene": 4,
+        "room": 0,
+        "x": 48,
+        "y": 160,
+        "direction": 2
+      },
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 4,
+            "room": 5,
+            "group": 17
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 19
+            },
+            {
+              "do": "startMain",
+              "task": 20
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "exchange-niem-tho-egg"
+        }
+      ]
+    },
+    {
+      "id": "exchange-niem-tho-egg",
+      "chapter": "liet-hoa",
+      "title": "Trao đổi trứng sủng vật",
+      "mainTask": 20,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 4,
+            "room": 5,
+            "group": 18
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 20
+            },
+            {
+              "do": "startMain",
+              "task": 21
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "challenge-niem-tho-gym"
+        }
+      ]
+    },
+    {
+      "id": "challenge-niem-tho-gym",
+      "chapter": "liet-hoa",
+      "title": "Ở Niêm Thổ",
+      "mainTask": 21,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 9,
+            "room": 2,
+            "group": 1
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 21
+            },
+            {
+              "do": "startMain",
+              "task": 22
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "inspect-airship"
+        }
+      ]
+    },
+    {
+      "id": "inspect-airship",
+      "chapter": "liet-hoa",
+      "title": "Kiểm tra Phi Không Đĩnh",
+      "mainTask": 22,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 4,
+            "room": 8,
+            "group": 0
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 22
+            },
+            {
+              "do": "startMain",
+              "task": 23
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "return-to-niem-tho"
+        }
+      ]
+    },
+    {
+      "id": "return-to-niem-tho",
+      "chapter": "liet-hoa",
+      "title": "Trở lại Niêm Thổ",
+      "mainTask": 23,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 4,
+            "room": 5,
+            "group": 19
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 23
+            },
+            {
+              "do": "startMain",
+              "task": 24
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "road-to-hac-thach"
+        }
+      ]
+    },
+    {
+      "id": "road-to-hac-thach",
+      "chapter": "liet-hoa",
+      "title": "Đến Hắc Thạch",
+      "mainTask": 24,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 5,
+            "room": 1,
+            "group": 0
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 24
+            },
+            {
+              "do": "startMain",
+              "task": 25
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "hac-thach-frontier"
+        }
+      ]
+    },
+    {
+      "id": "hac-thach-frontier",
+      "chapter": "liet-hoa",
+      "title": "Thăm dò Hắc Thạch Thành",
+      "mainTask": 25,
+      "checkpoint": {
+        "scene": 5,
+        "room": 1,
+        "x": 230,
+        "y": 128,
+        "direction": 1
+      },
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 9,
+            "room": 4,
+            "group": 3
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 25
+            },
+            {
+              "do": "startMain",
+              "task": 26
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "meet-yafei-hac-thach"
+        }
+      ]
+    },
+    {
+      "id": "meet-yafei-hac-thach",
+      "chapter": "liet-hoa",
+      "title": "Hội ngộ Yafei",
+      "mainTask": 26,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 5,
+            "room": 3,
+            "group": 4
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 26
+            },
+            {
+              "do": "startMain",
+              "task": 27
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "hac-thach-lower-gym"
+        }
+      ]
+    },
+    {
+      "id": "hac-thach-lower-gym",
+      "chapter": "liet-hoa",
+      "title": "Huy hiệu đá",
+      "mainTask": 27,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 9,
+            "room": 5,
+            "group": 3
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 27
+            },
+            {
+              "do": "startMain",
+              "task": 28
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "hac-tinh-thach"
+        }
+      ]
+    },
+    {
+      "id": "hac-tinh-thach",
+      "chapter": "liet-hoa",
+      "title": "Hắc Tinh Thạch",
+      "mainTask": 28,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 5,
+            "room": 6,
+            "group": 1
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 28
+            },
+            {
+              "do": "startMain",
+              "task": 29
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "phoenix-relic"
+        }
+      ]
+    },
+    {
+      "id": "phoenix-relic",
+      "chapter": "liet-hoa",
+      "title": "Liệt Hỏa gia hộ",
+      "mainTask": 29,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 1,
+            "room": 3,
+            "group": 6
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 29
+            },
+            {
+              "do": "startMain",
+              "task": 30
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "tran-phong-story"
+        }
+      ]
+    },
+    {
+      "id": "tran-phong-story",
+      "chapter": "liet-hoa",
+      "title": "Câu chuyện Trần Phong",
+      "mainTask": 30,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 1,
+            "room": 0,
+            "group": 10
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 30
+            },
+            {
+              "do": "startMain",
+              "task": 31
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "sophie-hoa-tinh-thach"
+        }
+      ]
+    },
+    {
+      "id": "sophie-hoa-tinh-thach",
+      "chapter": "liet-hoa",
+      "title": "Sophie và Hỏa Tinh Thạch",
+      "mainTask": 31,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 6,
+            "room": 1,
+            "group": 0
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 31
+            },
+            {
+              "do": "startMain",
+              "task": 32
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "chase-airship"
+        }
+      ]
+    },
+    {
+      "id": "chase-airship",
+      "chapter": "liet-hoa",
+      "title": "Phá hư Phi Không Đĩnh",
+      "mainTask": 32,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 7,
+            "room": 6,
+            "group": 4
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 32
+            },
+            {
+              "do": "startMain",
+              "task": 33
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "thien-khong-chi-thanh"
+        }
+      ]
+    },
+    {
+      "id": "thien-khong-chi-thanh",
+      "chapter": "liet-hoa",
+      "title": "Thiên Không Chi Thành",
+      "mainTask": 33,
+      "checkpoint": {
+        "scene": 7,
+        "room": 6,
+        "x": 48,
+        "y": 192,
+        "direction": 1
+      },
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 7,
+            "room": 3,
+            "group": 2
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 33
+            },
+            {
+              "do": "startMain",
+              "task": 34
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "den-thanh-dien"
+        }
+      ]
+    },
+    {
+      "id": "den-thanh-dien",
+      "chapter": "liet-hoa",
+      "title": "Đến Thánh Điện",
+      "mainTask": 34,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 11,
+            "room": 3,
+            "group": 2
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 34
+            },
+            {
+              "do": "startMain",
+              "task": 35
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "loi-ky-lan"
+        }
+      ]
+    },
+    {
+      "id": "loi-ky-lan",
+      "chapter": "liet-hoa",
+      "title": "Thượng cùng bích lạc 1",
+      "mainTask": 35,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 10,
+            "room": 4,
+            "group": 3
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 35
+            },
+            {
+              "do": "startMain",
+              "task": 36
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "doi-canh-troi-xanh"
+        }
+      ]
+    },
+    {
+      "id": "doi-canh-troi-xanh",
+      "chapter": "liet-hoa",
+      "title": "Đôi cánh của trời xanh",
+      "mainTask": 36,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 11,
+            "room": 3,
+            "group": 4
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 36
+            },
+            {
+              "do": "startMain",
+              "task": 37
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "minh-vuong-long"
+        }
+      ]
+    },
+    {
+      "id": "minh-vuong-long",
+      "chapter": "liet-hoa",
+      "title": "Thượng cùng bích lạc 2",
+      "mainTask": 37,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 10,
+            "room": 8,
+            "group": 0
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 37
+            },
+            {
+              "do": "startMain",
+              "task": 38
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "tinh-van-hac"
+        }
+      ]
+    },
+    {
+      "id": "tinh-van-hac",
+      "chapter": "liet-hoa",
+      "title": "Thượng cùng bích lạc 3",
+      "mainTask": 38,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 10,
+            "room": 7,
+            "group": 0
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 38
+            },
+            {
+              "do": "startMain",
+              "task": 39
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "thien-khong-gia-ho"
+        }
+      ]
+    },
+    {
+      "id": "thien-khong-gia-ho",
+      "chapter": "liet-hoa",
+      "title": "Thiên không gia hộ",
+      "mainTask": 39,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 11,
+            "room": 3,
+            "group": 5
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 39
+            },
+            {
+              "do": "startMain",
+              "task": 40
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "u-linh-chuong"
+        }
+      ]
+    },
+    {
+      "id": "u-linh-chuong",
+      "chapter": "liet-hoa",
+      "title": "U Linh Chương",
+      "mainTask": 40,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 9,
+            "room": 7,
+            "group": 4
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 40
+            },
+            {
+              "do": "startMain",
+              "task": 41
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "thien-dia-truyen-tong"
+        }
+      ]
+    },
+    {
+      "id": "thien-dia-truyen-tong",
+      "chapter": "liet-hoa",
+      "title": "Thiên Địa truyền tống",
+      "mainTask": 41,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 7,
+            "room": 0,
+            "group": 0
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 41
+            },
+            {
+              "do": "startMain",
+              "task": 42
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "xuong-hoang-tuyen-1"
+        }
+      ]
+    },
+    {
+      "id": "xuong-hoang-tuyen-1",
+      "chapter": "liet-hoa",
+      "title": "Xuống hoàng tuyền 1",
+      "mainTask": 42,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 10,
+            "room": 11,
+            "group": 0
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 42
+            },
+            {
+              "do": "startMain",
+              "task": 43
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "xuong-hoang-tuyen-2"
+        }
+      ]
+    },
+    {
+      "id": "xuong-hoang-tuyen-2",
+      "chapter": "liet-hoa",
+      "title": "Xuống hoàng tuyền 2",
+      "mainTask": 43,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 10,
+            "room": 12,
+            "group": 1
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 43
+            },
+            {
+              "do": "startMain",
+              "task": 44
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "xuong-hoang-tuyen-3"
+        }
+      ]
+    },
+    {
+      "id": "xuong-hoang-tuyen-3",
+      "chapter": "liet-hoa",
+      "title": "Xuống hoàng tuyền 3",
+      "mainTask": 44,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 10,
+            "room": 0,
+            "group": 1
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 44
+            },
+            {
+              "do": "startMain",
+              "task": 45
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "thoi-gian-truyen-tong"
+        }
+      ]
+    },
+    {
+      "id": "thoi-gian-truyen-tong",
+      "chapter": "liet-hoa",
+      "title": "Thời gian truyền tống",
+      "mainTask": 45,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 7,
+            "room": 0,
+            "group": 1
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 45
+            },
+            {
+              "do": "startMain",
+              "task": 46
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "thien-dia-chi-so"
+        }
+      ]
+    },
+    {
+      "id": "thien-dia-chi-so",
+      "chapter": "liet-hoa",
+      "title": "Thiên Địa chi sơ",
+      "mainTask": 46,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 8,
+            "room": 0,
+            "group": 4
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 46
+            },
+            {
+              "do": "startMain",
+              "task": 47
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "bat-dau-va-ket-thuc"
+        }
+      ]
+    },
+    {
+      "id": "bat-dau-va-ket-thuc",
+      "chapter": "liet-hoa",
+      "title": "Bắt đầu và kết thúc",
+      "mainTask": 47,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 8,
+            "room": 6,
+            "group": 0
+          },
+          "do": [
+            {
+              "do": "cutscene",
+              "route": "ancient-temple-finale"
+            }
+          ],
+          "to": "co-dai-than-dien"
+        }
+      ]
+    },
+    {
+      "id": "co-dai-than-dien",
+      "chapter": "liet-hoa",
+      "title": "Bắt đầu và kết thúc",
+      "mainTask": 47,
+      "exits": [
+        {
+          "on": {
+            "kind": "cutsceneEnd",
+            "route": "ancient-temple-finale"
+          },
+          "do": [
+            {
+              "do": "warp",
+              "to": {
+                "scene": 7,
+                "room": 2,
+                "x": 255,
+                "y": 224,
+                "direction": 1
+              }
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "tro-ve-hien-tai"
+        }
+      ]
+    },
+    {
+      "id": "tro-ve-hien-tai",
+      "chapter": "liet-hoa",
+      "title": "Bắt đầu và kết thúc",
+      "mainTask": 47,
+      "exits": [
+        {
+          "on": {
+            "kind": "eventComplete",
+            "scene": 1,
+            "room": 2,
+            "group": 4
+          },
+          "do": [
+            {
+              "do": "completeMain",
+              "task": 47
+            },
+            {
+              "do": "startMain",
+              "task": 48
+            },
+            {
+              "do": "save"
+            }
+          ],
+          "to": "huan-luyen-su-xuat-sac"
+        }
+      ]
+    },
+    {
+      "id": "huan-luyen-su-xuat-sac",
+      "chapter": "liet-hoa",
+      "title": "Huấn luyện sư xuất sắc",
+      "mainTask": 48,
+      "ending": true,
+      "checkpoint": {
+        "scene": 1,
+        "room": 2,
+        "x": 120,
+        "y": 200,
+        "direction": 0
+      }
+    }
+  ]
+}

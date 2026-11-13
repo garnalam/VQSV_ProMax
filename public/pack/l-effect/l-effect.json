@@ -1,0 +1,14 @@
+{
+ "source": "VqsvBattleRuntime.tickP7LEffect / VqsvBattleRenderer.drawState1LEffect",
+ "species": {
+  "0": {"speffect": 27, "visual": 86, "drawAfter": false, "state1Ticks": [2, 2, 2, 2, 2, 2, 2, 2, 4]},
+  "10": {"speffect": 28, "visual": 96, "drawAfter": true, "state1Ticks": [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]},
+  "62": {"speffect": 24, "visual": 148, "drawAfter": false, "state1Ticks": [2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]},
+  "75": {"speffect": 20, "visual": 161, "drawAfter": false, "state1Ticks": [2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]},
+  "87": {"speffect": 21, "visual": 173, "drawAfter": false, "state1Ticks": [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]},
+  "91": {"speffect": 26, "visual": 177, "drawAfter": false, "state1Ticks": [2, 2, 1, 1, 1, 1]},
+  "92": {"speffect": 25, "visual": 178, "drawAfter": false, "state1Ticks": [2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1]},
+  "97": {"speffect": 23, "visual": 183, "drawAfter": false, "state1Ticks": [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]},
+  "98": {"speffect": 23, "visual": 184, "drawAfter": false, "state1Ticks": [2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1]}
+ }
+}
