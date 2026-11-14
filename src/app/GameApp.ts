@@ -16,8 +16,7 @@ import { BootScreen } from "../screens/BootScreen";
 import { NewGameScreen } from "../screens/NewGameScreen";
 import { TitleScreen } from "../screens/TitleScreen";
 import { TitleFlowModel, type StartRequest } from "../screens/title/TitleFlowModel";
-import type { Account } from "../account/AccountService";
-import { RemoteAccountService } from "../account/RemoteAccountService";
+import { LocalAccountService } from "../account/AccountService";
 import type { SaveService } from "../persistence/SaveService";
 import { LoginOverlay } from "./LoginOverlay";
 import { TouchGamepad } from "../core/input/TouchGamepad";
@@ -31,8 +30,7 @@ export class GameApp {
   private readonly input = new InputState();
   private readonly screens = new ScreenManager();
   private readonly gameplayClock = new GameplayClock();
-  private readonly accounts = new RemoteAccountService();
-  private account: Account | null = null;
+  private readonly accounts = new LocalAccountService();
   private saves = new SaveRepository();
   private login: LoginOverlay | null = null;
   private activeSaveService: SaveService | null = null;
@@ -141,17 +139,17 @@ export class GameApp {
   }
 
   private showLogin(): void {
-    const authenticate = async (mode: "login" | "register", email: string, password: string) => {
-      this.account = await this.accounts[mode](email, password);
+    const authenticate = async (mode: "login" | "register", username: string, password: string) => {
+      const account = await this.accounts[mode](username, password);
+      this.saves = this.accounts.saves(account);
       await this.showTitle(true);
       this.input.cancelForFocusLoss();
       this.login?.hide();
       this.audio?.chooseMusic(true);
     };
     this.login = new LoginOverlay(document.body, {
-      identity: "email",
-      login: (email, password) => authenticate("login", email, password),
-      register: (email, password) => authenticate("register", email, password),
+      login: (username, password) => authenticate("login", username, password),
+      register: (username, password) => authenticate("register", username, password),
       firstGesture: () => this.audio?.chooseMusic(true),
       volume: {
         level: () => this.audio?.volumeLevel() ?? 0,
@@ -220,7 +218,6 @@ export class GameApp {
     this.switching = true;
     try {
       await this.activeSaveService?.flush();
-      if (this.account) this.saves = this.accounts.saves(this.account);
       const model = new TitleFlowModel(
         await this.saves.hasValidSave(),
         await this.saves.hasAnySave(),
@@ -243,8 +240,7 @@ export class GameApp {
     if (!this.gameAssets || !this.assets || this.switching) return;
     this.switching = true;
     try {
-      const saves =
-        request.loadSave && this.account ? this.accounts.saves(this.account) : this.saves;
+      const saves = this.saves;
       const save = request.loadSave ? await saves.load() : undefined;
       if (request.loadSave && !save) {
         await this.showTitle();
@@ -259,7 +255,6 @@ export class GameApp {
         () => void this.showTitle(),
         save,
       );
-      this.saves = saves;
       this.activeSaveService = game.saveService;
       this.gameplayClock.setSpeedX2(request.speedX2);
       this.screens.replace(this.wireGameplay(game));
