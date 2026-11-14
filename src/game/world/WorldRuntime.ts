@@ -121,6 +121,7 @@ import {
 import { EventStateLedger } from "./EventStateLedger";
 import { BattleRandom } from "../battle/BattleRandom";
 import { MapLoadingRuntime } from "./MapLoadingRuntime";
+import { safeRoomArrival, wasBlockedArrival } from "./RoomArrivalSafety";
 import { WorldEventDispatcher, type WorldView } from "./WorldEventDispatcher";
 import {
   settledActorStates,
@@ -789,6 +790,8 @@ export class WorldRuntime {
   mapLoading: MapLoadingRuntime | null = null;
   /** `session.world.useMap`: false until a room has actually been loaded, so the first one is a change. */
   private mapLoaded = false;
+  private arrivalSafety: "entry" | "resume" | null = null;
+  private resumedPosition: { x: number; y: number } | null = null;
   /**
    * JavaSE's one lazily-seeded source stream (`VqsvSourceRandom.lazySourceSeeded`). The port runs it
    * from the fixed battle seed, one stream per world, so the same room sequence always draws the
@@ -988,6 +991,7 @@ export class WorldRuntime {
       this.savePoint.x,
       this.savePoint.y,
       this.savePoint.direction,
+      save ? "resume" : null,
     );
     if (save) {
       this.repairStrandedSave();
@@ -1729,10 +1733,14 @@ export class WorldRuntime {
     const loading = this.mapLoading;
     if (!loading) return false;
     if (loading.tick()) {
-      if (!loading.active && this.currentRoomReady()) this.mapLoading = null;
+      if (!loading.active && this.currentRoomReady()) {
+        this.checkRoomArrival();
+        this.mapLoading = null;
+      }
       return true;
     }
     if (!this.currentRoomReady()) return true;
+    this.checkRoomArrival();
     this.mapLoading = null;
     return false;
   }
@@ -2393,17 +2401,25 @@ export class WorldRuntime {
   private respawnAfterLoss(): void {
     const destination = battleLossRecovery(this.recoveryCheckpoint, this.sceneId, this.roomIndex);
     if (destination.scene === 98 && destination.room === 50) {
-      this.loadRoom(98, 50, 310, 359, DIRECTION_DOWN);
+      this.loadRoom(98, 50, 310, 359, DIRECTION_DOWN, "entry");
       return;
     }
     const target = this.sources.room(destination.scene, destination.room);
-    const arrival = target && transitionArrivalForTarget(this.sources.registry, target, destination);
+    const arrival =
+      target && transitionArrivalForTarget(this.sources.registry, target, destination);
     if (arrival) {
-      this.loadRoom(destination.scene, destination.room, arrival.x, arrival.y, arrival.direction);
+      this.loadRoom(
+        destination.scene,
+        destination.room,
+        arrival.x,
+        arrival.y,
+        arrival.direction,
+        "entry",
+      );
       return;
     }
     const point = this.savePoint;
-    this.loadRoom(point.scene, point.room, point.x, point.y, point.direction);
+    this.loadRoom(point.scene, point.room, point.x, point.y, point.direction, "resume");
   }
   private view(activation: boolean): WorldView {
     return {
@@ -2454,7 +2470,14 @@ export class WorldRuntime {
     if (!arrival) return null;
     this.dispatcher.markArrival(door);
     const from = { scene: this.sceneId, room: this.roomIndex };
-    this.loadRoom(door.target.scene, door.target.room, arrival.x, arrival.y, arrival.direction);
+    this.loadRoom(
+      door.target.scene,
+      door.target.room,
+      arrival.x,
+      arrival.y,
+      arrival.direction,
+      "entry",
+    );
     this.reconcilePlatformArrival(from, door.target.actor);
     if (this.sceneId === 7 && this.roomIndex === 4) this.reconcilePlatformsForSide(false);
     return null;
@@ -2474,7 +2497,7 @@ export class WorldRuntime {
     const row = roomDoorRow(this.sources.registry, scene, room, entry);
     if (!row) return null;
     const arrival = roomDoorArrival(row);
-    this.loadRoom(scene, room, arrival.x, arrival.y, arrival.direction);
+    this.loadRoom(scene, room, arrival.x, arrival.y, arrival.direction, "entry");
     return null;
   }
   /**
@@ -2489,7 +2512,14 @@ export class WorldRuntime {
       this.sources.prepareRoom?.(scene, room);
       return null;
     }
-    this.loadRoom(scene, room, portal.arrival.x, portal.arrival.y, portal.arrival.direction);
+    this.loadRoom(
+      scene,
+      room,
+      portal.arrival.x,
+      portal.arrival.y,
+      portal.arrival.direction,
+      "entry",
+    );
     return null;
   }
   private startEvent(trigger: WorldEventTrigger): WorldAction | null {
@@ -3435,10 +3465,22 @@ export class WorldRuntime {
     }
     // A room whose collision has not arrived yet holds the hero still rather than failing.
     const asset = this.sources.room(this.sceneId, this.roomIndex);
-    if (!asset || !this.sources.collision(asset.mapId)) return false;
+    const map = asset && this.sources.collision(asset.mapId);
+    if (!map) return false;
     // `tryStartSourceLeafRide`: stepping onto a platform that can sail that way boards it.
     if (!this.hasHaiAuFlight() && this.startPlatformRide(intent)) return true;
     if (!this.hasHaiAuFlight() && this.trySummonLeaf(intent)) return false;
+    const resumed = this.resumedPosition;
+    this.resumedPosition = null;
+    if (
+      resumed?.x === this.player.x &&
+      resumed.y === this.player.y &&
+      this.repairRoomPosition(map, true)
+    ) {
+      this.roomEntry = { x: this.player.x, y: this.player.y };
+      this.saveRequested = true;
+      return false;
+    }
     const ride = this.meta.campaign.ride,
       // `VqsvFreeWorldRuntime`: Liệt Hỏa's Hải âu flies (Cầu Vồng's sky ride keeps its gates).
       haiAuFlight =
@@ -3456,7 +3498,7 @@ export class WorldRuntime {
           ? this.haiAuFlightStep(intent)
           : this.constrainCauVongStep(
               stepWithTerrain(
-                this.currentMap(),
+                map,
                 this.player.x,
                 this.player.y,
                 intent,
@@ -3649,6 +3691,7 @@ export class WorldRuntime {
       ...vortex.from,
       target: { ...vortex.from.target, actor: vortex.to.actorId },
     });
+    this.repairRoomPosition(this.currentMap(), true);
     this.vortex = null;
   }
   /** `applySourceSpinFrame`: the hero turns to `floorMod(direction, 4)` (left draws right mirrored). */
@@ -7347,7 +7390,48 @@ export class WorldRuntime {
       throw new Error(`World room ${this.sceneId}:${this.roomIndex} has no source map collision`);
     return map;
   }
-  private loadRoom(scene: number, room: number, x: number, y: number, direction: number): void {
+  private checkRoomArrival(): void {
+    const safety = this.arrivalSafety;
+    if (!safety) return;
+    const asset = this.sources.room(this.sceneId, this.roomIndex);
+    const map = asset && this.sources.collision(asset.mapId);
+    if (!map) return;
+    this.arrivalSafety = null;
+    if (safety === "resume" && !wasBlockedArrival(this.sceneId, this.roomIndex, this.player)) {
+      // Let room events inspect their authored coordinates before checking an old save on movement.
+      this.resumedPosition = { x: this.player.x, y: this.player.y };
+      return;
+    }
+    if (this.repairRoomPosition(map, false)) this.roomEntry = { x: this.player.x, y: this.player.y };
+  }
+  private repairRoomPosition(map: MapCollision, preserveEscapable: boolean): boolean {
+    if (this.hasHaiAuFlight()) return false;
+    const player = this.player;
+    const arrival = safeRoomArrival(
+      map,
+      player,
+      this.playerMoveSpeed,
+      this.movementTerrain,
+      this.sceneId !== 98 && this.flags.terrainBadgeGatedOpen(),
+      this.sceneId === 98,
+      preserveEscapable,
+      (x, y, direction, speed) => this.actorBlocksMove(x, y, direction, speed),
+    );
+    if (!arrival) return false;
+    Object.assign(player, arrival);
+    if (this.savePoint.scene === this.sceneId && this.savePoint.room === this.roomIndex)
+      Object.assign(this.savePoint, arrival);
+    this.centerCamera();
+    return true;
+  }
+  private loadRoom(
+    scene: number,
+    room: number,
+    x: number,
+    y: number,
+    direction: number,
+    safety: "entry" | "resume" | null = null,
+  ): void {
     // Every way into a room — a door, a story load, a warp, a save — starts its map fetch here;
     // the map-loading screen holds until it has arrived.
     if (this.sources.roomReady && !this.sources.roomReady(scene, room))
@@ -7486,6 +7570,9 @@ export class WorldRuntime {
       ])
         this.sources.prepareRoom(target.scene, target.room);
     this.hud.showRoomTitle(this.sources.roomName?.(scene, room) ?? "");
+    this.resumedPosition = null;
+    this.arrivalSafety = safety;
+    this.checkRoomArrival();
     this.centerCamera();
     // `loadCanonicalRoom`'s gate: a different room — or the first room of the session, which is a
     // change because no map was loaded yet — gets the source loading screen.

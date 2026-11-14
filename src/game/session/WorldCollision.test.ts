@@ -39,7 +39,7 @@ const { scene1Save } = await import("../../dev/parityCheckpoints");
 const { SCENE1_RESUME } = await import("../../persistence/save/migrations");
 const { GameplayHost, gameplaySources } = await import("./GameplayHost");
 const { BADGE_MOC_QUY } = await import("../world/WorldFlags");
-const { DIRECTION_UP, DIRECTION_DOWN } = await import("../world/MapCollision");
+const { DIRECTION_UP, DIRECTION_DOWN, terrainAtWorld } = await import("../world/MapCollision");
 type GameSave = import("../../persistence/save/GameSave").GameSave;
 type Host = InstanceType<typeof GameplayHost>;
 
@@ -115,6 +115,62 @@ function hold(host: Host, key: "holdUp" | "holdDown" | "holdLeft" | "holdRight",
 /** The save a reload of this session would open (the menu's Lưu dữ liệu). */
 function snapshot(host: Host): GameSave {
   return host.snapshot(host.world!);
+}
+
+describe("room arrivals on blocked terrain", () => {
+  it("lands on walkable ground after the forest door opens the dock room", async () => {
+    await assets.prepareRoom(11, 7);
+    const host = await standAt(baseSave(), 1, 4, 426, 113, DIRECTION_UP);
+    const world = host.world!;
+    host.step([]);
+    expect([world.sceneId, world.roomIndex]).toEqual([11, 7]);
+    while (host.mapLoadingActive) host.step([]);
+    expectClearFootprint(world);
+    const start = [world.player.x, world.player.y];
+    for (const key of ["holdUp", "holdDown", "holdLeft", "holdRight"] as const) {
+      host.step([key]);
+      if (start[0] !== world.player.x || start[1] !== world.player.y) break;
+    }
+    expect([world.player.x, world.player.y]).not.toEqual(start);
+  });
+
+  it("frees the hero after a gym vortex drops him in a wall", async () => {
+    const host = await standAt(baseSave({}, 31), 9, 6, 136, 328, DIRECTION_UP);
+    const world = host.world!;
+    const vortex = world.actors.get(3)!;
+    Object.assign(world.player, { x: vortex.x, y: vortex.y });
+    for (let i = 0; i < 37; i++) host.step([]);
+    expect([world.sceneId, world.roomIndex]).toEqual([9, 6]);
+    expectClearFootprint(world);
+  });
+
+  it.each([
+    [11, 7, 176, 112],
+    [7, 12, 192, 48],
+    [9, 6, 168, 224],
+    [10, 7, 264, 368],
+    [11, 0, 40, 256],
+  ])("repairs a save in a wall in room %i:%i", async (scene, room, x, y) => {
+    const host = await standAt(baseSave(), scene, room, x, y, DIRECTION_DOWN);
+    expectClearFootprint(host.world!);
+    expect(host.snapshot(host.world!).location).toMatchObject({ sceneId: scene, roomIndex: room });
+  });
+
+  it("frees a save trapped away from a door's exact arrival when the player walks", async () => {
+    const host = await standAt(baseSave(), 11, 7, 176, 114, DIRECTION_DOWN);
+    const world = host.world!;
+    expect(world.player).toMatchObject({ x: 176, y: 114 });
+    host.step(["holdDown"]);
+    expectClearFootprint(world);
+  });
+});
+
+function expectClearFootprint(world: NonNullable<Host["world"]>): void {
+  const asset = assets.getWorldRoom(world.sceneId, world.roomIndex)!;
+  const map = assets.getCollision(asset.mapId)!;
+  for (const dx of [-8, 0, 7])
+    for (const dy of [-8, 0, 7])
+      expect(terrainAtWorld(map, world.player.x + dx, world.player.y + dy)).toBe(0);
 }
 
 describe("WorldEngine actor collision (VqsvFreeWorldRuntime.actorLookup)", () => {
