@@ -109,10 +109,9 @@ export type RuntimeStoryEvent =
    */
   | { type: "countText"; speaker: string; template: string; counter: number }
   /**
-   * op83 `[yes, no]`, Jones' exchange (`NiemThoC2Runtime.JonesExchange`): JavaSE turns the source's
-   * yes/no into a four-row menu — the source egg for the yes branch's op31 money (`pay`), the two
-   * V4 eggs bought outright (then the group completes at `done`), or leave (`leave`: the no
-   * branch's op42, without its farewell line). `next` holds the raw record numbers until compiled.
+   * op83 `[yes, no]`, Jones' exchange (`NiemThoC2Runtime.JonesExchange`): buy an ordinary
+   * egg for the yes branch's op31 money (`pay`), or leave via the no branch (`leave`).
+   * `next` holds the raw record numbers until compiled.
    */
   | {
       type: "eggExchange";
@@ -120,7 +119,6 @@ export type RuntimeStoryEvent =
       cost: number;
       pay: number;
       leave: number;
-      done: number;
     }
   /**
    * op88 `[target, _]` (`NiemThoC1Runtime.Task9Challenge`): with six pets in the party and the Pet
@@ -334,7 +332,6 @@ export class SourceOpcodeInterpreter {
           cost: payment.amount,
           pay,
           leave: at(no + 1),
-          done,
         };
       } else if (branch.event.type === "waitForActor")
         events[branch.at] = {
@@ -619,7 +616,6 @@ export class SourceOpcodeInterpreter {
           cost: 0,
           pay: 0,
           leave: 0,
-          done: 0,
         },
       ];
     if (opcode === 88) return [{ type: "petsFull", next: s[0] ?? 0 }];

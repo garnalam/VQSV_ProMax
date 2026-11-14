@@ -259,6 +259,12 @@ import {
   SUMMON_MENU_BASE,
   SummoningOwner,
   summoningRoom,
+  KIM_DIEM_AMULET_ID,
+  KIM_DIEM_BANK_CAPACITY,
+  KIM_DIEM_BATTLE_KEY,
+  KIM_DIEM_REWARD_RECEIPT,
+  KIM_DIEM_ROOM,
+  SUMMON_PREFIX,
   type CauVongSummoningDocument,
   type SummonWorld,
 } from "./CauVongSummoning";
@@ -424,7 +430,7 @@ import {
   type CauVongIncubation,
   type CauVongIncubationResult,
 } from "../campaign/CauVongIncubator";
-import { eggTarget } from "../campaign/EggService";
+import { eggTarget, rollHatchNature } from "../campaign/EggService";
 import {
   activeCharmValue,
   craftCharm,
@@ -911,7 +917,8 @@ export class WorldRuntime {
     // `SaveSessionSnapshotMapper`: every pet the session owns is collected, whatever the save says.
     this.collection = new PetCollection(save?.collection);
     this.playTimeSaved = Math.max(0, save?.playTimeMillis ?? 0);
-    for (const pet of this.pets) this.collection.markCollected(pet.speciesId);
+    for (const pet of [...this.pets, ...this.campaign.petBank])
+      this.collection.markCollected(pet.speciesId, pet.nature);
     this.flags.restore(save?.world);
     this.flags.activeTask = save?.progress.activeTask ?? initial.activeTask;
     this.flags.setMainTaskProgress(save?.progress.mainTaskProgress ?? initial.mainTaskProgress);
@@ -1103,7 +1110,7 @@ export class WorldRuntime {
         state: this.cauVongIncubation,
         roster: this.pets,
         bank: this.meta.campaign.petBank,
-        bankCapacity: petBankCapacity(this.meta.campaign.petBankExpansionPurchases),
+        bankCapacity: this.petBankCapacity(),
         recipe: (item) => eggs.find((row) => row.itemId === item)?.incubator,
         count: (material) => this.cauVongMaterialCount(material.id),
         remove: (material, count) => {
@@ -1111,8 +1118,11 @@ export class WorldRuntime {
           const key = String(material.id);
           this.bag.materials[key] = Math.max(0, (this.bag.materials[key] ?? 0) - count);
         },
-        create: (species, level) => this.createHatchedPet(species, level),
-        markCollected: (species) => this.collection.markCollected(species),
+        create: (species, level) =>
+          this.createHatchedPet(species, level, (lane, bound) =>
+            this.worldRandomBounded(lane, bound),
+          ),
+        markCollected: (species, nature) => this.collection.markCollected(species, nature),
       },
       slot,
     );
@@ -1357,14 +1367,32 @@ export class WorldRuntime {
       Date.now(),
     );
   }
-  /**
-   * `sourceHatchedPet`: `PetSourceAdapter.create(0, species, 5, -1, 2, element * 10, -1)` — level 5,
-   * the species' resolved quality, nature 2, and (unified skill profile) its level-5 learnset.
-   */
-  createHatchedPet(speciesId: number, level = 5): SavedPet | undefined {
+  kimDiemAmuletEquipped(): boolean {
+    return (
+      this.bag.equipment.includes(KIM_DIEM_AMULET_ID) &&
+      this.pets.some((pet) => pet.heldEquipmentId === KIM_DIEM_AMULET_ID)
+    );
+  }
+
+  kimDiemRewardClaimed(): boolean {
+    return this.eventState.sourceEventStateComplete(98, KIM_DIEM_ROOM, KIM_DIEM_REWARD_RECEIPT);
+  }
+
+  petBankCapacity(): number {
+    return this.kimDiemRewardClaimed()
+      ? KIM_DIEM_BANK_CAPACITY
+      : petBankCapacity(this.meta.campaign.petBankExpansionPurchases);
+  }
+
+  /** `sourceHatchedPet`: the incubation level, the species' quality and the rolled nature. */
+  createHatchedPet(
+    speciesId: number,
+    level: number,
+    draw: (lane: string, bound: number) => number,
+  ): SavedPet | undefined {
     const species = this.sources.petStats.speciesRow(speciesId);
     if (!species) return undefined;
-    const nature = 2,
+    const nature = rollHatchNature(draw, this.kimDiemAmuletEquipped()),
       quality = this.sources.petStats.resolveQuality(speciesId, -1),
       initial = this.sources.battle?.progression.initialSkills(speciesId, level) ?? [],
       skillIds = initial.length ? initial : [species.element * 10],
@@ -1675,7 +1703,7 @@ export class WorldRuntime {
     this.synchronizeDivineSeal();
     if (this.sceneId === 98) this.tickCauVongPresentation();
     // Every owned pet is collected (`markCollected` on a grant, a hatch, an evolution...).
-    for (const pet of this.pets) this.collection.markCollected(pet.speciesId);
+    for (const pet of this.pets) this.collection.markCollected(pet.speciesId, pet.nature);
     this.hud.tick(this.talkPrompt?.actorId ?? -1);
     this.presentationTick++;
     // While an event group runs it steps the hero itself: he is the record the group walks around
@@ -1788,8 +1816,10 @@ export class WorldRuntime {
             );
         }
         // `markCollected(caught.speciesId)`, before the storage decision: a released catch counts.
-        if (battle.settlement?.caught)
-          this.collection.markCollected(battle.settlement.caught.pet.speciesId);
+        if (battle.settlement?.caught) {
+          const { speciesId, nature } = battle.settlement.caught.pet;
+          this.collection.markCollected(speciesId, nature);
+        }
         const repeatable = this.repeatableBattle;
         this.payVictoryReward(battle);
         // What the story director hears: the group fought here and whether it was won.
@@ -1830,7 +1860,8 @@ export class WorldRuntime {
           };
           this.fourGatesFight = null;
           this.setPhase("freeworld");
-          return "autosave";
+          // Save Kim Diễm only after his win or retry marker has replaced the battle marker.
+          return this.fourGatesPending.key === KIM_DIEM_BATTLE_KEY ? null : "autosave";
         }
         if (this.lockeBattle) {
           // `handleBattleResult` runs once the world is back; the settlement healed the party.
@@ -2480,22 +2511,8 @@ export class WorldRuntime {
           return counter === 0 ? [collected, Math.max(0, SPECIES_COUNT - collected)] : ["", ""];
         },
         canPay: (amount) => this.currency.money >= amount,
-        exchangeEggs: () =>
-          (this.sources.campaignSystems?.eggs ?? []).flatMap((egg) =>
-            egg.price === undefined
-              ? []
-              : [{ itemId: egg.itemId, name: egg.name, price: egg.price }],
-          ),
-        buyEgg: (itemId, price) => {
-          if (this.currency.money < price) return false;
-          this.currency.money -= price;
-          this.bag.specials.push(itemId);
-          return true;
-        },
         petStorageFull: () =>
-          this.pets.length >= 6 &&
-          this.meta.campaign.petBank.length >=
-            petBankCapacity(this.meta.campaign.petBankExpansionPurchases),
+          this.pets.length >= 6 && this.meta.campaign.petBank.length >= this.petBankCapacity(),
         worldHook: (hook, elapsed) =>
           hook.startsWith("cauVong.")
             ? this.cauVongHook(hook, elapsed)
@@ -2876,39 +2893,33 @@ export class WorldRuntime {
       this.currency.money = Math.max(0, this.currency.money + repeatableReward);
       return;
     }
-    if (this.wildBattle && battle.core) {
-      const enemy = battle.core.enemySetup(battle.core.activeMember("enemy"));
-      this.currency.money = Math.max(
-        0,
-        this.currency.money + wildVictoryMoney(enemy.level, enemy.quality),
-      );
-      this.currency.badges += wildVictoryBadges(
-        this.sourceRandom.next("battle.wildVictory.badge", 100),
-      );
-      return;
-    }
-    const npc = npcVictoryMoney(row);
+    const npc = this.wildBattle ? null : npcVictoryMoney(row);
     if (npc !== null) {
       this.currency.money = Math.max(0, this.currency.money + npc);
       return;
     }
     const core = battle.core;
-    if (!isWildEncounter(row) || !core) return;
+    if ((!this.wildBattle && !isWildEncounter(row)) || !core) return;
     const enemy = core.enemySetup(core.activeMember("enemy"));
     this.currency.money = Math.max(
       0,
       this.currency.money + wildVictoryMoney(enemy.level, enemy.quality),
     );
-    this.currency.badges += wildVictoryBadges(
-      this.sourceRandom.next("battle.wildVictory.badge", 100),
+    this.currency.badges = Math.min(
+      0x7fffffff,
+      this.currency.badges +
+        wildVictoryBadges(this.sourceRandom.next("battle.wildVictory.badge", 100)) +
+        (this.kimDiemAmuletEquipped() ? 1 : 0),
     );
   }
   /** `VqsvBattleRuntime` start: every species of the enemy party is seen. */
   private markEnemiesSeen(battle: BattleRuntime): void {
     const core = battle.core;
     if (!core) return;
-    for (let member = 0; member < core.partySize("enemy"); member++)
-      this.collection.markSeen(core.enemySetup(member).speciesId);
+    for (let member = 0; member < core.partySize("enemy"); member++) {
+      const { speciesId, nature } = core.enemySetup(member);
+      this.collection.markSeen(speciesId, nature);
+    }
   }
   /**
    * op18 mode 0, `game.j.c(id, n, 2)`: an equipment id (below 12) is owned once; a material adds
@@ -4417,11 +4428,7 @@ export class WorldRuntime {
   }
   /** `CauVongDormPetQuest.hasSpace(s, 1)`: the roster or the bank takes one more. */
   private petHasSpace(): boolean {
-    return (
-      this.pets.length < 6 ||
-      this.meta.campaign.petBank.length <
-        petBankCapacity(this.meta.campaign.petBankExpansionPurchases)
-    );
+    return this.pets.length < 6 || this.meta.campaign.petBank.length < this.petBankCapacity();
   }
   /** The party as the boy's trade reads it. */
   private openingPets() {
@@ -5284,11 +5291,7 @@ export class WorldRuntime {
       // `CauVongDormPetQuest.hasSpace`: free party slots plus free bank slots.
       petRoom: (count) =>
         Math.max(0, 6 - this.pets.length) +
-          Math.max(
-            0,
-            petBankCapacity(this.meta.campaign.petBankExpansionPurchases) -
-              this.meta.campaign.petBank.length,
-          ) >=
+          Math.max(0, this.petBankCapacity() - this.meta.campaign.petBank.length) >=
         count,
       releaseSnake: () => {
         // `returnPet`: `confirmRelease` of the lowest Thiết Giáp Xà (122); another living pet stays.
@@ -5438,8 +5441,19 @@ export class WorldRuntime {
   private tickFourGatesPending(): boolean {
     const owner = this.fourGates(),
       pending = this.fourGatesPending;
+    if (!owner || !pending) {
+      this.fourGatesPending = null;
+      return false;
+    }
+    if (pending.kind === "result" && pending.key === KIM_DIEM_BATTLE_KEY) {
+      if (
+        !pending.won &&
+        !this.warp({ scene: 98, room: SKY_HUB_ROOM, x: 310, y: 359, direction: 0 })
+      )
+        return true;
+      this.saveRequested = true;
+    }
     this.fourGatesPending = null;
-    if (!owner || !pending) return false;
     const w = this.fourGatesWorld(false),
       room = this.roomIndex;
     const forest = this.forest(),
@@ -5505,10 +5519,12 @@ export class WorldRuntime {
           return this.runFourGatesAction(forest.answer(w, pending.owner, pending.selected, room));
         return this.runFourGatesAction(owner.answer(w, pending.owner, pending.selected, room));
       case "result":
-        if (summoning?.owns(pending.key))
-          return this.runFourGatesAction(
+        if (summoning?.owns(pending.key)) {
+          const played = this.runFourGatesAction(
             summoning.result(this.summonWorld(false), pending.key, pending.won),
           );
+          return played || pending.key === KIM_DIEM_BATTLE_KEY;
+        }
         if (sea?.owns(pending.key))
           return this.runFourGatesAction(
             sea.result(this.northSeaWorld(false), pending.key, pending.won),
@@ -5768,6 +5784,25 @@ export class WorldRuntime {
   private summonWorld(confirm: boolean): SummonWorld {
     return {
       ...this.branchWorld(confirm),
+      kimDiemRewardFits: () =>
+        this.kimDiemRewardClaimed() ||
+        Math.max(0, 6 - this.pets.length) +
+          Math.max(0, KIM_DIEM_BANK_CAPACITY - this.campaign.petBank.length) >=
+          2,
+      grantKimDiemReward: () => {
+        if (this.kimDiemRewardClaimed()) return;
+        const pets = [280, 278].map((id) => this.buildSourcePet(id, 5, 5, 0, 0, []));
+        for (const pet of pets) {
+          const storage = this.pets.length < 6 ? this.pets : this.campaign.petBank;
+          pet.slot = storage.length;
+          storage.push(pet);
+          this.collection.markCollected(pet.speciesId);
+        }
+        if (!this.bag.equipment.includes(KIM_DIEM_AMULET_ID))
+          this.bag.equipment.push(KIM_DIEM_AMULET_ID);
+        this.eventState.op14CompleteEvent(98, KIM_DIEM_ROOM, KIM_DIEM_REWARD_RECEIPT);
+        this.saveRequested = true;
+      },
       grant: (cue) => {
         const stage = this.cauVongStageOver(this.actors);
         if (cue.k === "pet") stage.pet(cue);
@@ -6183,7 +6218,12 @@ export class WorldRuntime {
     if (!services || !request || this.pets.length === 0) return false;
     this.battle = createSourceTrainerBattle(
       services,
-      request,
+      {
+        ...request,
+        enemyStatPercent: key.startsWith(`${SUMMON_PREFIX}51:`)
+          ? (speciesId) => this.divineSeal?.percent(speciesId, true) ?? 100
+          : undefined,
+      },
       this.pets,
       this.inventory,
       this.battleItemCatalog(),
@@ -7143,6 +7183,7 @@ export class WorldRuntime {
         rideSuppressesEncounters: rideSuppressesEncounters(this.meta.campaign.ride.activeIndex),
         mainTaskProgress: this.flags.mainTaskProgress,
         rareEncounterBonusPercent: this.activeCharmValue("RARE_ENCOUNTER"),
+        shinyGearEquipped: this.kimDiemAmuletEquipped(),
       },
       {
         temporaryActorTicks: this.temporaryActorTicks,

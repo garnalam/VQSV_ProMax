@@ -147,7 +147,7 @@ export class BranchesOwner {
         if (!done(67, 2)) return this.reply("AUX_REQUEST_REPLY");
         return this.text(aux.rows["1"]);
       }
-      if (done(67, 2) && !done(67, 3) && this.tiles(w, 10, 5, 16, 9)) return this.part("AUX_OPEN");
+      if (!done(67, 3) && this.tiles(w, 10, 5, 16, 9)) return this.part("AUX_OPEN");
       if (done(67, 3) && this.tiles(w, 13, 7, 13, 7) && w.confirm) return this.choose(w, 67, 4);
       if (w.requested(aux.mei)) {
         if (done(67, aux.receipt)) return this.text(aux.rows["3"]);

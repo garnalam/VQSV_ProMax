@@ -63,6 +63,7 @@ export type AcademyBattle = {
   /** The request's AI tier; `profile` is that tier's row, resolved when the pack loads. */
   tier?: string;
   profile?: PackBattleAiProfile;
+  encounterStats?: { hp: number; attack: number; defense: number; speed: number };
 };
 export type CauVongAcademyDocument = {
   parts: Record<string, CauVongPart>;

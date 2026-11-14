@@ -176,6 +176,21 @@ describe("the aux room 67 and its lifts (CauVongMissingBranchesRuntime)", () => 
     expect(world.roomIndex).toBe(50);
   });
 
+  it("opens the vine to the sky hub without showing the flower pet", () => {
+    const world = enter(67, 250, 139, [
+      [67, 0],
+      [67, 1],
+    ]);
+    expect(world.pets.some((pet) => pet.speciesId === AUX.wanted)).toBe(false);
+    world.tick([]);
+    expect(showed(play(world), "AUX_OPEN")).toBe(true);
+    expect(done(world, 67, 2)).toBe(false);
+    press(world, 13, 7);
+    expect(options(world)).toEqual(BRANCHES.menus["4"]);
+    choose(world, 0);
+    expect(world.roomIndex).toBe(50);
+  });
+
   it("Tiểu Mỹ's notice, 43's quest scroll for 7 badges, and the scroll traded for the egg", () => {
     const world = enter(67, 230, 330, [[67, 0]]);
     expect(showed(ask(world, AUX.mei), "SCROLL_NOTICE")).toBe(true);

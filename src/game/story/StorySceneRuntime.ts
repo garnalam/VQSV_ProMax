@@ -98,10 +98,6 @@ export type StorySceneServices = {
   sourceCounts?: (counter: number) => readonly [number | string, number | string];
   /** `sourceCanPay(s, 0, amount)`: the hero holds this much money. */
   canPay?: (amount: number) => boolean;
-  /** The V4 eggs Jones sells (`V4EggCatalog`), in menu order. */
-  exchangeEggs?: () => readonly { itemId: number; name: string; price: number }[];
-  /** `V4EggShopService.purchase`: pay the price and add the egg; false when the money is short. */
-  buyEgg?: (itemId: number, price: number) => boolean;
   /** `roster.size() >= 6 && PetBankExpansionService.full(...)`: no room for another pet. */
   petStorageFull?: () => boolean;
   /** A room runtime's script step: still running, done, or the branch to take. */
@@ -1125,16 +1121,8 @@ export class StorySceneRuntime {
     e: Extract<StoryEvent, { type: "eggExchange" }>,
     elapsed: number,
   ): StoryEventStepResult {
-    const eggs = this.services.exchangeEggs?.() ?? [];
     if (elapsed === 1)
-      this.choice = {
-        options: [
-          `Trứng sủng vật - ${e.cost}`,
-          ...eggs.map((egg) => `${egg.name} - ${egg.price}`),
-          "Rời đi",
-        ],
-        index: 0,
-      };
+      this.choice = { options: [`Trứng sủng vật - ${e.cost}`, "Rời đi"], index: 0 };
     if (!this.activeState.confirmed) return "continue";
     const pending = this.activeState.exchangeNext;
     if (pending !== undefined) {
@@ -1150,12 +1138,6 @@ export class StorySceneRuntime {
     if (picked === 0) {
       if (this.services.canPay?.(e.cost) ?? true) next = e.pay;
       else notice = `Không đủ ${e.cost} tiền để đổi trứng sủng vật.`;
-    } else if (picked <= eggs.length) {
-      const egg = eggs[picked - 1];
-      if (this.services.buyEgg?.(egg.itemId, egg.price)) {
-        notice = `Đã mua ${egg.name} x1.`;
-        next = e.done;
-      } else notice = `Không đủ kim tiền để mua ${egg.name}.`;
     }
     if (notice === null) {
       this.interpreter.jumpTo(next);

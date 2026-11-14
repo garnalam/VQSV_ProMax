@@ -100,7 +100,7 @@ export type CauVongHatchContext = {
   remove: (material: CauVongMaterial, count: number) => void;
   /** `PetSourceAdapter.create(0, species, level, -1, 2, element * 10, -1)`. */
   create: (speciesId: number, level: number) => SavedPet | undefined;
-  markCollected: (speciesId: number) => void;
+  markCollected: (speciesId: number, nature?: number) => void;
 };
 export type CauVongMaterial = NonNullable<EggCatalogRow["incubator"]>["materials"][number];
 
@@ -129,6 +129,6 @@ export function hatchCauVongSlot(
   into.push(pet);
   for (const material of recipe.materials) c.remove(material, material.count);
   clearCauVongSlot(c.state, slot);
-  c.markCollected(pet.speciesId);
+  c.markCollected(pet.speciesId, pet.nature);
   return { result: "HATCHED", pet, storage: storage === 0 ? 0 : 1 };
 }

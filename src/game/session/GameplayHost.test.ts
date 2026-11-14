@@ -138,6 +138,7 @@ describe("campaign service wiring", () => {
 
     // The bag's egg: item 14 puts it in the incubator and fills it, "Ap trung" hatches it.
     world.bag.specials.push(0);
+    world.campaign.egg.drawSeed = "9"; // egg.shinyChance rolls zero at draw index 0.
     world.inventory["14"] = 1;
     const bag = host.panel.bagSource,
       boost = bag.rows(0).find((row) => row.id === 14)!;
@@ -151,7 +152,9 @@ describe("campaign service wiring", () => {
     expect(world.bag.specials).not.toContain(0);
     expect(world.campaign.egg).toMatchObject({ drawIndex: 1, type: 1, active: false });
     const hatched = world.pets[world.pets.length - 1];
-    expect([hatched.level, hatched.nature]).toEqual([5, 2]);
+    expect(hatched.level).toBe(5);
+    expect([7, 8, 9]).toContain(hatched.nature);
+    expect(world.collection.status(hatched.speciesId, hatched.nature)).toBe(2);
   });
 });
 

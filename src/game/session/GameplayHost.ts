@@ -114,7 +114,6 @@ import {
   claimDailyBadges,
   dailyBadgeStatus,
   depositPet,
-  petBankCapacity,
   purchasePetBankExpansion,
   releaseBankPet,
   withdrawPet,
@@ -126,6 +125,7 @@ import {
   eggHatchResultText,
   eggReady,
   hatchEgg,
+  previewDraw,
   selectForIncubation,
   type HatchContext,
 } from "../campaign/EggService";
@@ -451,7 +451,7 @@ export class GameplayHost {
         if (!world) return "invalid";
         // `equipmentEngine.applySelection`: the deposited pet's equipment goes back to the bag.
         const held = world.pets[index]?.heldEquipmentId ?? -1,
-          result = depositPet(world.pets, world.campaign, index);
+          result = depositPet(world.pets, world.campaign, index, world.petBankCapacity());
         if (result === "deposited" && held >= 0 && !world.bag.equipment.includes(held))
           world.bag.equipment.push(held);
         return result;
@@ -574,9 +574,11 @@ export class GameplayHost {
       expandBank: () => {
         const world = this.world;
         if (!world) return "Cần 10 Huy hiệu để mở thêm 100 ô kho Pet.";
+        if (world.kimDiemRewardClaimed())
+          return `Kho Pet đã đạt tối đa ${world.petBankCapacity()} ô.`;
         const result = purchasePetBankExpansion(world.campaign, world.currency);
         return result === "success"
-          ? `Mở rộng thành công. Kho Pet hiện có ${petBankCapacity(world.campaign.petBankExpansionPurchases)} ô.`
+          ? `Mở rộng thành công. Kho Pet hiện có ${world.petBankCapacity()} ô.`
           : result === "max"
             ? "Kho Pet đã đạt tối đa 400 ô."
             : "Cần 10 Huy hiệu để mở thêm 100 ô kho Pet.";
@@ -1413,15 +1415,16 @@ export class GameplayHost {
         egg,
         roster: world.pets,
         bank: world.campaign.petBank,
-        bankCapacity: petBankCapacity(world.campaign.petBankExpansionPurchases),
+        bankCapacity: world.petBankCapacity(),
         collected: (id) => world.collection.collected(id),
-        create: (id) => world.createHatchedPet(id),
+        create: (id) =>
+          world.createHatchedPet(id, 5, (lane, bound) => previewDraw(egg, lane, bound)),
         specials: world.bag.specials,
       },
       result = hatchEgg(context, kind, systems.eggTiers ?? { rates: [], species: [] });
     if (result.outcome === "not-ready") return EGG_TEXT.hatchNotReady;
     if (result.outcome !== "hatched") return null;
-    world.collection.markCollected(result.speciesId);
+    world.collection.markCollected(result.speciesId, result.nature);
     world.recordBattlePassEvent("EGG_HATCHED");
     const name =
       this.sources.world.petStats.speciesRow(result.speciesId)?.name ?? `Pet ${result.speciesId}`;

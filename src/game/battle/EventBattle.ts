@@ -9,6 +9,7 @@ import { AiV2EnemyController } from "./engine/AiV2EnemyController";
 import { BattleCore } from "./engine/BattleCore";
 import { BasicEnemyAi } from "./engine/EnemyController";
 import type { SavedPet } from "../../persistence/save/GameSave";
+import { DivinePetSeal } from "../pet/DivinePetSeal";
 import type { BattleContext } from "../story/SourceOpcodeInterpreter";
 import type { SourceItemData } from "../story/GameAssets";
 import type { GroupRef } from "../world/WorldEventCatalog";
@@ -352,6 +353,8 @@ export function createSourceTrainerBattle(
     quality?: number;
     skills?: readonly (readonly number[])[];
     profile?: PackBattleAiProfile;
+    encounterStats?: CombatantSetup["stats"];
+    enemyStatPercent?: (speciesId: number) => number;
   },
   party: SavedPet[],
   inventory: Record<string, number>,
@@ -368,6 +371,9 @@ export function createSourceTrainerBattle(
         request.quality ?? -1,
         nature,
       );
+      if (request.encounterStats) pet.stats = { ...request.encounterStats };
+      if (request.enemyStatPercent)
+        pet.stats = DivinePetSeal.scaleStats(pet.stats, request.enemyStatPercent(speciesId));
       const deck = request.skills?.[member];
       return deck && deck.length > 0 ? { ...pet, skillIds: [...deck] } : pet;
     }),

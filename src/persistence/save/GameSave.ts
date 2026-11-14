@@ -69,7 +69,7 @@ export type GameSave = {
   /** JavaSE inventory currency, used by skill relearn and shops. */
   currency?: { money: number; badges: number };
   /**
-   * JavaSE `progression.collection.snapshot()`: the Đồ giám state of species 0..275, 0 unseen,
+   * JavaSE `progression.collection.snapshot()`: species and Shiny form states, 0 unseen,
    * 1 seen, 2 collected.
    */
   collection?: number[];

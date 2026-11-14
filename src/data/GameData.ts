@@ -94,7 +94,12 @@ export type PackSpeciesGrowth =
       fiveStarLevelOne: number[];
       fiveStarLevelFifty: number[];
     }
-  | { kind: "authored-flat"; record: PackSpeciesRecordIdentity; stats: number[] };
+  | {
+      kind: "authored-flat";
+      record: PackSpeciesRecordIdentity;
+      stats: number[];
+      levelAtFullStats?: number;
+    };
 
 /** Which branch of `BattleSpeciesRow.rawStat` resolves this species' own-form stat. */
 export type PackSpeciesStatPath =

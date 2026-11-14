@@ -113,8 +113,12 @@ describe("the unified Item catalog behind the bag (VqsvSourceOps)", () => {
     ),
     bag = new BagCatalog(catalog.document, unified);
 
-  it("bakes JavaSE's 87 records, 25 aliases and their icons", () => {
-    expect(unified.records).toHaveLength(87);
+  it("bakes the JavaSE records, 25 aliases and their icons", () => {
+    expect(unified.records).toHaveLength(88);
+    expect(unified.byRuntime("EQUIPMENT", 6000)).toMatchObject({
+      key: "KIM-DIEM-VICTORY-EQUIPMENT",
+      icon: "icons/KIM-DIEM-VICTORY-EQUIPMENT.png",
+    });
     expect(unified.records.filter((r) => r.rainbowImported)).toHaveLength(35);
     expect(Object.keys(unified.document.aliases)).toHaveLength(25);
     // An alias resolves to its canonical record (CV "Đồ uống" is the Sandwich).

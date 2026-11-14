@@ -167,9 +167,13 @@ export class PetStatCalculator {
           growth.growthDenominator,
         );
       }
-      case "authored-flat":
-        // The custom bosses keep four constants and read no level or quality at all.
-        return growth.stats[this.statIndex(stat)];
+      case "authored-flat": {
+        const full = growth.stats[this.statIndex(stat)];
+        const cap = growth.levelAtFullStats;
+        return cap === undefined
+          ? full
+          : Math.max(1, Math.floor((full * Math.max(1, Math.min(level, cap))) / cap));
+      }
     }
   }
 

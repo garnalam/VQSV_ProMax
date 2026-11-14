@@ -137,8 +137,9 @@ export function depositPet(
   roster: SavedPet[],
   state: CampaignState,
   index: number,
+  capacity: number,
 ): "deposited" | "invalid" | "full" | "last-living" {
-  if (state.petBank.length >= petBankCapacity(state.petBankExpansionPurchases)) return "full";
+  if (state.petBank.length >= capacity) return "full";
   const pet = roster[index];
   if (!pet) return "invalid";
   if (!roster.some((other, at) => at !== index && living(other))) return "last-living";

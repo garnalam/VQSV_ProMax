@@ -141,7 +141,14 @@ export class BattleServices {
       new PetProgression(
         petStats,
         learnsets,
-        new Map(traits.map((row) => [row.speciesId, row.petKey])),
+        new Map([
+          ...traits.map((row) => [row.speciesId, row.petKey] as const),
+          ...species.rows.flatMap((row) =>
+            row.growth.kind === "authored-flat"
+              ? [[row.speciesId, row.growth.record.stableKey] as const]
+              : [],
+          ),
+        ]),
         (id) => rules.damage.skillRow(id)?.ppMax ?? 0,
         initialPools,
       ),
