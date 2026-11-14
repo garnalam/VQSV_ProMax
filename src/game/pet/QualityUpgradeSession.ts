@@ -26,6 +26,7 @@ export type QualitySessionWorld = {
   rules: QualityRules;
   /** `qualityUpgradeRandom.nextIntBounded(.., 10000)`. */
   roll: () => number;
+  onCommitted?: () => void;
 };
 
 export class QualityUpgradeSession {
@@ -215,5 +216,6 @@ export class QualityUpgradeSession {
     this.phase = 2;
     this.ticks = 0;
     this.status = "Đang mở khóa phẩm mới...";
+    this.world.onCommitted?.();
   }
 }

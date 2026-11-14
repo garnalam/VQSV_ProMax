@@ -12,7 +12,6 @@ const screen = (validSave = false, anySave = false) => {
       {} as BootAssets,
       model,
       (r) => started.push(r),
-      async () => {},
     );
   return { title, model, started };
 };

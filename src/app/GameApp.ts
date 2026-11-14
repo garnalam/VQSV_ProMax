@@ -16,13 +16,27 @@ import { BootScreen } from "../screens/BootScreen";
 import { NewGameScreen } from "../screens/NewGameScreen";
 import { TitleScreen } from "../screens/TitleScreen";
 import { TitleFlowModel, type StartRequest } from "../screens/title/TitleFlowModel";
+import type { Account } from "../account/AccountService";
+import { RemoteAccountService } from "../account/RemoteAccountService";
+import type { SaveService } from "../persistence/SaveService";
+import { LoginOverlay } from "./LoginOverlay";
+import { TouchGamepad } from "../core/input/TouchGamepad";
+import { fitStage } from "./StageLayout";
+import { mountFullscreenButton } from "./FullscreenButton";
+import "./login.css";
+import "./touch-controls.css";
 
 export class GameApp {
   private readonly renderer: CanvasRenderer;
   private readonly input = new InputState();
   private readonly screens = new ScreenManager();
   private readonly gameplayClock = new GameplayClock();
-  private readonly saves = new SaveRepository();
+  private readonly accounts = new RemoteAccountService();
+  private account: Account | null = null;
+  private saves = new SaveRepository();
+  private login: LoginOverlay | null = null;
+  private activeSaveService: SaveService | null = null;
+  private switching = false;
   private audio: AudioManager | null = null;
   private assets: BootAssets | null = null;
   private gameAssets: GameAssets | null = null;
@@ -37,6 +51,71 @@ export class GameApp {
     });
   }
   async start(): Promise<void> {
+    this.mountControls();
+    const ready = this.loadAssets();
+    await ready;
+    if (import.meta.env.PROD) this.showLogin();
+    if (import.meta.env.DEV && !(await this.enterParityCheckpoint()))
+      this.screens.replace(new BootScreen(this.assets!, (enabled) => this.enterTitle(enabled)));
+    window.addEventListener("keydown", (event) => {
+      if (event.code === "KeyM" && !event.repeat) this.audio?.toggleMute();
+    });
+    new GameLoop(
+      SIMULATION_STEP_MS,
+      () => {
+        const input = this.input.drainSnapshot();
+        if (this.switching || this.login?.visible) return;
+        this.gameplayClock.tick(
+          (input, sameFrame) => this.screens.tick(input, sameFrame),
+          input,
+          () => this.screens.speedX2Suppressed(),
+        );
+      },
+      (alpha) => this.screens.render(this.renderer, alpha),
+      () => this.screens.animating(),
+    ).start();
+  }
+
+  private mountControls(): void {
+    const app = document.querySelector<HTMLElement>("#app")!;
+    const stage = document.querySelector<HTMLElement>("#stage")!;
+    const left = document.createElement("div");
+    const right = document.createElement("div");
+    left.className = "touch-pad touch-pad-left";
+    right.className = "touch-pad touch-pad-right";
+    app.append(left, right);
+    const gamepad = new TouchGamepad(this.input, left, right);
+    mountFullscreenButton(document.body);
+
+    let touch = matchMedia("(pointer: coarse)").matches;
+    const layout = () => {
+      const style = getComputedStyle(app);
+      const width =
+        app.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+      const height =
+        app.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+      const fit = fitStage(width, height, touch);
+      app.dataset.layout = fit.mode;
+      stage.style.width = touch ? `${fit.width}px` : "";
+      stage.style.height = touch ? `${fit.height}px` : "";
+    };
+    layout();
+    window.addEventListener("resize", layout);
+    window.visualViewport?.addEventListener("resize", layout);
+    window.addEventListener(
+      "pointerdown",
+      (event) => {
+        if (!touch && event.pointerType === "touch") {
+          touch = true;
+          layout();
+        }
+      },
+      { capture: true },
+    );
+    window.addEventListener("pagehide", () => gamepad.releaseAll());
+  }
+
+  private async loadAssets(): Promise<void> {
     // The canvas has to show something while the pack arrives, so the loader draws over the whole
     // boot and hands the frame buffer to the first screen when the files are in.
     const progress = new BootProgress(),
@@ -59,23 +138,35 @@ export class GameApp {
     const assets = this.gameAssets!;
     this.renderer.hdTwin = (image) => assets.hdTwin(image);
     this.renderer.hdScale = assets.cauVongHd?.scale ?? 3;
-    if (!(await this.enterParityCheckpoint()))
-      this.screens.replace(new BootScreen(this.assets!, (enabled) => this.enterTitle(enabled)));
-    // M mutes and unmutes the game (remembered for the next visit).
-    window.addEventListener("keydown", (event) => {
-      if (event.code === "KeyM" && !event.repeat) this.audio?.toggleMute();
+  }
+
+  private showLogin(): void {
+    const authenticate = async (mode: "login" | "register", email: string, password: string) => {
+      this.account = await this.accounts[mode](email, password);
+      await this.showTitle(true);
+      this.input.cancelForFocusLoss();
+      this.login?.hide();
+      this.audio?.chooseMusic(true);
+    };
+    this.login = new LoginOverlay(document.body, {
+      identity: "email",
+      login: (email, password) => authenticate("login", email, password),
+      register: (email, password) => authenticate("register", email, password),
+      firstGesture: () => this.audio?.chooseMusic(true),
+      volume: {
+        level: () => this.audio?.volumeLevel() ?? 0,
+        setLevel: (level) => this.audio?.setVolumeLevel(level),
+      },
+      muted: {
+        get: () => this.audio?.volumeLevel() === 0,
+        toggle: () => this.audio?.toggleMute(),
+      },
+      speedX2: {
+        get: () => this.gameplayClock.isSpeedX2,
+        set: (on) => this.gameplayClock.setSpeedX2(on),
+      },
     });
-    new GameLoop(
-      SIMULATION_STEP_MS,
-      () =>
-        this.gameplayClock.tick(
-          (input) => this.screens.tick(input),
-          this.input.drainSnapshot(),
-          () => this.screens.speedX2Suppressed(),
-        ),
-      (alpha) => this.screens.render(this.renderer, alpha),
-      () => this.screens.animating(),
-    ).start();
+    this.login.show();
   }
 
   /**
@@ -124,42 +215,63 @@ export class GameApp {
     this.audio?.chooseMusic(enabled);
     void this.showTitle();
   }
-  private async showTitle(): Promise<void> {
-    this.gameplayClock.setSpeedX2(false);
-    this.audio?.playMenu();
+  private async showTitle(fromLogin = false): Promise<void> {
     if (!this.assets) return;
-    const model = new TitleFlowModel(
-      await this.saves.hasValidSave(),
-      await this.saves.hasAnySave(),
-    );
-    this.screens.replace(
-      new TitleScreen(
-        this.assets,
-        model,
-        (request) => this.startBoundary(request),
-        () => this.saves.deleteAll(),
-      ),
-    );
-  }
-  private async startBoundary(request: StartRequest): Promise<void> {
-    if (!this.gameAssets || !this.assets) return;
-    this.gameplayClock.setSpeedX2(request.speedX2);
-    const save = request.loadSave ? await this.saves.load() : undefined;
-    if (request.loadSave && !save) {
-      await this.showTitle();
-      return;
+    this.switching = true;
+    try {
+      await this.activeSaveService?.flush();
+      if (this.account) this.saves = this.accounts.saves(this.account);
+      const model = new TitleFlowModel(
+        await this.saves.hasValidSave(),
+        await this.saves.hasAnySave(),
+      );
+      this.activeSaveService = null;
+      model.speedX2 = fromLogin && this.gameplayClock.isSpeedX2;
+      this.gameplayClock.setSpeedX2(model.speedX2);
+      this.audio?.playMenu();
+      this.screens.replace(
+        new TitleScreen(this.assets, model, (request) => this.startBoundary(request, model)),
+      );
+    } catch (error) {
+      if (fromLogin) throw error;
+      this.reportLoadError(error);
+    } finally {
+      this.switching = false;
     }
-    this.screens.replace(
-      this.wireGameplay(
-        new NewGameScreen(
-          request.skipIntro,
-          this.gameAssets,
-          this.assets,
-          this.saves,
-          () => void this.showTitle(),
-          save,
-        ),
-      ),
-    );
+  }
+  private async startBoundary(request: StartRequest, model: TitleFlowModel): Promise<void> {
+    if (!this.gameAssets || !this.assets || this.switching) return;
+    this.switching = true;
+    try {
+      const saves =
+        request.loadSave && this.account ? this.accounts.saves(this.account) : this.saves;
+      const save = request.loadSave ? await saves.load() : undefined;
+      if (request.loadSave && !save) {
+        await this.showTitle();
+        return;
+      }
+      if (!request.loadSave && model.anySave) await saves.deleteAll();
+      const game = new NewGameScreen(
+        request.skipIntro,
+        this.gameAssets,
+        this.assets,
+        saves,
+        () => void this.showTitle(),
+        save,
+      );
+      this.saves = saves;
+      this.activeSaveService = game.saveService;
+      this.gameplayClock.setSpeedX2(request.speedX2);
+      this.screens.replace(this.wireGameplay(game));
+    } catch (error) {
+      model.mode = "menu";
+      this.reportLoadError(error);
+    } finally {
+      this.switching = false;
+    }
+  }
+
+  private reportLoadError(error: unknown): void {
+    window.alert(error instanceof Error ? error.message : "Không tải được bản lưu. Hãy thử lại.");
   }
 }

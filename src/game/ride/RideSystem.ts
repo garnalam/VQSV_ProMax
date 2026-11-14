@@ -116,12 +116,14 @@ export function roomAllowsRide(state: RideState, rideIndex: number): boolean {
   return rideIndex >= 0 && rideIndex < RIDE_COUNT && state.blocked[rideIndex] !== 1;
 }
 
-/** The baked `applyRoomPolicy` restrictions for a room. */
+/** The baked `applyRoomPolicy` restrictions with ProMax's Northern Sky rule. */
 export function roomRestrictions(
   doc: RideRoomsDocument | undefined,
   scene: number,
   room: number,
 ): number[] {
+  if (scene === 98 && room >= 24 && room <= 26)
+    return Array.from({ length: RIDE_COUNT }, (_, i) => (i === CV_SKY ? 0 : 1));
   const row = doc?.rooms[`${scene}:${room}`];
   return Array.from({ length: RIDE_COUNT }, (_, i) => (row ? (row[i] === 1 ? 1 : 0) : 1));
 }

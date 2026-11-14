@@ -127,6 +127,7 @@ import { WorldEventRuntime, type WorldEventEffects } from "./WorldEventRuntime";
 import {
   roomDoorArrival,
   roomDoorRow,
+  roomDoorTriggerRect,
   sourceDoors,
   sourceRoomDoors,
   sourceRoomPortals,
@@ -1899,6 +1900,8 @@ export class WorldRuntime {
           return null;
         }
         this.objectiveComplete = true;
+        if (!this.pets.some((pet) => pet.speciesId === this.data.opponent.id))
+          this.pets.push(this.petFromSource(this.data.opponent, this.pets.length));
         const opponent = this.actors.get(this.data.encounter.actorId);
         if (opponent) opponent.visible = false;
         this.completeBattleGroup();
@@ -2230,8 +2233,6 @@ export class WorldRuntime {
       y: this.player.y,
       direction: this.player.direction,
     };
-    if (this.objectiveComplete && !this.pets.some((pet) => pet.speciesId === this.data.opponent.id))
-      this.pets.push(this.petFromSource(this.data.opponent, this.pets.length));
     const elder = this.data.elderGroup,
       complete = elder
         ? this.eventState.sourceEventStateComplete(elder.scene, elder.room, elder.group)
@@ -4330,7 +4331,25 @@ export class WorldRuntime {
       if (action && this.runOpeningAction(action)) return this.takeSaveRequest();
     }
     const yard = academy && this.roomIndex === ACADEMY_ROOM;
+    // The North Sea office uses the two native east door tiles. Academy services
+    // and classrooms keep their own triggers.
+    const officeDoors = yard
+      ? sourceRoomDoors(this.sources.registry, this.sceneId, this.roomIndex).filter(
+          (door) => door.target.room === 27,
+        )
+      : [];
     const exit = (): PrepAction | AcademyAction => {
+      const office = officeDoors.find((door) =>
+        playerSourcePointInRect(this.player.x, this.player.y, roomDoorTriggerRect(door)),
+      );
+      if (office) {
+        const { scene, room, entry } = office.target;
+        const row = roomDoorRow(this.sources.registry, scene, room, entry);
+        if (row) {
+          const { x, y, direction } = roomDoorArrival(row);
+          return { kind: "exit", room, x, y, dir: direction };
+        }
+      }
       const ctx = yard || academyRoom ? this.openingContext(() => false, false) : null;
       return (
         (academy && academyRoom && ctx ? cauVongAcademyExit(this.roomIndex, ctx) : null) ??

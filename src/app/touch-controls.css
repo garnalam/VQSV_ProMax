@@ -1,0 +1,84 @@
+.touch-pad { display: none; }
+
+#app[data-layout="portrait"] {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: minmax(0, 1fr) 200px;
+}
+#app[data-layout="portrait"] #stage { grid-column: 1 / -1; grid-row: 1; }
+#app[data-layout="portrait"] .touch-pad { display: grid; align-content: start; align-self: start; grid-row: 2; margin: 0 4vw; }
+#app[data-layout="portrait"] .touch-pad-left { grid-column: 1; justify-self: start; }
+#app[data-layout="portrait"] .touch-pad-right { grid-column: 2; justify-self: end; }
+
+#app[data-layout="landscape"] { grid-template-columns: 150px minmax(0, 1fr) 150px; }
+#app[data-layout="landscape"] #stage { grid-column: 2; grid-row: 1; }
+#app[data-layout="landscape"] .touch-pad { display: grid; grid-row: 1; }
+#app[data-layout="landscape"] .touch-pad-left { grid-column: 1; }
+#app[data-layout="landscape"] .touch-pad-right { grid-column: 3; }
+
+.touch-pad {
+  gap: 12px;
+  color: #eee;
+  touch-action: none;
+  user-select: none;
+}
+.touch-pad button, #fullscreen {
+  border: 1px solid #ffffff20;
+  color: inherit;
+  background: #272727;
+  cursor: pointer;
+  touch-action: none;
+}
+.touch-pad .soft { width: 44px; height: 23px; padding: 0; border-radius: 999px; }
+.touch-pad-right .soft { justify-self: end; }
+.touch-pad .ab { position: relative; width: 95px; height: 96px; }
+.touch-pad .ab button { position: absolute; width: 44px; height: 44px; border-radius: 50%; font-weight: bold; }
+.touch-pad .a { right: 0; top: 12px; background: #403637; }
+.touch-pad .b { left: 6px; top: 44px; }
+.touch-pad .held { filter: brightness(1.4); }
+.touch-pad .joystick {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(70px, 34vw, 132px);
+  aspect-ratio: 1;
+  touch-action: none;
+  border: 1px solid #555;
+  border-radius: 50%;
+  background: radial-gradient(circle, #252525 58%, #111 62%, #292929 74%);
+}
+.touch-pad .knob {
+  width: 44%;
+  height: 44%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 33% 26%, #777, #555 55%, #373737);
+  box-shadow: 0 2px 5px #000b, inset 0 0 0 1px #7779;
+}
+.touch-pad .arrow {
+  position: absolute;
+  width: 8px;
+  height: 6px;
+  background: #858585;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.touch-pad .arrow.held { background: #ddd; }
+.touch-pad .up { top: 9%; }
+.touch-pad .down { bottom: 9%; transform: rotate(180deg); }
+.touch-pad .left { left: 9%; transform: rotate(-90deg); }
+.touch-pad .right { right: 9%; transform: rotate(90deg); }
+#fullscreen {
+  position: fixed;
+  z-index: 2;
+  top: max(10px, env(safe-area-inset-top));
+  right: max(10px, env(safe-area-inset-right));
+  display: grid;
+  place-items: center;
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #151c20b5;
+  color: #eee;
+}
+@media (pointer: coarse) {
+  #fullscreen { top: auto; bottom: max(8px, env(safe-area-inset-bottom)); width: 32px; height: 32px; }
+}

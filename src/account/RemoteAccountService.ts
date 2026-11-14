@@ -28,12 +28,11 @@ async function refusal(response: Response): Promise<AccountError> {
   }
   const code =
     response.status === 409 ? "exists" : response.status === 401 ? "wrongPassword" : "invalidName";
-  return new AccountError(code, message || `Máy chủ trả lỗi ${response.status}.`);
+  return new AccountError(code, message || `Máy chủ trả lỗi ${response.status}.`, response.status);
 }
 
 /**
- * Email accounts and saves kept on the Cloudflare server (the same D1 database the Java build
- * uses). The session lives in an HttpOnly cookie the server sets; nothing secret is kept here.
+ * Email accounts and saves kept by the same-origin API. The server sets the HttpOnly session cookie.
  */
 export class RemoteAccountService implements AccountService {
   constructor(private readonly api: ApiFetch = defaultFetch) {}
@@ -46,8 +45,31 @@ export class RemoteAccountService implements AccountService {
     return this.authenticate("login", email, password);
   }
 
-  saves(): SaveRepository {
-    return new SaveRepository(new RemoteSaveStore(this.api));
+  async current(): Promise<Account | null> {
+    const response = await this.api("/auth/me");
+    if (response.status === 401) return null;
+    if (!response.ok) throw await refusal(response);
+    const { user } = (await response.json()) as { user: { id: string; email: string } };
+    return { id: user.id, username: user.email };
+  }
+
+  async logout(account: Account): Promise<void> {
+    const response = await this.api("/auth/logout", {
+      method: "POST",
+      headers: { "x-vqsv-account": account.id },
+    });
+    if (response.status === 409) {
+      const { code } = await response.clone().json().catch(() => ({}));
+      if (code === "account_changed") return;
+    }
+    if (!response.ok && response.status !== 401) throw await refusal(response);
+  }
+
+  saves(account?: Account): SaveRepository {
+    const api: ApiFetch = account ? (path, init = {}) => this.api(path, {
+      ...init, headers: { ...Object.fromEntries(new Headers(init.headers)), "x-vqsv-account": account.id },
+    }) : this.api;
+    return new SaveRepository(new RemoteSaveStore(api));
   }
 
   /** The Java build's save text for this account, if it has one (to carry the player over). */
@@ -106,16 +128,15 @@ async function listSaves(api: ApiFetch): Promise<SaveRow[]> {
  */
 export class RemoteSaveStore implements SaveStore {
   private row: SaveRow | null | undefined;
-  private readonly cache = new Map<string, unknown>();
 
   constructor(private readonly api: ApiFetch = defaultFetch) {}
 
   async get(key: string): Promise<unknown> {
-    if (this.cache.has(key)) return structuredClone(this.cache.get(key));
     const row = await this.ownRow();
     let value: unknown;
     if (row && (key === "active" || key === "backup")) {
       const response = await this.api(`/saves/${row.id}${key === "backup" ? "/backup" : ""}`);
+      if (!response.ok && response.status !== 404) throw await refusal(response);
       if (response.ok) {
         try {
           value = JSON.parse(await response.text());
@@ -124,27 +145,27 @@ export class RemoteSaveStore implements SaveStore {
         }
       }
     }
-    this.cache.set(key, value);
     return structuredClone(value);
   }
 
   async putAll(entries: ReadonlyArray<readonly [string, unknown]>): Promise<void> {
     const active = entries.find(([key]) => key === "active");
     if (active) await this.upload(active[1]);
-    for (const [key, value] of entries) this.cache.set(key, structuredClone(value));
   }
 
   async clear(): Promise<void> {
     const row = await this.ownRow();
     if (row) {
-      const response = await this.api(`/saves/${row.id}`, { method: "DELETE" });
-      if (!response.ok && response.status !== 404) throw await refusal(response);
+      const response = await this.api(`/saves/${row.id}`, {
+        method: "DELETE",
+        headers: { "if-match": `"${row.revision}"` },
+      });
+      if (!response.ok) throw await refusal(response);
     }
     this.row = null;
-    this.cache.clear();
   }
 
-  private async upload(value: unknown, retried = false): Promise<void> {
+  private async upload(value: unknown): Promise<void> {
     const row = await this.ownRow(),
       form = new FormData();
     form.set(
@@ -159,11 +180,6 @@ export class RemoteSaveStore implements SaveStore {
       method: row ? "PUT" : "POST",
       body: form,
     });
-    if (response.status === 409 && !retried) {
-      // Another tab of the same player saved first: the newest play wins, as it does locally.
-      this.row = undefined;
-      return this.upload(value, true);
-    }
     if (!response.ok) throw await refusal(response);
     this.row = (await response.json()) as SaveRow;
   }

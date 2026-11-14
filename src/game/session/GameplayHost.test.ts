@@ -937,6 +937,34 @@ describe("free-world HUD (WorldUi, talk prompt)", () => {
     expect([host.panel.petStage, host.panel.selected]).toEqual(["list", 0]);
   });
 
+  it.each([
+    { roll: 0, outcome: "SUCCESS", stars: 3 },
+    { roll: 9999, outcome: "FAILURE", stars: 2 },
+  ])(
+    "saves a committed quality upgrade ($outcome) exactly once",
+    async ({ roll, outcome, stars }) => {
+      const { host, saves, repository } = session(freeWorld());
+      const world = host.world!;
+      vi.spyOn(world, "worldRandomBounded").mockReturnValue(roll);
+      world.pets.push({ ...world.pets[0], slot: 1, quality: 1, heldEquipmentId: 4 });
+      const upgrade = host.panel.petSource.openQuality(0)!;
+      upgrade.tick(["confirm"]);
+      upgrade.tick(["confirm"]);
+      upgrade.tick(["left"]);
+      upgrade.tick(["confirm"]);
+      expect(saves.pending).toBe(0);
+      for (let i = 0; i < 100 && !upgrade.result; i++) upgrade.tick([]);
+      expect(upgrade.result?.outcome).toBe(outcome);
+      expect(saves.pending).toBe(1);
+      for (let i = 0; i < 100; i++) upgrade.tick([]);
+      expect(saves.pending).toBe(1);
+      await saves.flush();
+      const persisted = await repository.load();
+      expect(persisted?.pets.map((pet) => pet.quality)).toEqual([stars]);
+      expect(persisted?.inventory.equipment).toContain(4);
+    },
+  );
+
   it("Vật phẩm trang sức puts a piece on, takes it from another pet, and takes it off", () => {
     const { host } = session(freeWorld());
     host.step([]);
@@ -971,6 +999,40 @@ describe("free-world HUD (WorldUi, talk prompt)", () => {
     expect(host.panel.petMessage?.text).toBe("Thành công dỡ xuống");
     expect(world.pets[0].heldEquipmentId).toBe(-1);
   });
+
+  it.each([
+    { x: 80, edge: 14, hover: false, equipped: 1 },
+    { x: 80, edge: 5, hover: true, equipped: 1 },
+    { x: 184, edge: 5, hover: false, equipped: -1 },
+  ])(
+    "uses the clicked equipment row at x=$x, edge=$edge, hover=$hover",
+    ({ x, edge, hover, equipped }) => {
+      const { host } = session(freeWorld());
+      host.step([]);
+      const world = host.world!;
+      world.bag.equipment.push(0, 1, 2, 3, 4, 5);
+      host.panel.openPets();
+      host.step(["confirm"]);
+      host.step(["down"]);
+      host.step(["down"]);
+      host.step(["confirm"]);
+      expect(host.panel.petStage).toBe("equipChoice");
+      const choice = sources.layouts.get("choice")!;
+      const row = choice.widget(16)!;
+      if (!host.pointerPress(x, row.y + edge)) host.pointer(x, row.y + edge);
+      if (hover) host.pointerMove(80, choice.widget(21)!.y + 5);
+      host.step([]);
+      expect(world.pets[0].heldEquipmentId).toBe(equipped);
+      if (equipped < 0) {
+        expect(host.panel.petChoiceView?.scroll).toBe(1);
+        const last = choice.widget(31)!;
+        expect(host.pointerPress(80, last.y + 5)).toBe(false);
+        host.pointer(80, last.y + 5);
+        host.step([]);
+        expect(world.pets[0].heldEquipmentId).toBe(5);
+      }
+    },
+  );
 
   it("Đồ giám: record.ui asks for the pet book, then petmap.ui and badge.ui navigate as JavaSE", () => {
     const { host } = session(freeWorld());

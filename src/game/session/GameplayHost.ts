@@ -1109,7 +1109,7 @@ export class GameplayHost {
       return true;
     }
     if (this.panelOpen) {
-      if (!this.panel.pressScrollbar(x, y)) return false;
+      if (!this.panel.pressScrollbar(x, y, this.panelPointerLayout())) return false;
       if (this.panel.scrollbarDragging) this.capture = "panel";
       return true;
     }
@@ -1654,6 +1654,7 @@ export class GameplayHost {
           maxHp: (pet) => services.partyMember(pet).stats.hp,
         },
         roll: () => world.worldRandomBounded("quality-upgrade", ROLL_BOUND),
+        onCommitted: () => this.saves.save(this.snapshot(world)),
       },
       main,
     );

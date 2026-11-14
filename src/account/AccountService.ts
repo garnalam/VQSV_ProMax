@@ -12,6 +12,7 @@ export class AccountError extends Error {
   constructor(
     readonly code: AccountErrorCode,
     readonly serverMessage?: string,
+    readonly status?: number,
   ) {
     super(serverMessage ?? code);
     this.name = "AccountError";

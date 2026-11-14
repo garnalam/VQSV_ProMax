@@ -13,12 +13,12 @@ export class GameplayClock {
     return this.speedX2;
   }
   tick(
-    tick: (input: InputSnapshot) => void,
+    tick: (input: InputSnapshot, sameFrame?: boolean) => void,
     input: InputSnapshot,
     speedX2Suppressed: () => boolean = () => false,
   ): void {
     tick(input);
     // `GameFacade`: the state on screen may hold the extra tick back (the map loading screen does).
-    if (this.speedX2 && !speedX2Suppressed()) tick(input.heldOnly());
+    if (this.speedX2 && !speedX2Suppressed()) tick(input.heldOnly(), true);
   }
 }

@@ -3,6 +3,9 @@ import { defineConfig } from "vitest/config";
 // `npm test` covers the web game only and needs nothing outside this folder. Checks that compare
 // the pack against the Java source tree live in oracle/ and run with `npm run test:oracle`.
 export default defineConfig({
+  build: {
+    rollupOptions: { input: { game: "index.html", account: "account.html" } },
+  },
   test: {
     include: [
       "src/**/*.test.ts",

@@ -1,0 +1,8 @@
+*
+!server/
+!server/**
+!src/
+!src/persistence/
+!src/persistence/save/
+!src/persistence/save/GameSave.ts
+!package.json

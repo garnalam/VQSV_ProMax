@@ -6,7 +6,6 @@ if (!canvas) throw new Error("Missing game canvas");
 // The sheet in index.html reports the code download; from here the canvas loader reports the files.
 document.getElementById("boot")?.remove();
 
-const app = new GameApp(canvas);
 window.addEventListener("vqsv-render-error", ((event: CustomEvent<string>) => {
   const context = canvas.getContext("2d");
   if (context) {
@@ -19,7 +18,7 @@ window.addEventListener("vqsv-render-error", ((event: CustomEvent<string>) => {
   }
 }) as EventListener);
 try {
-  await app.start();
+  await new GameApp(canvas).start();
 } catch (error) {
   console.error("VQSV_BOOT_FAILED", error);
   const context = canvas.getContext("2d");

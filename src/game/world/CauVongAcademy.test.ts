@@ -43,7 +43,7 @@ type OpeningDocument = import("./CauVongOpening").CauVongOpeningDocument;
 
 const pack = await Pack.load();
 const [boot, assets] = await Promise.all([loadBootAssets(pack), GameAssets.fromPack(pack)]);
-for (const room of [0, 1, 2, 3, 4, 7, 8, 59]) await assets.prepareRoom(98, room);
+for (const room of [0, 1, 2, 3, 4, 7, 8, 27, 59]) await assets.prepareRoom(98, room);
 
 const read = (file: string) =>
   JSON.parse(readFileSync(resolve(import.meta.dirname, "../../../public/pack", file), "utf8"));
@@ -193,6 +193,22 @@ describe("Cầu Vồng CV3 (nhập học và đời sống Học viện)", () =>
     expect(OPENING.quests.at(-3)).toMatchObject({ show: [3, 102], done: [9, 114] });
     expect(OPENING.quests.at(-2)).toMatchObject({ show: [9, 114], done: [61, 105] });
     expect(OPENING.quests.at(-1)).toMatchObject({ show: [48, 120], done: [30, 124] });
+  });
+
+  it.each([
+    [359, 619],
+    [379, 599],
+  ])("takes the academy's right exit at y=%i to the North Sea office", (y, arrivalY) => {
+    const world = enter(2, 530, y);
+    play(world);
+    expect(world.roomIndex).toBe(2);
+    for (let tick = 0; tick < 10 && world.roomIndex === 2; tick++) world.tick(["right"]);
+    expect([world.roomIndex, world.player.x, world.player.y, world.player.direction]).toEqual([
+      27,
+      30,
+      arrivalY,
+      1,
+    ]);
   });
 
   it("2 → 8: the doors open once registered; the preliminaries, a loss and the retry", () => {

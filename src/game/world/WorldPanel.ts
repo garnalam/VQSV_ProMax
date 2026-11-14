@@ -12,7 +12,12 @@ import { contains, PET_STATE, petIndexAt } from "../battle/BattleListLayout";
 import { SKILL_SLOTS } from "../battle/engine/PetProgression";
 import type { PendingSkillLearn } from "../../persistence/save/GameSave";
 import { PET_ITEM_USED, PET_PROMPT } from "../pet/PetScreen";
-import { CHOICE_VISIBLE_ROWS, type ChoiceRow } from "../../rendering/SourceChoiceRenderer";
+import {
+  CHOICE_THUMB_TRAVEL_HEIGHT,
+  CHOICE_VISIBLE_ROWS,
+  choiceVisibleStart,
+  type ChoiceRow,
+} from "../../rendering/SourceChoiceRenderer";
 import { SKILL_VISIBLE_ROWS, type SkillScreenView } from "../../rendering/SkillScreenRenderer";
 import type { SkillState } from "../pet/PetSkillPool";
 import type { QualityUpgradeSession } from "../pet/QualityUpgradeSession";
@@ -453,6 +458,7 @@ export class WorldPanel {
   private readonly pressed: InputCommand[] = [];
   /** Where the held scrollbar thumb was grabbed, or null. */
   private scrollGrab: number | null = null;
+  private choiceScrollBar: ScrollbarGeometry | undefined;
 
   /** Java's `open(Scene)`: the cursor survives a close, so re-opening resumes where it left off. */
   open(): void {
@@ -476,7 +482,7 @@ export class WorldPanel {
 
   close(): void {
     this.visible = false;
-    this.scrollGrab = null;
+    this.releaseScrollbar();
     this.pressed.length = 0;
     this.savePhase = 0;
     this.saveMessage = "";
@@ -3367,18 +3373,19 @@ export class WorldPanel {
   }
 
   private sourceChoiceIndexAt(layout: SourceUiLayout, x: number, y: number): number {
-    const choice = this.petStage === "itemChoice" ? this.itemChoice : this.equipChoice,
-      size = this.petChoiceView?.rows.length ?? 0;
+    const view = this.petChoiceView;
+    if (!view) return -1;
+    const start = choiceVisibleStart(view);
     for (let slot = 0; slot < CHOICE_VISIBLE_ROWS; slot++) {
       const row = layout.widget(11 + slot * 5),
-        index = choice.scroll + slot;
+        index = start + slot;
       if (
         row &&
-        index < size &&
-        x >= row.x - 4 &&
-        x <= row.x + 136 &&
-        y >= row.y - 2 &&
-        y <= row.y + 14
+        index < view.rows.length &&
+        x >= row.x &&
+        x < row.x + row.w &&
+        y >= row.y &&
+        y < row.y + row.h
       )
         return index;
     }
@@ -4030,6 +4037,7 @@ export class WorldPanel {
         return;
       }
       if (this.petStage === "itemChoice" || this.petStage === "equipChoice") {
+        if (this.pressed.includes("confirm")) return;
         const index = this.sourceChoiceIndexAt(layout, x, y),
           cursor = this.petStage === "itemChoice" ? this.itemChoice : this.equipChoice;
         if (index >= 0) cursor.selected = index;
@@ -4258,13 +4266,34 @@ export class WorldPanel {
   }
 
   /** `pointerPressedScrollbar`: the thumb is grabbed, the track pages. True when the bar took it. */
-  pressScrollbar(x: number, y: number): boolean {
+  pressScrollbar(x: number, y: number, layout?: SourceUiLayout): boolean {
+    this.releaseScrollbar();
+    const view = this.mode === "pet" && !this.petMessage ? this.petChoiceView : null;
+    const track = view && layout?.widget(50);
+    if (track && view.rows.length > CHOICE_VISIBLE_ROWS) {
+      this.choiceScrollBar = {
+        x: track.x,
+        y: track.y,
+        w: layout?.widget(51)?.w ?? track.w,
+        h: track.h,
+        rowCount: view.rows.length,
+        visibleRows: CHOICE_VISIBLE_ROWS,
+        minThumbHeight: CHOICE_THUMB_TRAVEL_HEIGHT,
+        fixedThumbHeight: CHOICE_THUMB_TRAVEL_HEIGHT,
+      };
+    }
     const bar = this.scrollbar;
     if (!bar) return false;
-    const pressed = pressScrollbar(x, y, this.listScroll, bar);
-    if (!pressed) return false;
+    const pressed = pressScrollbar(x, y, view?.scroll ?? this.listScroll, bar);
+    if (!pressed) {
+      this.choiceScrollBar = undefined;
+      return false;
+    }
     if ("drag" in pressed) this.scrollGrab = pressed.drag;
-    else this.applyScroll(pressed.scroll);
+    else {
+      this.applyScroll(pressed.scroll);
+      this.choiceScrollBar = undefined;
+    }
     return true;
   }
   get scrollbarDragging(): boolean {
@@ -4274,18 +4303,20 @@ export class WorldPanel {
   dragScrollbar(y: number): void {
     const bar = this.scrollbar;
     if (this.scrollGrab === null || !bar) {
-      this.scrollGrab = null;
+      this.releaseScrollbar();
       return;
     }
     this.applyScroll(dragScroll(y, this.scrollGrab, bar));
   }
   releaseScrollbar(): void {
     this.scrollGrab = null;
+    this.choiceScrollBar = undefined;
   }
 
   /** `scrollbarGeometry`: the game menu's and the task list's bars (the system menu has none). */
   private get scrollbar(): ScrollbarGeometry | undefined {
     if (!this.visible) return undefined;
+    if (this.mode === "pet" && this.petChoiceView) return this.choiceScrollBar;
     if (this.mode === "gamemenu")
       return {
         ...GAME_MENU_SCROLLBAR,
@@ -4302,6 +4333,17 @@ export class WorldPanel {
   }
   /** `applyScrollbarScroll`: move the window and pull the cursor back inside it. */
   private applyScroll(next: number): void {
+    if (this.choiceScrollBar) {
+      const cursor = this.petStage === "itemChoice" ? this.itemChoice : this.equipChoice;
+      cursor.scroll = next;
+      cursor.selected = clampIndexIntoVisible(
+        cursor.selected,
+        next,
+        this.choiceScrollBar.rowCount,
+        CHOICE_VISIBLE_ROWS,
+      );
+      return;
+    }
     const [rows, visible] =
       this.mode === "task"
         ? [this.taskRows.length, TASK_VISIBLE_ROWS]

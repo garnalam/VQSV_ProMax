@@ -31,7 +31,11 @@ describe("pack exclusivity", () => {
     for (const file of sourceFiles(srcRoot)) {
       if (file.startsWith(resolve(srcRoot, "pack"))) continue;
       const text = readFileSync(file, "utf8"),
-        hits = forbidden.filter(({ pattern }) => pattern.test(text)).map(({ name }) => name);
+        // Account traffic goes through the fixed /api boundary, not the resource pack. Its
+        // exception is for fetch only: images/audio and resource paths remain forbidden here.
+        hits = forbidden.filter(({ name, pattern }) =>
+          !(name === "fetch" && file === resolve(srcRoot, "account", "RemoteAccountService.ts")) && pattern.test(text)
+        ).map(({ name }) => name);
       if (hits.length > 0) offenders.push(`${file.slice(srcRoot.length + 1)}: ${hits.join(", ")}`);
     }
     expect(offenders, `only src/pack may load resources:\n  ${offenders.join("\n  ")}`).toEqual([]);

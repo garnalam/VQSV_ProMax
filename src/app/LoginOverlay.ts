@@ -173,6 +173,8 @@ export class LoginOverlay {
       if (this.mode === "login") await this.handlers.login(username, password);
       else await this.handlers.register(username, password);
       this.remember(username);
+      this.input("password").value = "";
+      this.input("confirm").value = "";
     } catch (error) {
       this.message(
         error instanceof AccountError ? accountMessage(error) : "Có lỗi, hãy thử lại.",
@@ -189,6 +191,7 @@ export class LoginOverlay {
     this.mode = mode;
     this.root.dataset.mode = mode;
     const register = mode === "register";
+    this.root.querySelector(".login-title")!.textContent = register ? "Tạo tài khoản" : "Đăng nhập";
     this.root.querySelector<HTMLButtonElement>(".primary")!.textContent = register
       ? "Đăng ký"
       : "Đăng nhập";

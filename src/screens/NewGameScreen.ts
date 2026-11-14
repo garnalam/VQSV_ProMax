@@ -160,7 +160,7 @@ export class NewGameScreen implements Screen {
    * One simulation tick (`GameplayState.tick`): the pointer press, if any, is applied first and may
    * add commands for this same tick; then the keyboard-derived commands run.
    */
-  tick(input: InputSnapshot): void {
+  tick(input: InputSnapshot, sameFrame = false): void {
     if (this.frozen) return;
     const pointer = input.pointer;
     // A press on a scrollbar is the bar's; any other press is a click.
@@ -188,11 +188,11 @@ export class NewGameScreen implements Screen {
     if (world && shortcuts.task) this.host.openTask(world);
     if (world && shortcuts.ride) this.host.pressRide(world);
     if (input.typedText) this.host.panel.typeText(input.typedText);
-    this.step([...gameplayCommands(input), ...panelSoftkeys, ...fromPointer]);
+    this.step([...gameplayCommands(input), ...panelSoftkeys, ...fromPointer], sameFrame);
   }
 
   /** Advance one tick with already-derived commands (also used by scripted traces). */
-  step(commands: InputCommand[]): void {
+  step(commands: InputCommand[], sameFrame = false): void {
     if (this.frozen) return;
     if (this.doubleBattle) {
       this.doubleBattle.handleInput(commands);
@@ -200,7 +200,9 @@ export class NewGameScreen implements Screen {
       return;
     }
     const before = this.motionTarget();
-    this.motion.capture(before?.actors ?? null, before?.camera ?? null, before?.actors.values());
+    // Both x2 ticks share one render interval, so keep the start of the first step.
+    if (!sameFrame)
+      this.motion.capture(before?.actors ?? null, before?.camera ?? null, before?.actors.values());
     const menu = this.menuOwnsInput();
     this.host.step(commands);
     this.emitSounds(commands, menu);

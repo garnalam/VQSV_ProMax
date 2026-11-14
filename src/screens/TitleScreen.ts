@@ -39,17 +39,14 @@ export class TitleScreen implements Screen {
     private readonly assets: BootAssets,
     readonly model: TitleFlowModel,
     private readonly start: (request: StartRequest) => void,
-    private readonly deleteSave: () => Promise<void>,
   ) {}
   tick(input: InputSnapshot): void {
     this.colorTick = (this.colorTick + 1) % OUTLINE.length;
     this.tickParticles();
     const command = this.command(input);
     if (!command) return;
-    const before = this.model.mode;
     const request =
       command === "toggleSpeed" ? (this.model.toggleSpeed(), null) : this.apply(command);
-    if (before === "overwrite" && this.model.mode === "skipIntro") void this.deleteSave();
     if (request) this.start(request);
   }
 
