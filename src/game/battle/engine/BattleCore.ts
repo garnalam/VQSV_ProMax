@@ -909,15 +909,20 @@ export class BattleCore {
   }
 
   private buildSide(id: SideId, setups: readonly CombatantSetup[]): Side {
+    const longUy =
+      id === "player" &&
+      this.setup.enemy.length === 1 &&
+      this.setup.enemy[0].speciesId === KIM_DIEM_LONG_VUONG_SPECIES;
     const party = setups.map((setup) => {
       const unit = this.rules.traits.unit({
         speciesId: setup.speciesId,
         ownerSide: id === "player" ? 0 : 1,
         formationSlot: SEAT_SLOT[id],
         base: setup.stats,
-        physicalTraitId: setup.physicalTraitId,
+        physicalTraitId: longUy ? undefined : setup.physicalTraitId,
         heldItemId: setup.heldItemId,
       });
+      if (longUy) unit.designTraitState.enabled = false;
       unit.restoreStatsForCheck();
       if (setup.hp !== undefined) unit.setHp(Math.max(0, Math.min(unit.maxHp(), setup.hp)));
       // `PetBattleAdapter.toBattleUnit(pet, 0, badges)`: the badge lands on a player pet as it is built.

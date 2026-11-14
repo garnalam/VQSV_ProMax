@@ -1044,7 +1044,11 @@ export class DesignTraitProjection {
    * that is refused instead.
    */
   private refuseSignatureConditionSource(unit: DesignTraitUnit, what: string): void {
-    if (this.mechanics.catalog.bySpecies(unit.speciesId) === undefined) return;
+    if (
+      !unit.designTraitState.enabled ||
+      this.mechanics.catalog.bySpecies(unit.speciesId) === undefined
+    )
+      return;
     throw new Error(
       `SignatureSkillMechanics.${what} reached species ${unit.speciesId} without the design trait` +
         " enabled, so it would read PetDesignSkillCatalog.conditionSource; that catalogue is a later slice",

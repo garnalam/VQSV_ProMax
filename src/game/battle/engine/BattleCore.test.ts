@@ -89,6 +89,29 @@ describe("BattleCore: a whole fight", () => {
     expect(() => core.submit({ kind: "skill", slot: 0 })).toThrow(BattleCommandError);
   });
 
+  it("suppresses the whole party's pet traits against Kim Diễm and keeps their skills", () => {
+    const player = [pet(68, { physicalTraitId: 2 }), pet(47, { physicalTraitId: 2 })];
+    const normal = fight({ kind: "trainer", player });
+    expect(rules.traits.enabled(normal.unit("player", 0))).toBe(true);
+    expect(normal.unit("player", 1).physicalTraitId).toBe(2);
+    const boss = fight({ kind: "trainer", player, enemy: [pet(280)] });
+    for (const [member, setup] of player.entries()) {
+      const unit = boss.unit("player", member);
+      expect(rules.traits.enabled(unit)).toBe(false);
+      expect(unit.physicalTraitId).toBe(-1);
+      expect(unit.skillIds[0]).toBe(setup.skillIds[0]);
+      expect(boss.setupOf("player", member).physicalTraitId).toBe(2);
+    }
+    expect(boss.submit({ kind: "skill", slot: 0 })).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "skill",
+          seat: expect.objectContaining({ side: "player" }),
+        }),
+      ]),
+    );
+  });
+
   it("the faster pet strikes first; an equal pair is settled by the fight's roll", () => {
     const fast = fight({
       enemy: [pet(34, { stats: { hp: 300, attack: 120, defense: 40, speed: 90 } })],
