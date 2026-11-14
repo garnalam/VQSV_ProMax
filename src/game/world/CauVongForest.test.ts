@@ -359,6 +359,22 @@ describe("Rừng U Ám, 60, cửa Bắc and the rocks (CV4b)", () => {
     expect(openingQuestDetail(quest, ([r, e]) => done(world, r, e))).toContain("Đến đấu trường trung cấp");
   });
 
+  it("requires Mao Cau Dieu to cross the cloud edge in room 24", () => {
+    const { world } = enter(24, 470, 270, [RAID, [40, 6400], [9, 104]]);
+    while (world.mapLoading) world.tickMapLoading();
+    play(world);
+    expect(world.warp({ scene: 98, room: 24, x: 470, y: 270, direction: 0 })).toBe(true);
+    while (world.mapLoading) world.tickMapLoading();
+    expect(world.activeRideIndex).toBe(-1);
+    for (let tick = 0; tick < 5; tick++) world.tick(["holdDown"]);
+    expect([world.roomIndex, world.player.y]).toEqual([24, 270]);
+    expect(world.selectRide(7)).toBe("ready");
+    for (let tick = 0; tick < 3; tick++) world.tick(["holdDown"]);
+    expect([world.roomIndex, world.player.y]).toEqual([24, 294]);
+    world.dismountRide();
+    expect(world.activeRideIndex).toBe(7);
+  });
+
   it("a lost rescue: the masked man's line, then 5 in the strip tries again", () => {
     const { world } = enter(26, 170, 130, [RAID, [40, 6400], [9, 104]]);
     world.tick([]);

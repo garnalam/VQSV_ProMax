@@ -1572,7 +1572,13 @@ export class BattleRuntime {
             experience: pet.experience ?? 0,
           }));
           this.settlement = this.settle?.() ?? null;
+          const storage = this.settlement?.caught?.storage;
           this.beats = [
+            ...(storage === "BANK"
+              ? [{ kind: "message", text: "Đội đã đủ 6 pet. Pet bắt được đã chuyển vào kho." } as const]
+              : storage === "RELEASE"
+                ? [{ kind: "message", text: "Đội và kho đã đầy. Pet bắt được đã được phóng sinh." } as const]
+                : []),
             ...(this.settlement?.members ?? []).flatMap((entry, member): Beat[] => {
               if (entry.experience <= 0 || !this.party?.[member]) return [];
               const beats: Beat[] = [],

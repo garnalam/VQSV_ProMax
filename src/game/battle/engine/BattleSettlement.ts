@@ -16,14 +16,16 @@ export type BattleSettlementReport = {
   restoredAfterLoss: boolean;
 };
 
+/** The current bank and its capacity, including expansions. */
+export type CatchBank = { pets: SavedPet[]; capacity: number };
+
 /**
  * Write a finished fight back into the save. `party` is the save's own list of pets, in the order the
  * fight was built from, and is changed in place; so is `inventory`.
  *
  * - HP and PP: what each pet walked out with.
  * - EXP: every pet's share, with its level-ups (stats, refills, new skills).
- * - A caught pet joins the roster while it has fewer than six (`decideCatchStorage`); the bank is not
- *   kept by the web save yet, so a seventh pet is reported as "BANK" and left to the caller.
+ * - A caught pet joins the roster, then the bank if the roster is full, or is released when both are full.
  * - The bag: every count the fight spent.
  * - A loss (decided 2026-11-05): the whole party is restored to full, as the player is sent back to
  *   the last save point.
@@ -33,6 +35,7 @@ export function settleBattle(
   party: SavedPet[],
   inventory: Record<string, number>,
   progression: PetProgression,
+  bank?: CatchBank,
 ): BattleSettlementReport {
   const request = core.request;
   if (request.kind !== "ended") throw new Error("settle a fight only after it has ended");
@@ -69,9 +72,17 @@ export function settleBattle(
         physicalTraitId: setup.physicalTraitId ?? -1,
         heldEquipmentId: NO_HELD_ITEM,
       },
-      storage = decideCatchStorage({ rosterSize: party.length, bankSize: 0 }).outcome;
+      storage = decideCatchStorage({
+        rosterSize: party.length,
+        bankSize: bank?.pets.length ?? 0,
+        bankCapacity: bank?.capacity ?? 0,
+      }).outcome;
     if (storage === "ROSTER") party.push(pet);
-    caught = { pet, storage: storage as "ROSTER" | "BANK" | "RELEASE" };
+    else if (storage === "BANK" && bank) {
+      pet.slot = bank.pets.length;
+      bank.pets.push(pet);
+    }
+    caught = { pet, storage };
   }
 
   const restoredAfterLoss = outcome.winner === "enemy";

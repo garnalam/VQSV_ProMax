@@ -84,6 +84,16 @@ function save(done: string[] = [], level = 60) {
 }
 
 describe("quest pets on the map", () => {
+  it("saves a caught pet in the bank when the roster already has six pets", async () => {
+    const base = await standAt(save(), 2, 4, 120, 160, 2);
+    const loaded = base.world.snapshot();
+    loaded.pets = Array.from({ length: 6 }, (_, slot) => ({ ...loaded.pets[0], slot }));
+    const result = await playGroup(loaded, 2, 4, 0, { catchFoe: true });
+    expect(result.saved.pets).toHaveLength(6);
+    expect(result.saved.meta?.campaign.petBank).toMatchObject([{ speciesId: 52, slot: 0 }]);
+    expect(result.saved.collection?.[52]).toBe(2);
+  });
+
   for (const { ref, species, name, done } of QUEST_PETS)
     it(`${name} (${ref.join(":")}) starts its fight on its rect and can be caught`, async () => {
       const [scene, room, group] = ref,

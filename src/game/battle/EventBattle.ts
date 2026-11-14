@@ -18,7 +18,7 @@ import { BattleDefinitionRegistry, type BattleDefinition } from "./BattleDefinit
 import { BattleRuntime } from "./BattleRuntime";
 import type { BattleCharms, BattleKind, BattleSetup, CombatantSetup } from "./engine/BattleTypes";
 import { ENCOUNTER_NATURE_FALLBACK } from "./engine/BattleTypes";
-import { settleBattle } from "./engine/BattleSettlement";
+import { settleBattle, type CatchBank } from "./engine/BattleSettlement";
 import type { BattleServices } from "./engine/BattleServices";
 
 /**
@@ -155,6 +155,7 @@ export function createEventBattle(
   /** The team charms for a fight of this kind (`trainerOwned`: `TRAINER_OWNED_FORBIDDEN`). */
   charms?: (trainerOwned: boolean) => BattleCharms | undefined,
   shopCurrency?: { money: number; badges: number },
+  catchBank?: CatchBank,
 ): BattleRuntime {
   const resolved = resolve(services, group, context.actorId);
   if (!resolved.ok)
@@ -212,7 +213,7 @@ export function createEventBattle(
       core,
       party,
       services,
-      settle: () => settleBattle(core, party, inventory, services.progression),
+      settle: () => settleBattle(core, party, inventory, services.progression, catchBank),
       entryPresentation: true,
       shopCurrency,
     },
@@ -276,6 +277,7 @@ export function createWildBattle(
   presentation?: { playerActorSpriteId: number; enemyActorSpriteId: number },
   charms?: BattleCharms,
   shopCurrency?: { money: number; badges: number },
+  catchBank?: CatchBank,
 ): BattleRuntime {
   const enemy = [
       services.encounterPet(
@@ -329,7 +331,7 @@ export function createWildBattle(
       core,
       party,
       services,
-      settle: () => settleBattle(core, party, inventory, services.progression),
+      settle: () => settleBattle(core, party, inventory, services.progression, catchBank),
       entryPresentation: true,
       shopCurrency,
     },

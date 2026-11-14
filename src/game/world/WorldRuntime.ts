@@ -1225,6 +1225,15 @@ export class WorldRuntime {
   }
   /** `VqsvRideRuntime.dismount` (key 9 while mounted). */
   dismountRide(): void {
+    // Clouds require the sky mount. Dismounting there would strand the hero on blocked terrain.
+    if (this.sceneId === 98 && this.activeRideIndex === CV_SKY) {
+      const room = this.sources.room(this.sceneId, this.roomIndex);
+      const map = room && this.sources.collision(room.mapId);
+      if (!map) return;
+      for (const dx of [-8, 7])
+        for (const dy of [-8, 7])
+          if (terrainAtWorld(map, this.player.x + dx, this.player.y + dy) === 4) return;
+    }
     this.meta.campaign.ride.activeIndex = -1;
     this.applyPlayerVisual();
   }
@@ -1853,6 +1862,7 @@ export class WorldRuntime {
         if (battle.settlement?.caught) {
           const { speciesId, nature } = battle.settlement.caught.pet;
           this.collection.markCollected(speciesId, nature);
+          if (battle.settlement.caught.storage === "BANK") this.synchronizeGoldenBankReward();
         }
         const repeatable = this.repeatableBattle;
         this.payVictoryReward(battle);
@@ -2609,6 +2619,7 @@ export class WorldRuntime {
       },
       (trainerOwned) => this.battleCharms(trainerOwned),
       this.currency,
+      { pets: this.campaign.petBank, capacity: this.petBankCapacity() },
     );
     this.prepareBattleSprites(this.battle);
     this.markEnemiesSeen(this.battle);
@@ -3256,7 +3267,11 @@ export class WorldRuntime {
         core,
         party: this.pets,
         services,
-        settle: () => settleBattle(core, this.pets, this.inventory, services.progression),
+        settle: () =>
+          settleBattle(core, this.pets, this.inventory, services.progression, {
+            pets: this.campaign.petBank,
+            capacity: this.petBankCapacity(),
+          }),
         shopCurrency: this.currency,
       },
     );
@@ -7290,6 +7305,7 @@ export class WorldRuntime {
       { playerActorSpriteId: this.player.sprite, enemyActorSpriteId: 0 },
       this.battleCharms(false),
       this.currency,
+      { pets: this.campaign.petBank, capacity: this.petBankCapacity() },
     );
     this.prepareBattleSprites(this.battle);
     this.wildBattle = true;

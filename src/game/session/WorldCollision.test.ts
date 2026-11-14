@@ -118,6 +118,16 @@ function snapshot(host: Host): GameSave {
 }
 
 describe("WorldEngine actor collision (VqsvFreeWorldRuntime.actorLookup)", () => {
+  it("rejects a land mount's sideways slide into a wall in room 1:4", async () => {
+    const save = baseSave({}, 25);
+    save.inventory.specials = [1];
+    const host = await standAt(save, 1, 4, 312, 280, 3);
+    const world = host.world!;
+    expect(world.selectRide(0)).toBe("ready");
+    host.step(["holdLeft"]);
+    expect([world.player.x, world.player.y]).toEqual([312, 280]);
+  });
+
   it("a beaten trainer keeps his place and his lines but lets the hero by", async () => {
     // George (5:4 actor 25, NPC) at (92,167); once 5:4:g0 is won his tile opens.
     const host = await standAt(baseSave({ "5:4:0": 3 }), 5, 4, 140, 180, 3);

@@ -171,7 +171,12 @@ export function stepWithTerrain(
   else if (step.direction === DIRECTION_RIGHT) next.x += step.speed;
   else if (step.direction === DIRECTION_UP) next.y -= step.speed;
   else if (step.direction === DIRECTION_LEFT) next.x -= step.speed;
-  return { ...next, direction: step.direction, moved: true };
+  const result = { ...next, direction: step.direction, moved: true };
+  // The first probe can redirect movement perpendicular to the checked edge.
+  // Check the edge that will actually move before allowing that slide.
+  if (step.direction !== direction && !terrainEdgeClear(map, result, movementTerrain, badgeGatedOpen))
+    return { x, y, direction: step.direction, moved: false };
+  return result;
 }
 
 /**
@@ -200,10 +205,19 @@ export function cauVongEdgeClear(
   step: MoveStep,
   movementTerrain: (terrain: number) => number,
 ): boolean {
+  return terrainEdgeClear(map, step, movementTerrain, false);
+}
+
+function terrainEdgeClear(
+  map: MapCollision,
+  step: MoveStep,
+  movementTerrain: (terrain: number) => number,
+  badgeGatedOpen: boolean,
+): boolean {
   if (!step.moved) return true;
   const open = (x: number, y: number) => {
     const terrain = movementTerrain(terrainAtWorld(map, x, y));
-    return terrain !== TERRAIN_BLOCKED && terrain !== TERRAIN_BADGE_GATED;
+    return passable(terrain, badgeGatedOpen);
   };
   const left = step.x - 8,
     right = step.x + 7,

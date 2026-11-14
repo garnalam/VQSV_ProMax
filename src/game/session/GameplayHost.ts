@@ -1717,7 +1717,7 @@ export class GameplayHost {
 
   /**
    * `pressRideShortcut` / `dispatchRideShortcut` (key 9 or the ride shortcut): mounted, the hero
-   * gets off at once (no landing test, as in JavaSE); on foot it opens `ride.ui` when a panel may.
+   * gets off when the current terrain allows it; on foot it opens `ride.ui` when a panel may.
    */
   pressRide(world: WorldRuntime): void {
     if (world.activeRideIndex >= 0) {
