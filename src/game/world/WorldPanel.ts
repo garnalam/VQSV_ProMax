@@ -286,6 +286,7 @@ export type PetmapRow = {
 };
 /** One `badge.ui` entry, in display order (`badgeDisplayIds`). */
 export type BadgeEntry = {
+  goldenRank?: number;
   id: number;
   name: string;
   description: string;
@@ -2844,7 +2845,7 @@ export class WorldPanel {
     /** `recordAccess(specialRewards, 5)`: the Sủng vật sách tranh is held. */
     hasPetmapBook: () => boolean;
     stats: () => RecordStats;
-    petmapRows: (tab: number) => PetmapRow[];
+    petmapRows: (tab: number, family: number, variant: number) => PetmapRow[];
     badges: () => BadgeEntry[];
   } = {
     hasPetmapBook: () => false,
@@ -2857,11 +2858,23 @@ export class WorldPanel {
   /** `recordMessageMode`'s line ("Không đạt được sủng vật sách tranh đạo cụ"). */
   recordMessage: BagMessage | null = null;
   petmapTab = 0;
+  petmapFamily = 0;
+  petmapVariant = 0;
+  get petmapNature(): number {
+    return this.petmapVariant === 0 ? 0 : this.petmapVariant + 6;
+  }
+  changePetmapPage(family: number, variant: number): void {
+    this.petmapFamily = clamp(Math.trunc(family), 0, 2);
+    this.petmapVariant = clamp(Math.trunc(variant), 0, 3);
+    this.selected = 0;
+    this.listScroll = 0;
+    this.openedTicks = 0;
+  }
   private petmapReturnToBag: { selected: number; scroll: number } | null = null;
   private badgeReturnToBag: { selected: number; scroll: number } | null = null;
 
   get petmapRows(): PetmapRow[] {
-    return this.recordSource.petmapRows(this.petmapTab);
+    return this.recordSource.petmapRows(this.petmapTab, this.petmapFamily, this.petmapVariant);
   }
   get badgeEntries(): BadgeEntry[] {
     return this.recordSource.badges();
@@ -2907,6 +2920,7 @@ export class WorldPanel {
     this.mode = "petmap";
     this.selected = 0;
     this.petmapTab = 0;
+    this.changePetmapPage(0, 0);
     this.listScroll = 0;
     this.openedTicks = 0;
   }
@@ -3086,7 +3100,7 @@ export class WorldPanel {
     this.keepSelectedVisible(size);
     this.openedTicks = 0;
   }
-  /** `tickPetmap`: up/down within the tab, left/right turn the tab, 5 does nothing. */
+  /** `tickPetmap`: up/down rows, left/right elements, confirm cycles the twelve family/form pages. */
   private tickPetmap(pressed: readonly InputCommand[]): void {
     const rows = this.petmapRows,
       max = Math.max(0, rows.length - 1);
@@ -3108,6 +3122,9 @@ export class WorldPanel {
         this.selected = 0;
         this.listScroll = 0;
       }
+    } else if (pressed.includes("confirm")) {
+      const page = (this.petmapFamily * 4 + this.petmapVariant + 1) % 12;
+      this.changePetmapPage(Math.trunc(page / 4), page % 4);
     } else if (pressed.includes("back")) {
       const bag = this.petmapReturnToBag;
       this.petmapReturnToBag = null;
@@ -3791,6 +3808,14 @@ export class WorldPanel {
       return true;
     }
     if (this.mode === "petmap") {
+      if (x >= 41 && x < 127 && y >= 49 && y < 71) {
+        this.changePetmapPage((this.petmapFamily + 1) % 3, this.petmapVariant);
+        return true;
+      }
+      if (x >= 127 && x < 191 && y >= 49 && y < 71) {
+        this.changePetmapPage(this.petmapFamily, (this.petmapVariant + 1) % 4);
+        return true;
+      }
       const tab = this.petmapTabAt(layout, x, y),
         slot = this.petmapRowAt(layout, x, y);
       if (tab >= 0 && tab !== this.petmapTab) {
@@ -3800,7 +3825,8 @@ export class WorldPanel {
       } else if (slot >= 0) {
         const index = this.visibleListStart(this.petmapRows.length) + slot;
         if (index < this.petmapRows.length) this.select(index);
-      } else if (panelBackHit(x, y)) this.pressed.push("back");
+      } else if (panelConfirmHit(x, y)) this.pressed.push("confirm");
+      else if (panelBackHit(x, y)) this.pressed.push("back");
       return true;
     }
     if (this.mode === "badge") {

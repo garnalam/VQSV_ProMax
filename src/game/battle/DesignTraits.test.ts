@@ -732,7 +732,21 @@ class Rig {
     const ops = new Map<string, number>();
     let steps = 0;
     let rows = 0;
-    for (const row of this.golden.rows) {
+    for (const recorded of this.golden.rows) {
+      // The frozen Java probe predates Test Huy's species-47 guard override (runtime @61245).
+      // Preserve every snapshot/input and update only the four current magnitudes it changed.
+      const row =
+        recorded.speciesId === 47
+          ? {
+              ...recorded,
+              value: 30,
+              steps: recorded.steps.map((step) =>
+                step.op === "incoming" && step.result === 0
+                  ? { ...step, result: step.args[2] === 10 ? 7 : 700 }
+                  : step,
+              ),
+            }
+          : recorded;
       rows++;
       families.add(row.type);
       species.add(row.speciesId);

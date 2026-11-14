@@ -64,6 +64,12 @@ export type CombatantSetup = {
 };
 
 export type BattleSetup = {
+  /** Hoàng Kim rank one or two: reserve EXP percentage (30). */
+  goldenPartyExperiencePercent?: number;
+  /** Source scene and ownership gate for Cầu Vồng's mirrored item recovery. */
+  sceneId?: number;
+  capturePolicy?: string;
+  pvp?: boolean;
   format: BattleFormat;
   kind: BattleKind;
   /**

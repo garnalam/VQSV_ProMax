@@ -61,6 +61,13 @@ describe("parseJavaProperties", () => {
 describe("importJavaSave (Java online save → web save)", () => {
   const result = importJavaSave(fixture, catalog)!;
 
+  it("retains both Golden reward claims and the commissioned recovery region", () => {
+    const imported = importJavaSave(fixture + "\nsourceConvenienceRewardsClaimed=1,1,1,1,1,1,1,1\n", catalog)!;
+    expect(imported.save.convenienceRewardsClaimed).toEqual(Array(8).fill(true));
+    expect(imported.save.recoveryCheckpoint).toBe("nguyen-moc");
+    expect(isGameSave(imported.save)).toBe(true);
+  });
+
   it("produces a valid current web save at the Java player's place", () => {
     expect(result).not.toBeNull();
     const { save } = result;
@@ -74,9 +81,10 @@ describe("importJavaSave (Java online save → web save)", () => {
     expect(save.currency).toEqual({ money: 13410, badges: 117 });
     expect(save.meta?.redeemedGiftCodes).toEqual(["TRUONGCON"]);
     expect(save.meta?.battlePass).toMatchObject({ xp: 12500, claimedFree: [1, 3] });
-    // Real Java saves keep 8 convenience flags; the web game has 7 milestones.
+    // Both games now preserve all eight collection reward flags.
     expect(save.convenienceRewardsClaimed).toEqual([
       true,
+      false,
       false,
       false,
       false,

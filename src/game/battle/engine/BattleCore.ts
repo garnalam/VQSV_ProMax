@@ -1,4 +1,4 @@
-import { calculateCatchChance, expAward } from "../BattleOutcomeEngine";
+import { calculateCatchChance, decideReserveShare, expAward, reserveExpAward } from "../BattleOutcomeEngine";
 import type { BattleRandom } from "../BattleRandom";
 import type { BattleRules } from "../BattleRules";
 import type { DesignTraitProjection } from "../DesignTraitProjection";
@@ -8,6 +8,7 @@ import { resolveP7Strike } from "../P7Strike";
 import type { StatusInstance } from "../StatusState";
 import type { StatusWebRules } from "../StatusWebRules";
 import type { BattleItem, BattleItems } from "./BattleItems";
+import { applyCauVongItemRecovery } from "./CauVongItemRecovery";
 import {
   BattleCommandError,
   SKILL_NOT_READY_WARNING,
@@ -25,7 +26,7 @@ import {
   type SideId,
 } from "./BattleTypes";
 import type { EnemyController, EnemyView } from "./EnemyController";
-import { KIM_DIEM_LONG_VUONG_SPECIES, KimDiemLongAn } from "./KimDiemLongAn";
+import { KIM_DIEM_LONG_VUONG_SPECIES, KimDiemLongAn, KimDiemDebuffReflection } from "./KimDiemLongAn";
 import type { CharmLoadoutEntry, RainbowCharmBattleState } from "../../charm/RainbowCharmBattle";
 
 /** The projection's seats in a 1v1 (`VqsvBattleRuntime.TRAIT_ENEMY_SLOT` / `TRAIT_PLAYER_SLOT`). */
@@ -348,6 +349,9 @@ export class BattleCore {
         sideId === "player" &&
         targetSide === "enemy" &&
         target.speciesId === KIM_DIEM_LONG_VUONG_SPECIES,
+      debuffReflection = longAn && this.setup.enemy.length === 1
+        ? new KimDiemDebuffReflection(target)
+        : undefined,
       targetHpBefore = target.hp(),
       trace = resolveP7Strike({
         attacker: actor,
@@ -360,7 +364,16 @@ export class BattleCore {
           this.sides[targetSide].setup[this.activeMember(targetSide)].spriteId ?? -2,
         // Only the player's hit on a catchable pet keeps it alive for the ball (held item 10's floor).
         allowsHpFloor: this.captureAllowed() && sideId === "player" && targetSide === "enemy",
-        postSkill: resolveP7PostSkill,
+        postSkill: debuffReflection
+          ? (step) => {
+              // Commit-pending effects return before the separate post-skill effect phase.
+              debuffReflection.returnTo(actor);
+              const postDebuffs = new KimDiemDebuffReflection(target);
+              const outcome = resolveP7PostSkill(step);
+              postDebuffs.returnTo(actor);
+              return outcome;
+            }
+          : resolveP7PostSkill,
         charmEvasion: (receiver, sureHit) => {
           const charms = this.charms[targetSide];
           if (!charms) return false;
@@ -521,6 +534,15 @@ export class BattleCore {
       this.rules.status,
     );
     this.emit({ type: "item", seat: { side: sideId, member }, itemId: command.itemId, ...result });
+    if (sideId === "player") {
+      const recovery = applyCauVongItemRecovery(this.setup, item, [this.activeUnit("enemy")], this.sides.enemy.party, (id) => this.ppMax(id));
+      if (recovery) {
+        const { target, ...gained } = recovery;
+        if (target === this.activeUnit("enemy") && gained.hpGained > 0)
+          this.projection.afterHealing(target, SEAT_SLOT.enemy, this.round);
+        this.emit({ type: "item", seat: { side: "enemy", member: this.sides.enemy.party.indexOf(target) }, itemId: command.itemId, ...gained });
+      }
+    }
   }
 
   private attemptCatch(itemId: number): void {
@@ -668,7 +690,29 @@ export class BattleCore {
         from: { side: "enemy", member: enemyMember },
       });
     }
-    if (earners.length > 0 && !this.setup.script) this.postExpBadgeHeal();
+    if (earners.length > 0) {
+      const lastLevel = this.sides.player.setup[earners[earners.length - 1]].level;
+      this.sides.player.party.forEach((unit, member) => {
+        if (this.facing.has(member) || !unit.alive()) return;
+        const share = decideReserveShare({ globalShare: false, goldenSharePercent: this.setup.goldenPartyExperiencePercent, heldItem6: unit.hasHeldItem(6) });
+        if (share.outcome === "SKIP") return;
+        const trait = this.projection.projectExperience(unit, SEAT_SLOT.player, this.round, 0);
+        const amount = reserveExpAward({
+          enemyLevel: enemy.level,
+          enemyNature: enemy.nature,
+          levelFactorLevel: lastLevel,
+          participantCount: earners.length,
+          divisor: share.divisor,
+          heldItem5: false,
+          heldItem5Multiplier: 0,
+          experienceMultiplierPercent: trait.multiplierPercent,
+          experienceMultiplierStackable: trait.stackable,
+        }, share);
+        this.experience[member] += amount;
+        this.emit({ type: "experience", member, amount, from: { side: "enemy", member: enemyMember } });
+      });
+      if (!this.setup.script) this.postExpBadgeHeal();
+    }
   }
 
   /**

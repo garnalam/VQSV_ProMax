@@ -824,12 +824,12 @@ export class DesignTraitMechanics {
   }
 
   /**
-   * `PetDesignTraitMechanics.stack`: a single consumable mark still refreshes, and a stackable
-   * characteristic has no gameplay cap.
+   * `PetDesignTraitMechanics.stack`: refresh the mark while respecting the runtime's three-stack
+   * ceiling, including callers requesting a smaller cap.
    */
   stack(unit: DesignTraitUnit, id: number, duration: number, cap: number, value: number): void {
     const old = unit.statuses.get(BUFF_BANK, id);
-    const stacks = !old || cap === 1 ? 1 : old.stackCount + 1;
+    const stacks = !old ? 1 : Math.min(Math.max(1, Math.min(cap, 3)), old.stackCount + 1);
     this.put(unit, this.requireSignature(id), duration, value, stacks, unit);
   }
 
@@ -1189,7 +1189,7 @@ export class DesignTraitMechanics {
     const spec = this.spec(unit);
     if (!spec || spec.type !== "electric_charge" || !unit.alive()) return;
     if (unit.designTraitState.lastCharge === unit.designTraitState.round) return;
-    this.stack(unit, FAMILY_CHARGE_ID, 3, 2, spec.value);
+    this.stack(unit, FAMILY_CHARGE_ID, 3, 3, spec.value);
     unit.designTraitState.lastCharge = unit.designTraitState.round;
   }
 

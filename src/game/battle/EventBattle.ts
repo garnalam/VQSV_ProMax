@@ -174,6 +174,8 @@ export function createEventBattle(
     setup: BattleSetup = {
       format: "1v1",
       kind,
+      sceneId: event.sceneId,
+      capturePolicy: event.npcEnemyEntry ? "TRAINER_OWNED_FORBIDDEN" : "WILD_ALLOWED",
       captureAllowed,
       runAllowed: event.op32Mode[1] === 0,
       player: party.map((pet) => services.partyMember(pet)),
@@ -349,6 +351,7 @@ export function createSourceTrainerBattle(
   services: BattleServices,
   request: {
     label: string;
+    sceneId?: number;
     members: readonly (readonly [number, number, number])[];
     quality?: number;
     skills?: readonly (readonly number[])[];
@@ -384,6 +387,8 @@ export function createSourceTrainerBattle(
   const setup: BattleSetup = {
     format: "1v1",
     kind: "trainer",
+    sceneId: request.sceneId,
+    capturePolicy: "TRAINER_OWNED_FORBIDDEN",
     captureAllowed: false,
     runAllowed: false,
     player: party.map((pet) => services.partyMember(pet)),
@@ -446,6 +451,7 @@ function profiledCore(
     {
       ...setup,
       badgeProfile: setup.badgeProfile ?? services.badgeProfile(),
+      goldenPartyExperiencePercent: setup.goldenPartyExperiencePercent ?? services.goldenPartyExperiencePercent(),
       postExpBadgeHeal:
         setup.postExpBadgeHeal ?? ((speciesId) => services.postExpBadgeHeal(speciesId)),
       enemy: setup.enemy.map((pet, member) =>

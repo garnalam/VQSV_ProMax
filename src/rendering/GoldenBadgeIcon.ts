@@ -1,0 +1,111 @@
+/** Exact Test Huy GoldenBadgeIconRenderer pixels, native source lines 205997–206002. */
+const PALETTE = [0,-13360587,-9946571,-6663880,-3900360,-1660852,-405903,-7013,-2869,-13426609,-11982744,-10274952,-10479824,-6808511,-3657384,-1223814,-23382,-3294267,-2834];
+const GRID = [
+  "............................",
+  ".............mm.............",
+  "............ommo............",
+  ".....ohho..ooffo...ohho.....",
+  ".....ohhoo.otffto.oohho.....",
+  ".....ootttottffttottto......",
+  "......ootttttfftttttoo......",
+  "......ootttttfftttttoo......",
+  "......ooggggggggggggoo......",
+  "......ooeeteeeteeteeoo......",
+  "......ogoooooooooooogo......",
+  "...o.oggeefvvvvvfpeeggo.o...",
+  "...oooggefvvvvvuufpeggooo...",
+  "..oeodgefvvwwvvuuufpegdoeo..",
+  "..ogodgefvvvvvtuuuufegdogo..",
+  "..ogoggefrvvtttuuuufeggogo..",
+  "...oodgefrttttttuuufegdoo...",
+  "...oodgeftttttttuuufegdoo...",
+  "...oodgefrtttttrvvfpegdoo...",
+  "....ooggefrrttrrrfpeggoo....",
+  ".....odgeefrrrrrfpeegdo.....",
+  "......odgeooooooooegdo......",
+  "......oodoeeeeeeeeodoo......",
+  ".......oooerhrrhreooo.......",
+  ".........oerhrrhreo.........",
+  ".........oerhrrhre..........",
+  "..........ooooooo...........",
+  "............................"
+];
+const PREVIEW = [
+  "................................................................",
+  "................................................................",
+  "................................................................",
+  "..............................oooo..............................",
+  ".............................olmmlo.............................",
+  ".............................olmmlo.............................",
+  "..............oooo...........ollllo...........oooo..............",
+  ".............olmmlo.........oolllloo.........olmmlo.............",
+  ".............olmmloo.......oooooooooo.......oolmmlo.............",
+  ".............ollllooo.....ooorfhhfrooo....oooollllo.............",
+  ".............ollllorrro..ooorthhhfrrooo..orrrollllo.............",
+  "..............ooooetttroooortthhffrrroooorrrteoooo..............",
+  "..............ooreettttroorttthhfftrrroortttteeroo..............",
+  "...............oreeettttrrtttfhhffftrrtttttteeero...............",
+  "...............ooeeettttttttffhffffttttttttteeeoo...............",
+  "...............ooreeetttttttfhffffffttttttteeeroo...............",
+  "...............ooreeeerrrrrffffffffffrrrrreeeeroo...............",
+  "...............ooreeeeerrrrffffffffffrrrreeeerroo...............",
+  "................oooooooooooooooooooooooooooooooo................",
+  ".................ooehhhhhhhhhhhhhhhhhhhhhhhheoo.................",
+  ".................ooeeeewrreeeeewrreeeeewrreeeoo.................",
+  ".................ooeeeerrreeeeerrreeeeerrreeeoo.................",
+  "................ooooeeeeggeeeeeeggeeeeeeggeeoboo................",
+  "...............oobeooeeeeeeeeeeeeeeeeeeeeeeogeboo...............",
+  "...............ooeggooooooooooooooooooooooogggeoo...............",
+  ".........o....ooegggllhhbqqoooooooooqppbhhllgggeoo....o.........",
+  ".........oo...obeggdlhhqqqoeggggggggoqqpphhldggebo..ooo.........",
+  "........oofooooeggdlhhqqqoeggggggggggoqqpbhhldggeoooofoo........",
+  "........oodfdobegglhhbqqoeggvvvvvvvrggoqppbhhlggebodfooo........",
+  "........ooodoobggdlhhqqoeggvvwwwvvvurggoqpphhldggboodooo........",
+  ".........oodooeggllhqqoeggvvwwwvvvuuureeoqpbhllggeooooo.........",
+  "......o...ooobogdlhhqqoegvvwmwvvvvuuuureeopphhldoebooo...o......",
+  "......ooo..ooofodlhbqqoegtvvwvvvvtuuuuueeoppbhlofoboo..ooo......",
+  "......ofooooofffolhbqqoegtttvvttttuuuuueeoppbhofffoooooofo......",
+  "......odfdoofftffohbqqoeerttttttttuuuuueeoppbofftffooodfoo......",
+  "......oodfofftwtffobqqoeerttttttttuuuuueeoppofftwtffoffdoo......",
+  "......ooddofftttffobqqoeertttttttttuuuueeoppofftttffofdoo.......",
+  ".......ooddofftffohbqqoeertttttttttuuuueeoppbofftffoodoo........",
+  "......o.ooooofffolhbqqoeerrttttttttuuuueeoppbhofffooooo.oo......",
+  "......oooo.ooofodlhbqqoeerrttttttttvuuueeoppbhlofobooooooo......",
+  "......ofooooobogdlhbpqoeerrvttttttvvvvueeoppbhldoebooooof.......",
+  ".......dfdooobeedllbbpoeerrrvttttvvvvveeeopbblldeebooodfo.......",
+  ".......odfdoobbeddlhbpoeeerrvvvtvvvvveeeoppbhlddebbooffdo.......",
+  "........ddfdoobeedlhbbpoeeervvvvvvvveeeoppbbhldeebooffdo........",
+  ".........ddfoobeeddlhbbpoeeervvvvvveeeoppbbhlddeebooddo.........",
+  "........ooo.dobbeeddlbbppoeeeeeeeeeeeopppbblddeebbodoooo........",
+  "........ooooooobeeddllbbbpoeeeeeeeeeoppbbbllddeebooooooo........",
+  ".........fooooobbeeddllbbbpoooooooooppbbbllddeebbooooof.........",
+  ".........dfdoooobbeeddllbbbbbofffopbbbbbllddeebboooodfo.........",
+  "..........dfdoooobbeedddlooooooooooooooldddeebbooooffd..........",
+  "..........ddfdooobbbeeddooeeeeeeeeeeeeooddeebbboooffd...........",
+  "...........ddooooobbbeeoeerrrrrrrrrrreeeoeebbboooood............",
+  ".............oooooobbboeerrrrrrrrrrrrreeeobbbooooo..............",
+  "..............fooooobboeerrrgggrrrgggrreeobbooooof..............",
+  "..............dfdooooooeerrrrgrrrrrgrrreeoooooodf...............",
+  "...............dfdoooooeerrrrgrrrrrgrrreeoooooffd...............",
+  "...............ddfd..ooeerrrrgrrrrrgrrreeoo..ffd................",
+  "................ddfd.fooeerrfffrrrfffreeoof.fdd.................",
+  "...................dddfooeerrrrrrrrrreeodf.dd...................",
+  "......................dfooeeeeeeeeeeeeoffd......................",
+  "......................ddfoooooooooooooffd.......................",
+  ".......................ddfd..........fdd........................",
+  "..........................dd........dd..........................",
+  "................................................................"
+];
+const KEYS = ".obcdefghpqsrtuvwlm";
+
+export function drawGoldenBadgeIcon(g: CanvasRenderingContext2D, x: number, y: number, preview = false): void {
+  const rows = preview ? PREVIEW : GRID;
+  rows.forEach((row, dy) => {
+    for (let dx = 0; dx < row.length; dx++) {
+      const index = KEYS.indexOf(row[dx]);
+      if (index <= 0) continue;
+      g.fillStyle = "#" + ((PALETTE[index] & 0xffffff) | 0x1000000).toString(16).slice(1);
+      g.fillRect(x + dx, y + dy, 1, 1);
+    }
+  });
+}

@@ -15,6 +15,17 @@ export const MUTATION_SPECIES_BASE = 274;
 export const MUTATION_SPECIES_COUNT = 2;
 /** `snapshot().length`: `KimDiemLongVuongCatalog.RUNTIME_ID + 1`. */
 export const COLLECTION_SNAPSHOT_LENGTH = 281;
+export const COLLECTION_REWARD_MILESTONES = [10, 15, 20, 30, 40, 50, 281, 843] as const;
+export const COLLECTION_FAMILY_NAMES = ["Liệt Hỏa", "Cầu Vồng", "V4"] as const;
+
+/** `PetCollectionCatalog.family`: additions retain their source game's family. */
+export function collectionFamily(speciesId: number): number {
+  if (!Number.isInteger(speciesId) || speciesId < 0 || speciesId >= 281) return -1;
+  if (speciesId < 100) return 0;
+  if (speciesId < 202) return 1;
+  if (speciesId < 274) return 2;
+  return [274, 276, 277, 279].includes(speciesId) ? 0 : 1;
+}
 
 const SHINY_SAVE_STRIDE = 512;
 const SHINY_FORM_COUNT = 3;
@@ -30,6 +41,7 @@ const tracked = (speciesId: number): boolean =>
 export class PetCollection {
   private readonly states = new Uint8Array(COLLECTION_SNAPSHOT_LENGTH);
   private readonly shinyStates = new Uint8Array(SHINY_SAVE_STRIDE * SHINY_FORM_COUNT);
+  private readonly convenienceRewardsClaimed = Array<boolean>(8).fill(false);
 
   constructor(saved?: readonly number[]) {
     this.restore(saved);
@@ -92,6 +104,43 @@ export class PetCollection {
     for (let i = 0; i < V4_SPECIES_COUNT; i++)
       if (this.states[V4_SPECIES_BASE + i] === COLLECTED) count++;
     return count;
+  }
+  allCollectedSpeciesCount(): number {
+    return this.states.reduce((count, state) => count + (state === COLLECTED ? 1 : 0), 0);
+  }
+  goldenShinyCollectedCount(): number {
+    let count = 0;
+    for (let nature = 7; nature <= 9; nature++)
+      for (let id = 0; id < COLLECTION_SNAPSHOT_LENGTH; id++)
+        if (this.status(id, nature) === COLLECTED) count++;
+    return count;
+  }
+  nextConvenienceRewardTier(): number {
+    const tier = this.convenienceRewardsClaimed.indexOf(false);
+    return tier < 0 ? this.convenienceRewardsClaimed.length : tier;
+  }
+  convenienceRewardMilestone(tier: number): number {
+    return COLLECTION_REWARD_MILESTONES[tier] ?? -1;
+  }
+  convenienceRewardCollectedCount(tier: number): number {
+    return tier === 6 ? this.allCollectedSpeciesCount() : tier === 7 ? this.goldenShinyCollectedCount() : this.collectedSpeciesCount();
+  }
+  convenienceRewardReady(tier: number): boolean {
+    return Number.isInteger(tier) && tier >= 0 && tier < this.convenienceRewardsClaimed.length && !this.convenienceRewardsClaimed[tier] && this.convenienceRewardCollectedCount(tier) >= this.convenienceRewardMilestone(tier);
+  }
+  claimConvenienceReward(tier: number): boolean {
+    if (!this.convenienceRewardReady(tier)) return false;
+    this.convenienceRewardsClaimed[tier] = true;
+    return true;
+  }
+  convenienceRewardsSnapshot(): boolean[] {
+    return [...this.convenienceRewardsClaimed];
+  }
+  restoreConvenienceRewards(saved?: readonly boolean[]): void {
+    this.convenienceRewardsClaimed.fill(false);
+    saved?.slice(0, this.convenienceRewardsClaimed.length).forEach((claimed, tier) => {
+      this.convenienceRewardsClaimed[tier] = claimed === true;
+    });
   }
   /** Test Huy's save uses species states first, then a 512-entry block per Shiny form. */
   snapshot(): number[] {

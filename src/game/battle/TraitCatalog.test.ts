@@ -228,7 +228,7 @@ describe("Power families (flat Power from the balance workbook)", () => {
 
   it("electric_charge: hitting or being hit stores X Power a round; a main-element hit spends all", () => {
     const pattern =
-        /^Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích (\d+) Power, cộng dồn không giới hạn số tầng, (\d+) lượt\. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng\/lượt\.$/,
+        /^Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích (\d+) Power, cộng dồn tối đa 3 tầng, (\d+) lượt\. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng\/lượt\.$/,
       wrong: string[] = [];
     expect(family("electric_charge").length).toBe(13);
     for (const trait of family("electric_charge")) {

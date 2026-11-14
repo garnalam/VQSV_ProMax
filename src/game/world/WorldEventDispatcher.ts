@@ -38,6 +38,8 @@ export type WorldView = {
   direction: number;
   /** Java's key0 / pointer activation: op16 triggers fire on it, op13 triggers ignore it. */
   activation: boolean;
+  /** Pointer ticks choose an actor by displayed ink rather than the hero's facing query. */
+  actorActivation?: (id: number) => boolean;
   actorAt: (id: number) => { x: number; y: number; visible: boolean } | undefined;
   /** Mirrors WorldRoomCatalog.supportsTransition: an unloadable target leaves the world untouched. */
   supportsTarget: (scene: number, room: number) => boolean;
@@ -144,7 +146,7 @@ export class WorldEventDispatcher {
         const actor = view.actorAt(trigger.actorId);
         if (!actor) continue;
         if (view.activation) {
-          if (playerInteractsActor(view.x, view.y, view.direction, actor))
+          if (view.actorActivation?.(trigger.actorId) ?? playerInteractsActor(view.x, view.y, view.direction, actor))
             return { kind: "event", trigger };
           continue;
         }
@@ -178,7 +180,7 @@ export class WorldEventDispatcher {
           target &&
           switchActor &&
           (target.x !== trigger.gateX || target.y !== trigger.gateY) &&
-          playerInteractsActor(view.x, view.y, view.direction, switchActor)
+          (view.actorActivation?.(trigger.triggerActor) ?? playerInteractsActor(view.x, view.y, view.direction, switchActor))
         )
           return { kind: "event", trigger };
       }

@@ -23,6 +23,11 @@ export type DoubleSkillRules = {
 };
 
 export type DoubleBattleSetup = {
+  /** Hoàng Kim rank one or two: reserve EXP percentage (30). */
+  goldenPartyExperiencePercent?: number;
+  /** Source scene and encounter ownership for Cầu Vồng's mirrored item recovery. */
+  sceneId?: number;
+  capturePolicy?: string;
   /** `playerControlsBoth`: a gym fight, the player commands slots 2 and 3. */
   controlsBoth: boolean;
   /** The player's battle owners: the first six roster pets, in roster order. */
@@ -111,6 +116,8 @@ export type DoubleEvent =
       hpGained: number;
       ppGained: number;
       revived: boolean;
+      /** Free enemy recovery after a player item; the species also names a benched target. */
+      cauVongRecovery?: { speciesId: number };
       /** Set when the queued item could not be used any more (`itemWarning`). */
       refused?: string;
     }

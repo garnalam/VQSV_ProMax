@@ -94,7 +94,7 @@ describe("quest pets on the map", () => {
       expect(played.saved.eventStates?.[ref.join(":")]).toBeGreaterThanOrEqual(3);
     }, 60000);
 
-  it("a lost quest-pet fight revives the party, returns to the save point and keeps the pet", async () => {
+  it("a lost quest-pet fight revives the party at the regional hub and keeps the pet", async () => {
     const [scene, room, group] = [3, 5, 0],
       { host, world } = await standAt(save(["9:1:2"], 2), scene, room, 120, 160, 2),
       point = triggerPoint(scene, room, group);
@@ -114,8 +114,8 @@ describe("quest pets on the map", () => {
     }
     expect(fought).toBe(true);
     expect(world.battle).toBeNull();
-    expect({ scene: world.sceneId, room: world.roomIndex }).toEqual({ scene, room });
-    expect({ x: world.player.x, y: world.player.y }).toEqual({ x: 120, y: 160 });
+    expect({ scene: world.sceneId, room: world.roomIndex }).toEqual({ scene: 3, room: 3 });
+    expect(world.snapshot().recoveryCheckpoint).toBe("nguyen-moc");
     expect(world.eventState.sourceEventState(scene, room, group)).toBeLessThan(3);
     expect(world.pets.every((pet) => (pet.currentHp ?? 1) > 0)).toBe(true);
   }, 60000);
@@ -153,22 +153,25 @@ function loseFight(
 describe("lost fights cannot be farmed or looped", () => {
   it("Fruita's Tất Trung Cầu (2:2:0) is handed over once, however often the Uy Qua fight is lost", async () => {
     const [scene, room, group] = [2, 2, 0],
-      { host, world } = await standAt(save(["11:8:1"], 2), scene, room, 120, 160, 2),
       point = triggerPoint(scene, room, group),
-      balls = () => world.inventory["0"] ?? 0,
-      before = balls(),
       counts: number[] = [];
+    let retrySave = save(["11:8:1"], 2);
+    const before = retrySave.inventory.items["0"] ?? 0;
+    let receipt: number | undefined;
     for (let attempt = 0; attempt < 3; attempt++) {
+      const { host, world } = await standAt(retrySave, scene, room, 120, 160, 2);
       world.player.x = point.x;
       world.player.y = point.y;
       expect(loseFight(host, world)).toBe(true);
       expect(world.eventState.sourceEventState(scene, room, group)).toBeLessThan(3);
-      counts.push(balls());
+      counts.push(world.inventory["0"] ?? 0);
+      retrySave = world.snapshot();
+      receipt = retrySave.eventStates?.["gift:2:2:0:4:0"];
     }
     // The first run pays the ball (it is not thrown in a lost fight); the replays pay nothing.
     expect(counts).toEqual([before + 1, before + 1, before + 1]);
     // The receipt is saved with the ledger, so a reloaded session does not pay it again either.
-    expect(world.eventState.snapshotStates()["gift:2:2:0:4:0"]).toBe(4);
+    expect(receipt).toBe(4);
   }, 120000);
 
   it("a lost PaYaQi fight (2:1:1, a chain link with no rect) does not restart until the room changes", async () => {

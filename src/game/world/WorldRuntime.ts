@@ -1,4 +1,12 @@
 import type { SourceRoutePatch } from "../story/SourceOpcodeInterpreter";
+import { worldPointerNear, worldPointerTarget } from "./WorldPointer";
+import { migrateLegacyRides } from "../ride/RideSystem";
+import { claimCollectionReward, synchronizeGoldenBadgeBankReward } from "../pet/GoldenBadgeBankReward";
+import { COLLECTION_REWARD_MILESTONES } from "../pet/PetCollection";
+import {
+  battleLossRecovery, isRecoveryCheckpoint, legacyRecoveryCheckpoint, reachedRecoveryHub,
+  type RecoveryCheckpoint,
+} from "./RecoveryCheckpoint";
 import {
   ENTRY_COMPLETES,
   KEYED_CHESTS,
@@ -476,9 +484,8 @@ import {
 const CHECKED_MINIGAMES = new WeakSet<CauVongMinigameState>();
 
 /** `PetCollectionProgression.CONVENIENCE_REWARD_MILESTONES`. */
-const CONVENIENCE_REWARD_MILESTONES = [10, 15, 20, 30, 40, 50, 100] as const;
+const CONVENIENCE_REWARD_MILESTONES = COLLECTION_REWARD_MILESTONES;
 /** `BadgeProgression.HOANG_KIM`. */
-const BADGE_HOANG_KIM = 7;
 
 /** `VqsvText.Scene1ThreeMapInteractions.CHEST_EMPTY`. */
 const CHEST_EMPTY = "Bảo rương này đã trống";
@@ -499,6 +506,8 @@ export type WorldPhase =
 export type WorldBattleStage = InteractiveBattleStage;
 export type WorldAction = "save" | "autosave" | null;
 export type WorldSources = {
+  /** Current displayed sprite ink, including its orientation and render offsets. */
+  pointerMask?: (actor: StoryActor) => CollisionMask | null;
   /** `WorldEncounterEngine`'s pools (petArea.mid, the unified overlay, the Cầu Vồng V4 pets). */
   worldEncounters?: WorldEncountersDocument;
   battlePass?: BattlePassCatalog;
@@ -619,6 +628,8 @@ export class WorldRuntime {
   roomIndex: number;
   cameraX = 0;
   cameraY = 0;
+  /** A map tap's selected actor for this tick; undefined keeps keyboard activation unchanged. */
+  private pointerActor: number | undefined;
   readonly actors = new Map<number, StoryActor>();
   readonly inventory: Record<string, number>;
   /** The bag's other lists (the original's M, N, O): equipment ids, materials, special ids. */
@@ -649,29 +660,33 @@ export class WorldRuntime {
   readonly pendingSkillLearns: PendingSkillLearn[];
   /** `progression.evolutionNoticeArmed`. */
   evolutionNoticeArmed = false;
-  /** `collection.convenienceRewardsClaimed`, one flag per "Dẫn thưởng" milestone. */
-  convenienceRewardsClaimed: boolean[] = new Array(7).fill(false);
   /**
-   * `claimSourceConvenienceReward`: the next unclaimed milestone pays 1 Huy hiệu (the last, at 100
-   * Liệt Hỏa species, the golden badge). Returns the `msgWarm` line.
+   * `claimSourceConvenienceReward`: six currency rewards, then the two Golden ranks.
    */
   claimConvenienceReward(): string {
-    const tier = this.convenienceRewardsClaimed.indexOf(false);
-    if (tier < 0) return "Tất cả dẫn thưởng đã nhận.";
-    const milestone = CONVENIENCE_REWARD_MILESTONES[tier],
-      collected =
-        tier === CONVENIENCE_REWARD_MILESTONES.length - 1
-          ? this.collection.lietHoaCollectedSpeciesCount()
-          : this.collection.collectedSpeciesCount();
-    if (collected < milestone)
+    const tier = this.collection.nextConvenienceRewardTier();
+    if (tier >= CONVENIENCE_REWARD_MILESTONES.length) return "Tất cả dẫn thưởng đã nhận.";
+    const milestone = this.collection.convenienceRewardMilestone(tier),
+      collected = this.collection.convenienceRewardCollectedCount(tier);
+    if (collected < milestone) {
+      if (tier === 6)
+        return `Hoàng Kim bậc 1: ${collected}/${milestone} loài. Cần đủ Liệt Hỏa, Cầu Vồng và V4.`;
+      if (tier === 7)
+        return `Hoàng Kim bậc 2: ${collected}/${milestone} dạng shiny. Cần đủ Shiny 1, 2, 3 của mọi loài.`;
       return `Hiện đã thu thập ${collected} loài sủng vật. Cần ${milestone} loài để nhận dẫn thưởng tiếp theo.`;
-    this.convenienceRewardsClaimed[tier] = true;
-    if (tier === 6) {
-      this.flags.badges.grant(BADGE_HOANG_KIM);
-      return "Đạt được hoàng kim huy hiệu";
     }
-    this.currency.badges = Math.max(0, this.currency.badges + 1);
+    const reward = claimCollectionReward(this.collection, this.flags.badges, tier);
+    if (!reward.claimed) return "Tất cả dẫn thưởng đã nhận.";
+    this.currency.badges = Math.max(0, this.currency.badges + reward.badgeCurrency);
+    this.synchronizeGoldenBankReward();
+    if (tier === 7) return "Nhận Hoàng Kim Chương bậc 2. Toàn bộ pet ngân hàng lên 5 sao.";
+    if (tier === 6) return "Nhận Hoàng Kim Chương bậc 1. Pet dự bị trong đội nhận 30% EXP.";
     return "Đạt được 1 huy hiệu";
+  }
+  /** Golden rank two also applies to pets received after the collection reward. */
+  synchronizeGoldenBankReward(): void {
+    synchronizeGoldenBadgeBankReward(this.flags.badges, this.meta.campaign.petBank, (pet) =>
+      this.sources.petStats.coreStats(pet.speciesId, pet.level, pet.quality, pet.nature ?? 0).hp);
   }
   /** `encounterStepsRemaining`: -1 until the room's first countdown is drawn. */
   encounterStepsRemaining = -1;
@@ -788,6 +803,7 @@ export class WorldRuntime {
   private activeBattleGroup: GroupRef | null = null;
   private saveRequested = false;
   private savePoint: SavePoint;
+  private recoveryCheckpoint: RecoveryCheckpoint = "village";
   /** The last fight's group and result, until the host has read it (`takeBattleResult`). */
   private lastBattle: (GroupRef & { won: boolean }) | null = null;
   takeBattleResult(): (GroupRef & { won: boolean }) | null {
@@ -875,10 +891,6 @@ export class WorldRuntime {
       (entry) => entry.petSlot < this.pets.length,
     );
     this.evolutionNoticeArmed = save?.evolutionNoticeArmed === true;
-    this.convenienceRewardsClaimed = Array.from(
-      { length: CONVENIENCE_REWARD_MILESTONES.length },
-      (_, tier) => save?.convenienceRewardsClaimed?.[tier] === true,
-    );
     this.meta = structuredClone(
       save?.meta ?? {
         fashion: {
@@ -916,10 +928,21 @@ export class WorldRuntime {
     this.restoreCauVongIncubation();
     // `SaveSessionSnapshotMapper`: every pet the session owns is collected, whatever the save says.
     this.collection = new PetCollection(save?.collection);
+    this.collection.restoreConvenienceRewards(save?.convenienceRewardsClaimed);
     this.playTimeSaved = Math.max(0, save?.playTimeMillis ?? 0);
     for (const pet of [...this.pets, ...this.campaign.petBank])
       this.collection.markCollected(pet.speciesId, pet.nature);
     this.flags.restore(save?.world);
+    this.synchronizeGoldenBankReward();
+    migrateLegacyRides(this.meta.campaign.ride, this.sceneId, {
+      specials: this.bag.specials,
+      rainbowEventDone: (room, event) => this.eventState.sourceEventStateComplete(98, room, event),
+      collected: (species) => this.collection.collected(species),
+    }, (event) => this.eventState.op14CompleteEvent(98, 0, event));
+    this.recoveryCheckpoint = isRecoveryCheckpoint(save?.recoveryCheckpoint)
+      ? save.recoveryCheckpoint
+      : legacyRecoveryCheckpoint(this.sceneId, this.roomIndex,
+          this.eventState.sourceEventStateComplete(2, 0, 1));
     this.flags.activeTask = save?.progress.activeTask ?? initial.activeTask;
     this.flags.setMainTaskProgress(save?.progress.mainTaskProgress ?? initial.mainTaskProgress);
     // `session.progression.badges`, read by every fight's `toBattleUnit(pet, 0, badges)`.
@@ -1017,13 +1040,20 @@ export class WorldRuntime {
    * `game.l.E` for an op38 wait: the first actor of the record's own list the hero is facing.
    */
   private facedActor(ids: readonly number[]): number {
-    const player = this.player;
     for (const id of ids) {
       const actor = this.actors.get(id);
-      if (actor?.visible && playerInteractsActor(player.x, player.y, player.direction, actor))
+      if (actor?.visible && this.actorInteractionRequested(actor))
         return id;
     }
     return -1;
+  }
+  private actorInteractionRequested(actor: StoryActor): boolean {
+    if (this.pointerActor === undefined)
+      return playerInteractsActor(this.player.x, this.player.y, this.player.direction, actor);
+    return actor.visible && this.pointerActor === actor.id && worldPointerNear(
+      this.player.x, this.player.y,
+      [actor.x + actor.renderOffsetX, actor.y + actor.renderOffsetY, 0, 0],
+    );
   }
   get questState(): { activeTask: string; mainTaskProgress: number } {
     return { activeTask: this.flags.activeTask, mainTaskProgress: this.flags.mainTaskProgress };
@@ -1126,6 +1156,7 @@ export class WorldRuntime {
       },
       slot,
     );
+    this.synchronizeGoldenBankReward();
     return result;
   }
   /** `CauVongIncubationProgression.clear`: the discard, without refund. */
@@ -1536,7 +1567,10 @@ export class WorldRuntime {
   }
   /** The faced talkable actor of this room that runs a service, started; false when none. */
   private startNpcService(): boolean {
-    const prompt = this.talkPrompt;
+    const selected = this.pointerActor === undefined ? undefined : this.actors.get(this.pointerActor);
+    const prompt = this.pointerActor === undefined ? this.talkPrompt
+      : selected && talkEligible(selected) && this.actorInteractionRequested(selected)
+        ? { actorId: selected.id } : null;
     if (!prompt) return false;
     const service = npcServiceAt(
       this.sources.npcServices,
@@ -1832,12 +1866,10 @@ export class WorldRuntime {
         this.battle = null;
         if (this.wildBattle) {
           // `FreeWorldEncounterBattle`: the world resumes where the fight began. A loss revived the
-          // party (`BattleLossWorldService`); JavaSE then respawns at the region's shop entrance,
-          // which the web does not have yet, so the hero goes back to the last save point.
+          // party (`BattleLossWorldService`), then returns the hero to the regional entrance.
           this.wildBattle = false;
           if (battle.result === BATTLE_RESULT_LOST) {
-            const point = this.savePoint;
-            this.loadRoom(point.scene, point.room, point.x, point.y, point.direction);
+            this.respawnAfterLoss();
           }
           this.setPhase("freeworld");
           return "autosave";
@@ -1873,6 +1905,7 @@ export class WorldRuntime {
           return "autosave";
         }
         if (repeatable) {
+          if (battle.result === BATTLE_RESULT_LOST) this.respawnAfterLoss();
           this.repeatableBattle = false;
           this.activeBattleGroup = null;
           this.setPhase("freeworld");
@@ -1892,22 +1925,8 @@ export class WorldRuntime {
         if (hosted) {
           this.activeBattleGroup = null;
           if (battle.result === BATTLE_RESULT_LOST) {
-            // Java sends a defeated hero to the village; until that route exists the group simply
-            // stays open. The settlement already healed the party, so the retry starts on full HP.
-            // A chain link (no rect, e.g. PaYaQi's 2:1:1) waits until the hero has left the room,
-            // or it would restart the lost fight on the next tick (`holdUntilRoomChange`).
-            this.dispatcher.holdUntilRoomChange(this.event!.ref);
+            const retry = this.event!.ref;
             this.event = null;
-            // A quest pet (Uy Qua Đệ Đệ, Nhiên Liệp Sư, Thảo Diệp Cô...) is a catchable wild
-            // encounter: `BattleLossWorldService` revives the party and respawns the hero away from
-            // it, which the web does as for any wild loss — back at the save point. The group stays
-            // open, so the pet waits there for a retry.
-            if (battle.core?.captureAllowed()) {
-              const point = this.savePoint;
-              this.loadRoom(point.scene, point.room, point.x, point.y, point.direction);
-              this.setPhase("freeworld");
-              return "autosave";
-            }
             // `BattleLossWorldService.prepare` resets Thiên Giới Đạo Quán's clouds, and `GymBattle`
             // puts the hero back at its door (actor 5) to try again.
             if (this.sceneId === 9 && this.roomIndex === 7)
@@ -1916,6 +1935,11 @@ export class WorldRuntime {
             // back to their rows; the web keeps the hero in the gym, at its door (actor 23).
             if (this.sceneId === 9 && this.roomIndex === 0)
               this.retryGymFromDoor(23, BICH_THUY_GYM_LEAVES);
+            this.respawnAfterLoss();
+            // Loading the recovery room clears dispatch latches. Preserve a retry hold
+            // when recovery lands in the same room as an automatic battle.
+            if (retry.scene === this.sceneId && retry.room === this.roomIndex)
+              this.dispatcher.holdUntilRoomChange(retry);
             this.setPhase("freeworld");
             return "autosave";
           }
@@ -1944,10 +1968,9 @@ export class WorldRuntime {
     if (this.phase === "battleReport") {
       if (!commands.includes("confirm")) return null;
       if (this.battleLost) {
-        const point = this.savePoint;
         this.battle = null;
         this.lastSettlement = null;
-        this.loadRoom(point.scene, point.room, point.x, point.y, point.direction);
+        this.respawnAfterLoss();
         this.setPhase("freeworld");
         return "autosave";
       }
@@ -2193,7 +2216,14 @@ export class WorldRuntime {
       if (row < 0) return;
       this.event!.moveChoice(row - choice.index);
     }
-    this.tick(["confirm"]);
+    const mapTap = this.onFreeMap || (this.phase === "event" && !!this.event?.activationIds.length);
+    if (mapTap) this.pointerActor = worldPointerTarget(this.actors.values(), x + this.cameraX, y + this.cameraY,
+      actor => this.sources.pointerMask?.(actor) ?? null);
+    try {
+      if (this.tick(["confirm"]) === "autosave") this.saveRequested = true;
+    } finally {
+      this.pointerActor = undefined;
+    }
   }
   saveSucceeded(): void {
     this.saveStatus = this.data.text.saveSuccess;
@@ -2257,6 +2287,7 @@ export class WorldRuntime {
     }
   }
   snapshot(): GameSave {
+    this.synchronizeGoldenBankReward();
     this.savePoint = {
       scene: this.sceneId,
       room: this.roomIndex,
@@ -2272,6 +2303,7 @@ export class WorldRuntime {
       format: SAVE_FORMAT,
       version: CURRENT_SAVE_VERSION,
       savedAt: new Date().toISOString(),
+      recoveryCheckpoint: this.recoveryCheckpoint,
       location: {
         sceneId: this.sceneId,
         roomIndex: this.roomIndex,
@@ -2312,7 +2344,7 @@ export class WorldRuntime {
       repelSteps: this.repelSteps,
       pendingSkillLearns: this.pendingSkillLearns.map((entry) => ({ ...entry })),
       evolutionNoticeArmed: this.evolutionNoticeArmed,
-      convenienceRewardsClaimed: [...this.convenienceRewardsClaimed],
+      convenienceRewardsClaimed: this.collection.convenienceRewardsSnapshot(),
       meta: structuredClone(this.meta),
       pets: this.pets.map((pet) => ({
         ...pet,
@@ -2348,6 +2380,21 @@ export class WorldRuntime {
     if (dispatch.kind === "room-portal") return this.useRoomPortal(dispatch.portal);
     return this.startEvent(dispatch.trigger);
   }
+  private respawnAfterLoss(): void {
+    const destination = battleLossRecovery(this.recoveryCheckpoint, this.sceneId, this.roomIndex);
+    if (destination.scene === 98 && destination.room === 50) {
+      this.loadRoom(98, 50, 310, 359, DIRECTION_DOWN);
+      return;
+    }
+    const target = this.sources.room(destination.scene, destination.room);
+    const arrival = target && transitionArrivalForTarget(this.sources.registry, target, destination);
+    if (arrival) {
+      this.loadRoom(destination.scene, destination.room, arrival.x, arrival.y, arrival.direction);
+      return;
+    }
+    const point = this.savePoint;
+    this.loadRoom(point.scene, point.room, point.x, point.y, point.direction);
+  }
   private view(activation: boolean): WorldView {
     return {
       scene: this.sceneId,
@@ -2356,6 +2403,10 @@ export class WorldRuntime {
       y: this.player.y,
       direction: this.player.direction,
       activation,
+      actorActivation: this.pointerActor === undefined ? undefined : id => {
+        const actor = this.actors.get(id);
+        return !!actor && this.actorInteractionRequested(actor);
+      },
       actorAt: (id: number) => this.actors.get(id),
       lit: (id: number) =>
         this.flags.hasSourceWorldFlag(switchFlag(this.sceneId, this.roomIndex, id)),
@@ -2664,6 +2715,7 @@ export class WorldRuntime {
       if (this.sceneId === 9 && this.roomIndex === 7) this.retryGymFromDoor(5, [0, 1, 2, 3, 4]);
       if (this.sceneId === 9 && this.roomIndex === 0 && !won)
         this.retryGymFromDoor(23, BICH_THUY_GYM_LEAVES);
+      if (!won) this.respawnAfterLoss();
       this.setPhase("freeworld");
       return "autosave";
     }
@@ -2717,7 +2769,8 @@ export class WorldRuntime {
   private challengeTanNguyet(commands: readonly InputCommand[]): boolean {
     if (!commands.includes("confirm")) return false;
     const boss = this.actors.get(TAN_NGUYET_ACTOR_ID);
-    if (!boss?.visible || !withinTanNguyetReach(this.player, boss)) return false;
+    if (!boss?.visible || !withinTanNguyetReach(this.player, boss) ||
+      (this.pointerActor !== undefined && this.pointerActor !== boss.id)) return false;
     const block = this.flags.hasSourceWorldFlag(TAN_NGUYET_BOSS.victoryCompletedFlag)
       ? TAN_NGUYET_WORLD_TEXT.alreadyDefeated
       : tanNguyetChallengeBlock(this.pets);
@@ -2779,6 +2832,7 @@ export class WorldRuntime {
         [],
       );
     bank.push(reward);
+    this.synchronizeGoldenBankReward();
     this.collection.markCollected(reward.speciesId);
     this.flags.mutateSourceWorldFlag(0, TAN_NGUYET_BOSS.victoryCompletedFlag);
     this.resumeAfterBattle();
@@ -2823,8 +2877,7 @@ export class WorldRuntime {
     )
       return null;
     this.tanNguyetModal = null;
-    const point = this.savePoint;
-    this.loadRoom(point.scene, point.room, point.x, point.y, point.direction);
+    this.respawnAfterLoss();
     this.setPhase("freeworld");
     return "autosave";
   }
@@ -3010,6 +3063,7 @@ export class WorldRuntime {
       // bank too; it is only reported with sourceResult=1 to the surrounding script.
       owned.slot = this.meta.campaign.petBank.length;
       this.meta.campaign.petBank.push(owned);
+      this.synchronizeGoldenBankReward();
     } else {
       this.pets.splice(slot, 0, owned);
       this.pets.forEach((inserted, index) => (inserted.slot = index));
@@ -3620,7 +3674,7 @@ export class WorldRuntime {
             ? !(playerMask && hit
                 ? sourceMaskOverlap(this.player.x, this.player.y, playerMask, actor.x, actor.y, hit)
                 : intersectsActorBox(this.player.x, this.player.y, actor.x, actor.y))
-            : !playerInteractsActor(this.player.x, this.player.y, this.player.direction, actor)
+            : !this.actorInteractionRequested(actor)
         )
           continue;
         actor.state = 1;
@@ -3806,6 +3860,7 @@ export class WorldRuntime {
       direction: player.direction,
       mask: this.sources.collisionMask?.(player.sprite, player.state, player.animationTick) ?? null,
       speed: this.playerMoveSpeed,
+      pointerTarget: this.pointerActor,
     };
   }
   /**
@@ -3993,6 +4048,7 @@ export class WorldRuntime {
           );
         if (toRoster) this.pets.push(built);
         else bank.push(built);
+        this.synchronizeGoldenBankReward();
         this.collection.markSeen(pet.species);
         this.collection.markCollected(pet.species);
         if (pet.ride >= 0)
@@ -4905,7 +4961,7 @@ export class WorldRuntime {
     }
     this.battle = createSourceTrainerBattle(
       services,
-      request,
+      { ...request, sceneId: this.sceneId },
       this.pets,
       this.inventory,
       this.battleItemCatalog(),
@@ -5078,6 +5134,7 @@ export class WorldRuntime {
         );
       if (toRoster) this.pets.push(pet);
       else bank.push(pet);
+      this.synchronizeGoldenBankReward();
       this.collection.markSeen(row.species);
       this.collection.markCollected(row.species);
       this.eventState.op14CompleteEvent(98, 44, row.receipt);
@@ -5199,7 +5256,7 @@ export class WorldRuntime {
     if (!services || !request || this.pets.length === 0) return false;
     this.battle = createSourceTrainerBattle(
       services,
-      request,
+      { ...request, sceneId: this.sceneId },
       this.pets,
       this.inventory,
       this.battleItemCatalog(),
@@ -5796,6 +5853,7 @@ export class WorldRuntime {
           const storage = this.pets.length < 6 ? this.pets : this.campaign.petBank;
           pet.slot = storage.length;
           storage.push(pet);
+          this.synchronizeGoldenBankReward();
           this.collection.markCollected(pet.speciesId);
         }
         if (!this.bag.equipment.includes(KIM_DIEM_AMULET_ID))
@@ -6048,7 +6106,8 @@ export class WorldRuntime {
       requested: (id) => {
         const rect = props[String(id)];
         if (!rect) return base.requested(id);
-        return cauVongPropRequested(hero, this.actors.get(id)?.visible ?? false, rect, confirm);
+        return cauVongPropRequested(hero, this.actors.get(id)?.visible ?? false, rect, confirm,
+          this.pointerActor === undefined ? undefined : this.pointerActor === id);
       },
       terrain: (x, y) => this.terrainAt(x, y),
       hero: () => ({ x: player.x, y: player.y, direction: player.direction }),
@@ -6220,6 +6279,7 @@ export class WorldRuntime {
       services,
       {
         ...request,
+        sceneId: this.sceneId,
         enemyStatPercent: key.startsWith(`${SUMMON_PREFIX}51:`)
           ? (speciesId) => this.divineSeal?.percent(speciesId, true) ?? 100
           : undefined,
@@ -6805,7 +6865,7 @@ export class WorldRuntime {
       if (
         !actor?.visible ||
         actor.sourceKind !== 3 ||
-        !playerInteractsActor(this.player.x, this.player.y, this.player.direction, actor)
+        !this.actorInteractionRequested(actor)
       )
         continue;
       const key = this.chestKey(id),
@@ -6863,7 +6923,7 @@ export class WorldRuntime {
         actor.variant === ROCK_BEHAVIOR
           ? this.flags.badges.canBreakRocks()
           : this.flags.badges.canClearTrees();
-      if (ready && playerInteractsActor(this.player.x, this.player.y, this.player.direction, actor))
+      if (ready && this.actorInteractionRequested(actor))
         ids.push(id);
     }
     return ids;
@@ -6926,7 +6986,7 @@ export class WorldRuntime {
     if (
       !commands.includes("confirm") ||
       !jill?.visible ||
-      !playerInteractsActor(player.x, player.y, player.direction, jill)
+      !this.actorInteractionRequested(jill)
     )
       return false;
     // `prepareNpcEvent`: an ordinary NPC turns to face the hero.
@@ -7280,6 +7340,7 @@ export class WorldRuntime {
       previousRoom = this.roomIndex;
     this.sceneId = scene;
     this.roomIndex = room;
+    this.recoveryCheckpoint = reachedRecoveryHub(scene, room) ?? this.recoveryCheckpoint;
     // `NguyenMocC4RaceRuntime.onRoomReplacement` / `reconcileRoomEntry`: no reward, no start counted.
     this.race = { active: false, startMillis: 0, countdown: 0, countdownTicks: 0 };
     // `reconcileRoomEntry`: barriers the chapter has outgrown close before any trigger is read.

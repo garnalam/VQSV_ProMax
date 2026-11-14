@@ -115,7 +115,7 @@ describe("Đồ giám data (record.ui / petmap.ui / badge.ui)", () => {
     expect(entries).toHaveLength(9);
     expect(entries[8]).toMatchObject({ id: 8, icon: "UD-BADGE-DIEN-MIEU" });
     expect(badgeStatusText(badges, 0)).toBe("Đã đạt - Chưa cường hóa");
-    expect(badgeStatusText(badges, 7)).toBe("Đã đạt - Không thể cường hóa");
+    expect(badgeStatusText(badges, 7)).toBe("Bậc 1");
     badges.enhance(0);
     expect(badgeStatusText(badges, 0)).toBe("Đã đạt - Đã cường hóa");
     // An enhanced badge describes its enhanced effect.

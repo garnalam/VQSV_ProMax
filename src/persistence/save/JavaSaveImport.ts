@@ -1,4 +1,5 @@
 import { defaultCampaignState, type CampaignState } from "../../game/campaign/CampaignSystems";
+import { isRecoveryCheckpoint } from "../../game/world/RecoveryCheckpoint";
 import {
   CURRENT_SAVE_VERSION,
   SAVE_FORMAT,
@@ -32,7 +33,7 @@ export type JavaSaveImport = {
 const NEWEST_JAVA_VERSION = 22;
 const MAX_PET_LEVEL = 100;
 const PARTY_SIZE = 6;
-const CONVENIENCE_TIERS = 7;
+const CONVENIENCE_TIERS = 8;
 const BASE_OUTFIT = "FASH-BASE-NEIL";
 
 /** `java.util.Properties.load` for the files Java writes: `key=value` lines with `\` escapes. */
@@ -302,10 +303,12 @@ export function importJavaSave(text: string, catalog: ImportCatalog): JavaSaveIm
     repelSteps: Math.max(-1, int("sourceAvoidMonsterTicks")),
     pendingSkillLearns: [],
     evolutionNoticeArmed: bool("sourceEvolutionNoticeArmed"),
-    // Java keeps one more tier flag than the web game has milestones (7).
+    // Preserve both Golden ranks in the deployed runtime's eight-tier collection ledger.
     convenienceRewardsClaimed: ints("sourceConvenienceRewardsClaimed")
       .slice(0, CONVENIENCE_TIERS)
       .map((v) => v !== 0),
+    recoveryCheckpoint: isRecoveryCheckpoint(str("recoveryCheckpointId"))
+      ? str("recoveryCheckpointId") as GameSave["recoveryCheckpoint"] : undefined,
     meta: {
       fashion: {
         selected: owned.includes(selected) ? selected : BASE_OUTFIT,

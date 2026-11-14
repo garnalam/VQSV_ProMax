@@ -1,6 +1,6 @@
 import type { PackBattleAiProfile } from "../../../data/GameData";
 import type { RainbowCharmBattleState } from "../../charm/RainbowCharmBattle";
-import { decideReserveShare, expAward } from "../BattleOutcomeEngine";
+import { decideReserveShare, expAward, reserveExpAward } from "../BattleOutcomeEngine";
 import type { BattleRandom } from "../BattleRandom";
 import type { BattleRules } from "../BattleRules";
 import type { DesignTraitProjection } from "../DesignTraitProjection";
@@ -22,6 +22,7 @@ import { LiveBattleAiUnit } from "../ai/BattleAiUnit";
 import { RUNTIME_MODES, type BattleAiV2RuntimeMode } from "../ai/BattleAiV2RuntimeSelector";
 import { BattleAiDecision as AiDecision } from "../ai/BattleAiDecision";
 import type { BattleItems } from "./BattleItems";
+import { applyCauVongItemRecovery } from "./CauVongItemRecovery";
 import {
   BattleCommandError,
   type CombatantSetup,
@@ -856,6 +857,15 @@ export class DoubleBattleCore {
       itemId: action.itemId,
       ...result,
     });
+    if (action.playerItem) {
+      const recovery = applyCauVongItemRecovery(this.setup, item, [this.unit(0), this.unit(1)], this.enemyUnits, (id) => this.ppMax(id));
+      if (recovery) {
+        const { target, ...gained } = recovery;
+        const slot = this.slotOfUnit(target);
+        if (slot >= 0 && gained.hpGained > 0) this.projection.afterHealing(target, slot, this.turn);
+        this.emit({ type: "item", slot: action.actorSlot, target: slot, itemId: action.itemId, cauVongRecovery: { speciesId: target.speciesId }, ...gained });
+      }
+    }
   }
 
   // ------------------------------------------------------------------ targets and power
@@ -1128,7 +1138,7 @@ export class DoubleBattleCore {
     const lastLevel = this.setup.player[living[living.length - 1]].level;
     this.playerUnits.forEach((unit, member) => {
       if (this.participants.includes(member) || !unit.alive()) return;
-      const share = decideReserveShare({ globalShare: false, heldItem6: unit.hasHeldItem(6) });
+      const share = decideReserveShare({ globalShare: false, goldenSharePercent: this.setup.goldenPartyExperiencePercent, heldItem6: unit.hasHeldItem(6) });
       if (share.outcome === "SKIP") return;
       const trait = this.projection.projectExperience(
         unit,
@@ -1138,7 +1148,7 @@ export class DoubleBattleCore {
       );
       let amount = 0;
       this.setup.enemy.forEach((enemy) => {
-        amount += expAward({
+        amount += reserveExpAward({
           enemyLevel: enemy.level,
           enemyNature: enemy.nature,
           levelFactorLevel: lastLevel,
@@ -1148,7 +1158,7 @@ export class DoubleBattleCore {
           heldItem5Multiplier: 0,
           experienceMultiplierPercent: trait.multiplierPercent,
           experienceMultiplierStackable: trait.stackable,
-        });
+        }, share);
       });
       this.reserveExperience[member] += amount;
       this.emit({ type: "experience", member, amount, reserve: true });

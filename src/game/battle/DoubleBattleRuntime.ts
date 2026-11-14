@@ -481,12 +481,16 @@ export class DoubleBattleRuntime {
         this.startDeath(event.slot);
         beat.ticks = 0;
         return;
-      case "item":
+      case "item": {
         if (event.target !== -1) this.displayHp[event.target] = this.core.unit(event.target).hp();
-        this.log = event.refused ?? `${this.slot(event.slot).name} dùng đạo cụ.`;
+        const recovery = [event.hpGained > 0 ? `${event.hpGained} HP` : "", event.ppGained > 0 ? `${event.ppGained} PP` : ""].filter(Boolean).join(" và ");
+        this.log = event.cauVongRecovery
+          ? `Đối phương hồi ${recovery} cho ${this.speciesName(event.cauVongRecovery.speciesId)}.`
+          : event.refused ?? `${this.slot(event.slot).name} dùng đạo cụ.`;
         this.hold = ITEM_HOLD;
         this.beat = null;
         return;
+      }
       case "statusTick":
       case "charmHeal":
       case "charmRevive":

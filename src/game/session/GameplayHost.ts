@@ -94,6 +94,7 @@ import {
 import { openingBranchRows, openingQuestDetail } from "../world/CauVongOpening";
 import { EVENT_STATE_COMPLETE } from "../world/EventStateLedger";
 import { WorldRuntime, type WorldAction, type WorldSources } from "../world/WorldRuntime";
+import { worldPointerMask } from "../world/WorldPointer";
 import {
   stockOffers,
   type ShopStockDocument,
@@ -200,6 +201,7 @@ export function gameplaySources(assets: GameAssets, boot: BootAssets): GameplayS
       animationTicks: (sprite, state) => assets.animationTicks(sprite, state),
       collisionMask: (sprite, state, tick) => assets.collisionMask(sprite, state, tick),
       hitMask: (sprite, state, tick) => assets.hitMask(sprite, state, tick),
+      pointerMask: (actor) => worldPointerMask(actor, assets.frame(actor.sprite, actor.state, actor.animationTick)),
       dialogPages: dialogPagination(boot),
       petStats: assets.petStats,
       battleRules: assets.battleRules,
@@ -442,6 +444,7 @@ export class GameplayHost {
       bankCards: () => {
         const world = this.world,
           services = this.sources.world.battle;
+        world?.synchronizeGoldenBankReward();
         return world && services
           ? world.campaign.petBank.map((pet, i) => worldPetCard(pet, i, services))
           : [];
@@ -452,12 +455,17 @@ export class GameplayHost {
         // `equipmentEngine.applySelection`: the deposited pet's equipment goes back to the bag.
         const held = world.pets[index]?.heldEquipmentId ?? -1,
           result = depositPet(world.pets, world.campaign, index, world.petBankCapacity());
+        if (result === "deposited") world.synchronizeGoldenBankReward();
         if (result === "deposited" && held >= 0 && !world.bag.equipment.includes(held))
           world.bag.equipment.push(held);
         return result;
       },
-      bankWithdraw: (index) =>
-        this.world ? withdrawPet(this.world.pets, this.world.campaign, index) : "invalid",
+      bankWithdraw: (index) => {
+        const world = this.world;
+        if (!world) return "invalid";
+        world.synchronizeGoldenBankReward();
+        return withdrawPet(world.pets, world.campaign, index);
+      },
       bankReleaseProtected: (index) => {
         const pet = this.world?.campaign.petBank[index];
         return !!pet && (this.sources.petSpecies?.divine(pet.speciesId) ?? false);
@@ -759,12 +767,14 @@ export class GameplayHost {
             })
           : { owned: 0, collected: 0, rare: 0, divine: 0, badges: 0, playTimeMillis: 0 };
       },
-      petmapRows: (tab) =>
+      petmapRows: (tab, family, variant) =>
         this.world
           ? petmapRows(
               (id) => this.sources.world.petStats.speciesRow(id),
               this.world.collection,
               tab,
+              family,
+              variant,
             )
           : [],
       badges: () =>
@@ -1253,6 +1263,7 @@ export class GameplayHost {
 
   /** What `task.ui` lists: `mTask.mid` up to the current task, and the branch tasks held. */
   private taskBoard(): TaskBoardSource {
+    const world = this.world;
     return {
       mainTasks: this.sources.mainTasks ?? [],
       branchCatalog: this.sources.quests?.branchTasks ?? [],
@@ -1260,6 +1271,11 @@ export class GameplayHost {
       branches: this.director?.log.branchTasks() ?? [],
       openingRows: this.openingQuestRows(),
       openingBranchRows: this.openingBranchQuestRows(),
+      goldenCollection: world ? {
+        species: world.collection.allCollectedSpeciesCount(),
+        shiny: world.collection.goldenShinyCollectedCount(),
+        rank: world.flags.badges.goldenTier(),
+      } : undefined,
     };
   }
   /** `openingQuestRows` tab 1 from task 48 on: the Cầu Vồng branch rows. */

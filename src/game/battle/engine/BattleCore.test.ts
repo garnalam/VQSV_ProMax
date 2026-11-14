@@ -72,6 +72,27 @@ const skillOrder = (events: readonly BattleEvent[]) =>
   events.flatMap((e) => (e.type === "skill" ? [e.seat.side] : []));
 
 describe("BattleCore: a whole fight", () => {
+  it("pays living reserves 30 percent with Hoàng Kim, full EXP with item six, and none when fainted", () => {
+    const core = fight({
+      goldenPartyExperiencePercent: 30,
+      player: [
+        pet(68, { stats: { hp: 400, attack: 400, defense: 100, speed: 120 } }),
+        pet(47),
+        pet(47, { heldItemId: 6 }),
+        pet(47, { hp: 0 }),
+      ],
+      enemy: [pet(34, { hp: 1 })],
+    });
+    slug(core);
+    expect(core.request.kind).toBe("ended");
+    if (core.request.kind !== "ended") return;
+    const exp = core.request.outcome.experience;
+    expect(exp[0]).toBeGreaterThan(0);
+    expect(exp[1]).toBe(Math.trunc(exp[0] * 30 / 100));
+    expect(exp[2]).toBe(exp[0]);
+    expect(exp[3]).toBe(0);
+  });
+
   it("seats both sides, then runs rounds until a side is out, and pays the EXP", () => {
     const core = fight({
       player: [pet(68, { stats: { hp: 400, attack: 200, defense: 60, speed: 120 } })],
@@ -110,6 +131,17 @@ describe("BattleCore: a whole fight", () => {
         }),
       ]),
     );
+  });
+
+  it("reflects skill debuffs from Kim Diễm back to the living attacker", () => {
+    const core = fight({
+      kind: "trainer",
+      player: [pet(68, { skillIds: [12], stats: { hp: 10_000, attack: 120, defense: 100, speed: 10 } })],
+      enemy: [pet(280, { skillIds: [4], stats: { hp: 10_000, attack: 100, defense: 100, speed: 100 } })],
+    }, new Fixed(0));
+    core.submit({ kind: "skill", slot: 0 });
+    expect(core.unit("enemy", 0).statuses.has(1, 2)).toBe(false);
+    expect(core.unit("player", 0).statuses.get(1, 2)).toMatchObject({ sourceSide: 1 });
   });
 
   it("the faster pet strikes first; an equal pair is settled by the fight's roll", () => {

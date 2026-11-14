@@ -356,7 +356,7 @@ describe("Rừng U Ám, 60, cửa Bắc and the rocks (CV4b)", () => {
     expect(done(world, 26, 100)).toBe(true);
     expect([world.roomIndex, world.player.x, world.player.y]).toEqual([4, 250, 170]);
     const quest = assets.cauVongOpening!.quests.find((q) => q.variants)!;
-    expect(openingQuestDetail(quest, ([r, e]) => done(world, r, e))).toBe(quest.variants![9].text);
+    expect(openingQuestDetail(quest, ([r, e]) => done(world, r, e))).toContain("Đến đấu trường trung cấp");
   });
 
   it("a lost rescue: the masked man's line, then 5 in the strip tries again", () => {
@@ -395,8 +395,8 @@ describe("Rừng U Ám, 60, cửa Bắc and the rocks (CV4b)", () => {
     world.eventState.op14CompleteEvent(98, 9, 104);
     expect(row()).toBe(quest.variants![11].text);
     world.eventState.op14CompleteEvent(98, 59, 130);
-    expect(row()).toBe(quest.variants![10].text);
+    expect(row()).toContain("Xem hết cuộc nói chuyện sáng hôm sau");
     world.eventState.op14CompleteEvent(98, 59, 131);
-    expect(row()).toBe(quest.variants![9].text);
+    expect(row()).toContain("Đến đấu trường trung cấp");
   });
 });

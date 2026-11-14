@@ -1,6 +1,7 @@
 import type { EventStateSnapshot } from "../../game/world/EventStateLedger";
 import type { WorldFlagsSnapshot } from "../../game/world/WorldFlags";
 import type { CampaignState } from "../../game/campaign/CampaignSystems";
+import { isRecoveryCheckpoint, type RecoveryCheckpoint } from "../../game/world/RecoveryCheckpoint";
 
 /** Bump together with a new entry in `migrations.ts`. */
 export const CURRENT_SAVE_VERSION = 33;
@@ -46,6 +47,8 @@ export type GameSave = {
   version: typeof CURRENT_SAVE_VERSION;
   savedAt: string;
   location: { sceneId: number; roomIndex: number; x: number; y: number; direction: number };
+  /** Last commissioned regional hub; absent in saves from before regional recovery. */
+  recoveryCheckpoint?: RecoveryCheckpoint;
   /** Which runtime resumes the session, e.g. "scene1.bunny-capture". */
   resume: { owner: string };
   /** Quest progress; an absent field means "the chapter's initial value". */
@@ -81,7 +84,7 @@ export type GameSave = {
   pendingSkillLearns: PendingSkillLearn[];
   /**
    * JavaSE `progression.evolutionNoticeArmed` (the evolution tutorial has run, which opens the
-   * convenience shop's evolve rows) and `collection.convenienceRewardsSnapshot()` (the seven
+   * convenience shop's evolve rows) and `collection.convenienceRewardsSnapshot()` (the eight
    * "Dẫn thưởng" milestones claimed). Absent in older saves: false and none claimed.
    */
   evolutionNoticeArmed?: boolean;
@@ -289,6 +292,7 @@ export function isGameSave(value: unknown): value is GameSave {
     finite(location.x) &&
     finite(location.y) &&
     integer(location.direction) &&
+    optional(value.recoveryCheckpoint, isRecoveryCheckpoint) &&
     record(resume) &&
     typeof resume.owner === "string" &&
     resume.owner.length > 0 &&
@@ -338,7 +342,7 @@ export function isGameSave(value: unknown): value is GameSave {
     optional(
       value.convenienceRewardsClaimed,
       (v) =>
-        Array.isArray(v) && v.length <= 7 && v.every((claimed) => typeof claimed === "boolean"),
+        Array.isArray(v) && v.length <= 8 && v.every((claimed) => typeof claimed === "boolean"),
     ) &&
     optional(
       value.collection,

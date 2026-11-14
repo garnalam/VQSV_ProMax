@@ -99,7 +99,13 @@ export type OpeningQuest = {
    * `fourGateQuestDetail`'s stages, latest first: the first whose `when` has a done flag and whose
    * `unless` has none.
    */
-  variants?: { when: [number, number][]; unless?: [number, number][]; text: string }[];
+  variants?: {
+    when: [number, number][];
+    unless?: [number, number][];
+    /** At least one route marker must hold, in addition to the stage marker. */
+    requiresAny?: [number, number][];
+    text: string;
+  }[];
 };
 /** `fourGateQuestDetail`: the latest stage whose flag is done (the last always matches), else `detail`. */
 export function openingQuestDetail(
@@ -110,7 +116,10 @@ export function openingQuestDetail(
   if (!variants?.length) return quest.detail;
   return (
     variants.find(
-      (row) => (row.when.length === 0 || row.when.some(done)) && !row.unless?.some(done),
+      (row) =>
+        (row.when.length === 0 || row.when.some(done)) &&
+        !row.unless?.some(done) &&
+        (!row.requiresAny || row.requiresAny.some(done)),
     ) ?? variants[variants.length - 1]
   ).text;
 }

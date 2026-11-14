@@ -77,6 +77,78 @@ const sources = {
   petStats: await PetStatCalculator.load(gameData),
   battleRules: await loadBattleRules(gameData),
 };
+
+describe("commissioned recovery checkpoints survive autosaves", () => {
+  it("records a visited hub and retains it after saving on another road", () => {
+    const base = new WorldRuntime(data, sources).snapshot();
+    const hub = new WorldRuntime(data, sources, {
+      ...base, location: {sceneId: 2, roomIndex: 1, x: 200, y: 200, direction: 0},
+    }).snapshot();
+    expect(hub.recoveryCheckpoint).toBe("bich-thuy");
+    const road = new WorldRuntime(data, sources, {
+      ...hub, location: {sceneId: 3, roomIndex: 1, x: 200, y: 200, direction: 0},
+    }).snapshot();
+    expect(road.recoveryCheckpoint).toBe("bich-thuy");
+  });
+});
+
+describe("golden collection rewards in the playable world", () => {
+  it("claims both ranks and upgrades restored and newly stored bank pets", () => {
+    const base = new WorldRuntime(data, sources).snapshot();
+    const world = new WorldRuntime(data, sources, base);
+    for (let id = 0; id < 281; id++) world.collection.markCollected(id);
+    for (let i = 0; i < 7; i++) world.claimConvenienceReward();
+    expect(world.flags.badges.goldenTier()).toBe(1);
+    world.campaign.petBank.push({...base.pets[0], slot: 0, quality: 1});
+    for (let nature = 7; nature <= 9; nature++)
+      for (let id = 0; id < 281; id++) world.collection.markCollected(id, nature);
+    world.claimConvenienceReward();
+    expect(world.flags.badges.goldenTier()).toBe(2);
+    expect(world.campaign.petBank[0].quality).toBe(5);
+    world.campaign.petBank.push({...base.pets[0], slot: 1, quality: 1});
+    const saved = world.snapshot();
+    expect(saved.meta?.campaign.petBank[1].quality).toBe(5);
+    const restored = new WorldRuntime(data, sources, saved);
+    expect(restored.flags.badges.goldenTier()).toBe(2);
+    expect(restored.snapshot().convenienceRewardsClaimed).toEqual(Array(8).fill(true));
+    expect(restored.claimConvenienceReward()).toBe("Tất cả dẫn thưởng đã nhận.");
+  });
+});
+describe("world pointer actor selection", () => {
+  const rig = () => {
+    const base = new WorldRuntime(data, sources).snapshot();
+    const runtime = new WorldRuntime(data, {
+      ...sources,
+      pointerMask: () => [-12, -32, 24, 32] as const,
+    }, {
+      ...base,
+      location: { sceneId: 1, roomIndex: 0, x: 200, y: 190, direction: DIRECTION_UP },
+      eventStates: { ...base.eventStates, "1:1:0": EVENT_STATE_COMPLETE, "1:0:1": EVENT_STATE_COMPLETE },
+    });
+    settleLoading(runtime);
+    return runtime;
+  };
+
+  it("does not turn an empty-map tap into confirm on the faced Elder", () => {
+    const runtime = rig();
+    runtime.pointer(0, 0);
+    expect(runtime.eventScene).toBeNull();
+    runtime.tick(["confirm"]);
+    expect(runtime.eventScene?.program.id).toBe("world:1:0:2");
+  });
+
+  it("selects a nearby actor under the screen tap even when the hero faces away", () => {
+    const runtime = rig(), elder = runtime.actors.get(data.elderActor)!;
+    runtime.player.x = elder.x + 40;
+    runtime.player.y = elder.y;
+    runtime.player.direction = DIRECTION_LEFT;
+    runtime.cameraX = 80;
+    runtime.cameraY = 70;
+    runtime.pointer(elder.x - runtime.cameraX, elder.y - 8 - runtime.cameraY);
+    expect(runtime.eventScene?.program.id).toBe("world:1:0:2");
+  });
+});
+
 /** The same world engine over both scripts' scenes, so the Cầu Vồng chapter's tables are readable. */
 const cvRegistry = StoryDataRegistry.combine(
   registry.document,

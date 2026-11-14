@@ -426,6 +426,6 @@ describe("Hoàng Dực Điểu, the laboratory and the exam (CV4c)", () => {
       world.eventState.op14CompleteEvent(98, room, event);
       seen.push(row());
     }
-    expect(seen).toEqual([9, 5, 6, 7, 8, 4, 3, 2, 1, 0]);
+    expect(seen).toEqual([10, 5, 6, 7, 8, 4, 3, 2, 1, 0]);
   });
 });

@@ -42,7 +42,7 @@
     "note": "Reproduces all 280 workbook values exactly, and is the same clamp Java applies to the four damage-reduction families, so those 26 rows agree with the Java export too."
   },
   "limitsText": {
-    "capsRemoved": "Đã bỏ trần hiệu quả, số tầng cộng dồn và số lần tối đa mỗi trận. Dấu đơn vẫn không cộng dồn; điều kiện, thời hạn và nhịp kích hoạt theo mô tả. HP/PP hồi không vượt tối đa của pet/chiêu; DEF còn lại không âm.",
+    "capsRemoved": "Đã bỏ trần hiệu quả và số lần tối đa mỗi trận. Năm họ đặc tính tích tầng cộng dồn tối đa 3 tầng. Dấu đơn vẫn không cộng dồn; điều kiện, thời hạn và nhịp kích hoạt theo mô tả. HP/PP hồi không vượt tối đa của pet/chiêu; DEF còn lại không âm.",
     "damageReductionCappedAt100": "Giảm sát thương tối đa 100%. Điều kiện và nhịp kích hoạt theo mô tả."
   },
   "boss": {
@@ -104,7 +104,7 @@
       "value": 18,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Nhận damage trực tiếp: Sức mạnh +18% trong 3 lượt, cộng dồn không giới hạn số tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
+      "description": "Nhận damage trực tiếp: Sức mạnh +18% trong 3 lượt, cộng dồn tối đa 3 tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
       "matchesJavaExport": true
     },
     {
@@ -136,7 +136,7 @@
       "value": 30,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +30%, cộng dồn không giới hạn số tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
+      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +30%, cộng dồn tối đa 3 tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
       "matchesJavaExport": true
     },
     {
@@ -456,7 +456,7 @@
       "value": 20,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu Power 0: dự trữ 20% HP tối đa, cộng dồn không giới hạn số tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
+      "description": "Dùng chiêu Power 0: dự trữ 20% HP tối đa, cộng dồn tối đa 3 tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
       "matchesJavaExport": true
     },
     {
@@ -472,7 +472,7 @@
       "value": 30,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn không giới hạn số tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
+      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn tối đa 3 tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
       "matchesJavaExport": true
     },
     {
@@ -821,10 +821,10 @@
       "type": "first_hit_guard",
       "factor": 10,
       "sourceValue": 10,
-      "value": 100,
+      "value": 30,
       "unit": "%",
       "limits": "damageReductionCappedAt100",
-      "description": "Giảm 100% damage trực tiếp đầu tiên nhận trong mỗi lượt. Không giảm DOT/chi phí HP; không kích phản đòn.",
+      "description": "Giảm 30% damage trực tiếp đầu tiên nhận trong mỗi lượt. Không giảm DOT/chi phí HP; không kích phản đòn.",
       "matchesJavaExport": true
     },
     {
@@ -888,7 +888,7 @@
       "value": 30,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +30%, cộng dồn không giới hạn số tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
+      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +30%, cộng dồn tối đa 3 tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
       "matchesJavaExport": true
     },
     {
@@ -904,7 +904,7 @@
       "value": 40,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +40%, cộng dồn không giới hạn số tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
+      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +40%, cộng dồn tối đa 3 tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
       "matchesJavaExport": true
     },
     {
@@ -920,7 +920,7 @@
       "value": 40,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +40%, cộng dồn không giới hạn số tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
+      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +40%, cộng dồn tối đa 3 tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
       "matchesJavaExport": true
     },
     {
@@ -1112,7 +1112,7 @@
       "value": 48,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 48 Power, cộng dồn không giới hạn số tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 48 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
       "matchesJavaExport": false
     },
     {
@@ -1128,7 +1128,7 @@
       "value": 66,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 66 Power, cộng dồn không giới hạn số tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 66 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
       "matchesJavaExport": false
     },
     {
@@ -1144,7 +1144,7 @@
       "value": 84,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 84 Power, cộng dồn không giới hạn số tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 84 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
       "matchesJavaExport": false
     },
     {
@@ -1160,7 +1160,7 @@
       "value": 30,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +30%, cộng dồn không giới hạn số tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
+      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +30%, cộng dồn tối đa 3 tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
       "matchesJavaExport": true
     },
     {
@@ -1176,7 +1176,7 @@
       "value": 40,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +40%, cộng dồn không giới hạn số tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
+      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +40%, cộng dồn tối đa 3 tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
       "matchesJavaExport": true
     },
     {
@@ -1192,7 +1192,7 @@
       "value": 24,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn không giới hạn số tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
+      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn tối đa 3 tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
       "matchesJavaExport": true
     },
     {
@@ -1208,7 +1208,7 @@
       "value": 24,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn không giới hạn số tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
+      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn tối đa 3 tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
       "matchesJavaExport": true
     },
     {
@@ -1272,7 +1272,7 @@
       "value": 30,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu damage hệ chính: damage hệ đó +30% trong 3 lượt, cộng dồn không giới hạn số tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
+      "description": "Dùng chiêu damage hệ chính: damage hệ đó +30% trong 3 lượt, cộng dồn tối đa 3 tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
       "matchesJavaExport": true
     },
     {
@@ -1656,7 +1656,7 @@
       "value": 50,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +50%, cộng dồn không giới hạn số tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
+      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +50%, cộng dồn tối đa 3 tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
       "matchesJavaExport": true
     },
     {
@@ -1896,7 +1896,7 @@
       "value": 30,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn không giới hạn số tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
+      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn tối đa 3 tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
       "matchesJavaExport": true
     },
     {
@@ -2008,7 +2008,7 @@
       "value": 48,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 48 Power, cộng dồn không giới hạn số tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 48 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
       "matchesJavaExport": false
     },
     {
@@ -2024,7 +2024,7 @@
       "value": 66,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 66 Power, cộng dồn không giới hạn số tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 66 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
       "matchesJavaExport": false
     },
     {
@@ -2040,7 +2040,7 @@
       "value": 84,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 84 Power, cộng dồn không giới hạn số tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 84 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
       "matchesJavaExport": false
     },
     {
@@ -2056,7 +2056,7 @@
       "value": 78,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 78 Power, cộng dồn không giới hạn số tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 78 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
       "matchesJavaExport": false
     },
     {
@@ -2248,7 +2248,7 @@
       "value": 18,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu damage hệ chính: damage hệ đó +18% trong 3 lượt, cộng dồn không giới hạn số tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
+      "description": "Dùng chiêu damage hệ chính: damage hệ đó +18% trong 3 lượt, cộng dồn tối đa 3 tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
       "matchesJavaExport": true
     },
     {
@@ -2264,7 +2264,7 @@
       "value": 24,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn không giới hạn số tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
+      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn tối đa 3 tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
       "matchesJavaExport": true
     },
     {
@@ -2280,7 +2280,7 @@
       "value": 24,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn không giới hạn số tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
+      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn tối đa 3 tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
       "matchesJavaExport": true
     },
     {
@@ -2296,7 +2296,7 @@
       "value": 24,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn không giới hạn số tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
+      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn tối đa 3 tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
       "matchesJavaExport": true
     },
     {
@@ -2504,7 +2504,7 @@
       "value": 12,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Nhận damage trực tiếp: Sức mạnh +12% trong 3 lượt, cộng dồn không giới hạn số tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
+      "description": "Nhận damage trực tiếp: Sức mạnh +12% trong 3 lượt, cộng dồn tối đa 3 tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
       "matchesJavaExport": true
     },
     {
@@ -2520,7 +2520,7 @@
       "value": 18,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Nhận damage trực tiếp: Sức mạnh +18% trong 3 lượt, cộng dồn không giới hạn số tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
+      "description": "Nhận damage trực tiếp: Sức mạnh +18% trong 3 lượt, cộng dồn tối đa 3 tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
       "matchesJavaExport": true
     },
     {
@@ -2536,7 +2536,7 @@
       "value": 18,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Nhận damage trực tiếp: Sức mạnh +18% trong 3 lượt, cộng dồn không giới hạn số tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
+      "description": "Nhận damage trực tiếp: Sức mạnh +18% trong 3 lượt, cộng dồn tối đa 3 tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
       "matchesJavaExport": true
     },
     {
@@ -2552,7 +2552,7 @@
       "value": 18,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Nhận damage trực tiếp: Sức mạnh +18% trong 3 lượt, cộng dồn không giới hạn số tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
+      "description": "Nhận damage trực tiếp: Sức mạnh +18% trong 3 lượt, cộng dồn tối đa 3 tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
       "matchesJavaExport": true
     },
     {
@@ -2760,7 +2760,7 @@
       "value": 20,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu Power 0: dự trữ 20% HP tối đa, cộng dồn không giới hạn số tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
+      "description": "Dùng chiêu Power 0: dự trữ 20% HP tối đa, cộng dồn tối đa 3 tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
       "matchesJavaExport": true
     },
     {
@@ -2776,7 +2776,7 @@
       "value": 30,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn không giới hạn số tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
+      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn tối đa 3 tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
       "matchesJavaExport": true
     },
     {
@@ -2792,7 +2792,7 @@
       "value": 30,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn không giới hạn số tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
+      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn tối đa 3 tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
       "matchesJavaExport": true
     },
     {
@@ -2808,7 +2808,7 @@
       "value": 30,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn không giới hạn số tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
+      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn tối đa 3 tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
       "matchesJavaExport": true
     },
     {
@@ -3400,7 +3400,7 @@
       "value": 20,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu Power 0: dự trữ 20% HP tối đa, cộng dồn không giới hạn số tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
+      "description": "Dùng chiêu Power 0: dự trữ 20% HP tối đa, cộng dồn tối đa 3 tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
       "matchesJavaExport": true
     },
     {
@@ -3416,7 +3416,7 @@
       "value": 30,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn không giới hạn số tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
+      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn tối đa 3 tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
       "matchesJavaExport": true
     },
     {
@@ -3432,7 +3432,7 @@
       "value": 30,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn không giới hạn số tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
+      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn tối đa 3 tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
       "matchesJavaExport": true
     },
     {
@@ -3448,7 +3448,7 @@
       "value": 30,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn không giới hạn số tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
+      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn tối đa 3 tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
       "matchesJavaExport": true
     },
     {
@@ -3496,7 +3496,7 @@
       "value": 48,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 48 Power, cộng dồn không giới hạn số tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 48 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
       "matchesJavaExport": false
     },
     {
@@ -3512,7 +3512,7 @@
       "value": 66,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 66 Power, cộng dồn không giới hạn số tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 66 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
       "matchesJavaExport": false
     },
     {
@@ -3528,7 +3528,7 @@
       "value": 84,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 84 Power, cộng dồn không giới hạn số tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 84 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
       "matchesJavaExport": false
     },
     {
@@ -3624,7 +3624,7 @@
       "value": 18,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu damage hệ chính: damage hệ đó +18% trong 3 lượt, cộng dồn không giới hạn số tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
+      "description": "Dùng chiêu damage hệ chính: damage hệ đó +18% trong 3 lượt, cộng dồn tối đa 3 tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
       "matchesJavaExport": true
     },
     {
@@ -3640,7 +3640,7 @@
       "value": 24,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn không giới hạn số tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
+      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn tối đa 3 tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
       "matchesJavaExport": true
     },
     {
@@ -3656,7 +3656,7 @@
       "value": 24,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn không giới hạn số tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
+      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn tối đa 3 tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
       "matchesJavaExport": true
     },
     {
@@ -3672,7 +3672,7 @@
       "value": 24,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn không giới hạn số tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
+      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn tối đa 3 tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
       "matchesJavaExport": true
     },
     {
@@ -3944,7 +3944,7 @@
       "value": 48,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 48 Power, cộng dồn không giới hạn số tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 48 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
       "matchesJavaExport": false
     },
     {
@@ -3960,7 +3960,7 @@
       "value": 66,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 66 Power, cộng dồn không giới hạn số tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 66 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
       "matchesJavaExport": false
     },
     {
@@ -3976,7 +3976,7 @@
       "value": 84,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 84 Power, cộng dồn không giới hạn số tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 84 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
       "matchesJavaExport": false
     },
     {
@@ -4040,7 +4040,7 @@
       "value": 12,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Nhận damage trực tiếp: Sức mạnh +12% trong 3 lượt, cộng dồn không giới hạn số tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
+      "description": "Nhận damage trực tiếp: Sức mạnh +12% trong 3 lượt, cộng dồn tối đa 3 tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
       "matchesJavaExport": true
     },
     {
@@ -4056,7 +4056,7 @@
       "value": 18,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Nhận damage trực tiếp: Sức mạnh +18% trong 3 lượt, cộng dồn không giới hạn số tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
+      "description": "Nhận damage trực tiếp: Sức mạnh +18% trong 3 lượt, cộng dồn tối đa 3 tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
       "matchesJavaExport": true
     },
     {
@@ -4072,7 +4072,7 @@
       "value": 18,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Nhận damage trực tiếp: Sức mạnh +18% trong 3 lượt, cộng dồn không giới hạn số tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
+      "description": "Nhận damage trực tiếp: Sức mạnh +18% trong 3 lượt, cộng dồn tối đa 3 tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
       "matchesJavaExport": true
     },
     {
@@ -4376,7 +4376,7 @@
       "value": 50,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +50%, cộng dồn không giới hạn số tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
+      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +50%, cộng dồn tối đa 3 tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
       "matchesJavaExport": true
     },
     {
@@ -4408,7 +4408,7 @@
       "value": 40,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu Power 0: dự trữ 40% HP tối đa, cộng dồn không giới hạn số tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
+      "description": "Dùng chiêu Power 0: dự trữ 40% HP tối đa, cộng dồn tối đa 3 tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
       "matchesJavaExport": true
     },
     {
@@ -4477,7 +4477,14 @@
       "description": "Miễn nhiễm Mê Muội, Quấn Quanh hoặc Giam Cầm, Tê Liệt, Hóa Đá, Hỗn Loạn và Ngủ; giảm 25% sát thương trực tiếp nhận vào.",
       "matchesJavaExport": false,
       "exclusiveTrait": "TL-01",
-      "immuneStatuses": ["dazed", "bind", "paralysis", "petrification", "confusion", "sleep"]
+      "immuneStatuses": [
+        "dazed",
+        "bind",
+        "paralysis",
+        "petrification",
+        "confusion",
+        "sleep"
+      ]
     },
     {
       "speciesId": 276,
@@ -4508,7 +4515,7 @@
       "value": 40,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +40%, cộng dồn không giới hạn số tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
+      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +40%, cộng dồn tối đa 3 tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
       "matchesJavaExport": true
     },
     {

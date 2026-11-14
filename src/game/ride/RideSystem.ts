@@ -141,6 +141,27 @@ export type RideOwnership = {
 export const RAINBOW_RIDE_OWNED_EVENT = 700100;
 /** `applySelectedRide` marks the save as using the separated ride ids. */
 export const RIDE_IDS_SEPARATED_EVENT = 700099;
+const LEGACY_BEAST_PRESERVED_EVENT = 700097;
+
+/** `preserveLegacyBeastOwnership` runs before `migrateLegacyRainbowRide`. */
+export function migrateLegacyRides(
+  state: RideState,
+  scene: number,
+  ownership: RideOwnership,
+  complete: (event: number) => void,
+): void {
+  const done = (event: number) => ownership.rainbowEventDone(0, event);
+  if (!done(LEGACY_BEAST_PRESERVED_EVENT)) {
+    if (done(RIDE_IDS_SEPARATED_EVENT) && ownership.collected(117))
+      complete(RAINBOW_RIDE_OWNED_EVENT + CV_BEAST);
+    complete(LEGACY_BEAST_PRESERVED_EVENT);
+  }
+  if (done(RIDE_IDS_SEPARATED_EVENT)) return;
+  const replacement = new Map([[0, CV_PLANT], [1, CV_SKY], [3, CV_WATER]]).get(state.activeIndex);
+  if (scene === 98 && replacement !== undefined && rideUnlocked(replacement, ownership))
+    state.activeIndex = replacement;
+  complete(RIDE_IDS_SEPARATED_EVENT);
+}
 /** `CauVongNorthSeaHiddenClassroomRuntime.CAPTIVES_RELEASED_EVENT`. */
 const CAPTIVES_RELEASED_EVENT = 104;
 

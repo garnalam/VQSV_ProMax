@@ -517,6 +517,7 @@ describe("battle outcome engine", () => {
     expect(decideReserveShare({ globalShare: true, heldItem6: true })).toEqual({
       outcome: "SHARE",
       divisor: 1000,
+      percent: 100,
     });
 
     // Holding Mật Phong Sào and reading nothing from it is the same as not holding it, which is the

@@ -108,6 +108,8 @@ export function doubleBattleSetup(
   for (const [id, count] of Object.entries(inventory)) bag[Number(id)] = count;
   return {
     controlsBoth,
+    sceneId: event.sceneId,
+    capturePolicy: trainerOwned ? "TRAINER_OWNED_FORBIDDEN" : "WILD_ALLOWED",
     player: party.slice(0, PLAYER_OWNER_LIMIT).map((pet) => services.partyMember(pet)),
     companion,
     enemy,
@@ -150,6 +152,8 @@ export function tanNguyetBattleSetup(
   for (const [id, count] of Object.entries(inventory)) bag[Number(id)] = count;
   return {
     controlsBoth: true,
+    sceneId: TAN_NGUYET_BOSS.sceneId,
+    capturePolicy: "TRAINER_OWNED_FORBIDDEN",
     player: party.slice(0, PLAYER_OWNER_LIMIT).map((pet) => services.partyMember(pet)),
     companion: [],
     enemy,
@@ -194,6 +198,7 @@ export function newDoubleBattleCore(
     {
       ...setup,
       badgeProfile: setup.badgeProfile ?? services.badgeProfile(),
+      goldenPartyExperiencePercent: setup.goldenPartyExperiencePercent ?? services.goldenPartyExperiencePercent(),
       enemy: setup.enemy.map((pet, member) => services.enemyTalentPet(pet, member, symbol, seed)),
       companion: setup.companion.map((pet, index) =>
         services.enemyTalentPet(pet, setup.enemy.length + index, symbol, seed),

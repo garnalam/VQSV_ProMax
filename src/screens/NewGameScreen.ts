@@ -1408,9 +1408,11 @@ export class NewGameScreen implements Screen {
           {
             font: this.boot.panelFont,
             cell: (i) => this.boot.cell(257, i),
-            idle: (spriteId) => {
-              const frame = this.assets.frameAtCursor(spriteId, 0, 0);
-              return frame ? { image: this.assets.imageFor(frame), ox: 0, oy: 0 } : undefined;
+            idle: (spriteId, nature) => {
+              const visual = this.assets.shinySprite(spriteId, nature);
+              const frame = this.assets.frameAtCursor(visual, 0, 0);
+              const image = frame && this.assets.petImage(frame, visual, nature);
+              return image ? { image, ox: 0, oy: 0 } : undefined;
             },
             badgeIcon: (key) => this.assets.pack.imageElement(`badge-icons.${key}`),
           },

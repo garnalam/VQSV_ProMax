@@ -315,6 +315,10 @@ export class BattleServices {
     return this.badges ? battleBadgeProfile(this.badges, this.badgeRows) : NO_BADGE_PROFILE;
   }
 
+  goldenPartyExperiencePercent(): number {
+    return this.badges?.achieved(7) ? 30 : 0;
+  }
+
   /** `sourcePostExpPassiveHealAmount(speciesId)` under Liệt Hỏa enhanced, else undefined. */
   postExpBadgeHeal(speciesId: number): number | undefined {
     if (!this.badges) return undefined;
@@ -339,6 +343,7 @@ export class BattleServices {
       {
         ...setup,
         badgeProfile: setup.badgeProfile ?? this.badgeProfile(),
+        goldenPartyExperiencePercent: setup.goldenPartyExperiencePercent ?? this.goldenPartyExperiencePercent(),
         postExpBadgeHeal:
           setup.postExpBadgeHeal ?? ((speciesId) => this.postExpBadgeHeal(speciesId)),
         enemy: setup.enemy.map((pet, member) =>

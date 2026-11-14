@@ -201,6 +201,31 @@ const FLOOR: Record<string, { strikes: number; draws: number; joint: number; bos
 };
 
 describe("DoubleBattleCore replays the Java 2v2 golden", () => {
+  it("pays Hoàng Kim reserve EXP at thirty percent while item six keeps the whole share", () => {
+    const base = combatant(golden.scenarios[0].units.player[0]);
+    const pet = (extra = {}) => ({ ...base, speciesId: 68, level: 10, quality: 2, nature: 2, hp: 10000, physicalTraitId: -1, heldItemId: -1, skillIds: [0], skillPp: [99], stats: { hp: 10000, attack: 10000, defense: 100, speed: 1000 }, ...extra });
+    const core = new DoubleBattleCore(rules, { items, skillRules, rulebook, catalog }, {
+      controlsBoth: true,
+      goldenPartyExperiencePercent: 30,
+      player: [pet(), pet(), pet(), pet({ heldItemId: 6 }), pet({ hp: 0 })],
+      companion: [],
+      enemy: [pet({ hp: 1 }), pet({ hp: 1 })],
+      enemyProfile: trainerProfile,
+      companionProfile,
+    }, new BattleRandom(7n));
+    core.start();
+    for (let guard = 0; guard < 12 && core.request.kind === "command"; guard++) {
+      core.submit({ kind: "skill", skillIndex: 0, target: core.unit(0).alive() ? 0 : 1 });
+    }
+    expect(core.request.kind).toBe("ended");
+    if (core.request.kind !== "ended") return;
+    const outcome = core.request.outcome;
+    expect(outcome.experience[0]).toBeGreaterThan(0);
+    expect(outcome.reserveExperience[2]).toBe(Math.trunc(outcome.experience[0] / 2 * 30 / 100) * 2);
+    expect(outcome.reserveExperience[3]).toBe(outcome.experience[0]);
+    expect(outcome.reserveExperience[4]).toBe(0);
+  });
+
   for (const scenario of golden.scenarios)
     it(`${scenario.name} stays identical up to the first web-status-rule divergence`, () => {
       const { core, random, error } = replay(scenario),
