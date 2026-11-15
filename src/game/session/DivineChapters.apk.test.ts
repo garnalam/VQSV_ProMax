@@ -162,6 +162,11 @@ function earlierStory(): string[] {
   return done;
 }
 
+/** The walk's save just before Chiến Thần Đà's room (4:10:g1 played), for the reset check. */
+let beforeChienThanDa: GameSave | undefined;
+/** The walk's save at its end (task 47, in Thiên Địa chi sơ's 8:0). */
+let afterChain: GameSave | undefined;
+
 describe("Liệt Hỏa's divine-beast chapters on foot (APK layout), task 29 → 47 from the owner's save", () => {
   it("walks every beat; a stuck spot is recorded, forced through, and the walk goes on", async () => {
     const start = baseSave(
@@ -180,6 +185,7 @@ describe("Liệt Hỏa's divine-beast chapters on foot (APK layout), task 29 →
         try {
           await game.play(scene, room, group, options);
           save = await game.snapshot();
+          if (key === "4:10:1") beforeChienThanDa = save;
           trail.push(`${chapter} ${key} ✓ task ${save.progress.mainTaskProgress} (${game.log.rooms.join(">")})`);
         } catch (error) {
           stuck.push(`[${chapter}] ${key}: ${(error as Error).message}`);
@@ -198,6 +204,7 @@ describe("Liệt Hỏa's divine-beast chapters on foot (APK layout), task 29 →
             }
         }
       }
+    afterChain = save;
     console.log(trail.join("\n"));
     console.log("STUCK:\n" + stuck.join("\n"));
     // The owner reported these four beasts (and the ending they lead to) as the ones players got
@@ -207,4 +214,107 @@ describe("Liệt Hỏa's divine-beast chapters on foot (APK layout), task 29 →
     expect(stuck.filter((line) => checked.some((chapter) => line.startsWith(`[${chapter}]`)))).toEqual([]);
     expect(save.progress.mainTaskProgress).toBe(47);
   }, 3_600_000);
+});
+
+describe("Chiến Thần Đà's shapes reset on the way back in (web fix for saves stuck with every shape broken)", () => {
+  const SHAPES = Array.from({ length: 28 }, (_, id) => 300000 + 10 * 10000 + 12 * 100 + id);
+  for (const [label, tableau] of [
+    ["every shape broken, the tableau never played", false],
+    ["every shape broken and the tableau played, him not caught", true],
+  ] as const)
+    it(`${label}: out to the ruins' entrance and back, break them again, catch him`, async () => {
+      expect(beforeChienThanDa, "the chain above ran first").toBeDefined();
+      const base = beforeChienThanDa!;
+      // The stuck save: standing in 10:12, all 28 shape flags written, Chiến Thần Đà uncaught.
+      const stuckSave: GameSave = {
+        ...base,
+        location: doorArrival(boot.sourceEvents, assets, 10, 12),
+        eventStates: Object.fromEntries(
+          Object.entries({ ...base.eventStates, ...(tableau ? { "10:12:0": 3 } : {}) }).filter(
+            ([key]) => tableau || key !== "10:12:0",
+          ),
+        ),
+        world: {
+          ...base.world!,
+          sourceWorldFlags: [...new Set([...(base.world?.sourceWorldFlags ?? []), ...SHAPES])],
+        },
+      };
+      const game = walker.open(stuckSave);
+      await game.goToRoom(4, 10);
+      await game.goToRoom(10, 12);
+      const back = await game.snapshot();
+      expect(SHAPES.filter((flag) => back.world?.sourceWorldFlags?.includes(flag))).toEqual([]);
+      expect(back.eventStates?.["10:12:0"] ?? 0).toBe(0);
+      await game.play(10, 12, 0);
+      // As a player does: walk up to Chiến Thần Đà where he stands, and the fight starts there.
+      const guardian = game.world().actors.get(29)!;
+      expect(guardian.visible).toBe(true);
+      game.walk(
+        (x, y) => Math.abs(x - guardian.x) <= 16 && Math.abs(y - guardian.y) <= 12,
+        "beside Chiến Thần Đà",
+        { catchFoe: true },
+        () => (game.world().eventState.sourceEventState(10, 12, 4) ?? 0) >= 3,
+      );
+      game.settle({ catchFoe: true });
+      const end = await game.snapshot();
+      expect(end.eventStates?.["10:12:4"]).toBe(3);
+      expect(game.log.rooms.join(">")).toContain("10:12>4:10>10:12");
+    }, 600_000);
+});
+
+describe("each divine beast's meeting rect lies at his feet in the APK layout", () => {
+  // [room, guardian actor, groups whose op13 is the meeting]: the player walks up to the beast, so
+  // the rect that starts the fight has to be where he stands (10:12 once kept the JAR spot).
+  for (const [room, actorId, groups] of [
+    [11, 0, [0, 1]],
+    [0, 1, [1, 3]],
+    [12, 29, [1, 4]],
+    [7, 6, [0, 1]],
+  ] as const)
+    it(`10:${room}: actor ${actorId}`, () => {
+      const actor = assets.rooms[`10:${room}`]!.actors.find((a) => a.id === actorId)!;
+      for (const group of groups) {
+        const rect = boot.sourceEvents.group(10, room, group)!.records.find((r) => r.opcode === 13)!.short_args,
+          [x, y, w, h] = rect,
+          dx = Math.max(x - actor.x, 0, actor.x - (x + w)),
+          dy = Math.max(y - actor.y, 0, actor.y - (y + h));
+        expect(Math.hypot(dx, dy), `g${group} rect ${rect} vs actor at (${actor.x},${actor.y})`).toBeLessThanOrEqual(60);
+      }
+    });
+});
+
+describe("task 46: Tomas's ritual in Vĩnh Hằng Kinh Phiên (7:2:g6), as JavaSE's XhtC4Runtime", () => {
+  it("starts as the hero steps in from 7:1 (the way from the temple); from every other door he walks to it", async () => {
+    const { sourceDoors } = await import("../world/WorldTransition");
+    const base = afterChain!;
+    const states = Object.fromEntries(
+      Object.entries(base.eventStates ?? {}).filter(([k]) => !/^(7:2:(2|3|4|5|6|8)|8:0:\d+)$/.test(k)),
+    );
+    expect(states["7:0:1"]).toBe(3);
+    const sources: { scene: number; room: number }[] = [];
+    for (const key of Object.keys(assets.rooms)) {
+      if (key.includes("#")) continue;
+      const [s, r] = key.split(":").map(Number);
+      if (sourceDoors(boot.sourceEvents, s, r).some((d) => d.target.scene === 7 && d.target.room === 2))
+        sources.push({ scene: s, room: r });
+    }
+    expect(sources.length).toBeGreaterThan(1);
+    for (const from of sources) {
+      const location = doorArrival(boot.sourceEvents, assets, 7, 2, from),
+        game = walker.open({
+          ...base,
+          location,
+          eventStates: states,
+          progress: { ...base.progress, mainTaskProgress: 46 },
+          world: { ...base.world!, mainTaskProgress: 46 },
+        });
+      game.settle({});
+      if (from.scene === 7 && from.room === 1)
+        expect(game.world().eventState.sourceEventState(7, 2, 6), "on arrival from 7:1").toBe(3);
+      else await game.play(7, 2, 6);
+      const end = await game.snapshot();
+      expect(end.eventStates?.["7:2:6"], `from ${from.scene}:${from.room}`).toBe(3);
+      expect(end.location.sceneId, `from ${from.scene}:${from.room}`).toBe(8);
+    }
+  }, 600_000);
 });

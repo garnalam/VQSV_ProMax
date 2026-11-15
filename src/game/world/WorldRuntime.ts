@@ -7988,6 +7988,21 @@ export class WorldRuntime {
     this.tickTanNguyetBoss();
     // `VqsvSceneLoaders` room load: the room's ride policy (a save resume validates ownership too).
     this.applyRideRoomPolicy(this.restoringSave);
+    // Web-only: walking into Chiến Thần Đà's room from the ruins' entrance (4:10) while he is still
+    // uncaught (10:12:g4 open) lays its 28 floor shapes back and replays their tableau (g0), so a
+    // save whose shapes were all broken without him appearing can break them again and meet him.
+    if (
+      scene === 10 &&
+      room === 12 &&
+      previousScene === 4 &&
+      previousRoom === 10 &&
+      !this.restoringSave &&
+      !this.eventState.sourceEventStateComplete(10, 12, 4)
+    ) {
+      for (let id = 0; id <= 27; id++)
+        this.flags.mutateSourceWorldFlag(1, switchFlag(10, 12, id));
+      this.eventState.resetEvent(10, 12, 0);
+    }
     this.dispatcher.enterRoom(scene, room);
     // `reconcileRoomEntry`: lit torches burn, and finished op59/op60 groups keep their actors' states.
     this.applySettledStates(this.actors);

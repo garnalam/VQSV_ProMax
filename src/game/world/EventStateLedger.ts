@@ -96,6 +96,11 @@ export class EventStateLedger {
     this.setSourceEventState(sceneId, roomIndex, groupIndex, EVENT_STATE_RETIRED);
   }
 
+  /** Web-only: a group back to fresh (state 0), for a room puzzle the web lets the player redo. */
+  resetEvent(sceneId: number, roomIndex: number, groupIndex: number): void {
+    this.states.delete(eventStateKey(sceneId, roomIndex, groupIndex));
+  }
+
   private setSourceEventState(
     sceneId: number,
     roomIndex: number,

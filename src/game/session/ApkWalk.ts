@@ -661,9 +661,16 @@ export function apkWalker(sources: GameplaySources, assets: GameAssets, registry
 
     /** Walk to a group's room and start it the way a player does (its rect, its actor or 5 on switches). */
     async function play(scene: number, room: number, group: number, options: PlayOptions = {}) {
-      await goToRoom(scene, room, options);
-      const t = trigger(scene, room, group),
-        done = () => world().eventState.sourceEventState(scene, room, group) >= 3;
+      const done = () => world().eventState.sourceEventState(scene, room, group) >= 3,
+        before = world().eventState.sourceEventState(scene, room, group);
+      try {
+        await goToRoom(scene, room, options);
+      } catch (error) {
+        // The beat played on the way in (a rect at the doorway) and its load took him elsewhere.
+        if (before < 3 && done()) return;
+        throw error;
+      }
+      const t = trigger(scene, room, group);
       if (done()) return;
       if (!t) throw new WalkStuck(`${scene}:${room}:${group} has no trigger`);
       if (t.kind === "rect")

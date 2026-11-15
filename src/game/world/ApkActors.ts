@@ -77,9 +77,29 @@ export type ApkEventsDocument = {
   rooms: Record<string, [number, number, number[]][]>;
 };
 
+/**
+ * Web fixes laid over the APK positions (after them, so they win):
+ *
+ * 10:12, which `apk-events.mjs` left without APK rects although its guardian moved: the meeting
+ * rect moves with him. 10:12: Chiến Thần Đà (29) stands at (292,92) in the APK, (190,81)
+ * in the JAR, so g1's and g4's rect [160,80,64,16] at his feet shifts by (+102,+11) too —
+ * `XhtC2Runtime.playerIntersectsGuardianTrigger`, laid out for the landscape map.
+ */
+const APK_EVENT_FIXES: ApkEventsDocument["rooms"] = {
+  "10:12": [
+    [1, 1, [262, 91, 64, 16]],
+    [4, 1, [262, 91, 64, 16]],
+  ],
+  // 7:2:g6 (`XhtC4Runtime.tryHandleCity`, task 46): Tomas's ritual starts on the plaza where the
+  // hero steps in from 7:1 (the way from the temple), [240,352,64,32]. The APK values put it on a
+  // 16 px strip at the room's far left edge by the 7:3 door, so coming from the temple nothing
+  // happened and Tomas never showed. 7:1's door keeps its JAR spot (289,385) on the APK map.
+  "7:2": [[6, 1, [240, 352, 64, 32]]],
+};
+
 /** Lays the APK's event positions over the story registry (landscape app only, like the actors). */
 export function applyApkEvents(document: ApkEventsDocument, registry: StoryDataRegistry): void {
-  for (const [key, edits] of Object.entries(document.rooms)) {
+  for (const [key, edits] of [...Object.entries(document.rooms), ...Object.entries(APK_EVENT_FIXES)]) {
     const [scene, room] = key.split(":").map(Number);
     for (const [group, record, args] of edits) {
       const target = registry.group(scene, room, group)?.records[record];
