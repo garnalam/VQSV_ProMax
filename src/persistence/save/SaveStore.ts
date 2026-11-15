@@ -4,6 +4,7 @@
  */
 export interface SaveStore {
   get(key: string): Promise<unknown>;
+  getAll?(): Promise<unknown[]>;
   putAll(entries: ReadonlyArray<readonly [string, unknown]>): Promise<void>;
   clear(): Promise<void>;
 }
@@ -14,6 +15,9 @@ export class MemorySaveStore implements SaveStore {
   async get(key: string): Promise<unknown> {
     const value = this.values.get(key);
     return value === undefined ? undefined : structuredClone(value);
+  }
+  async getAll(): Promise<unknown[]> {
+    return structuredClone([...this.values.values()]);
   }
   async putAll(entries: ReadonlyArray<readonly [string, unknown]>): Promise<void> {
     const cloned = entries.map(([key, value]) => [key, structuredClone(value)] as const);
@@ -33,6 +37,9 @@ export class IndexedDbSaveStore implements SaveStore {
 
   async get(key: string): Promise<unknown> {
     return this.run("readonly", (store) => store.get(key));
+  }
+  async getAll(): Promise<unknown[]> {
+    return (await this.run("readonly", (store) => store.getAll())) as unknown[];
   }
 
   async putAll(entries: ReadonlyArray<readonly [string, unknown]>): Promise<void> {

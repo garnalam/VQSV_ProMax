@@ -16,7 +16,8 @@ import { BootScreen } from "../screens/BootScreen";
 import { NewGameScreen } from "../screens/NewGameScreen";
 import { TitleScreen } from "../screens/TitleScreen";
 import { TitleFlowModel, type StartRequest } from "../screens/title/TitleFlowModel";
-import { LocalAccountService } from "../account/AccountService";
+import { LocalAccountService, type AccountService } from "../account/AccountService";
+import { RemoteAccountService } from "../account/RemoteAccountService";
 import type { SaveService } from "../persistence/SaveService";
 import { LoginOverlay } from "./LoginOverlay";
 import { TouchGamepad } from "../core/input/TouchGamepad";
@@ -30,7 +31,9 @@ export class GameApp {
   private readonly input = new InputState();
   private readonly screens = new ScreenManager();
   private readonly gameplayClock = new GameplayClock();
-  private readonly accounts = new LocalAccountService();
+  private readonly accounts: AccountService = import.meta.env.VITE_ACCOUNTS === "remote"
+    ? new RemoteAccountService()
+    : new LocalAccountService();
   private saves = new SaveRepository();
   private login: LoginOverlay | null = null;
   private activeSaveService: SaveService | null = null;
@@ -52,8 +55,8 @@ export class GameApp {
     this.mountControls();
     const ready = this.loadAssets();
     await ready;
-    if (import.meta.env.PROD) this.showLogin();
-    if (import.meta.env.DEV && !(await this.enterParityCheckpoint()))
+    if (import.meta.env.PROD || this.accounts instanceof RemoteAccountService) this.showLogin();
+    else if (!(await this.enterParityCheckpoint()))
       this.screens.replace(new BootScreen(this.assets!, (enabled) => this.enterTitle(enabled)));
     window.addEventListener("keydown", (event) => {
       if (event.code === "KeyM" && !event.repeat) this.audio?.toggleMute();
@@ -150,6 +153,7 @@ export class GameApp {
     this.login = new LoginOverlay(document.body, {
       login: (username, password) => authenticate("login", username, password),
       register: (username, password) => authenticate("register", username, password),
+      identity: this.accounts instanceof RemoteAccountService ? "email" : "username",
       firstGesture: () => this.audio?.chooseMusic(true),
       volume: {
         level: () => this.audio?.volumeLevel() ?? 0,
@@ -254,6 +258,7 @@ export class GameApp {
         saves,
         () => void this.showTitle(),
         save,
+        () => this.accounts.towerLeaderboard(),
       );
       this.activeSaveService = game.saveService;
       this.gameplayClock.setSpeedX2(request.speedX2);

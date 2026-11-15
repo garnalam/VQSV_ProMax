@@ -1,6 +1,6 @@
 import type { InputCommand } from "../../core/input/GameCommand";
 import { contains, type Rect } from "../battle/BattleListLayout";
-import { HEART_FRAGMENTS, TOWER_BOND_LIMIT } from "../meta/BondingTower";
+import { HEART_FRAGMENTS, TOWER_BOND_LIMIT, type TowerRankingEntry } from "../meta/BondingTower";
 
 export type TowerPanelFloor = {
   floor: number;
@@ -47,16 +47,21 @@ export type TowerPanelSource = {
   craft: (count: number) => string | null;
   nurture: (index: number, count: number) => string | null;
   sweep: () => string | null;
+  leaderboard?: () => Promise<readonly TowerRankingEntry[]>;
 };
 
 type SweepQuote = NonNullable<TowerSweepView["group"]> & { used: number; cost: number };
-type Tab = "floors" | "craft" | "nurture" | "sweep";
+type Tab = "floors" | "craft" | "nurture" | "sweep" | "leaderboard";
+type Ranking =
+  | { status: "idle" | "loading" | "error" | "unavailable" }
+  | { status: "ready"; rows: readonly TowerRankingEntry[] };
 
 export const TOWER_TABS: readonly { tab: Tab; label: string; rect: Rect }[] = [
-  { tab: "floors", label: "Khiêu chiến", rect: { x: 13, y: 69, w: 57, h: 22 } },
-  { tab: "craft", label: "Ghép tim", rect: { x: 72, y: 69, w: 47, h: 22 } },
-  { tab: "nurture", label: "Bồi dưỡng", rect: { x: 121, y: 69, w: 55, h: 22 } },
-  { tab: "sweep", label: "Quét tầng", rect: { x: 178, y: 69, w: 49, h: 22 } },
+  { tab: "floors", label: "Khiêu chiến", rect: { x: 13, y: 69, w: 51, h: 22 } },
+  { tab: "craft", label: "Ghép tim", rect: { x: 66, y: 69, w: 42, h: 22 } },
+  { tab: "nurture", label: "Bồi dưỡng", rect: { x: 110, y: 69, w: 45, h: 22 } },
+  { tab: "sweep", label: "Quét tầng", rect: { x: 157, y: 69, w: 46, h: 22 } },
+  { tab: "leaderboard", label: "BXH", rect: { x: 205, y: 69, w: 22, h: 22 } },
 ];
 
 export const TOWER_FLOORS_PER_PAGE = 5;
@@ -96,10 +101,11 @@ export function towerNurtureCounts(
   return [max >= 1 ? 1 : 0, max >= 10 ? 10 : 0, max];
 }
 
-/** Interaction state for the four tower tabs. All resource changes go through the host. */
+/** Interaction state for the tower tabs. All resource changes go through the host. */
 export class BondingTowerPanelState {
   tab: Tab = "floors";
   message = "";
+  ranking: Ranking = { status: "idle" };
   private floorIndex: number | undefined;
   petIndex = 0;
   craftAction = 0;
@@ -114,6 +120,7 @@ export class BondingTowerPanelState {
     this.craftAction = 0;
     this.nurtureAction = -1;
     this.pendingSweep = undefined;
+    this.ranking = { status: "idle" };
   }
 
   activeFloorIndex(view: TowerPanelView): number {
@@ -142,10 +149,30 @@ export class BondingTowerPanelState {
     this.tab = tab;
     this.message = "";
     this.pendingSweep = undefined;
+    if (tab === "leaderboard") this.ranking = { status: "idle" };
+  }
+
+  private loadRanking(source: TowerPanelSource): void {
+    if (this.ranking.status === "loading") return;
+    if (!source.leaderboard) {
+      this.ranking = { status: "unavailable" };
+      return;
+    }
+    const loading = { status: "loading" } as const;
+    this.ranking = loading;
+    void source.leaderboard().then(
+      (rows) => {
+        if (this.ranking === loading) this.ranking = { status: "ready", rows };
+      },
+      () => {
+        if (this.ranking === loading) this.ranking = { status: "error" };
+      },
+    );
   }
 
   /** Returns the transition the world panel should apply after this tick. */
   tick(pressed: readonly InputCommand[], source: TowerPanelSource): "menu" | "battle" | undefined {
+    if (this.tab === "leaderboard" && this.ranking.status === "idle") this.loadRanking(source);
     if (!pressed.length) return;
     if (pressed.includes("back")) {
       if (!this.pendingSweep) return "menu";
@@ -205,6 +232,9 @@ export class BondingTowerPanelState {
       }
       case "sweep":
         this.confirmSweep(view.sweep, source);
+        return;
+      case "leaderboard":
+        this.loadRanking(source);
     }
   }
 
@@ -247,7 +277,7 @@ export class BondingTowerPanelState {
       return [];
     }
     if (!view) return [];
-    if ((this.tab === "floors" || this.tab === "sweep") && hit(TOWER_LAYOUT.back)) return ["back"];
+    if ((this.tab === "floors" || this.tab === "sweep" || this.tab === "leaderboard") && hit(TOWER_LAYOUT.back)) return ["back"];
     if (this.tab === "floors") {
       if (hit(TOWER_LAYOUT.action)) return ["confirm"];
       if (hit(TOWER_LAYOUT.previous)) this.page(view, -1);

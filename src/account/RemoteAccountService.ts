@@ -2,6 +2,7 @@ import { SaveRepository } from "../persistence/SaveRepository";
 import type { SaveStore } from "../persistence/save/SaveStore";
 import { decodeJavaSaveBytes } from "../persistence/save/JavaSaveEnvelope";
 import { AccountError, type Account, type AccountService } from "./AccountService";
+import { TOWER_FLOORS, TOWER_RANKING_SIZE, type TowerRankingEntry } from "../game/meta/BondingTower";
 
 /** The row this game keeps for each account; the Java game's own row is never written. */
 export const WEB_NATIVE_VERSION = "web-native";
@@ -48,6 +49,18 @@ export class RemoteAccountService implements AccountService {
 
   saves(): SaveRepository {
     return new SaveRepository(new RemoteSaveStore(this.api));
+  }
+
+  async towerLeaderboard(): Promise<TowerRankingEntry[]> {
+    const response = await this.api("/tower/leaderboard");
+    if (!response.ok) throw await refusal(response);
+    const { rankings } = (await response.json()) as { rankings?: TowerRankingEntry[] };
+    if (!Array.isArray(rankings)) throw new Error("Bảng xếp hạng không hợp lệ.");
+    return rankings
+      .filter((row) => row && typeof row.username === "string" && row.username.length &&
+        Number.isInteger(row.highest) && row.highest >= 1 && row.highest <= TOWER_FLOORS)
+      .slice(0, TOWER_RANKING_SIZE)
+      .map(({ username, highest }) => ({ username: username.split("@", 1)[0], highest }));
   }
 
   /** The Java build's save text for this account, if it has one (to carry the player over). */

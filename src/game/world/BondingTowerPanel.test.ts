@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { SourceUiLayout } from "../../rendering/SourceUiLayout";
 import { WorldPanel } from "./WorldPanel";
 
@@ -68,6 +68,20 @@ function enterTower() {
 }
 
 describe("Tháp Gắn Kết world panel", () => {
+  it("loads the ranking when the player opens the BXH tab and can refresh it", async () => {
+    const { panel, click, calls } = enterTower();
+    const rows = [{ username: "huypham", highest: 42 }];
+    const leaderboard = vi.fn().mockResolvedValue(rows);
+    panel.towerSource.leaderboard = leaderboard;
+    click(216, 78);
+    expect(panel.bondingTower.tab).toBe("leaderboard");
+    expect(panel.bondingTower.ranking.status).toBe("loading");
+    await vi.waitFor(() => expect(panel.bondingTower.ranking).toEqual({ status: "ready", rows }));
+    panel.tick(["confirm"]);
+    expect(leaderboard).toHaveBeenCalledTimes(2);
+    expect(calls).toEqual([]);
+  });
+
   it("opens on the next uncrossed floor and closes when the challenge starts", () => {
     const { panel, calls } = enterTower();
     panel.tick(["confirm"]);

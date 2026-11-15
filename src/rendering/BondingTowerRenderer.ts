@@ -320,6 +320,34 @@ function drawSweep(
   button(g, font, back, pending ? "Hủy" : "Quay lại");
 }
 
+function drawLeaderboard(
+  g: CanvasRenderingContext2D,
+  font: PanelFontRenderer,
+  state: BondingTowerPanelState,
+): void {
+  label(g, font, "BẢNG XẾP HẠNG", 13, 97, 214, GOLD);
+  const ranking = state.ranking;
+  if (ranking.status === "ready" && ranking.rows.length) {
+    font.draw(g, "Tên đăng nhập", 42, 114, DIM);
+    label(g, font, "Tầng", 177, 114, 45, DIM);
+    for (const [index, row] of ranking.rows.entries()) {
+      const y = 127 + index * 15;
+      box(g, { x: 13, y, w: 214, h: 15 }, "#153548", "#386075", 3);
+      label(g, font, String(index + 1), 15, y + 2, 24, index < 3 ? GOLD : DIM);
+      font.draw(g, fit(font, row.username, 132), 42, y + 2, INK);
+      label(g, font, String(row.highest), 177, y + 2, 45, GOLD);
+    }
+  } else {
+    const message =
+      ranking.status === "ready" ? "Chưa có save nào vượt tầng." :
+      ranking.status === "error" ? "Không tải được bảng xếp hạng." :
+      ranking.status === "unavailable" ? "Bảng xếp hạng chưa sẵn sàng." : "Đang tải…";
+    label(g, font, message, 13, 175, 214, DIM);
+  }
+  button(g, font, action, "Tải lại", false, ranking.status === "loading");
+  button(g, font, back, "Quay lại");
+}
+
 type TowerArt = {
   icon: HTMLImageElement | undefined;
   portrait: (id: number) => HTMLImageElement | undefined;
@@ -370,6 +398,9 @@ export function drawBondingTower(
       break;
     case "sweep":
       drawSweep(g, font, state, view);
+      break;
+    case "leaderboard":
+      drawLeaderboard(g, font, state);
       break;
   }
   g.restore();

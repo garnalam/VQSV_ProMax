@@ -61,7 +61,7 @@ import {
   SPEED_CHECKBOX,
   TALK_PROMPT,
 } from "../game/world/WorldHud";
-import { GameplayHost, gameplaySources, type SessionStart } from "../game/session/GameplayHost";
+import { GameplayHost, gameplaySources, type GameplayHooks, type SessionStart } from "../game/session/GameplayHost";
 import { cauVongDrawOrder } from "../game/world/CauVongDrawOrder";
 import { CAU_VONG_EXPRESSION_SPRITE } from "../game/world/CauVongCutscene";
 import { renderCauVongMinigame } from "../game/world/CauVongMinigameView";
@@ -117,6 +117,7 @@ export class NewGameScreen implements Screen {
     saves: SaveRepository,
     back: () => void,
     resumeSave?: GameSave,
+    towerLeaderboard?: GameplayHooks["towerLeaderboard"],
   ) {
     const start: SessionStart = resumeSave
       ? { kind: "resume", save: resumeSave }
@@ -129,6 +130,7 @@ export class NewGameScreen implements Screen {
       this.saveService,
       {
         onExit: back,
+        towerLeaderboard,
         onOpeningTick: () => this.tickParticles(),
         speedX2: {
           enabled: () => this.speed?.enabled() ?? false,

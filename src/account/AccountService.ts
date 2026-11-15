@@ -1,5 +1,6 @@
 import { SaveRepository } from "../persistence/SaveRepository";
 import { IndexedDbSaveStore, type SaveStore } from "../persistence/save/SaveStore";
+import { TOWER_FLOORS, TOWER_RANKING_SIZE, type TowerRankingEntry } from "../game/meta/BondingTower";
 
 /** A signed-in player. `id` never changes; `username` is what they typed when registering. */
 export type Account = { readonly id: string; readonly username: string };
@@ -37,6 +38,7 @@ export interface AccountService {
   login(username: string, password: string): Promise<Account>;
   /** The account's own save slot. */
   saves(account: Account): SaveRepository;
+  towerLeaderboard(): Promise<TowerRankingEntry[]>;
   /** The Java build's save text for this account, when the backend keeps one. */
   legacyJavaSave?(account: Account): Promise<string | undefined>;
 }
@@ -101,6 +103,18 @@ export class LocalAccountService implements AccountService {
 
   saves(account: Account): SaveRepository {
     return new SaveRepository(this.saveStore(account.id));
+  }
+
+  async towerLeaderboard(): Promise<TowerRankingEntry[]> {
+    const accounts = (await this.store.getAll?.() ?? []) as StoredAccount[];
+    const rows = await Promise.all(accounts.map(async ({ id, username }) => {
+      const save = await this.saves({ id, username }).load();
+      return { username, highest: save?.meta?.tower?.highest ?? 0 };
+    }));
+    return rows
+      .filter(({ highest }) => Number.isInteger(highest) && highest >= 1 && highest <= TOWER_FLOORS)
+      .sort((a, b) => b.highest - a.highest || a.username.localeCompare(b.username, "en"))
+      .slice(0, TOWER_RANKING_SIZE);
   }
 
   private key(username: string): string {

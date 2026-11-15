@@ -102,6 +102,14 @@ const javaRow = (text: string): Row => {
 };
 
 describe("RemoteAccountService", () => {
+  it("fetches the online ranking and exposes only the login name before @", async () => {
+    const accounts = new RemoteAccountService(async (path) => {
+      expect(path).toBe("/tower/leaderboard");
+      return Response.json({ rankings: [{ username: "alpha@example.com", highest: 42 }] });
+    });
+    expect(await accounts.towerLeaderboard()).toEqual([{ username: "alpha", highest: 42 }]);
+  });
+
   it("signs in by email and shows the server's own refusal", async () => {
     const { api } = fakeServer(),
       accounts = new RemoteAccountService(api);

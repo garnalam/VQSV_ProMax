@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { AccountError, LocalAccountService } from "./AccountService";
 import { MemorySaveStore, type SaveStore } from "../persistence/save/SaveStore";
+import { scene1Save } from "../dev/parityCheckpoints";
+import { createTowerState } from "../game/meta/BondingTower";
+import { upgradeSave } from "../persistence/save/migrations";
 
 function service() {
   const saveStores = new Map<string, SaveStore>();
@@ -22,6 +25,32 @@ async function refusal(promise: Promise<unknown>): Promise<string> {
 }
 
 describe("LocalAccountService", () => {
+  it("ranks the ten highest current saves, ordering ties by login name", async () => {
+    const accounts = service();
+    const save = upgradeSave({
+      ...scene1Save({
+        location: { sceneId: 1, roomIndex: 0, x: 0, y: 0, direction: 0 },
+        owner: "scene1.bunny-capture", bunnyCaught: false,
+        pets: [{ speciesId: 68, level: 6, quality: 2 }],
+      }),
+      version: 27,
+    })!;
+    for (let i = 0; i < 12; i++) {
+      const account = await accounts.register(`player_${i}`, "secret1");
+      const highest = i === 10 ? 11 : i;
+      await accounts.saves(account).save({
+        ...save, meta: { ...save.meta!, tower: { ...createTowerState(), highest } },
+      });
+    }
+    const rows = await accounts.towerLeaderboard();
+    expect(rows).toHaveLength(10);
+    expect(rows.slice(0, 2)).toEqual([
+      { username: "player_10", highest: 11 }, { username: "player_11", highest: 11 },
+    ]);
+    await accounts.saves(await accounts.login("player_10", "secret1")).deleteAll();
+    expect((await accounts.towerLeaderboard())[0].username).toBe("player_11");
+  });
+
   it("registers, then signs in with the same name in any case", async () => {
     const accounts = service(),
       created = await accounts.register("Harry_01", "secret1");

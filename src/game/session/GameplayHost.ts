@@ -28,6 +28,7 @@ import {
   type StorySceneServices,
 } from "../story/StorySceneRuntime";
 import { WorldPanel } from "../world/WorldPanel";
+import type { TowerPanelSource } from "../world/BondingTowerPanel";
 import { DoorGraph, type StoryGraph } from "../story/StoryGraph";
 import { StoryDirector, type StoryAction, type StorySignal } from "../story/StoryDirector";
 import type { QuestCatalog } from "../quest/QuestCatalog";
@@ -274,6 +275,7 @@ export type GameplayHooks = {
   onExit: () => void;
   /** One opening tick ran before the Scene 1 prelude took over (drives the star/fire particles). */
   onOpeningTick?: () => void;
+  towerLeaderboard?: TowerPanelSource["leaderboard"];
   /** The x2 speed the world.ui checkbox shows and toggles (`toggleSpeedX2`). */
   speedX2?: { enabled: () => boolean; toggle: () => void };
   /** JavaSE `settingsLevel` (0..3), backed by the app audio mixer. */
@@ -703,7 +705,12 @@ export class GameplayHost {
         return true;
       },
     };
+    const towerLeaderboard = hooks.towerLeaderboard;
     this.panel.towerSource = {
+      leaderboard: towerLeaderboard && (async () => {
+        await this.saves.flush();
+        return towerLeaderboard();
+      }),
       view: () => {
         const world = this.world,
           content = this.sources.bondingTower;

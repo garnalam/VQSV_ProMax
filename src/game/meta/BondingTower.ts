@@ -41,6 +41,8 @@ export type TowerState = {
 };
 
 export const TOWER_FLOORS = 200;
+export const TOWER_RANKING_SIZE = 10;
+export type TowerRankingEntry = { username: string; highest: number };
 export const TOWER_BOND_LIMIT = 255;
 export const HEART_FRAGMENTS = 20;
 const REPEAT_LIMIT = 30;
