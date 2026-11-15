@@ -509,3 +509,127 @@ describe("talking across a shop counter (WorldTalkPromptEngine with source masks
     expect(world.npcDialog?.speaker).toBe("ABell");
   });
 });
+
+describe("Bích Thủy ambient dialogue", () => {
+  it.each([
+    [65, 456, 416, "Binh lính Hắc Long", "Hắc Long Quân vạn tuế!"],
+    [73, 289, 428, "Eliza", "Trong lúc này có thể sử dụng lá sen."],
+  ])("opens the original dialogue for outdoor NPC %i", async (actorId, x, y, speaker, line) => {
+    const host = await standAt(baseSave({}, 16), 2, 1, x, y, DIRECTION_UP);
+    const world = host.world!;
+    expect([world.sceneId, world.roomIndex]).toEqual([2, 1]);
+    expect(world.talkPrompt?.actorId).toBe(actorId);
+    host.step(["confirm"]);
+    expect(world.npcDialog?.speaker).toBe(speaker);
+    host.step(["confirm"]);
+    expect(world.npcDialog?.text).toContain(line);
+    host.step(["confirm"]);
+    expect(world.npcDialog).toBeNull();
+  });
+
+  it("opens Eliza's dialogue when the player taps her sprite", async () => {
+    const host = await standAt(baseSave({}, 16), 2, 1, 289, 428, DIRECTION_UP);
+    const world = host.world!;
+    const eliza = world.actors.get(73)!;
+    const [dx, dy, width, height] = sources.world.pointerMask!(eliza)!;
+    host.pointer(
+      eliza.x + dx + Math.floor(width / 2) - world.cameraX,
+      eliza.y + dy + Math.floor(height / 2) - world.cameraY,
+    );
+    expect(world.npcDialog?.speaker).toBe("Eliza");
+  });
+});
+
+describe("Thủy Mộc ambient dialogue", () => {
+  it("lets Salmond talk at the southern dock", async () => {
+    const host = await standAt(baseSave({}, 12), 1, 5, 168, 213, DIRECTION_UP);
+    const world = host.world!;
+    expect(world.talkPrompt?.actorId).toBe(27);
+    host.step(["confirm"]);
+    expect(world.npcDialog?.speaker).toBe("Salmond");
+  });
+
+  it("opens the southern dock shop after ABell's greeting", async () => {
+    const host = await standAt(baseSave({}, 12), 1, 5, 120, 265, DIRECTION_UP);
+    const world = host.world!;
+    expect(world.talkPrompt?.actorId).toBe(29);
+    host.step(["confirm"]);
+    expect(world.npcDialog?.speaker).toBe("ABell");
+    for (let i = 0; i < 200 && world.npcDialog; i++) host.step(["confirm"]);
+    expect(host.panel.mode).toBe("worldShop");
+  });
+
+  it("shows Maghull's ordinary line after winning her trainer fight", async () => {
+    const host = await standAt(baseSave({ "1:1:2": 3 }, 12), 1, 1, 97, 76, DIRECTION_UP);
+    const world = host.world!;
+    expect(world.talkPrompt?.actorId).toBe(49);
+    host.step(["confirm"]);
+    expect(world.npcDialog?.speaker).toBe("Maghull");
+  });
+
+  it("keeps Maghull's trainer event ahead of the ordinary line", async () => {
+    const host = await standAt(baseSave({}, 12), 1, 1, 97, 76, DIRECTION_UP);
+    const world = host.world!;
+    host.step(["confirm"]);
+    expect(world.activeEventGroup).toEqual({ scene: 1, room: 1, group: 2 });
+    expect(world.npcDialog).toBeNull();
+  });
+});
+
+describe("Niêm Thổ and Nguyên Mộc ambient dialogue", () => {
+  it.each([
+    { speaker: "Owen", scene: 4, room: 1, x: 124, y: 176, actorId: 46 },
+    { speaker: "Sullbac", scene: 3, room: 3, x: 143, y: 234, actorId: 48 },
+  ])("lets $speaker talk when approached", async ({ speaker, scene, room, x, y, actorId }) => {
+    const host = await standAt(baseSave({}, 25), scene, room, x, y, DIRECTION_UP);
+    const world = host.world!;
+    expect(world.talkPrompt?.actorId).toBe(actorId);
+    host.step(["confirm"]);
+    expect(world.npcDialog?.speaker).toBe(speaker);
+  });
+});
+
+describe("Hắc Thạch guard dialogue", () => {
+  it.each([
+    { room: 3, x: 64, y: 448, actorId: 62, line: "Silia đại nhân" },
+    { room: 5, x: 116, y: 262, actorId: 19, line: "hai đạo quán" },
+  ])("opens soldier $actorId's original line in room $room", async ({ room, x, y, actorId, line }) => {
+    const host = await standAt(baseSave({ "5:5:0": 3 }, 29), 5, room, x, y, DIRECTION_UP);
+    const world = host.world!;
+    expect(world.actors.get(actorId)?.visible).toBe(true);
+    host.step(["confirm"]);
+    expect(world.npcDialog?.speaker).toBe("Binh lính Hắc Long");
+    host.step(["confirm"]);
+    expect(world.npcDialog?.text).toContain(line);
+  });
+
+  it.each([
+    { room: 3, x: 120, y: 223, actorId: 60, line: "Hắc Bảo Châu" },
+    { room: 3, x: 137, y: 238, actorId: 61, line: "Yafei điện hạ" },
+    { room: 3, x: 57, y: 449, actorId: 62, line: "Silia đại nhân" },
+    { room: 3, x: 122, y: 255, actorId: 64, line: "Mười sáu năm" },
+    { room: 5, x: 116, y: 262, actorId: 19, line: "hai đạo quán" },
+  ])("opens soldier $actorId's original line when tapping his sprite", async ({ room, x, y, actorId, line }) => {
+    const host = await standAt(baseSave({ "5:5:0": 3 }, 29), 5, room, x, y, DIRECTION_UP);
+    const world = host.world!;
+    const guard = world.actors.get(actorId)!;
+    const [dx, dy, width, height] = sources.world.pointerMask!(guard)!;
+    host.pointer(
+      guard.x + dx + Math.floor(width / 2) - world.cameraX,
+      guard.y + dy + Math.floor(height / 2) - world.cameraY,
+    );
+    expect(world.npcDialog?.speaker).toBe("Binh lính Hắc Long");
+    host.step(["confirm"]);
+    expect(world.npcDialog?.text).toContain(line);
+  });
+});
+
+it("lets Leita in Bích Lam Cốc speak and escort the hero into the temple", async () => {
+  const host = await standAt(baseSave({ "7:2:1": 3 }, 34), 7, 2, 557, 107, DIRECTION_UP);
+  const world = host.world!;
+  expect(world.actors.get(76)?.visible).toBe(true);
+  host.step(["confirm"]);
+  expect(world.npcDialog?.speaker).toBe("Leita");
+  for (let i = 0; i < 200 && world.npcDialog; i++) host.step(["confirm"]);
+  expect([world.sceneId, world.roomIndex]).toEqual([11, 3]);
+});

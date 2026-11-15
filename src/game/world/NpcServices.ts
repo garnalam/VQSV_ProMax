@@ -44,6 +44,8 @@ export type NpcService = {
   shopCategory?: number;
   /** The chapter runtime whose table the row is: only the room's current owner's rows answer. */
   runtime?: string;
+  /** Ordinary dialogue that appears after a source event group completes. */
+  afterEvent?: [scene: number, room: number, group: number];
   /** `LeitaTempleEscort`: after the line, the hero is taken to `[scene, room, x, y, direction]`. */
   transport?: number[];
   /**
@@ -80,13 +82,15 @@ export function npcServiceAt(
   actorId: number,
   /** The room's JavaSE owner (`JavaRoomRules.roomOwner`), when it has an owner table. */
   owner?: string,
+  eventComplete?: (scene: number, room: number, group: number) => boolean,
 ): NpcService | undefined {
   return doc?.services.find(
     (service) =>
       service.scene === scene &&
       service.room === room &&
       service.actorId === actorId &&
-      (owner === undefined || service.runtime === owner),
+      (owner === undefined || service.runtime === owner) &&
+      (service.afterEvent === undefined || eventComplete?.(...service.afterEvent) === true),
   );
 }
 
