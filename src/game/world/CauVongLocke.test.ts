@@ -46,6 +46,10 @@ type CuesDocument = import("./CauVongCutscene").CauVongCuesDocument;
 const pack = await Pack.load();
 const [boot, assets] = await Promise.all([loadBootAssets(pack), GameAssets.fromPack(pack)]);
 for (const room of [0, 32, 39, 47, 52]) await assets.prepareRoom(98, room);
+// The fights draw from the battle core's seed, which is the clock by default: a crit or a strong
+// enemy roll could then fell the party in one tick and the chain test would fail only sometimes.
+// One fixed stream, as the browser checkpoints use (`GameApp.enterParityCheckpoint`).
+assets.battleServices.seedSource = () => 0;
 
 const read = (file: string) =>
   JSON.parse(readFileSync(resolve(import.meta.dirname, "../../../public/pack", file), "utf8"));

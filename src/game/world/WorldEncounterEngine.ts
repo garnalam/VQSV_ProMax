@@ -1,3 +1,5 @@
+import { KIM_DIEM_AMULET_SHINY_PERCENT } from "../campaign/EggService";
+
 /**
  * JavaSE `vqsv.world.WorldEncounterEngine` (unified profile): the free-world random wild encounter.
  * After every tick the hero actually moves, the step countdown runs down (40..100, room 4:1 4..8);
@@ -94,6 +96,7 @@ export class WorldEncounterEngine {
       rideSuppressesEncounters: boolean;
       mainTaskProgress: number;
       rareEncounterBonusPercent: number;
+      shinyGearEquipped?: boolean;
     },
     state: EncounterState,
     terrainAtPlayer: () => number,
@@ -208,7 +211,7 @@ export class WorldEncounterEngine {
       minNature = v4Species !== null ? 1 : sourceEntry ? sourceEntry[1] : overlayEntry![7],
       maxNature = v4Species !== null ? 1 : sourceEntry ? sourceEntry[2] : overlayEntry![8],
       level = this.random.inclusive("world.encounter.level", minLevel, maxLevel),
-      nature = this.resolveWildNature(minNature, maxNature),
+      nature = this.resolveWildNature(minNature, maxNature, input.shinyGearEquipped ?? false),
       quality = qualityForRoll(
         input.mainTaskProgress,
         Math.min(
@@ -226,17 +229,26 @@ export class WorldEncounterEngine {
     };
   }
 
-  /** `resolveWildNature`: a 2 % rare 7..9 "Shiny" roll. */
-  private resolveWildNature(minNature: number, maxNature: number): number {
-    if (minNature === -1) return -1;
+  /** `resolveWildNature`: 2% Shiny, or 30% with the Kim Diễm amulet (owner's rate). */
+  private resolveWildNature(
+    minNature: number,
+    maxNature: number,
+    shinyGearEquipped: boolean,
+  ): number {
+    if (minNature === -1 && !shinyGearEquipped) return -1;
     const rare = this.random.entry("world.encounter.customNatureChance", 100);
-    if (rare >= 0 && rare < CUSTOM_NATURE_CHANCE_PERCENT)
+    if (
+      rare >= 0 &&
+      rare < (shinyGearEquipped ? KIM_DIEM_AMULET_SHINY_PERCENT : CUSTOM_NATURE_CHANCE_PERCENT)
+    )
       return this.random.inclusive(
         "world.encounter.customNature",
         CUSTOM_NATURE_MIN,
         CUSTOM_NATURE_MAX,
       );
-    return this.random.inclusive("world.encounter.nature", minNature, maxNature);
+    return minNature === -1
+      ? -1
+      : this.random.inclusive("world.encounter.nature", minNature, maxNature);
   }
   /** `resetCountdown`: 40..100 steps, 4..8 in room 4:1. */
   private resetCountdown(scene: number, room: number): number {

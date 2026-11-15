@@ -114,12 +114,13 @@ export type ExpAwardInput = {
 };
 
 export type ReserveShareInput = {
-  /** Java reads this field and then ignores it: the reserve share is item 6's alone. */
+  /** Retained for older callers. New saves supply the actual golden percentage. */
   globalShare: boolean;
+  goldenSharePercent?: number;
   heldItem6: boolean;
 };
 
-export type ReserveShareResult = { outcome: ReserveShareOutcome; divisor: number };
+export type ReserveShareResult = { outcome: ReserveShareOutcome; divisor: number; percent: number };
 
 export type EvolutionInput = {
   currentValid: boolean;
@@ -331,12 +332,17 @@ export function expAward(input: ExpAwardInput): number {
 }
 
 /**
- * `BattleOutcomeEngine.decideReserveShare`. Hoàng Kim is a collection achievement and must not take
- * over Ký Cư Giải Xác's role, so the reserve share is item 6's alone and `globalShare` is unread.
+ * `BattleOutcomeEngine.decideReserveShare`: item 6 keeps its whole share; Hoàng Kim gives 30%.
  */
 export function decideReserveShare(input: ReserveShareInput): ReserveShareResult {
-  if (input.heldItem6) return { outcome: "SHARE", divisor: 1000 };
-  return { outcome: "SKIP", divisor: 0 };
+  const percent = input.heldItem6 ? 100 : clamp(input.goldenSharePercent ?? 0, 0, 100);
+  if (percent > 0) return { outcome: "SHARE", divisor: 1000, percent };
+  return { outcome: "SKIP", divisor: 0, percent: 0 };
+}
+
+/** Percentage is applied after the normal EXP award, preserving the source's truncation order. */
+export function reserveExpAward(input: ExpAwardInput, share: ReserveShareResult): number {
+  return share.outcome === "SKIP" ? 0 : Math.trunc((expAward(input) * share.percent) / 100);
 }
 
 /** `BattleOutcomeEngine.decideExpCompletion`: learning a skill outranks levelling again. */

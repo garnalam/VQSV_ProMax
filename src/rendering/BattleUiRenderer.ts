@@ -17,6 +17,8 @@ import {
   type BattleListLayout,
 } from "../game/battle/BattleListLayout";
 import { PetStateRenderer } from "./PetStateRenderer";
+import { BATTLE_SEATS } from "../game/battle/BattleSeats";
+import { LAND_PET_STATE } from "../game/battle/BattleLandscape";
 import { thumbHeight, thumbY } from "../ui/UiScrollbarMath";
 
 export class BattleUiRenderer {
@@ -28,20 +30,29 @@ export class BattleUiRenderer {
     this.petStateRenderer = new PetStateRenderer({
       font: boot.panelFont,
       cell: (index) => boot.cell(257, index),
-      sprite: (spriteId, tick, nature) => {
-        const visual = assets.shinySprite(spriteId, nature),
+      sprite: (spriteId, tick, nature, shinyColor) => {
+        const visual = assets.shinySprite(spriteId, nature, shinyColor),
           frame = assets.frame(visual, 0, tick),
           bounds = assets.animationBounds(visual, 0),
-          image = frame ? assets.petImage(frame, visual, nature) : undefined;
+          image = frame ? assets.petImage(frame, visual, nature, false, shinyColor) : undefined;
         return frame && bounds && image ? { frame, bounds, image } : undefined;
       },
     });
   }
-  render(g: CanvasRenderingContext2D, battle: BattleUiHost): void {
+  /**
+   * `layout`: the `battle.ui` the command bar is laid out on (the APK's in landscape); `land`: the
+   * panel is drawn on the landscape 320x240 battle screen (`landPanelShift`).
+   */
+  render(
+    g: CanvasRenderingContext2D,
+    battle: BattleUiHost,
+    layout: SourceUiLayout = this.boot.battleLayout,
+    land = false,
+  ): void {
     const ui = battle.ui;
     switch (ui.mode) {
       case "COMMAND":
-        this.command(g, ui);
+        this.command(g, ui, layout);
         break;
       case "CHOICE":
         this.choice(g, battle as BattleRuntime, ui);
@@ -51,13 +62,13 @@ export class BattleUiRenderer {
         this.skills(g, ui, battle.tickCount);
         break;
       case "TARGET":
-        this.target(g, ui);
+        this.target(g, ui, land);
         break;
       case "WARNING":
         this.warning(g, ui, battle.tickCount);
         break;
       case "PET_STATE":
-        this.petState(g, ui, battle.tickCount, true);
+        this.petState(g, ui, battle.tickCount, true, land);
         break;
       case "LEVEL_UP":
         this.levelUp(g, battle as BattleRuntime, ui);
@@ -75,7 +86,8 @@ export class BattleUiRenderer {
         break;
     }
   }
-  private command(g: CanvasRenderingContext2D, ui: BattleUiState): void {
+  /** The six labels on widgets 3..8, the cursor (cell 31) on widgets 20..25. */
+  private command(g: CanvasRenderingContext2D, ui: BattleUiState, layout: SourceUiLayout): void {
     const labels = [
         ["Chiến", "đấu"],
         ["Bắt", "được"],
@@ -84,14 +96,20 @@ export class BattleUiRenderer {
         ["Thương", "điếm"],
         ["Chạy", "trốn"],
       ],
-      xs = [7, 48, 88, 128, 168, 208],
-      cursor = [20, 56, 98, 137, 176, 218],
+      label = (i: number) => layout.widget(3 + i) ?? { x: [7, 48, 88, 128, 168, 208][i], y: 299 },
+      selected = Math.max(0, Math.min(5, ui.selectedIndex)),
       cell = this.boot.cell(257, 31);
-    if (cell) g.drawImage(cell, cursor[Math.max(0, Math.min(5, ui.selectedIndex))], 293);
+    // The cursor keeps the JAR's place on its button (cursor widget 20..25 against label 3..8): the
+    // landscape APK's last two cursor widgets sit off their buttons.
+    const jarLabel = this.boot.battleLayout.widget(3 + selected)?.x ?? 7,
+      jarCursor = this.boot.battleLayout.widget(20 + selected) ?? { x: 20, y: 293 },
+      at = label(selected);
+    if (cell) g.drawImage(cell, at.x + jarCursor.x - jarLabel, at.y + jarCursor.y - 299);
     for (let i = 0; i < labels.length; i++) {
-      const color = i === ui.selectedIndex ? "#fff16a" : "#fff";
-      this.tiny(g, labels[i][0], xs[i], 299, 34, color);
-      this.tiny(g, labels[i][1], xs[i], 309, 34, color);
+      const color = i === ui.selectedIndex ? "#fff16a" : "#fff",
+        { x, y } = label(i);
+      this.tiny(g, labels[i][0], x, y, 34, color);
+      this.tiny(g, labels[i][1], x, y + 10, 34, color);
     }
   }
   private choice(g: CanvasRenderingContext2D, battle: BattleRuntime, ui: BattleUiState): void {
@@ -431,14 +449,20 @@ export class BattleUiRenderer {
     this.skillButton(g, 14, 264, 91, 22, "Sử dụng", true, enabled);
     this.skillButton(g, 135, 264, 91, 22, "Quay lại", false, true);
   }
-  private target(g: CanvasRenderingContext2D, ui: BattleUiState): void {
+  /**
+   * The cursor over the targeted pet (55,130 / 171,60 by the JAR's seats: the same place against
+   * the seat wherever it is) and the target's name, above the command band in landscape.
+   */
+  private target(g: CanvasRenderingContext2D, ui: BattleUiState, land = false): void {
     const cell = this.boot.cell(257, 31),
       at = ui.targetSlotPosition,
-      x = at ? at.x - 10 : ui.targetPlayerSide ? 55 : 171,
-      y = at ? at.y - 38 : ui.targetPlayerSide ? 130 : 60;
+      { player, enemy } = BATTLE_SEATS,
+      x = at ? at.x - 10 : ui.targetPlayerSide ? player.x - 15 : enemy.x - 6,
+      y = at ? at.y - 38 : ui.targetPlayerSide ? player.y - 93 : enemy.y - 43,
+      pill = land ? { x: 112, y: 134 } : { x: 72, y: 268 };
     if (cell) g.drawImage(cell, x, y);
-    this.panel(g, 72, 268, 96, 18, "rgba(0,0,0,.6)");
-    this.tiny(g, ui.targetName, 78, 273, 84, "#fff16a");
+    this.panel(g, pill.x, pill.y, 96, 18, "rgba(0,0,0,.6)");
+    this.tiny(g, ui.targetName, pill.x + 6, pill.y + 5, 84, "#fff16a");
   }
   private warning(g: CanvasRenderingContext2D, ui: BattleUiState, tick: number): void {
     const layout = this.layout("msgwarm"),
@@ -453,10 +477,16 @@ export class BattleUiRenderer {
   }
   /**
    * `VqsvBattleRenderer.renderPetStateOverlay`: the pet dashboard, in a fight (`inBattle`, the
-   * action reads "Xuất chiến") or over the free world (the menu's "Sủng vật", action "Xác định").
+   * action reads "Xuất chiến") or over the free world (the menu's "Sủng vật", action "Xác định");
+   * `land`: the landscape screen's short one (`LAND_PET_STATE`).
    */
-  drawPetDashboard(g: CanvasRenderingContext2D, ui: BattleUiState, tick: number): void {
-    this.petState(g, ui, tick, false);
+  drawPetDashboard(
+    g: CanvasRenderingContext2D,
+    ui: BattleUiState,
+    tick: number,
+    land = false,
+  ): void {
+    this.petState(g, ui, tick, false, land);
   }
   /** `TextBox.msgWarm(message, prompt)` as the battle's warning box draws it. */
   drawWarningBox(g: CanvasRenderingContext2D, message: string, prompt: string, tick: number): void {
@@ -467,8 +497,9 @@ export class BattleUiRenderer {
     ui: BattleUiState,
     tick: number,
     inBattle: boolean,
+    land = false,
   ): void {
-    this.petStateRenderer.render(g, ui, tick, inBattle);
+    this.petStateRenderer.render(g, ui, tick, inBattle, land ? LAND_PET_STATE : undefined);
   }
   private levelUp(g: CanvasRenderingContext2D, battle: BattleRuntime, ui: BattleUiState): void {
     const level = ui.levelUp;
@@ -497,9 +528,12 @@ export class BattleUiRenderer {
     const spriteId = this.assets.shinySprite(
         level.spriteId ?? battle.combatant("player").spriteId,
         level.nature,
+        level.shinyColor,
       ),
       frame = this.assets.frame(spriteId, 0, battle.tickCount),
-      image = frame ? this.assets.petImage(frame, spriteId, level.nature) : undefined;
+      image = frame
+        ? this.assets.petImage(frame, spriteId, level.nature, false, level.shinyColor)
+        : undefined;
     if (frame && image) {
       g.save();
       g.beginPath();
@@ -617,7 +651,8 @@ export class BattleUiRenderer {
     this.button(g, 140, 264, 75, 19, "Quay lại", false);
     if (ui.mode === "SHOP_CONFIRM") {
       g.fillStyle = "rgba(0,0,0,.55)";
-      g.fillRect(0, 36, 240, 252);
+      // Past the 240x320 screen's sides too: in landscape the dimming spans the whole canvas.
+      g.fillRect(-400, 36, 1040, 252);
       this.panel(g, 31, 92, 178, 139, "#d4f0ec");
       this.center(g, "XÁC NHẬN MUA", 51, 101, 138, "#fff");
       this.tiny(g, ui.message || "Số lượng 1", 41, 135, 158, "#1c6c91");

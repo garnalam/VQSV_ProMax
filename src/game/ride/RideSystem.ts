@@ -39,7 +39,8 @@ export type RideRoomsDocument = { profileVersion: string; rooms: Record<string, 
 /** The saved half of `RideProgression` (`campaign.ride`); the speed is derived from the ride. */
 export type RideState = { activeIndex: number; blocked: number[] };
 
-export type RideSelection = "locked" | "blocked" | "ready";
+/** "airborne": the hero stands where only the current ride carries him (web bug fix). */
+export type RideSelection = "locked" | "blocked" | "airborne" | "ready";
 
 /** `RideProgression.speedFor`: the plant mount is six, the fast mounts eight, the rest four. */
 export function rideSpeed(rideIndex: number): number {
@@ -116,12 +117,14 @@ export function roomAllowsRide(state: RideState, rideIndex: number): boolean {
   return rideIndex >= 0 && rideIndex < RIDE_COUNT && state.blocked[rideIndex] !== 1;
 }
 
-/** The baked `applyRoomPolicy` restrictions for a room. */
+/** The baked `applyRoomPolicy` restrictions with ProMax's Northern Sky rule. */
 export function roomRestrictions(
   doc: RideRoomsDocument | undefined,
   scene: number,
   room: number,
 ): number[] {
+  if (scene === 98 && room >= 24 && room <= 26)
+    return Array.from({ length: RIDE_COUNT }, (_, i) => (i === CV_SKY ? 0 : 1));
   const row = doc?.rooms[`${scene}:${room}`];
   return Array.from({ length: RIDE_COUNT }, (_, i) => (row ? (row[i] === 1 ? 1 : 0) : 1));
 }
@@ -139,6 +142,31 @@ export type RideOwnership = {
 export const RAINBOW_RIDE_OWNED_EVENT = 700100;
 /** `applySelectedRide` marks the save as using the separated ride ids. */
 export const RIDE_IDS_SEPARATED_EVENT = 700099;
+const LEGACY_BEAST_PRESERVED_EVENT = 700097;
+
+/** `preserveLegacyBeastOwnership` runs before `migrateLegacyRainbowRide`. */
+export function migrateLegacyRides(
+  state: RideState,
+  scene: number,
+  ownership: RideOwnership,
+  complete: (event: number) => void,
+): void {
+  const done = (event: number) => ownership.rainbowEventDone(0, event);
+  if (!done(LEGACY_BEAST_PRESERVED_EVENT)) {
+    if (done(RIDE_IDS_SEPARATED_EVENT) && ownership.collected(117))
+      complete(RAINBOW_RIDE_OWNED_EVENT + CV_BEAST);
+    complete(LEGACY_BEAST_PRESERVED_EVENT);
+  }
+  if (done(RIDE_IDS_SEPARATED_EVENT)) return;
+  const replacement = new Map([
+    [0, CV_PLANT],
+    [1, CV_SKY],
+    [3, CV_WATER],
+  ]).get(state.activeIndex);
+  if (scene === 98 && replacement !== undefined && rideUnlocked(replacement, ownership))
+    state.activeIndex = replacement;
+  complete(RIDE_IDS_SEPARATED_EVENT);
+}
 /** `CauVongNorthSeaHiddenClassroomRuntime.CAPTIVES_RELEASED_EVENT`. */
 const CAPTIVES_RELEASED_EVENT = 104;
 

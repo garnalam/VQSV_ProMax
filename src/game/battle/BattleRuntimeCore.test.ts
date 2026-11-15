@@ -66,6 +66,9 @@ function bunnyFight(
   inventory: Record<string, number> = {},
   bag: Record<number, number> = { 0: 1, 1: 2, 4: 5 },
   tutorial = true,
+  forcedCatch: (attempt: number) => boolean | undefined = (attempt) =>
+    attempt === 1 ? false : undefined,
+  bank?: { pets: SavedPet[]; capacity: number },
 ): Runtime {
   const opponent = contract.opponent,
     core = services.newCore(
@@ -89,7 +92,7 @@ function bunnyFight(
         inventory: bag,
         script: {
           unkillable: unkillable ? "enemy" : undefined,
-          forcedCatch: (attempt) => (attempt === 1 ? false : undefined),
+          forcedCatch,
         },
       },
       contract.encounter.descriptor,
@@ -118,7 +121,7 @@ function bunnyFight(
       core,
       party,
       services,
-      settle: () => settleBattle(core, party, inventory, services.progression),
+      settle: () => settleBattle(core, party, inventory, services.progression, bank),
     },
   );
 }
@@ -144,6 +147,86 @@ function menu(battle: Runtime, index: number): void {
   battle.ui.selectedIndex = index;
   press(battle, "confirm");
 }
+
+/** Open Bắt được and throw the first ball in the bag. */
+function throwBall(battle: Runtime): void {
+  menu(battle, 1);
+  expect(battle.catchListOpen).toBe(true);
+  press(battle, "confirm");
+}
+
+/** The message boxes shown until `done`, confirming each. */
+function messagesUntil(battle: Runtime, done: (battle: Runtime) => boolean): string[] {
+  const said: string[] = [];
+  for (let tick = 0; tick < 2000 && !done(battle); tick++) {
+    if (battle.interactiveStage === "warning") {
+      said.push(battle.ui.message);
+      press(battle, "confirm");
+    }
+    battle.tick();
+  }
+  return said;
+}
+
+describe("the capture ball in an ordinary fight (VqsvBattleRuntime P17)", () => {
+  const spec = services.captureAnimation,
+    [throwTicks, , shakeTicks, holdTicks] = spec.durations,
+    [shrinkTicks, restoreTicks] = spec.effectDurations;
+
+  it("flies, swallows the pet and lets it out on a miss, then says so before the enemy acts", () => {
+    const battle = bunnyFight([pet(68, 7, 2)], false, {}, undefined, false, () => false);
+    throwBall(battle);
+    // The ball is on screen for the whole miss: throw, shrink, shake, spring back.
+    const frames: string[] = [];
+    while (battle.interactiveStage === "captureFail") {
+      const shown = battle.captureVisual;
+      expect(shown?.spriteId).toBe(spec.spriteId);
+      frames.push(shown!.phase);
+      battle.tick();
+    }
+    expect(frames.length).toBe(throwTicks + shrinkTicks + shakeTicks + restoreTicks);
+    expect(frames[0]).toBe("throw");
+    expect(new Set(frames)).toEqual(new Set(["throw", "capture"]));
+    expect(battle.interactiveStage).toBe("warning");
+    expect(battle.ui.message).toBe("Đáng tiếc đã bắt trượt");
+    expect(battle.core!.activeUnit("enemy").alive()).toBe(true);
+  });
+
+  it("holds the ball on the ground on a catch and names the pet before the fight closes", () => {
+    const party = [pet(68, 7, 2)],
+      battle = bunnyFight(party, false, {}, undefined, false, () => true);
+    throwBall(battle);
+    let ticks = 0;
+    while (battle.interactiveStage === "captureSuccess") {
+      expect(battle.captureVisual?.spriteId).toBe(spec.spriteId);
+      ticks++;
+      battle.tick();
+    }
+    expect(ticks).toBe(throwTicks + shrinkTicks + shakeTicks + holdTicks);
+    const said = messagesUntil(battle, (b) => b.complete);
+    expect(said[0]).toBe(`Bắt thành công ${contract.opponent.name}`);
+    expect(party.map((member) => member.speciesId)).toEqual([68, contract.opponent.id]);
+  });
+
+  it("sends a seventh pet to the bank, and lets it go when the bank is full too", () => {
+    for (const [capacity, storage, notice] of [
+      [10, "BANK", "Sủng vật ba lô đã đủ, đã để vào ngân hàng"],
+      [0, "RELEASE", "Không còn không gian, sủng vật này đã phóng sinh"],
+    ] as const) {
+      const party = Array.from({ length: 6 }, () => pet(68, 7, 2)),
+        bank = { pets: [] as SavedPet[], capacity },
+        battle = bunnyFight(party, false, {}, undefined, false, () => true, bank);
+      throwBall(battle);
+      const said = messagesUntil(battle, (b) => b.complete);
+      expect(battle.settlement?.caught?.storage).toBe(storage);
+      expect(said).toContain(notice);
+      expect(party).toHaveLength(6);
+      expect(bank.pets.map((member) => [member.speciesId, member.slot])).toEqual(
+        storage === "BANK" ? [[contract.opponent.id, 0]] : [],
+      );
+    }
+  });
+});
 
 describe("BattleRuntime on the battle core", () => {
   it("shows the state-1 L while Lôi Kỳ Lân lunges (tickP7LEffect)", () => {

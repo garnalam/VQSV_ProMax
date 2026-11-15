@@ -1,15 +1,31 @@
 import type { InputCommand } from "../../core/input/GameCommand";
 import type { BattleRules } from "./BattleRules";
 import { battleUiState, type BattleUiPet, type BattleUiState } from "./BattleUiState";
+import {
+  commandIndexAt,
+  contains,
+  ITEM_LIST,
+  listIndexAt,
+  PET_STATE,
+  petIndexAt,
+  SKILL_LIST,
+} from "./BattleListLayout";
 import { CPOS_GROUPS } from "./BattleRuntime";
+import { battleSeatTables } from "./BattleSeats";
 import type { StatusPresentationSlot } from "./StatusPresentation";
 import {
   BattleCommandError,
+  ITEMS_NOT_ALLOWED_TEXT,
   SKILL_NOT_READY_WARNING,
   TIER_LOCK_WARNING,
 } from "./engine/BattleTypes";
 import type { DoubleBattleCore } from "./engine/DoubleBattleCore";
-import type { DoubleEvent, DoubleSlot, PlayerSlot } from "./engine/DoubleBattleTypes";
+import type {
+  DoubleEvent,
+  DoubleOutcome,
+  DoubleSlot,
+  PlayerSlot,
+} from "./engine/DoubleBattleTypes";
 import { MAX_PET_LEVEL, requiredExp } from "./engine/PetProgression";
 import type { BattleItems } from "./engine/BattleItems";
 import { DoubleActionFx, type DoubleFxRole } from "./DoubleSkillFx";
@@ -28,7 +44,8 @@ export type DoubleBattleView = {
 };
 
 /** `CPOS_GROUP` 1: the four formation rows (`VqsvBattleAnimationTables.cposRow(1, slot)`). */
-const FORMATION_ROWS = CPOS_GROUPS[1];
+/** The four seats' `cpos` rows (group 1): the APK's in the landscape app (`applyApkBattleSeats`). */
+const formationRows = () => (battleSeatTables.cpos ?? CPOS_GROUPS)[1];
 const SLOTS: readonly DoubleSlot[] = [0, 1, 2, 3];
 const ELEMENT_NAMES = ["Hỏa", "Mộc", "Thổ", "Thủy", "Điện", "Quỷ", "Phong"];
 /** `VqsvDoubleBattleRuntime`'s holds, in ticks. */
@@ -55,6 +72,8 @@ export type DoubleSlotView = {
   spriteId: number;
   /** The pet's nature: 7..9 draws the shiny palette (`PetShinyPalette`). */
   nature: number;
+  /** The pet's own shiny colour (`SavedPet.shinyColor`), when it has one. */
+  shinyColor?: number;
   spriteState: number;
   stateTick: number;
   name: string;
@@ -183,14 +202,13 @@ export class DoubleBattleRuntime {
   get finished(): boolean {
     return this.stage === "done";
   }
-  /** "player" or "enemy" once the fight is over. */
-  get winner(): "player" | "enemy" | null {
+  get winner(): DoubleOutcome["winner"] | null {
     const request = this.core.request;
     return request.kind === "ended" ? request.outcome.winner : null;
   }
 
   slot(slot: DoubleSlot): DoubleSlotView {
-    const row = FORMATION_ROWS[slot],
+    const row = formationRows()[slot],
       frames = row.length / 4,
       at = Math.max(0, Math.min(frames - 1, this.frame[slot])) * 4,
       unit = this.core.unit(slot),
@@ -203,6 +221,7 @@ export class DoubleBattleRuntime {
       visible: this.visible[slot] && !this.hidden[slot] && !this.fxHides(slot),
       spriteId: setup.spriteId ?? -1,
       nature: setup.nature,
+      shinyColor: setup.shinyColor,
       spriteState: this.spriteState[slot],
       stateTick: this.tickCount - this.stateStart[slot],
       name: setup.name ?? this.speciesName(setup.speciesId),
@@ -381,6 +400,58 @@ export class DoubleBattleRuntime {
     }
   }
 
+  pointer(x: number, y: number): void {
+    if (this.ui.mode === "WARNING") {
+      this.closeWarning();
+      return;
+    }
+    if (this.stage === "command") {
+      const index = commandIndexAt(x, y);
+      if (index < 0) return;
+      this.commandIndex = index;
+      this.ui.selectedIndex = index;
+      this.openCommand(index);
+      return;
+    }
+    if (this.stage === "skill" || this.stage === "item") {
+      const layout = this.stage === "skill" ? SKILL_LIST : ITEM_LIST;
+      const index = listIndexAt(layout, x, y, this.ui.rows.length, this.ui.scroll);
+      if (index >= 0) {
+        this.selectRow(index);
+        this.handleInput(["confirm"]);
+      } else if (contains(x, y, layout.action)) this.handleInput(["confirm"]);
+      else if (contains(x, y, layout.back)) this.handleInput(["back"]);
+      return;
+    }
+    if (this.stage === "target") {
+      if (contains(x, y, { x: 72, y: 268, w: 96, h: 18 })) {
+        this.handleInput(["confirm"]);
+        return;
+      }
+      const target = this.targets.find((slot) => {
+        const { actorX, actorY } = this.slot(slot);
+        return contains(x, y, { x: actorX - 22, y: actorY - 42, w: 44, h: 50 });
+      });
+      if (target !== undefined) {
+        this.showTarget(target);
+        this.handleInput(["confirm"]);
+      }
+      return;
+    }
+    if (this.stage === "pet") {
+      const tab = PET_STATE.tabs.findIndex((rect) => contains(x, y, rect));
+      if (tab >= 0) this.ui.tab = tab;
+      else if (contains(x, y, PET_STATE.previous)) this.handleInput(["up"]);
+      else if (contains(x, y, PET_STATE.next)) this.handleInput(["down"]);
+      else if (contains(x, y, PET_STATE.action)) this.handleInput(["confirm"]);
+      else if (contains(x, y, PET_STATE.back)) this.handleInput(["back"]);
+      else {
+        const index = petIndexAt(x, y, this.ui.rows.length, this.ui.scroll);
+        if (index >= 0) this.ui.selectedIndex = index;
+      }
+    }
+  }
+
   // ------------------------------------------------------------------ tick
 
   tick(): void {
@@ -406,13 +477,13 @@ export class DoubleBattleRuntime {
   private tickEntry(): void {
     if (this.entrySlot < SLOTS.length) {
       const slot = this.entrySlot,
-        frames = FORMATION_ROWS[slot].length / 4,
+        frames = formationRows()[slot].length / 4,
         frame = Math.max(0, Math.min(frames - 1, this.entryFrames[slot]));
       this.frame[slot] = frame;
       if ((slot & 1) === 0 && slot + 1 < SLOTS.length && frame > frames - 3) {
         const next = slot + 1;
         this.entryFrames[next] = Math.min(
-          FORMATION_ROWS[next].length / 4 - 1,
+          formationRows()[next].length / 4 - 1,
           this.entryFrames[next] + 1,
         );
         this.frame[next] = this.entryFrames[next];
@@ -428,7 +499,7 @@ export class DoubleBattleRuntime {
       }
       return;
     }
-    for (const slot of SLOTS) this.frame[slot] = FORMATION_ROWS[slot].length / 4 - 1;
+    for (const slot of SLOTS) this.frame[slot] = formationRows()[slot].length / 4 - 1;
     this.stage = "playing";
   }
 
@@ -481,12 +552,21 @@ export class DoubleBattleRuntime {
         this.startDeath(event.slot);
         beat.ticks = 0;
         return;
-      case "item":
+      case "item": {
         if (event.target !== -1) this.displayHp[event.target] = this.core.unit(event.target).hp();
-        this.log = event.refused ?? `${this.slot(event.slot).name} dùng đạo cụ.`;
+        const recovery = [
+          event.hpGained > 0 ? `${event.hpGained} HP` : "",
+          event.ppGained > 0 ? `${event.ppGained} PP` : "",
+        ]
+          .filter(Boolean)
+          .join(" và ");
+        this.log = event.cauVongRecovery
+          ? `Đối phương hồi ${recovery} cho ${this.speciesName(event.cauVongRecovery.speciesId)}.`
+          : (event.refused ?? `${this.slot(event.slot).name} dùng đạo cụ.`);
         this.hold = ITEM_HOLD;
         this.beat = null;
         return;
+      }
       case "statusTick":
       case "charmHeal":
       case "charmRevive":
@@ -507,8 +587,22 @@ export class DoubleBattleRuntime {
         this.hold = BLOCKED_HOLD;
         this.beat = null;
         return;
+      case "ppExhausted":
+        // Web rule: both teams ran dry; the one that ran dry first loses.
+        this.log =
+          event.side === "player"
+            ? "Toàn đội đã hết PP trước, bạn thua trận."
+            : "Đối thủ đã hết PP trước, bạn thắng trận.";
+        this.hold = BLOCKED_HOLD;
+        this.beat = null;
+        return;
       case "end":
-        this.log = event.outcome.winner === "player" ? "Chiến thắng!" : "Thất bại!";
+        this.log =
+          event.outcome.winner === "player"
+            ? "Chiến thắng!"
+            : event.outcome.winner === "enemy"
+              ? "Thất bại!"
+              : "Đã rời trận tháp.";
         this.activeActorSlot = -1;
         this.activeTargetSlot = -1;
         this.hold = RESULT_HOLD;
@@ -681,7 +775,7 @@ export class DoubleBattleRuntime {
 
   private tickSlide(): void {
     const slide = this.slide!,
-      frames = FORMATION_ROWS[slide.slot].length / 4;
+      frames = formationRows()[slide.slot].length / 4;
     this.frame[slide.slot] = slide.frame;
     if (++slide.cadence >= 2) {
       slide.cadence = 0;
@@ -717,16 +811,19 @@ export class DoubleBattleRuntime {
     this.ui = { ...battleUiState("COMMAND"), title: "Chiến đấu", selectedIndex: 0 };
   }
 
-  /** `tickCommand`: 0 fight, 2 items, 3 pets; catching and the rest are refused in a 2v2. */
+  /** `tickCommand`: fight, items, pets, and retreat when the encounter permits it. */
   private openCommand(index: number): void {
     const actor = this.core.unit(this.commandSlot),
       locked = !!this.rules.web?.switchAndItemsLocked(actor);
     if (index === 0) this.openSkills();
     else if (index === 1) this.warn("Trận chiến này không cho bắt sủng vật");
-    else if (index === 2)
-      locked ? this.warn("Trạng thái bị quấn, không thể sử dụng đạo cụ") : this.openItems();
-    else if (index === 3)
+    else if (index === 2) {
+      if (!this.core.itemsAllowed()) this.warn(ITEMS_NOT_ALLOWED_TEXT);
+      else if (locked) this.warn("Trạng thái bị quấn, không thể sử dụng đạo cụ");
+      else this.openItems();
+    } else if (index === 3)
       locked ? this.warn("Trạng thái bị quấn, không thể đổi sủng vật") : this.openPets("switch");
+    else if (index === 5 && this.core.runAllowed()) this.submit({ kind: "run" });
     else this.warn("Trận phối hợp 2v2 chỉ nhận lệnh chiến đấu.");
   }
 
@@ -774,7 +871,9 @@ export class DoubleBattleRuntime {
     const unit = this.core.unit(this.commandSlot),
       slot = this.skillSlots[this.ui.selectedIndex];
     if (slot === undefined) return;
-    if (unit.skillPp[slot] <= 0) return this.warn("Kỹ năng đã hết PP.");
+    // Every slot dry: the pick goes through and the turn passes (see `DoubleBattleCore.command`).
+    if (unit.skillPp[slot] <= 0 && this.core.hasUsableSkill(this.commandSlot))
+      return this.warn("Kỹ năng đã hết PP.");
     const id = unit.skillIds[slot];
     const row = this.rules.damage.skillRow(id);
     if (row && !unit.canUseSkillTier(row.learnTier)) return this.warn(TIER_LOCK_WARNING);
@@ -911,6 +1010,7 @@ export class DoubleBattleRuntime {
     return {
       spriteId: setup.spriteId ?? -1,
       nature: setup.nature,
+      shinyColor: setup.shinyColor,
       element: setup.element ?? -1,
       elementName: ELEMENT_NAMES[setup.element ?? -1],
       level: setup.level,

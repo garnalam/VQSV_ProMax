@@ -31,7 +31,16 @@ export const ENCOUNTER_NATURE_FALLBACK = 3;
 
 /** `VqsvText.Battle.CATCH_NOT_ALLOWED` and `RUN_NOT_ALLOWED`, the two refusals a fight can hit. */
 export const CATCH_NOT_ALLOWED_TEXT = "Trận chiến này không cho bắt sủng vật";
+/** `VqsvText.Battle.CATCH_SUCCESS` (the caught pet's name follows). */
+export const CATCH_SUCCESS_TEXT = "Bắt thành công ";
+/** `VqsvText.Battle.CATCH_FAILED`. */
+export const CATCH_FAILED_TEXT = "Đáng tiếc đã bắt trượt";
+/** `VqsvText.Battle.CATCH_SENT_BANK`. */
+export const CATCH_SENT_BANK_TEXT = "Sủng vật ba lô đã đủ, đã để vào ngân hàng";
+/** `VqsvText.Battle.CATCH_RELEASED_FULL`. */
+export const CATCH_RELEASED_FULL_TEXT = "Không còn không gian, sủng vật này đã phóng sinh";
 export const RUN_NOT_ALLOWED_TEXT = "Trận chiến này không thể trốn chạy";
+export const ITEMS_NOT_ALLOWED_TEXT = "Tháp không dùng vật phẩm trong trận.";
 
 /** One pet as a fight starts it: what the save (or the encounter) knows about it. */
 export type CombatantSetup = {
@@ -47,8 +56,14 @@ export type CombatantSetup = {
    * 7, 8 and 9 are the shiny ones, which also bend hp, attack and speed.
    */
   nature: number;
+  /** The shiny colour the pet owns (`SavedPet.shinyColor`); omitted for a wild or trainer pet. */
+  shinyColor?: number;
   /** Level-and-quality stats from `PetStatCalculator`; `hp` is the maximum. */
   stats: { hp: number; attack: number; defense: number; speed: number };
+  /** Multipliers for an authored opponent, applied after permanent talent stats. */
+  statFactors?: readonly [hp: number, attack: number, defense: number, speed: number];
+  /** Preserve boosted stats above the legacy short range. */
+  wideStats?: boolean;
   /** Current HP; omitted is full. */
   hp?: number;
   /** Up to five skill ids; PP per slot (omitted: each skill's maximum). */
@@ -64,6 +79,10 @@ export type CombatantSetup = {
 };
 
 export type BattleSetup = {
+  /** Source scene and ownership gate for Cầu Vồng's mirrored item recovery. */
+  sceneId?: number;
+  capturePolicy?: string;
+  pvp?: boolean;
   format: BattleFormat;
   kind: BattleKind;
   /**
@@ -77,6 +96,8 @@ export type BattleSetup = {
    * still refuse to let the player leave. Omitted: a wild fight allows it.
    */
   runAllowed?: boolean;
+  itemsAllowed?: boolean;
+  experienceAllowed?: boolean;
   player: readonly CombatantSetup[];
   enemy: readonly CombatantSetup[];
   /** Bag items the player may use, by item id; spent as they are used. */
@@ -102,6 +123,8 @@ export type BattleSetup = {
    * pet carries into the fight (`toBattleUnit(pet, 0, badges)`). Absent: none.
    */
   badgeProfile?: BattleBadgeProfile;
+  /** Hoàng Kim Chương rank one or two: the reserve's EXP share in percent (30); absent none. */
+  goldenPartyExperiencePercent?: number;
   /**
    * `sourcePostExpPassiveHealAmount(speciesId)` while Liệt Hỏa is enhanced, undefined otherwise: what
    * `applySourcePostExpPassiveHeal` gives every living player pet once a knockout's EXP is committed.
@@ -143,7 +166,8 @@ export type BattleRequest =
 export type BattleOutcome = {
   /** "none" when nobody won: the player ran. */
   winner: SideId | "none";
-  reason: "knockout" | "run" | "catch";
+  /** `ppExhausted`: both teams ran dry; the one that ran dry first lost (web rule). */
+  reason: "knockout" | "run" | "catch" | "ppExhausted";
   /** EXP each player party member earned, by member index (summed over every enemy knocked out). */
   experience: number[];
   /** The caught enemy member, when `reason` is "catch". */
@@ -194,6 +218,8 @@ export type BattleEvent =
     }
   | { type: "catch"; target: Seat; itemId: number; chance: number; caught: boolean }
   | { type: "run"; success: boolean }
+  /** Web rule: both teams are out of PP; `side` ran dry first and loses. */
+  | { type: "ppExhausted"; side: SideId }
   | { type: "faint"; seat: Seat }
   | { type: "experience"; member: number; amount: number; from: Seat }
   | { type: "roundEnd"; round: number }

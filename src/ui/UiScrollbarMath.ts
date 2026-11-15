@@ -16,7 +16,14 @@ export type ScrollbarGeometry = {
   rowCount: number;
   visibleRows: number;
   minThumbHeight: number;
+  fixedThumbHeight?: number;
 };
+
+function barThumbHeight(bar: ScrollbarGeometry): number {
+  return bar.fixedThumbHeight === undefined
+    ? thumbHeight(bar.h, bar.rowCount, bar.visibleRows, bar.minThumbHeight)
+    : clamp(bar.fixedThumbHeight, 1, Math.max(1, bar.h));
+}
 
 export function maxScroll(rowCount: number, visibleRows: number): number {
   return Math.max(0, rowCount - Math.max(1, visibleRows));
@@ -75,7 +82,7 @@ export function thumbContains(
 export function pageScroll(pointerY: number, scroll: number, bar: ScrollbarGeometry): number {
   const most = maxScroll(bar.rowCount, bar.visibleRows),
     current = clamp(scroll, 0, most),
-    thumb = thumbHeight(bar.h, bar.rowCount, bar.visibleRows, bar.minThumbHeight),
+    thumb = barThumbHeight(bar),
     top = thumbY(bar.y, bar.h, thumb, bar.rowCount, bar.visibleRows, current),
     page = Math.max(1, bar.visibleRows);
   if (pointerY < top) return clamp(current - page, 0, most);
@@ -86,7 +93,7 @@ export function pageScroll(pointerY: number, scroll: number, bar: ScrollbarGeome
 /** `dragScroll`: the thumb follows the pointer (less where it was grabbed), rounded to a row. */
 export function dragScroll(pointerY: number, grabOffset: number, bar: ScrollbarGeometry): number {
   const most = maxScroll(bar.rowCount, bar.visibleRows),
-    thumb = thumbHeight(bar.h, bar.rowCount, bar.visibleRows, bar.minThumbHeight),
+    thumb = barThumbHeight(bar),
     travel = Math.max(0, bar.h - thumb);
   if (most === 0 || travel === 0) return 0;
   const top = clamp(pointerY - grabOffset, bar.y, bar.y + travel);
@@ -131,7 +138,7 @@ export function pressScrollbar(
   bar: ScrollbarGeometry,
 ): { drag: number } | { scroll: number } | null {
   if (bar.rowCount <= bar.visibleRows || !trackContains(px, py, bar)) return null;
-  const thumb = thumbHeight(bar.h, bar.rowCount, bar.visibleRows, bar.minThumbHeight),
+  const thumb = barThumbHeight(bar),
     top = thumbY(bar.y, bar.h, thumb, bar.rowCount, bar.visibleRows, scroll);
   if (thumbContains(px, py, bar, top, thumb)) return { drag: py - top };
   return { scroll: pageScroll(py, scroll, bar) };

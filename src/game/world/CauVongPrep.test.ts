@@ -131,14 +131,14 @@ describe("Cầu Vồng CV2 (chăm trứng, chuẩn bị đi học)", () => {
     expect(PREP.dong).toMatchObject({ species: 166, receipt: 824002, ride: 5 });
     expect(PREP.cafe.wanted).toEqual([116, 162, 148]);
     expect(PREP.academy.pass.id).toBe(9002);
-    expect(OPENING.quests.map((q) => q.done)).toEqual([
-      [51, 651111],
-      [6, 100],
-      [2, 101],
-      [3, 102],
-      [9, 114],
-      [61, 105],
-      [30, 124],
+    // The five chapters in story order, each opened by the one before, then Thiên Không.
+    expect(OPENING.quests.map((q) => [q.title, q.show, q.done])).toEqual([
+      ["Cầu Vồng 1 — Mở đầu", null, [6, 100]],
+      ["Cầu Vồng 2 — Học viện", [6, 100], [3, 102]],
+      ["Cầu Vồng 3 — Bốn Cổng", [3, 102], [4, 1500]],
+      ["Cầu Vồng 4 — An Kỳ Nhi", [4, 1500], [9, 114]],
+      ["Cầu Vồng 5 — Bắc Hải", [9, 114], [30, 124]],
+      ["Thiên Không — Phòng triệu tập", [50, 651100], [51, 651111]],
     ]);
   });
 

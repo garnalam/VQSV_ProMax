@@ -1,6 +1,8 @@
 import type { SavedPet } from "../../../persistence/save/GameSave";
 import { decideCatchStorage } from "../BattleOutcomeEngine";
 import { NO_HELD_ITEM } from "../HeldItems";
+import { shinyApplies } from "../../../rendering/PetShinyPalette";
+import { defaultShinyColor } from "../../../rendering/ShinyDesigns";
 import type { BattleCore } from "./BattleCore";
 import type { BattleOutcome } from "./BattleTypes";
 import type { LevelUpResult, PetProgression } from "./PetProgression";
@@ -22,8 +24,8 @@ export type BattleSettlementReport = {
  *
  * - HP and PP: what each pet walked out with.
  * - EXP: every pet's share, with its level-ups (stats, refills, new skills).
- * - A caught pet joins the roster while it has fewer than six (`decideCatchStorage`); the bank is not
- *   kept by the web save yet, so a seventh pet is reported as "BANK" and left to the caller.
+ * - A caught pet joins the roster while it has fewer than six, else the bank while it has room, else
+ *   it is let go (`decideCatchStorage`); without a bank a seventh pet is let go.
  * - The bag: every count the fight spent.
  * - A loss (decided 2026-11-05): the whole party is restored to full, as the player is sent back to
  *   the last save point.
@@ -33,6 +35,7 @@ export function settleBattle(
   party: SavedPet[],
   inventory: Record<string, number>,
   progression: PetProgression,
+  bank?: { pets: SavedPet[]; capacity: number },
 ): BattleSettlementReport {
   const request = core.request;
   if (request.kind !== "ended") throw new Error("settle a fight only after it has ended");
@@ -60,6 +63,14 @@ export function settleBattle(
         level: setup.level,
         quality: setup.quality,
         nature: setup.nature,
+        // A caught shiny keeps the colour it fought in.
+        ...(shinyApplies(setup.nature)
+          ? {
+              shinyColor:
+                setup.shinyColor ??
+                defaultShinyColor(setup.spriteId ?? setup.speciesId, setup.nature),
+            }
+          : {}),
         currentHp: unit.hp(),
         maxHp: unit.maxHp(),
         experience: 0,
@@ -69,8 +80,13 @@ export function settleBattle(
         physicalTraitId: setup.physicalTraitId ?? -1,
         heldEquipmentId: NO_HELD_ITEM,
       },
-      storage = decideCatchStorage({ rosterSize: party.length, bankSize: 0 }).outcome;
+      storage = decideCatchStorage({
+        rosterSize: party.length,
+        bankSize: bank?.pets.length ?? 0,
+        bankCapacity: bank ? bank.capacity : 0,
+      }).outcome;
     if (storage === "ROSTER") party.push(pet);
+    else if (storage === "BANK" && bank) bank.pets.push({ ...pet, slot: bank.pets.length });
     caught = { pet, storage: storage as "ROSTER" | "BANK" | "RELEASE" };
   }
 

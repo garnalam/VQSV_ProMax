@@ -1,12 +1,13 @@
 import type { PackBattleAiProfile } from "../../../data/GameData";
 import type { RainbowCharmBattleState } from "../../charm/RainbowCharmBattle";
-import { decideReserveShare, expAward } from "../BattleOutcomeEngine";
+import { decideReserveShare, expAward, reserveExpAward } from "../BattleOutcomeEngine";
 import type { BattleRandom } from "../BattleRandom";
 import type { BattleRules } from "../BattleRules";
 import type { DesignTraitProjection } from "../DesignTraitProjection";
 import type { DesignTraitUnit } from "../DesignTraits";
 import { resolveP7PostSkill } from "../P7PostSkill";
 import { resolveP7Strike } from "../P7Strike";
+import { PpExhaustion } from "./PpExhaustion";
 import type { StatusInstance, StatusUnit as StatusUnitLike } from "../StatusState";
 import type { StatusWebRules } from "../StatusWebRules";
 import { BattleAiActorKey } from "../ai/BattleAiActorKey";
@@ -22,8 +23,11 @@ import { LiveBattleAiUnit } from "../ai/BattleAiUnit";
 import { RUNTIME_MODES, type BattleAiV2RuntimeMode } from "../ai/BattleAiV2RuntimeSelector";
 import { BattleAiDecision as AiDecision } from "../ai/BattleAiDecision";
 import type { BattleItems } from "./BattleItems";
+import { applyCauVongItemRecovery } from "./CauVongItemRecovery";
 import {
   BattleCommandError,
+  ITEMS_NOT_ALLOWED_TEXT,
+  RUN_NOT_ALLOWED_TEXT,
   type CombatantSetup,
   SKILL_NOT_READY_WARNING,
   TIER_LOCK_WARNING,
@@ -254,6 +258,14 @@ export class DoubleBattleCore {
     );
   }
 
+  itemsAllowed(): boolean {
+    return this.setup.itemsAllowed !== false;
+  }
+
+  runAllowed(): boolean {
+    return this.setup.runAllowed === true;
+  }
+
   /** `legalTargets`: the living slots of the side the skill aims at. */
   legalTargets(actorSlot: DoubleSlot, skillId: number): DoubleSlot[] {
     const row = this.rules.damage.skillRow(skillId),
@@ -327,7 +339,10 @@ export class DoubleBattleCore {
       case "skill": {
         const id = actor.skillIds[command.skillIndex];
         if (id === undefined || id < 0) throw new BattleCommandError("Ô Skill trống.");
-        if (actor.skillPp[command.skillIndex] <= 0)
+        // Bug fix (Java 2v2 too): a pet with every slot dry could take no command at all, so a side
+        // without a bench or a PP item was stuck for good. As in the 1v1, it may then pick a dry slot
+        // and the turn passes on "noPp".
+        if (actor.skillPp[command.skillIndex] <= 0 && this.hasUsableSkill(slot))
           throw new BattleCommandError("Kỹ năng đã hết PP.");
         const row = this.rules.damage.skillRow(id);
         // `VqsvDoubleBattleRuntime` checks Phong Bế's tier lock; a slot Kỹ năng Phong Bế sealed is
@@ -346,6 +361,7 @@ export class DoubleBattleCore {
         return;
       }
       case "item": {
+        if (!this.itemsAllowed()) throw new BattleCommandError(ITEMS_NOT_ALLOWED_TEXT);
         if (this.isMaMocBlockedItem(command.itemId))
           throw new BattleCommandError(MA_MOC_TEXT.sealedItem);
         if (this.web.switchAndItemsLocked(actor))
@@ -381,6 +397,10 @@ export class DoubleBattleCore {
         this.nextPlayerCommand(slot + 1);
         return;
       }
+      case "run":
+        if (!this.runAllowed()) throw new BattleCommandError(RUN_NOT_ALLOWED_TEXT);
+        this.end("none");
+        return;
     }
   }
 
@@ -534,6 +554,7 @@ export class DoubleBattleCore {
       if (!action.groupSecondary) this.acted[action.actorSlot] = true;
       if (action.itemId >= 0) {
         this.resolveItem(action);
+        if (this.endOnPpExhaustion(action.actorSlot)) return;
         continue;
       }
       let target: DoubleSlot = action.targetSlot;
@@ -548,6 +569,7 @@ export class DoubleBattleCore {
       if (action.groupSecondary) this.groupSecondaryHit(action, target);
       else this.skillAction(action, target);
       this.afterMaMocAction(action);
+      if (this.endOnPpExhaustion(action.actorSlot)) return;
       const pivot = this.pivotSlot(action.actor, action.actorSlot);
       if (pivot >= 0 && this.forcedReplacement(pivot as DoubleSlot, "RESOLVE", true)) return;
     }
@@ -775,6 +797,7 @@ export class DoubleBattleCore {
         target: combatant,
         skillId,
         randomPercent: (label) => this.random.percent(`battle.2v2.selfHit.${label}`),
+        unifiedPower: this.rules.web?.selfHitPower(skillId),
       }),
       landed = this.maMoc
         ? this.projectMaMocDamage(self, skillId, self, outcome.damage)
@@ -856,6 +879,29 @@ export class DoubleBattleCore {
       itemId: action.itemId,
       ...result,
     });
+    // `vg_CauVongItemRecovery_apply`: a Cầu Vồng trainer answers the player's item with one recovery.
+    if (action.playerItem) {
+      const recovery = applyCauVongItemRecovery(
+        this.setup,
+        item,
+        [this.unit(0), this.unit(1)],
+        this.enemyUnits,
+        (id) => this.ppMax(id),
+      );
+      if (recovery) {
+        const { target, ...gained } = recovery;
+        const slot = this.slotOfUnit(target);
+        if (slot >= 0 && gained.hpGained > 0) this.projection.afterHealing(target, slot, this.turn);
+        this.emit({
+          type: "item",
+          slot: action.actorSlot,
+          target: slot,
+          itemId: action.itemId,
+          cauVongRecovery: { speciesId: target.speciesId },
+          ...gained,
+        });
+      }
+    }
   }
 
   // ------------------------------------------------------------------ targets and power
@@ -1081,7 +1127,7 @@ export class DoubleBattleCore {
     if (this.npcCharms) for (const slot of [0, 1] as const) this.charmRevive(slot);
     if (this.reviveFallenMaMocBoss()) return false;
     if (!this.unit(0).alive() && !this.unit(1).alive() && this.firstLivingEnemyReserve() < 0) {
-      this.awardExperience();
+      if (this.setup.experienceAllowed !== false) this.awardExperience();
       this.end("player");
       return true;
     }
@@ -1128,7 +1174,12 @@ export class DoubleBattleCore {
     const lastLevel = this.setup.player[living[living.length - 1]].level;
     this.playerUnits.forEach((unit, member) => {
       if (this.participants.includes(member) || !unit.alive()) return;
-      const share = decideReserveShare({ globalShare: false, heldItem6: unit.hasHeldItem(6) });
+      // Hoàng Kim Chương (ProMax): 30% for a reserve without Ký Cư Giải Xác, which keeps its whole share.
+      const share = decideReserveShare({
+        globalShare: false,
+        goldenSharePercent: this.setup.goldenPartyExperiencePercent,
+        heldItem6: unit.hasHeldItem(6),
+      });
       if (share.outcome === "SKIP") return;
       const trait = this.projection.projectExperience(
         unit,
@@ -1138,30 +1189,52 @@ export class DoubleBattleCore {
       );
       let amount = 0;
       this.setup.enemy.forEach((enemy) => {
-        amount += expAward({
-          enemyLevel: enemy.level,
-          enemyNature: enemy.nature,
-          levelFactorLevel: lastLevel,
-          participantCount: living.length,
-          divisor: share.divisor,
-          heldItem5: false,
-          heldItem5Multiplier: 0,
-          experienceMultiplierPercent: trait.multiplierPercent,
-          experienceMultiplierStackable: trait.stackable,
-        });
+        amount += reserveExpAward(
+          {
+            enemyLevel: enemy.level,
+            enemyNature: enemy.nature,
+            levelFactorLevel: lastLevel,
+            participantCount: living.length,
+            divisor: share.divisor,
+            heldItem5: false,
+            heldItem5Multiplier: 0,
+            experienceMultiplierPercent: trait.multiplierPercent,
+            experienceMultiplierStackable: trait.stackable,
+          },
+          share,
+        );
       });
       this.reserveExperience[member] += amount;
       this.emit({ type: "experience", member, amount, reserve: true });
     });
   }
 
-  private end(winner: "player" | "enemy"): void {
+  private readonly ppExhaustion = new PpExhaustion();
+
+  /** Web rule: both teams out of PP; the one that ran dry first loses (see `PpExhaustion`). */
+  private endOnPpExhaustion(actorSlot: DoubleSlot): boolean {
+    if (this.openRequest?.kind === "ended") return true;
+    // The player can switch a benched pet with PP in, so the whole roster counts; the NPC never
+    // switches by choice in a 2v2, so only the two it has on the field can still act.
+    const loser = this.ppExhaustion.observe(
+      [...this.playerUnits, ...this.companionUnits],
+      [this.unit(0), this.unit(1)],
+      actorSlot >= 2 ? "player" : "enemy",
+    );
+    if (!loser) return false;
+    this.emit({ type: "ppExhausted", side: loser });
+    this.end(loser === "player" ? "enemy" : "player", true);
+    return true;
+  }
+
+  private end(winner: DoubleOutcome["winner"], ppExhausted = false): void {
     for (const unit of [...this.playerUnits, ...this.companionUnits, ...this.enemyUnits])
       unit.clearBuffsAtBattleEnd();
     const outcome: DoubleOutcome = {
       winner,
       experience: [...this.experience],
       reserveExperience: [...this.reserveExperience],
+      ...(ppExhausted ? { ppExhausted } : {}),
     };
     this.actions = [];
     this.openRequest = { kind: "ended", outcome };
@@ -1637,11 +1710,13 @@ export class DoubleBattleCore {
       ownerSide,
       formationSlot: -1,
       base: pet.stats,
+      wideStats: pet.wideStats,
       physicalTraitId: pet.physicalTraitId,
       heldItemId: pet.heldItemId,
     });
     if (this.setup.permanentStatsApplied) unit.traitBattleState.markPermanentStatsApplied();
     unit.restoreStatsForCheck();
+    if (pet.statFactors) this.projection.applyEncounterStatFactors(unit, pet.statFactors);
     if (pet.hp !== undefined) unit.setHp(Math.max(0, Math.min(unit.maxHp(), pet.hp)));
     for (let slot = 0; slot < unit.skillIds.length; slot++) {
       const skillId = pet.skillIds[slot] ?? EMPTY_SKILL;
@@ -1675,6 +1750,11 @@ export class DoubleBattleCore {
       playerItem: false,
       itemMember: -1,
     };
+  }
+
+  /** Whether the pet in `slot` still has a skill it may cast (PP left, not sealed). */
+  hasUsableSkill(slot: DoubleSlot): boolean {
+    return this.usableSlots(this.unit(slot)).length > 0;
   }
 
   private usableSlots(unit: DesignTraitUnit): { index: number; damaging: boolean }[] {

@@ -13,6 +13,7 @@
 // (`DesignTraitProjection.applyPermanentStatsOnce`). The two orders agree up to a point of rounding.
 import type { PetCoreStats } from "../battle/PetStatCalculator";
 import type { SavedPet } from "../../persistence/save/GameSave";
+import { towerBondStat } from "../meta/BondingTower";
 
 export type DivineSealDocument = { species: number[]; sealed: number; released: number };
 
@@ -94,7 +95,7 @@ export class DivinePetSeal {
   ): void {
     for (const pet of pets) {
       if (!this.isDivine(pet.speciesId)) continue;
-      const newMax = DivinePetSeal.scale(base(pet), percent(pet));
+      const newMax = towerBondStat(DivinePetSeal.scale(base(pet), percent(pet)), pet.towerBond);
       if (pet.maxHp === newMax) continue;
       if (pet.currentHp !== undefined)
         pet.currentHp = DivinePetSeal.carryHp(pet.currentHp, pet.maxHp, newMax);

@@ -11,8 +11,11 @@ import type { DoubleBattleRuntime, DoubleDeathView } from "../game/battle/Double
 import type { DoubleSlot } from "../game/battle/engine/DoubleBattleTypes";
 import type { SourceSpecialPlacement } from "../game/battle/SourceSkillAnimation";
 import type { GameAssets } from "../game/story/GameAssets";
-import type { SourceUiWidget } from "./SourceUiLayout";
-import { BattleUiRenderer } from "./BattleUiRenderer";
+import type { SourceUiLayout, SourceUiWidget } from "./SourceUiLayout";
+import { BATTLE_SEATS } from "../game/battle/BattleSeats";
+import { landPanel } from "../game/battle/BattleLandscape";
+import { battleFrameX, viewport } from "../core/Viewport";
+import { BattleUiRenderer, type BattleUiHost } from "./BattleUiRenderer";
 import { StateOneLEffectPainter } from "./StateOneLEffectPainter";
 import { npcEnemyEntryAt, npcEnemyEntryView } from "../game/battle/NpcEnemyEntry";
 import {
@@ -59,10 +62,6 @@ export class BattleRenderer {
       current: Record<BattleSide, { x: number; y: number }>;
     }
   >();
-  private readonly opaqueBounds = new WeakMap<
-    HTMLImageElement,
-    { x: number; y: number; width: number; height: number }
-  >();
   constructor(
     private readonly assets: GameAssets,
     private readonly boot: BootAssets,
@@ -71,24 +70,60 @@ export class BattleRenderer {
     this.lEffect = new StateOneLEffectPainter((visual) => assets.lEffectPicture(visual));
   }
   private readonly lEffect: StateOneLEffectPainter;
+  /**
+   * Whether this frame is laid out on the APK's 320x240 battle screen (`battle.ui` of the landscape
+   * APK, centred on the canvas at full size) rather than the JAR's 240x320 one.
+   */
+  private land = false;
+  /** The `battle.ui` the frame is laid out on. */
+  private get layout(): SourceUiLayout {
+    return (this.land && this.boot.landLayouts.get("battle")) || this.boot.battleLayout;
+  }
+  /** The `npcEnemy.ui` the VS card is laid out on. */
+  private get entryLayout(): SourceUiLayout {
+    return (this.land && this.boot.landLayouts.get("npcEnemy")) || this.boot.npcEnemyLayout;
+  }
+  /** The battle screen's size: the APK's 320x240 in landscape, the JAR's 240x320 otherwise. */
+  private get screen(): { width: number; height: number } {
+    return this.land ? { width: 320, height: 240 } : { width: 240, height: 320 };
+  }
   render(g: CanvasRenderingContext2D, battle: BattleRuntime, alpha = 1): void {
-    if (battle.phase.key === "NPC_VS_ENTRY") {
-      this.drawEntry(g, battle);
-      return;
+    // Landscape: the fight (and its VS card) is drawn on the APK's 320x240 screen at full size,
+    // centred; `box` is the 240x320 UI box a panel left off that screen would use.
+    const box = g.getTransform(),
+      k = box.a / viewport.ui.scale;
+    this.land = viewport.landscape;
+    if (this.land) g.setTransform(k, 0, 0, k, k * battleFrameX(), 0);
+    try {
+      if (battle.phase.key === "NPC_VS_ENTRY") this.drawEntry(g, battle);
+      else this.renderScene(g, battle, alpha, box);
+    } finally {
+      this.land = false;
+      g.setTransform(box);
     }
-    g.fillStyle = "rgba(0,0,0,0.5490196078)";
-    g.fillRect(0, 0, 240, 320);
+  }
+  private renderScene(
+    g: CanvasRenderingContext2D,
+    battle: BattleRuntime,
+    alpha: number,
+    box: DOMMatrix,
+  ): void {
+    this.fillScreen(g, "rgba(0,0,0,0.5490196078)");
     this.widget(g, 1, 92);
-    this.widget(g, 2, 93);
+    if (this.land) this.landBand(g);
+    else this.widget(g, 2, 93);
     this.widget(g, 19, 101);
+    // The square left of widget 59 (91,248 on the JAR screen).
+    const square = this.layout.widget(59);
     g.fillStyle = "#00b5d8";
-    g.fillRect(91, 248, 10, 10);
+    g.fillRect((square?.x ?? 104) - 13, square?.y ?? 248, 10, 10);
     this.element(g, 18, battle.combatant("enemy").element);
     this.element(g, 17, battle.combatant("player").element);
-    this.sprite(g, 294, 0, battle.tickCount, 144, 85);
-    this.sprite(g, 294, 0, battle.tickCount, 36, 206);
+    const { playerMarker, enemyMarker } = BATTLE_SEATS;
+    this.sprite(g, 294, 0, battle.tickCount, enemyMarker.x, enemyMarker.y);
+    this.sprite(g, 294, 0, battle.tickCount, playerMarker.x, playerMarker.y);
     if (battle.activeMarker) {
-      const marker = battle.activeMarkerSide === "player" ? { x: 36, y: 206 } : { x: 144, y: 85 };
+      const marker = battle.activeMarkerSide === "player" ? playerMarker : enemyMarker;
       this.sprite(g, 294, 1, battle.tickCount, marker.x, marker.y);
     }
     this.actorWithLEffect(g, battle, "enemy", alpha);
@@ -168,7 +203,7 @@ export class BattleRenderer {
     this.statusSlots(g, battle, "player");
     this.text(g, 40, `${exp.value}/${exp.max}`, "#fff7b1");
     this.charmHud(g, battle);
-    this.ui.render(g, battle);
+    this.renderUi(g, battle, box);
     const damage = battle.damage;
     if (damage) {
       const target = battle.combatant(damage.target),
@@ -182,6 +217,35 @@ export class BattleRenderer {
       const target = battle.combatant(post.target);
       this.outlined(g, post.text, target.origin.x - 32, target.origin.y - 50, 68, "#ffffff");
     }
+  }
+  /**
+   * The fight's command bar or open panel. Landscape: the command bar is laid out on the APK's
+   * `battle.ui`, the panels move onto the 320x240 screen (`landPanel`); a panel left out would
+   * stay in the UI box (`box`).
+   */
+  private renderUi(g: CanvasRenderingContext2D, battle: BattleUiHost, box: DOMMatrix): void {
+    const panel = this.land ? landPanel(battle) : null;
+    if (panel) {
+      const draw = (clipTop: number, clipBottom: number, lift: number) => {
+        g.save();
+        g.translate(panel.x, panel.y - lift);
+        g.beginPath();
+        g.rect(-400, clipTop, 1120, clipBottom - clipTop);
+        g.clip();
+        this.ui.render(g, battle, this.layout, true);
+        g.restore();
+      };
+      // A cut panel is drawn twice: down to the cut, then the rest lifted over it.
+      if (panel.cut) {
+        draw(-400, panel.cut.y, 0);
+        draw(panel.cut.y + panel.cut.h, 1000, panel.cut.h);
+      } else draw(-400, 1000, 0);
+    } else if (this.land && battle.ui.mode !== "COMMAND") {
+      const land = g.getTransform();
+      g.setTransform(box);
+      this.ui.render(g, battle);
+      g.setTransform(land);
+    } else this.ui.render(g, battle, this.layout);
   }
   /**
    * `renderSourceLikeBattleUi` for a simultaneous 2v2: the HUD bands while their side stands, the four
@@ -198,14 +262,35 @@ export class BattleRenderer {
       context.fillRect(0, 0, 240, 320);
     },
   ): void {
+    // Landscape: on the APK's 320x240 battle screen, like a 1v1 (`render`).
+    const box = g.getTransform(),
+      k = box.a / viewport.ui.scale;
+    this.land = viewport.landscape;
+    if (this.land) g.setTransform(k, 0, 0, k, k * battleFrameX(), 0);
+    try {
+      this.renderDoubleScene(g, battle, background, box);
+    } finally {
+      this.land = false;
+      g.setTransform(box);
+    }
+  }
+  private renderDoubleScene(
+    g: CanvasRenderingContext2D,
+    battle: DoubleBattleRuntime,
+    background: (g: CanvasRenderingContext2D) => void,
+    box: DOMMatrix,
+  ): void {
     const tick = battle.tickCount,
       slots = ([0, 1, 2, 3] as const).map((slot) => battle.slot(slot));
-    g.fillStyle = "rgba(0,0,0,0.5490196078)";
-    g.fillRect(0, 0, 240, 320);
+    this.fillScreen(g, "rgba(0,0,0,0.5490196078)");
     if (battle.sideAlive(false)) this.widget(g, 1, 92);
-    if (battle.sideAlive(true)) this.widget(g, 2, 93);
+    if (battle.sideAlive(true)) {
+      if (this.land) this.landBand(g);
+      else this.widget(g, 2, 93);
+    }
+    const square = this.layout.widget(59);
     g.fillStyle = "#00b5d8";
-    g.fillRect(91, 248, 10, 10);
+    g.fillRect((square?.x ?? 104) - 13, square?.y ?? 248, 10, 10);
     for (const view of slots) this.spriteCursor(g, 294, 0, 0, view.markerX, view.markerY);
     if (battle.activeActorSlot >= 0) {
       const view = slots[battle.activeActorSlot];
@@ -250,14 +335,14 @@ export class BattleRenderer {
       const lHere = l?.slot === slot;
       if (lHere && !l!.entry.drawAfter) drawL(view, slot >= 2);
       // `setPaletteNature(nature)`: a nature 7..9 pet in its shiny palette.
-      const petSprite = this.assets.shinySprite(view.spriteId, view.nature),
+      const petSprite = this.assets.shinySprite(view.spriteId, view.nature, view.shinyColor),
         frame = this.assets.frame(petSprite, view.spriteState, view.stateTick);
       if (frame) {
         const mirror = mirroredPetArt(view.spriteId, slot >= 2),
           image = this.assets.imageFor(frame, mirror);
         if (image.complete)
           g.drawImage(
-            this.petImage(image, petSprite, view.nature),
+            this.petImage(image, petSprite, view.nature, view.shinyColor),
             Math.floor(view.actorX + (mirror ? frame.mox : frame.ox)),
             Math.floor(view.actorY + (mirror ? frame.moy : frame.oy)),
           );
@@ -297,9 +382,10 @@ export class BattleRenderer {
       g.beginPath();
       g.rect(96, 13, 15, 15);
       g.clip();
+      // The background is a canvas-sized picture (or draws the world in its own space).
+      g.setTransform(1, 0, 0, 1, 0, 0);
       background(g);
-      g.fillStyle = "rgba(0,0,0,0.5490196078)";
-      g.fillRect(0, 0, 240, 320);
+      this.fillScreen(g, "rgba(0,0,0,0.5490196078)");
       g.restore();
       this.marqueeText(g, 15, enemy.name, "#ffffff", tick);
       this.text(g, 16, `lv${enemy.level}`, "#ffffff");
@@ -317,9 +403,11 @@ export class BattleRenderer {
       this.element(g, 17, player.element);
       this.doubleStatusSlots(g, battle, 2);
     }
+    // Slot 3's HUD sits on the player's band (widget 2: y 235, 155 on the APK's screen).
+    const bandTop = this.layout.widget(2)?.y ?? 235;
     for (const [slot, dx, dy] of [
       [1, 132, 0],
-      [3, 0, 235],
+      [3, 0, bandTop],
     ] as const) {
       const view = slots[slot];
       if (view.hp <= 0) continue;
@@ -333,7 +421,7 @@ export class BattleRenderer {
       this.element(g, 18, view.element);
       g.restore();
     }
-    this.ui.render(g, battle);
+    this.renderUi(g, battle, box);
     const damage = battle.damage;
     if (damage) {
       // `drawP7Damage`: the number floats along `bloodRow(0)`, the miss along `bloodRow(1)`.
@@ -485,8 +573,8 @@ export class BattleRenderer {
     slot: DoubleSlot,
   ): void {
     const playerSide = slot >= 2,
-      icons = this.boot.battleLayout.widget(playerSide ? 26 : 32),
-      badges = this.boot.battleLayout.widget(playerSide ? 43 : 49);
+      icons = this.layout.widget(playerSide ? 26 : 32),
+      badges = this.layout.widget(playerSide ? 43 : 49);
     if (!icons || !badges) return;
     for (const [index, entry] of battle.statusStrip(slot).entries()) {
       const step = (playerSide ? -index : index) * 15,
@@ -532,13 +620,18 @@ export class BattleRenderer {
   ): void {
     const combatant = battle.combatant(side),
       nature = "nature" in combatant ? combatant.nature : undefined,
+      shinyColor = "shinyColor" in combatant ? combatant.shinyColor : undefined,
       // `SpriteAnimator.setPaletteNature(unit.nature)`: a nature 7..9 pet in its shiny palette.
-      actor = { ...combatant, spriteId: this.assets.shinySprite(combatant.spriteId, nature) },
+      actor = {
+        ...combatant,
+        spriteId: this.assets.shinySprite(combatant.spriteId, nature, shinyColor),
+      },
       offset = this.smoothOffset(battle, side, alpha),
       x = actor.origin.x + offset.x,
       y = actor.origin.y + offset.y;
     if (side === "enemy" && battle.captureVisual?.hideEnemy) return;
     this.paletteNature = nature;
+    this.paletteColor = shinyColor;
     if (battle.hidden(side)) {
       // The fall (state 3): the authored death window, or on the core the beat that knocked it out,
       // played once and only for a sprite that has a fall of its own.
@@ -551,6 +644,7 @@ export class BattleRenderer {
       )
         this.sprite(g, actor.spriteId, 3, fall, actor.origin.x, actor.origin.y);
       this.paletteNature = undefined;
+      this.paletteColor = undefined;
       return;
     }
     const cursor = battle.cursor(side),
@@ -570,16 +664,20 @@ export class BattleRenderer {
     } else if (cursor >= 0) this.spriteCursor(g, actor.spriteId, state, cursor, x, y);
     else this.sprite(g, actor.spriteId, state, battle.tickCount, x, y);
     this.paletteNature = undefined;
+    this.paletteColor = undefined;
   }
   /** The nature of the pet being drawn by `sprite` / `spriteCursor` (undefined: no palette). */
   private paletteNature: number | undefined;
+  /** Its own shiny colour, when it owns one. */
+  private paletteColor: number | undefined;
   /** `PetShinyPalette.image` for the pet being drawn. */
   private petImage(
     image: HTMLImageElement,
     visual: number,
     nature = this.paletteNature,
+    shinyColor = this.paletteColor,
   ): HTMLImageElement | HTMLCanvasElement {
-    return this.assets.shinyImage(image, nature, visual);
+    return this.assets.shinyImage(image, nature, visual, shinyColor);
   }
 
   /**
@@ -626,11 +724,18 @@ export class BattleRenderer {
     const entry = battle.definition.entry,
       { step, frame } = npcEnemyEntryAt(battle.sequenceTick),
       view = npcEnemyEntryView(step, frame, entry.playerCount ?? 6, entry.enemyCount ?? 6),
-      layout = this.boot.npcEnemyLayout;
+      layout = this.entryLayout;
     // `drawBattleBackground`: the captured world under its 140-alpha veil.
-    g.fillStyle = step >= 5 ? "rgba(0,0,0,0.5490196078)" : "#000";
-    g.fillRect(0, 0, 240, 320);
-    this.cellTopLeft(g, view.mainCell, layout.x(1, 0), layout.y(1, 71));
+    this.fillScreen(g, step >= 5 ? "rgba(0,0,0,0.5490196078)" : "#000");
+    // The card stays on the battle screen: what the source slides off its edges is not drawn on
+    // the wider canvas around it (`render` restores the transform; the clip is undone below).
+    g.save();
+    if (this.land) {
+      g.beginPath();
+      g.rect(0, 0, 320, 240);
+      g.clip();
+    }
+    this.entryBands(g, view.mainCell, layout.widget(1));
     const enemyVisual = entry.rightActorSpriteId,
       playerVisual = entry.leftActorSpriteId;
     for (const [id, visual, player] of [
@@ -660,8 +765,9 @@ export class BattleRenderer {
         widget = layout.widget(id);
       if (cell < 0 || !widget) continue;
       let x = widget.x;
+      // Leaving, the enemy's row starts 26 px right of its first slot (172 on the JAR screen).
       if (view.exitSlotRows && id >= 7 && id < 19 && id % 2 === 1)
-        x = 172 + Math.trunc((17 * (id - 7)) / 2);
+        x = (layout.widget(7)?.x ?? 146) + 26 + Math.trunc((17 * (id - 7)) / 2);
       else if (view.exitSlotRows && id >= 19 && id < 31 && id % 2 === 1)
         x = -30 + Math.trunc((17 * (id - 19)) / 2);
       this.cellTopLeft(g, cell, x, widget.y);
@@ -675,11 +781,51 @@ export class BattleRenderer {
     if (view.cells[31] >= 0)
       this.entryText(g, 31, battle.combatant("player").name, "#ffffff", tick);
     if (view.cells[32] >= 0) this.entryText(g, 32, "VS", "#fff06a", tick);
+    g.restore();
     const flash = layout.widget(36);
-    if (view.overlay36 && flash) {
+    // Landscape: the flash covers the whole canvas, not only the battle screen.
+    if (view.overlay36 && this.land) this.fillScreen(g, "rgba(255,255,255,0.3607843137)");
+    else if (view.overlay36 && flash) {
       g.fillStyle = "rgba(255,255,255,0.3607843137)";
       g.fillRect(flash.x, flash.y, Math.max(1, flash.w), flash.h > 0 ? flash.h : 10);
     }
+  }
+  /**
+   * The VS card's two bands (sprite 296's 240x124 cells) on widget 1. The APK's widget is 320 wide:
+   * the cell's middle column is stretched, so each band keeps its slanted end and reaches its edge.
+   */
+  private entryBands(
+    g: CanvasRenderingContext2D,
+    cell: number,
+    widget: SourceUiWidget | undefined,
+  ): void {
+    const image = this.boot.cell(296, cell),
+      x = widget?.x ?? 0,
+      y = widget?.y ?? 71,
+      width = widget?.w ?? 240;
+    if (!image) return;
+    if (width <= image.width) {
+      g.drawImage(image, x, y);
+      return;
+    }
+    const half = Math.trunc(image.width / 2),
+      h = image.height,
+      smoothing = g.imageSmoothingEnabled;
+    g.imageSmoothingEnabled = false;
+    g.drawImage(image, 0, 0, half, h, x, y, half, h);
+    g.drawImage(image, half, 0, 1, h, x + half, y, width - image.width, h);
+    g.drawImage(
+      image,
+      half,
+      0,
+      image.width - half,
+      h,
+      x + half + width - image.width,
+      y,
+      image.width - half,
+      h,
+    );
+    g.imageSmoothingEnabled = smoothing;
   }
   /** `drawSpriteCellTopLeft(296, cell, x, y)`. */
   private cellTopLeft(g: CanvasRenderingContext2D, cell: number, x: number, y: number): void {
@@ -719,7 +865,7 @@ export class BattleRenderer {
     color: string,
     tick: number,
   ): void {
-    const widget = this.boot.npcEnemyLayout.widget(id);
+    const widget = this.entryLayout.widget(id);
     if (!widget || !value) return;
     const font = this.boot.panelFont,
       width = font.width(value),
@@ -989,36 +1135,51 @@ export class BattleRenderer {
         y: player.origin.y + playerBounds.y + playerBounds.height / 2,
       },
       markerCenter = {
-        x: 144 + markerBounds.x + markerBounds.width / 2,
-        y: 85 + markerBounds.y + markerBounds.height / 2,
+        x: BATTLE_SEATS.enemyMarker.x + markerBounds.x + markerBounds.width / 2,
+        y: BATTLE_SEATS.enemyMarker.y + markerBounds.y + markerBounds.height / 2,
       },
-      opaque = this.imageOpaqueBounds(image);
-    let center: { x: number; y: number };
-    if (capture.phase === "ground") center = markerCenter;
-    else {
-      const enemyCapture = {
-        x: markerCenter.x,
-        y: enemy.origin.y + enemyBounds.y - Math.max(3, opaque.height / 2) + 1,
+      spriteId = capture.spriteId,
+      // A frame's visible box (frames are cut to their ink): its centre in the frame's own space.
+      centre = (f: { ox: number; oy: number; w: number; h: number }) => ({
+        x: f.ox + f.w / 2,
+        y: f.oy + f.h / 2,
+      }),
+      // Where the sprite's origin goes so that `ref`'s centre lands on `target`. Every frame of the
+      // phase is then drawn from that one origin, so the ball keeps the shake and bounce its own
+      // frames carry instead of being re-centred (and jolted) frame by frame.
+      originFor = (target: { x: number; y: number }, ref: typeof frame) => {
+        const c = centre(ref);
+        return { x: target.x - c.x, y: target.y - c.y };
       };
+    let origin: { x: number; y: number };
+    if (capture.phase === "ground") {
+      // `enemyCatchSuccessGroundPoint`: the ball at rest on the enemy's ground marker.
+      const count = this.assets.sprites[String(spriteId)]?.states["3"]?.length ?? 1,
+        rest = this.assets.frameAtCursor(spriteId, 3, count - 1) ?? frame;
+      origin = originFor(markerCenter, rest);
+    } else {
+      // `enemyCaptureBallPoint`: above the enemy's head, measured on the hovering ball (state 1).
+      const hover = this.assets.frameAtCursor(spriteId, 1, 0) ?? frame,
+        enemyCapture = {
+          x: markerCenter.x,
+          y: enemy.origin.y + enemyBounds.y - Math.max(3, hover.h / 2) + 1,
+        };
       if (capture.phase === "throw") {
+        // `catchThrowPoint`: from the player to that point, one step per frame.
         const count = Math.max(
             1,
-            this.assets.sprites[String(capture.spriteId)]?.states[String(capture.state)]?.length ??
-              1,
+            this.assets.sprites[String(spriteId)]?.states[String(capture.state)]?.length ?? 1,
           ),
           cursor = Math.max(0, Math.min(capture.tick, count - 1)),
-          denominator = Math.max(1, count - 1);
-        center = {
-          x: playerCenter.x + ((enemyCapture.x - playerCenter.x) * cursor) / denominator,
-          y: playerCenter.y + ((enemyCapture.y - playerCenter.y) * cursor) / denominator,
+          denominator = Math.max(1, count - 1),
+          c = centre(frame);
+        origin = {
+          x: playerCenter.x + ((enemyCapture.x - playerCenter.x) * cursor) / denominator - c.x,
+          y: playerCenter.y + ((enemyCapture.y - playerCenter.y) * cursor) / denominator - c.y,
         };
-      } else center = enemyCapture;
+      } else origin = originFor(enemyCapture, hover);
     }
-    g.drawImage(
-      image,
-      Math.floor(center.x - opaque.x - opaque.width / 2),
-      Math.floor(center.y - opaque.y - opaque.height / 2),
-    );
+    g.drawImage(image, Math.floor(origin.x + frame.ox), Math.floor(origin.y + frame.oy));
   }
   private catchEffect(
     g: CanvasRenderingContext2D,
@@ -1043,44 +1204,6 @@ export class BattleRenderer {
     );
     g.restore();
   }
-  private imageOpaqueBounds(image: HTMLImageElement): {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  } {
-    const cached = this.opaqueBounds.get(image);
-    if (cached) return cached;
-    const canvas = document.createElement("canvas");
-    canvas.width = image.naturalWidth;
-    canvas.height = image.naturalHeight;
-    const context = canvas.getContext("2d", { willReadFrequently: true })!;
-    context.drawImage(image, 0, 0);
-    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
-    let left = canvas.width,
-      top = canvas.height,
-      right = -1,
-      bottom = -1;
-    for (let y = 0; y < canvas.height; y++)
-      for (let x = 0; x < canvas.width; x++) {
-        const i = (y * canvas.width + x) * 4;
-        if (
-          pixels[i + 3] === 0 ||
-          (pixels[i] === 255 && pixels[i + 1] === 255 && pixels[i + 2] === 255)
-        )
-          continue;
-        left = Math.min(left, x);
-        top = Math.min(top, y);
-        right = Math.max(right, x);
-        bottom = Math.max(bottom, y);
-      }
-    const result =
-      right < left
-        ? { x: 0, y: 0, width: canvas.width, height: canvas.height }
-        : { x: left, y: top, width: right - left + 1, height: bottom - top + 1 };
-    this.opaqueBounds.set(image, result);
-    return result;
-  }
   /**
    * `VqsvBattleRenderer.drawRainbowCharmHud` and `drawEnemyCharm`: a dark 20x23 badge per charm
    * (green rim for survival, gold for tactical, coral for the NPC's) with its icon and tier, beside
@@ -1089,7 +1212,7 @@ export class BattleRenderer {
   private charmHud(g: CanvasRenderingContext2D, battle: BattleRuntime): void {
     const core = battle.core;
     if (!core) return;
-    const layout = this.boot.battleLayout,
+    const layout = this.layout,
       x = (id: number, fallback: number) => layout.widget(id)?.x ?? fallback,
       y = (id: number, fallback: number) => layout.widget(id)?.y ?? fallback,
       w = (id: number, fallback: number) => layout.widget(id)?.w ?? fallback,
@@ -1097,8 +1220,8 @@ export class BattleRenderer {
         const widget = layout.widget(id);
         return widget && widget.h > 0 ? widget.h : 10;
       },
-      clampX = (value: number) => Math.max(0, Math.min(240 - 20, value)),
-      clampY = (value: number) => Math.max(0, Math.min(320 - 23, value)),
+      clampX = (value: number) => Math.max(0, Math.min(this.screen.width - 20, value)),
+      clampY = (value: number) => Math.max(0, Math.min(this.screen.height - 23, value)),
       badge = (bx: number, by: number, rim: string, id: number, tier: number, textX: number) => {
         g.fillStyle = "rgba(0, 0, 0, 0.706)";
         g.beginPath();
@@ -1144,14 +1267,74 @@ export class BattleRenderer {
       badge(bx, by, "#ed8666", enemy.charm.runtimeId, enemy.tier, bx + 6);
     }
   }
+  /** The whole canvas under `style` (in landscape the battle screen does not reach its sides). */
+  private fillScreen(g: CanvasRenderingContext2D, style: string): void {
+    g.save();
+    if (viewport.landscape) g.setTransform(1, 0, 0, 1, 0, 0);
+    g.fillStyle = style;
+    g.fillRect(
+      0,
+      0,
+      viewport.landscape ? g.canvas.width : 240,
+      viewport.landscape ? g.canvas.height : 320,
+    );
+    g.restore();
+  }
+  /**
+   * The player's band (cell 93, 240x85) across the APK's 320-wide widget 2. Its top 40 rows (the EXP
+   * bar, the HP block's tab) are widened at column 60, a plain stretch of the bar, so the HP block
+   * keeps its shape on the right where the APK's widgets 11..17 are. The six 40-wide command tiles
+   * below are each moved under their APK label (widgets 3..8) on the band's dark floor.
+   */
+  private landBand(g: CanvasRenderingContext2D): void {
+    const widget = this.layout.widget(2),
+      image = this.boot.cell(257, widget?.altId != null && widget.altId >= 0 ? widget.altId : 93);
+    if (!widget || !image) return;
+    const top = 40,
+      split = 61,
+      extra = widget.w - 1 - image.width,
+      smoothing = g.imageSmoothingEnabled;
+    g.imageSmoothingEnabled = false;
+    g.drawImage(image, 0, 0, split, top, widget.x, widget.y, split, top);
+    g.drawImage(image, split - 1, 0, 1, top, widget.x + split, widget.y, extra, top);
+    g.drawImage(
+      image,
+      split,
+      0,
+      image.width - split,
+      top,
+      widget.x + split + extra,
+      widget.y,
+      image.width - split,
+      top,
+    );
+    g.fillStyle = "#223355";
+    g.fillRect(widget.x, widget.y + top, widget.w - 1, image.height - top);
+    for (let i = 0; i < 6; i++) {
+      const jar = this.boot.battleLayout.widget(3 + i)?.x ?? 7 + 40 * i,
+        land = this.layout.widget(3 + i)?.x ?? jar;
+      g.drawImage(
+        image,
+        40 * i,
+        top,
+        40,
+        image.height - top,
+        land - (jar - 40 * i),
+        widget.y + top,
+        40,
+        image.height - top,
+      );
+    }
+    g.imageSmoothingEnabled = smoothing;
+  }
   private widget(g: CanvasRenderingContext2D, id: number, fallback: number): void {
-    const widget = this.boot.battleLayout.widget(id),
+    const widget = this.layout.widget(id),
       cell = (widget?.altId ?? -1) >= 0 ? widget!.altId! : (widget?.alt_image_ref?.id ?? fallback),
       image = this.boot.cell(257, cell);
     if (image && widget) g.drawImage(image, widget.x, widget.y);
   }
   private text(g: CanvasRenderingContext2D, id: number, value: string, color: string): void {
-    const widget = this.boot.battleLayout.widget(id);
+    const widget = this.layout.widget(id);
     if (!widget) return;
     this.boot.panelFont.draw(
       g,
@@ -1168,7 +1351,7 @@ export class BattleRenderer {
     color: string,
     tick: number,
   ): void {
-    const widget = this.boot.battleLayout.widget(id);
+    const widget = this.layout.widget(id);
     if (!widget) return;
     const width = this.boot.panelFont.width(value),
       x =
@@ -1239,7 +1422,7 @@ export class BattleRenderer {
     unit: ShieldTrackUnit,
     tick: number,
   ): void {
-    const bar = this.boot.battleLayout.widget(barId);
+    const bar = this.layout.widget(barId);
     if (!bar) return;
     const height = bar.h > 0 ? bar.h : 10;
     for (const rect of shieldTrackRects(unit, bar.x, bar.y, bar.w, height)) {
@@ -1248,7 +1431,7 @@ export class BattleRenderer {
     }
     const text = shieldTrackText(unit, bar.w);
     if (text.mode === "combined") {
-      const widget = this.boot.battleLayout.widget(textId);
+      const widget = this.layout.widget(textId);
       if (!widget) return;
       this.fieldText(
         g,
@@ -1263,7 +1446,7 @@ export class BattleRenderer {
       );
       return;
     }
-    const widget = this.boot.battleLayout.widget(textId);
+    const widget = this.layout.widget(textId);
     const y = widget ? widget.y : bar.y - 3;
     this.fieldText(g, text.hp, bar.x + 1, y, text.fieldWidth, 10, text.hpColor, tick, 0);
     this.fieldText(
@@ -1315,7 +1498,7 @@ export class BattleRenderer {
     g.restore();
   }
   private percent(g: CanvasRenderingContext2D, id: number, percent: number): void {
-    const w = this.boot.battleLayout.widget(id);
+    const w = this.layout.widget(id);
     if (!w) return;
     const h = w.bandHeight ?? (w.h > 0 ? w.h : 4);
     g.fillStyle = this.argb(w.jColor ?? w.j_color, "#646464");
@@ -1329,7 +1512,7 @@ export class BattleRenderer {
     }
   }
   private element(g: CanvasRenderingContext2D, id: number, element: number): void {
-    const widget = this.boot.battleLayout.widget(id),
+    const widget = this.layout.widget(id),
       image = this.boot.cell(257, 94 + element);
     if (!widget || !image) return;
     const x = widget.x - 4,
@@ -1353,8 +1536,8 @@ export class BattleRenderer {
    */
   private statusSlots(g: CanvasRenderingContext2D, battle: BattleRuntime, side: BattleSide): void {
     const playerSide = side === "player",
-      icons = this.boot.battleLayout.widget(playerSide ? 26 : 32),
-      badges = this.boot.battleLayout.widget(playerSide ? 43 : 49);
+      icons = this.layout.widget(playerSide ? 26 : 32),
+      badges = this.layout.widget(playerSide ? 43 : 49);
     if (!icons || !badges) return;
     for (const [index, slot] of battle.statusStrip(side).entries()) {
       const step = (playerSide ? -index : index) * 15,

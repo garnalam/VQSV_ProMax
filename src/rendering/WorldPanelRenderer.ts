@@ -3,7 +3,6 @@ import { thumbHeight, thumbY } from "../ui/UiScrollbarMath";
 import {
   GAME_MENU_SCROLLBAR,
   GAME_MENU_VISIBLE_ROWS,
-  MENU_LABELS,
   MENU_ROW_WIDGETS,
   TASK_OPTION_ROWS,
   TASK_ROW_BACKGROUNDS,
@@ -109,9 +108,18 @@ export function drawWorldPlates(
   g: CanvasRenderingContext2D,
   art: WorldPanelArt,
   layout: SourceUiLayout,
+  // Landscape pins the system plate to the bottom-left corner and the menu plate to the bottom-right.
+  left = { x: 0, y: 0 },
+  right = { x: 0, y: 0 },
 ): void {
+  g.save();
+  g.translate(left.x, left.y);
   drawWorldPlate(g, art, layout, 7, 167, 1, 303);
+  g.restore();
+  g.save();
+  g.translate(right.x, right.y);
   drawWorldPlate(g, art, layout, 5, 68, 222, 303);
+  g.restore();
 }
 
 export function fillBand(
@@ -330,7 +338,7 @@ export function drawRows(
   }
 }
 
-/** `drawGameMenuRows`: the six slots draw the scrolled window of the nine labels. */
+/** `drawGameMenuRows`: the six slots draw the scrolled window of menu labels. */
 function drawGameMenuRows(
   g: CanvasRenderingContext2D,
   art: WorldPanelArt,
@@ -340,7 +348,7 @@ function drawGameMenuRows(
   const first = panel.firstVisibleRow;
   for (let slot = 0; slot < GAME_MENU_VISIBLE_ROWS; slot++) {
     const index = first + slot;
-    if (index >= MENU_LABELS.length) break;
+    if (index >= panel.menuRowCount) break;
     const widget = layout.widget(MENU_ROW_WIDGETS[slot]);
     if (!widget) continue;
     drawCellTopLeft(g, art, rowCell(widget, index === panel.selected), widget.x, widget.y);
@@ -349,17 +357,17 @@ function drawGameMenuRows(
       art,
       layout,
       MENU_ROW_WIDGETS[slot],
-      MENU_LABELS[index],
+      panel.menuLabels[index],
       index === panel.selected ? selectedColor(widget) : widgetColor(widget, 0x1c6c92),
     );
   }
 }
 
 function drawGameMenuScrollbar(g: CanvasRenderingContext2D, panel: WorldPanel): void {
-  if (MENU_LABELS.length <= GAME_MENU_VISIBLE_ROWS) return;
+  if (panel.menuRowCount <= GAME_MENU_VISIBLE_ROWS) return;
   const { x, y, w, h, minThumbHeight } = GAME_MENU_SCROLLBAR,
-    thumb = thumbHeight(h, MENU_LABELS.length, GAME_MENU_VISIBLE_ROWS, minThumbHeight),
-    top = thumbY(y, h, thumb, MENU_LABELS.length, GAME_MENU_VISIBLE_ROWS, panel.listScroll);
+    thumb = thumbHeight(h, panel.menuRowCount, GAME_MENU_VISIBLE_ROWS, minThumbHeight),
+    top = thumbY(y, h, thumb, panel.menuRowCount, GAME_MENU_VISIBLE_ROWS, panel.listScroll);
   g.fillStyle = hex(0x6cb7bb);
   g.fillRect(x, y, w, h);
   g.fillStyle = hex(0xc6f0ff);

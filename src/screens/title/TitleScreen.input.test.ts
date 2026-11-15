@@ -66,4 +66,24 @@ describe("TitleScreen input (BootFlowState title phases)", () => {
     s.title.tick(InputSnapshot.keys(KEY.BACK_SPACE));
     expect(s.model.mode).toBe("menu");
   });
+  it("skip question asked after signing in: Có / Không start the game, Backspace signs out", () => {
+    const started: StartRequest[] = [];
+    let left = 0;
+    const ask = () => {
+      const model = new TitleFlowModel(false, false);
+      model.mode = "skipIntro";
+      return new TitleScreen(
+        {} as BootAssets,
+        model,
+        (r) => started.push(r),
+        async () => {},
+        () => left++,
+      );
+    };
+    ask().tick(InputSnapshot.keys(KEY.ENTER));
+    ask().tick(InputSnapshot.keys(KEY.F2));
+    expect(started.map((r) => r.skipIntro)).toEqual([true, false]);
+    ask().tick(InputSnapshot.keys(KEY.BACK_SPACE));
+    expect(left).toBe(1);
+  });
 });

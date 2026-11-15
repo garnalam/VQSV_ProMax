@@ -510,16 +510,11 @@ describe("CV5b: the laboratory, the late Rừng U Ám and the final's reopening"
     expect(starts(r.seen, seaSays("REOPEN"))).toBe(true);
     expect(done(world, 48, 120)).toBe(true);
     expect(done(world, 48, 130)).toBe(true);
-    const finals = assets.cauVongOpening!.quests.find((q) => q.show?.[0] === 48)!;
-    expect(finals).toMatchObject({
-      title: "Bắc Hải — ba vòng chung kết",
-      show: [48, 120],
-      done: [30, 124],
-    });
-    const sea = assets.cauVongOpening!.quests.find((q) => q.done?.[0] === 61)!;
-    expect(openingQuestDetail(sea, ([room, event]) => done(world, room, event))).toBe(
-      // `variants` run newest first: 61:105 picks the first.
-      sea.variants![0].text,
+    // Chapter 5 now points at the finals (its newest stage, 48:120).
+    const sea = assets.cauVongOpening!.quests.find((q) => q.title.startsWith("Cầu Vồng 5 "))!;
+    expect(sea).toMatchObject({ title: "Cầu Vồng 5 — Bắc Hải", done: [30, 124] });
+    expect(openingQuestDetail(sea, ([room, event]) => done(world, room, event))).toContain(
+      "Gặp trọng tài tại đấu trường (30)",
     );
   });
 

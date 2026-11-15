@@ -10,6 +10,19 @@ function repository(write: (save: GameSave) => Promise<void>): SaveRepository {
 }
 
 describe("SaveService", () => {
+  it("exposes an autosave failure even without a caller callback", async () => {
+    const error = new Error("Phiên đăng nhập đã hết.");
+    const service = new SaveService(
+      repository(async () => {
+        throw error;
+      }),
+    );
+    service.save(snapshot(1));
+    await service.flush();
+    expect(service.lastError).toBe(error);
+    expect(service.pending).toBe(0);
+    expect(service.lastSavedAt).toBeNull();
+  });
   it("writes in request order, one at a time", async () => {
     const order: string[] = [];
     let running = 0;

@@ -38,7 +38,7 @@ const { SaveRepository } = await import("../../persistence/SaveRepository");
 const { NewGameScreen } = await import("../../screens/NewGameScreen");
 const { applyUrlParityCheckpoint } = await import("../../dev/parityCheckpoints");
 const { TIER_LOCK_WARNING, SKILL_NOT_READY_WARNING } = await import("../battle/engine/BattleTypes");
-const { openingQuestDetail } = await import("./CauVongOpening");
+const { currentOpeningQuest, openingQuestDetail } = await import("./CauVongOpening");
 type LabDocument = import("./CauVongLab").CauVongLabDocument;
 
 const pack = await Pack.load();
@@ -363,10 +363,16 @@ describe("Hoàng Dực Điểu, the laboratory and the exam (CV4c)", () => {
       expect(r.fights).toEqual([species(`exam${round}`)]);
     }
     expect(done(world, 9, 114)).toBe(true);
-    const quest = assets.cauVongOpening!.quests.find((q) => q.variants)!;
-    expect(openingQuestDetail(quest, ([room, event]) => done(world, room, event))).toBe(
-      quest.variants![0].text,
-    );
+    // The exam closes chapter 4 (An Kỳ Nhi); chapter 5 (Bắc Hải) is the open row.
+    const quests = assets.cauVongOpening!.quests,
+      flag = ([room, event]: [number, number]) => done(world, room, event);
+    expect(
+      assets.cauVongOpening!.quests.find((q) => q.title.startsWith("Cầu Vồng 4 "))!.done,
+    ).toEqual([9, 114]);
+    const sea = quests.find((q) => q.title === "Cầu Vồng 5 — Bắc Hải")!;
+    expect(flag(sea.show!)).toBe(true);
+    expect(flag(sea.done)).toBe(false);
+    expect(openingQuestDetail(sea, flag)).toContain("văn phòng (27)");
   });
 
   it("Thiết Giáp Xà: the cry, the pursuit in 11, the rescue in 5, the return in 59", () => {
@@ -405,11 +411,17 @@ describe("Hoàng Dực Điểu, the laboratory and the exam (CV4c)", () => {
 
   it("the quest row follows the expansion, the lab and the exam", () => {
     const { world } = enter(9, 200, 300, [ROUTE, [26, 100], [59, 131]]);
-    const quest = assets.cauVongOpening!.quests.find((q) => q.variants)!;
-    const row = () =>
-      quest.variants!.findIndex(
-        (v) => v.text === openingQuestDetail(quest, ([room, event]) => done(world, room, event)),
-      );
+    // The chapter route the panel would show: chapter 3's last step, chapter 4 step by step, then 5.
+    const flag = ([room, event]: [number, number]) => done(world, room, event);
+    const row = () => {
+      const open = currentOpeningQuest(assets.cauVongOpening!.quests, flag)!;
+      return `${open.title}: ${openingQuestDetail(open, flag)}`;
+    };
+    for (const prior of [
+      [6, 100],
+      [3, 102],
+    ] as [number, number][])
+      world.eventState.op14CompleteEvent(98, ...prior);
     const steps: [number, number][] = [
       [4, 1500],
       [3, 110],
@@ -426,6 +438,22 @@ describe("Hoàng Dực Điểu, the laboratory and the exam (CV4c)", () => {
       world.eventState.op14CompleteEvent(98, room, event);
       seen.push(row());
     }
-    expect(seen).toEqual([9, 5, 6, 7, 8, 4, 3, 2, 1, 0]);
+    const expected = [
+      ["Cầu Vồng 3", "nghe hết báo cáo cứu giáo viên"],
+      ["Cầu Vồng 4", "để xem hết cảnh giới thiệu học viên trao đổi"],
+      ["Cầu Vồng 4", "xem hết cảnh tham quan trường"],
+      ["Cầu Vồng 4", "nghỉ qua đêm"],
+      ["Cầu Vồng 4", "hai anh em bắt Hoàng Dực Điểu"],
+      ["Cầu Vồng 4", "vào phòng thí nghiệm (58)"],
+      ["Cầu Vồng 4", "Xem hết cuộc điều tra tại ký túc xá"],
+      ["Cầu Vồng 4", "nghe hết báo cáo điều tra"],
+      ["Cầu Vồng 4", "giáo viên Đông, Nam, Tây, Bắc"],
+      ["Cầu Vồng 5", "văn phòng (27)"],
+    ];
+    expect(seen).toHaveLength(expected.length);
+    seen.forEach((text, i) => {
+      expect(text.startsWith(expected[i][0]), text).toBe(true);
+      expect(text, text).toContain(expected[i][1]);
+    });
   });
 });

@@ -10,3 +10,6 @@ build/
 vitest-report.json
 *.log
 /*.png
+
+# Wrangler local state
+.wrangler/

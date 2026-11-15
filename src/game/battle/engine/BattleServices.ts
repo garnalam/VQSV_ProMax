@@ -1,3 +1,4 @@
+import { giveShinyColor } from "../../../rendering/ShinyDesigns";
 import type {
   GameData,
   PackBattleAiProfile,
@@ -7,6 +8,7 @@ import type {
 } from "../../../data/GameData";
 import type { SavedPet } from "../../../persistence/save/GameSave";
 import { BattleRandom } from "../BattleRandom";
+import { DEFAULT_CAPTURE_ANIMATION, type CaptureAnimation } from "../BattleDefinition";
 import { EnemyLevel } from "../EnemyLevel";
 import type { EventBattleDescriptor } from "../EventBattle";
 import type { BattleRules } from "../BattleRules";
@@ -20,6 +22,7 @@ import { BattleItems } from "./BattleItems";
 import { BasicEnemyAi, type EnemyController } from "./EnemyController";
 import { PetProgression } from "./PetProgression";
 import { DivinePetSeal } from "../../pet/DivinePetSeal";
+import { applyTowerBond } from "../../meta/BondingTower";
 import type { DoubleSkillRules } from "./DoubleBattleTypes";
 import { ENCOUNTER_NATURE_FALLBACK, type BattleSetup, type CombatantSetup } from "./BattleTypes";
 import {
@@ -50,6 +53,12 @@ export type PetProfile = {
 export type PetStateFacts = {
   species: (speciesId: number) => string | undefined;
   evolution: (speciesId: number) => string | undefined;
+  /**
+   * The name of the piece a pet wears (`PetState.heldEquipmentId`), read from the equipment table
+   * as the equip menu does. The battle item list reuses runtime ids across its tables, so looking
+   * the id up there named every piece after a riding rein ("Dây cương cưỡi sủng 1").
+   */
+  heldName?: (equipmentId: number) => string | undefined;
 };
 
 /**
@@ -141,7 +150,15 @@ export class BattleServices {
       new PetProgression(
         petStats,
         learnsets,
-        new Map(traits.map((row) => [row.speciesId, row.petKey])),
+        // ProMax: the authored bosses learn by their stable key (`BOSS-KIM-DIEM-LONG-VUONG`).
+        new Map([
+          ...traits.map((row) => [row.speciesId, row.petKey] as const),
+          ...species.rows.flatMap((row) =>
+            row.growth.kind === "authored-flat"
+              ? [[row.speciesId, row.growth.record.stableKey] as const]
+              : [],
+          ),
+        ]),
         (id) => rules.damage.skillRow(id)?.ppMax ?? 0,
         initialPools,
       ),
@@ -206,10 +223,14 @@ export class BattleServices {
           : undefined,
       held =
         setup.heldItemId !== undefined && setup.heldItemId >= 0
-          ? (this.itemNames.get(setup.heldItemId) ?? `Vật phẩm ${setup.heldItemId}`)
+          ? (this.petFacts?.heldName?.(setup.heldItemId) ??
+            this.itemNames.get(setup.heldItemId) ??
+            `Vật phẩm ${setup.heldItemId}`)
           : undefined;
     return {
-      trait: trait ? { name: trait.name, description: trait.description } : undefined,
+      trait: trait
+        ? { name: trait.name, description: trait.summary ?? trait.description }
+        : undefined,
       talent: talent ? { name: talent.name, description: talent.description } : undefined,
       held,
       species: this.petFacts?.species(setup.speciesId),
@@ -228,12 +249,18 @@ export class BattleServices {
 
   /** A party pet as the core seats it: the save's level, quality, nature, HP, skills, talent and item. */
   partyMember(pet: SavedPet, name?: string): CombatantSetup {
+    // A shiny seated before the world has drawn its colour (a fight that opens straight away) draws
+    // it here, so the fight and the bag show the same colour.
+    giveShinyColor(pet);
     const row = this.speciesRows.get(pet.speciesId),
       // `DivinePetSeal.scale`: an owned Divine pet fights at 30% (120% once the golden title is won).
       percent = this.divinePercent?.(pet.speciesId) ?? 100,
-      stats = DivinePetSeal.scaleStats(
-        this.petStats.coreStats(pet.speciesId, pet.level, pet.quality, pet.nature ?? 0),
-        percent,
+      stats = applyTowerBond(
+        DivinePetSeal.scaleStats(
+          this.petStats.coreStats(pet.speciesId, pet.level, pet.quality, pet.nature ?? 0),
+          percent,
+        ),
+        pet.towerBond,
       ),
       skillIds = pet.skillIds?.length
         ? [...pet.skillIds]
@@ -248,7 +275,9 @@ export class BattleServices {
       quality: pet.quality,
       // `BattleUnit.fromPet` hands the unit the save's nature byte, and an unset one is 0.
       nature: pet.nature ?? 0,
+      shinyColor: pet.shinyColor,
       stats,
+      wideStats: pet.towerBond ? true : undefined,
       hp:
         percent === 100
           ? (pet.currentHp ?? stats.hp)
@@ -308,6 +337,11 @@ export class BattleServices {
     return this.badges ? battleBadgeProfile(this.badges, this.badgeRows) : NO_BADGE_PROFILE;
   }
 
+  /** Hoàng Kim Chương (badge 7) at either rank: the reserve's 30% EXP share. */
+  goldenPartyExperiencePercent(): number {
+    return this.badges?.achieved(7) ? 30 : 0;
+  }
+
   /** `sourcePostExpPassiveHealAmount(speciesId)` under Liệt Hỏa enhanced, else undefined. */
   postExpBadgeHeal(speciesId: number): number | undefined {
     if (!this.badges) return undefined;
@@ -324,6 +358,16 @@ export class BattleServices {
    * recorded trace sets a fixed source here.
    */
   seedSource: () => number = () => Date.now();
+  /**
+   * The capture ball's timing for every fight (`VqsvBattleRuntime.advanceCatchPhase`, sprite 269);
+   * the world sets the pack's own copy, and the defaults are the JavaSE values.
+   */
+  captureAnimation: CaptureAnimation = DEFAULT_CAPTURE_ANIMATION;
+  /**
+   * The player's pet bank, where a catch goes when the party already has six
+   * (`decideCatchStorage`). The world that owns the save sets it; without one a seventh pet is let go.
+   */
+  petBank?: () => { pets: SavedPet[]; capacity: number };
 
   newCore(setup: BattleSetup, descriptorSymbol?: string, seed = this.seedSource()): BattleCore {
     return new BattleCore(
@@ -332,6 +376,8 @@ export class BattleServices {
       {
         ...setup,
         badgeProfile: setup.badgeProfile ?? this.badgeProfile(),
+        goldenPartyExperiencePercent:
+          setup.goldenPartyExperiencePercent ?? this.goldenPartyExperiencePercent(),
         postExpBadgeHeal:
           setup.postExpBadgeHeal ?? ((speciesId) => this.postExpBadgeHeal(speciesId)),
         enemy: setup.enemy.map((pet, member) =>

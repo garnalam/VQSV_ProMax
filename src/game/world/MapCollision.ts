@@ -14,7 +14,20 @@ export type MapCollision = {
   layerCount: number;
   terrainLayerType: number;
   rows: string[];
+  /**
+   * The APK landscape maps (`source: "apk"`): the map pixel where the JAR map's (0, 0) lies. The
+   * game keeps the JAR's coordinates, so the widened parts sit at negative x/y or past the JAR's
+   * size; every read goes through `terrainAtWorld` and the `map*` bounds below.
+   */
+  originX?: number;
+  originY?: number;
 };
+
+/** The map's edges in game (JAR) coordinates. */
+export const mapLeft = (map: MapCollision): number => -(map.originX ?? 0);
+export const mapTop = (map: MapCollision): number => -(map.originY ?? 0);
+export const mapRight = (map: MapCollision): number => map.widthPixels - (map.originX ?? 0);
+export const mapBottom = (map: MapCollision): number => map.heightPixels - (map.originY ?? 0);
 
 export const DIRECTION_DOWN = 0,
   DIRECTION_RIGHT = 1,
@@ -30,15 +43,17 @@ export type MoveStep = { x: number; y: number; direction: number; moved: boolean
 type EdgeSamples = readonly [number, number, number, number, number, number, number];
 
 export const terrainAtWorld = (map: MapCollision, x: number, y: number): number => {
-  if (x <= 0 || x >= map.widthPixels || y <= 0 || y >= map.heightPixels) return TERRAIN_BLOCKED;
-  return Number(map.rows[Math.floor(y / map.tileSize)][Math.floor(x / map.tileSize)]);
+  const mx = x + (map.originX ?? 0),
+    my = y + (map.originY ?? 0);
+  if (mx <= 0 || mx >= map.widthPixels || my <= 0 || my >= map.heightPixels) return TERRAIN_BLOCKED;
+  return Number(map.rows[Math.floor(my / map.tileSize)][Math.floor(mx / map.tileSize)]);
 };
 
 export const passable = (terrain: number, badgeGatedOpen: boolean): boolean =>
   terrain !== TERRAIN_BLOCKED && (terrain !== TERRAIN_BADGE_GATED || badgeGatedOpen);
 
 const outside = (map: MapCollision, x: number, y: number): boolean =>
-  x <= 0 || x >= map.widthPixels || y <= 0 || y >= map.heightPixels;
+  x <= mapLeft(map) || x >= mapRight(map) || y <= mapTop(map) || y >= mapBottom(map);
 
 // WorldEngine.resolveLeadingEdge, in the Java sample order:
 // cornerA, cornerB, center, farA, farB, sideA, sideB.
@@ -171,7 +186,15 @@ export function stepWithTerrain(
   else if (step.direction === DIRECTION_RIGHT) next.x += step.speed;
   else if (step.direction === DIRECTION_UP) next.y -= step.speed;
   else if (step.direction === DIRECTION_LEFT) next.x -= step.speed;
-  return { ...next, direction: step.direction, moved: true };
+  const result = { ...next, direction: step.direction, moved: true };
+  // The first probe can redirect movement perpendicular to the checked edge.
+  // Check the edge that will actually move before allowing that slide.
+  if (
+    step.direction !== direction &&
+    !terrainEdgeClear(map, result, movementTerrain, badgeGatedOpen)
+  )
+    return { x, y, direction: step.direction, moved: false };
+  return result;
 }
 
 /**
@@ -200,10 +223,19 @@ export function cauVongEdgeClear(
   step: MoveStep,
   movementTerrain: (terrain: number) => number,
 ): boolean {
+  return terrainEdgeClear(map, step, movementTerrain, false);
+}
+
+function terrainEdgeClear(
+  map: MapCollision,
+  step: MoveStep,
+  movementTerrain: (terrain: number) => number,
+  badgeGatedOpen: boolean,
+): boolean {
   if (!step.moved) return true;
   const open = (x: number, y: number) => {
     const terrain = movementTerrain(terrainAtWorld(map, x, y));
-    return terrain !== TERRAIN_BLOCKED && terrain !== TERRAIN_BADGE_GATED;
+    return passable(terrain, badgeGatedOpen);
   };
   const left = step.x - 8,
     right = step.x + 7,

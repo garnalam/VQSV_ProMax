@@ -10,6 +10,7 @@ import {
   resultDurationTicks,
   validateQualityUpgrade,
   type QualityAttempt,
+  type QualityInvalidReason,
   type QualityRules,
 } from "./QualityUpgrade";
 
@@ -121,25 +122,45 @@ export class QualityUpgradeSession {
     this.pickerIndex = 0;
     this.pickerScroll = 0;
     this.pickerVisible = true;
-    this.status = this.candidates.length === 0 ? "Không có Pet phôi phù hợp" : "Chọn Pet phôi";
+    this.status =
+      this.candidates.length > 0
+        ? "Chọn Pet phôi"
+        : this.refusal
+          ? `Không có Pet phôi phù hợp: ${qualityReason(this.refusal)}`
+          : "Không có Pet phôi phù hợp";
   }
+  /**
+   * Web-only: why the closest pet was left out of an empty picker — one of the main pet's own
+   * family (same species, or one form of its line in either direction) — so the player is told
+   * "it is the pet fighting" or "too many stars" instead of a bare "none fits".
+   */
+  refusal: QualityInvalidReason | null = null;
   /** `rebuildQualityUpgradeCandidates`: party pets after the first, then bank pets, like JavaSE. */
   private rebuildCandidates(): void {
     this.candidates = [];
-    if (this.main.quality >= QUALITY_MAX) return;
-    const other = this.fodders[this.focus === 0 ? 1 : 0];
-    for (const pet of [...this.world.roster.slice(1), ...this.world.bank]) {
-      const trial = other ? [other, pet] : [pet];
-      if (
-        validateQualityUpgrade(
-          this.world.rules,
-          this.world.roster,
-          this.world.bank,
-          this.main,
-          trial,
-        ).valid
-      )
-        this.candidates.push(pet);
+    this.refusal = null;
+    if (this.main.quality >= QUALITY_MAX) {
+      this.refusal = "ALREADY_MAX_QUALITY";
+      return;
+    }
+    const other = this.fodders[this.focus === 0 ? 1 : 0],
+      { rules, roster, bank } = this.world,
+      family = (pet: SavedPet) =>
+        rules.formDistance(this.main.speciesId, pet.speciesId) >= 0 ||
+        rules.formDistance(pet.speciesId, this.main.speciesId) >= 0;
+    // The lead is listed for the explanation only: JavaSE never offers it.
+    for (const pet of [...roster, ...bank]) {
+      if (pet === this.main) continue;
+      const check = validateQualityUpgrade(
+        rules,
+        roster,
+        bank,
+        this.main,
+        other ? [other, pet] : [pet],
+      );
+      if (check.valid) {
+        if (pet !== roster[0]) this.candidates.push(pet);
+      } else if (this.refusal === null && family(pet)) this.refusal = check.reason;
     }
   }
   /** `tickQualityUpgradePicker`: up/down wrap, five rows show. */

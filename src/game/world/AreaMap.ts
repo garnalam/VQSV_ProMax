@@ -1,4 +1,5 @@
 import type { InputCommand } from "../../core/input/GameCommand";
+import { viewport } from "../../core/Viewport";
 
 /**
  * The original game's area map: `game.l` state 4, opened from the free map. It draws every room of
@@ -130,6 +131,13 @@ export const AREA_MAP_STEP = 8;
 /** The legend band at the bottom (`h() - 30`); a press there closes the map. */
 export const AREA_MAP_LEGEND_H = 30;
 export const AREA_MAP_SCREEN = { w: 240, h: 320 } as const;
+/**
+ * The screen the map fills: the source's 240x320, or in landscape the whole canvas (the owner's
+ * call, 2026-11-14), so the area spreads across the wide screen instead of a portrait strip.
+ */
+export function areaMapScreen(): { w: number; h: number } {
+  return viewport.landscape ? { w: viewport.width, h: viewport.height } : AREA_MAP_SCREEN;
+}
 /** `a(0, 270, g(), 30)`: the touch rectangle that closes the map. */
 export const AREA_MAP_CLOSE_RECT = { x: 0, y: 270, w: 240, h: 30 } as const;
 /** `aM`: the hero marker, sprite 0 state 3. `aN`: the four arrows, sprite 223 states 0..3. */
@@ -225,14 +233,15 @@ export class AreaMapView {
       found = rooms.findIndex((r) => r.scene === scene && r.room === room);
     if (found >= 0) this.heroBox = found;
     const box = rooms[this.heroBox] ?? rooms[0],
-      cellW = areaCellW(this.data);
+      cellW = areaCellW(this.data),
+      screen = areaMapScreen();
     if (this.data!.cellW === undefined) {
-      this.targetX = (AREA_MAP_SCREEN.w >> 1) - (box.x << 4) - 40;
-      this.targetY = (AREA_MAP_SCREEN.h >> 1) - (box.y << 3) - 20;
+      this.targetX = (screen.w >> 1) - (box.x << 4) - 40;
+      this.targetY = (screen.h >> 1) - (box.y << 3) - 20;
     } else {
       // A Cầu Vồng area: the hero's box centred, whatever its size.
-      this.targetX = (AREA_MAP_SCREEN.w >> 1) - box.x * cellW - Math.trunc((box.w * cellW) / 2);
-      this.targetY = (AREA_MAP_SCREEN.h >> 1) - (box.y << 3) - ((box.h << 3) >> 1);
+      this.targetX = (screen.w >> 1) - box.x * cellW - Math.trunc((box.w * cellW) / 2);
+      this.targetY = (screen.h >> 1) - (box.y << 3) - ((box.h << 3) >> 1);
     }
     this.sliding = true;
     this.ticks = 0;
@@ -265,36 +274,52 @@ export class AreaMapView {
       }
     }
     if (this.sliding) return false;
+    const screen = areaMapScreen();
     if (commands.includes("holdLeft")) {
       if (this.offsetX < 0) this.offsetX += AREA_MAP_STEP;
     } else if (commands.includes("holdRight")) {
-      if (this.offsetX + this.extentW > AREA_MAP_SCREEN.w) this.offsetX -= AREA_MAP_STEP;
+      if (this.offsetX + this.extentW > screen.w) this.offsetX -= AREA_MAP_STEP;
     } else if (commands.includes("holdUp")) {
       if (this.offsetY < 0) this.offsetY += AREA_MAP_STEP;
     } else if (commands.includes("holdDown")) {
-      if (this.offsetY + this.extentH > AREA_MAP_SCREEN.h - AREA_MAP_LEGEND_H)
-        this.offsetY -= AREA_MAP_STEP;
+      if (this.offsetY + this.extentH > screen.h - AREA_MAP_LEGEND_H) this.offsetY -= AREA_MAP_STEP;
     } else if (commands.includes("back") || closePressed) return true;
     return false;
   }
 
+  /**
+   * Web touch: a finger drags the area by (dx, dy) screen px. It goes no further than the held
+   * arrows would (never past the area's edges), and waits for the opening slide like they do.
+   */
+  drag(dx: number, dy: number): void {
+    if (this.sliding) return;
+    const screen = areaMapScreen(),
+      minX = Math.min(this.offsetX, screen.w - this.extentW),
+      maxX = Math.max(this.offsetX, 0),
+      minY = Math.min(this.offsetY, screen.h - AREA_MAP_LEGEND_H - this.extentH),
+      maxY = Math.max(this.offsetY, 0);
+    this.offsetX = Math.max(minX, Math.min(maxX, this.offsetX + Math.trunc(dx)));
+    this.offsetY = Math.max(minY, Math.min(maxY, this.offsetY + Math.trunc(dy)));
+  }
+
   /** `o(n)`: which of the four arrows (up, down, left, right) shows more map beyond the edge. */
   arrowVisible(index: number): boolean {
+    const screen = areaMapScreen();
     switch (index) {
       case 0:
         return this.offsetY < 0;
       case 1:
-        return this.offsetY + this.extentH > AREA_MAP_SCREEN.h;
+        return this.offsetY + this.extentH > screen.h;
       case 2:
         return this.offsetX < 0;
       default:
-        return this.offsetX + this.extentW > AREA_MAP_SCREEN.w;
+        return this.offsetX + this.extentW > screen.w;
     }
   }
 
   /** `aN[i].b(...)`: the arrows' anchors. */
   static arrowAt(index: number): { x: number; y: number } {
-    const { w, h } = AREA_MAP_SCREEN;
+    const { w, h } = areaMapScreen();
     return index <= 1
       ? { x: w >> 1, y: 20 + index * (h - 20) }
       : { x: 10 + (index % 2) * (w - 20), y: h >> 1 };

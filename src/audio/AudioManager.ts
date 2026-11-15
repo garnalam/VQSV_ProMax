@@ -130,6 +130,10 @@ export class AudioManager {
     if (!context.battle) void this.load(this.table.battleMusic);
   }
 
+  isMuted(): boolean {
+    return this.settings.muted;
+  }
+
   /** `M`: mute or unmute everything (remembered for the next visit). */
   toggleMute(): void {
     this.settings.muted = !this.settings.muted;

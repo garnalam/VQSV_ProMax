@@ -19,6 +19,9 @@ export type SaveOutcome = {
 export class SaveService {
   private queue: Promise<void> = Promise.resolve();
   private pendingCount = 0;
+  lastError: unknown = null;
+  lastSavedAt: number | null = null;
+  private failedSnapshot: GameSave | null = null;
 
   constructor(private readonly repository: SaveRepository) {}
 
@@ -32,14 +35,27 @@ export class SaveService {
     this.queue = this.queue
       .then(() => this.repository.save(snapshot))
       .then(
-        () => outcome.onSuccess?.(),
-        (error: unknown) => outcome.onFailure?.(error),
+        () => {
+          this.lastError = null;
+          this.failedSnapshot = null;
+          this.lastSavedAt = Date.now();
+          outcome.onSuccess?.();
+        },
+        (error: unknown) => {
+          this.lastError = error;
+          this.failedSnapshot = snapshot;
+          outcome.onFailure?.(error);
+        },
       )
       // A throwing callback must not reject the chain: every later write would be skipped.
       .catch((error: unknown) => console.error("VQSV save callback failed", error))
       .finally(() => {
         this.pendingCount--;
       });
+  }
+
+  retryLastFailure(): void {
+    if (this.failedSnapshot && !this.pending) this.save(this.failedSnapshot);
   }
 
   /** Resolves once every write requested so far has finished (tests, and leaving a session). */

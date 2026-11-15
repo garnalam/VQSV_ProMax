@@ -272,6 +272,40 @@ describe("Cầu Vồng CV3b: the campus shop (43), the arena merchant and the la
     expect(showed(play(world).seen, says("SHOP_ITEMS_BYE"))).toBe(true);
   });
 
+  it("the merchant also keeps the pet bank (web-only): a deposit, then her farewell", () => {
+    const { world, panel } = intoShop();
+    // A second pet, so the roster keeps one after the deposit.
+    world.pets.push({ ...structuredClone(world.pets[0]), slot: 1 });
+    ask(world, actorOf(0));
+    play(world);
+    openService(world, panel);
+    expect(shopLogic.shopMainMenu(0)).toEqual([
+      "Mua vật phẩm",
+      "Bán vật phẩm",
+      "Ngân hàng sủng vật",
+      "Rời đi",
+    ]);
+    expect(shopLogic.shopMainMenu(2)).toEqual(["Mua / trao đổi", "Ngân hàng sủng vật", "Rời đi"]);
+    // The mutation document's counter sells its one offer and nothing else.
+    expect(shopLogic.shopMainMenu(3)).toEqual(["Mua / trao đổi", "Rời đi"]);
+    // Ngân hàng sủng vật: the Liệt Hỏa bank menu, then Gửi: the roster's last pet goes in.
+    panel.tick(["down"]);
+    panel.tick(["down"]);
+    panel.tick(["confirm"]);
+    expect(panel.mode).toBe("petBank");
+    const roster = world.pets.length,
+      banked = world.meta.campaign.petBank.length;
+    panel.tick(["confirm"]);
+    panel.selected = roster - 1;
+    panel.tick(["confirm"]);
+    for (let i = 0; i < 4 && world.pets.length === roster; i++) panel.tick(["confirm"]);
+    expect(world.pets).toHaveLength(roster - 1);
+    expect(world.meta.campaign.petBank).toHaveLength(banked + 1);
+    for (let i = 0; i < 4 && panel.visible; i++) panel.tick(["back"]);
+    expect(panel.visible).toBe(false);
+    expect(showed(play(world).seen, says("SHOP_ITEMS_BYE"))).toBe(true);
+  });
+
   it("the material clerk's evolution scene, its gift, then the scroll and its charm", () => {
     const { world, panel } = intoShop();
     ask(world, actorOf(3));
@@ -293,6 +327,37 @@ describe("Cầu Vồng CV3b: the campus shop (43), the arena merchant and the la
     ask(world, actorOf(3));
     expect(showed(play(world).seen, says("SHOP_MATERIALS"))).toBe(true);
     expect(world.bag.materials["3000"]).toBe(2);
+  });
+
+  it("parks the hero within talking reach of Mỹ Mỹ and Harry after an offer, so the key asks again", () => {
+    const { world } = intoShop();
+    // Java walks the hero to y 139, one pixel short of the 4 px talk query: confirm did nothing
+    // until he stepped up. The web stops at y 135, where the walk up stops anyway.
+    world.currency.money = 0;
+    const offer = (id: number, x: number, answer: number) => {
+      ask(world, id);
+      play(world);
+      expect([world.player.x, world.player.y, !!world.eventScene?.choice]).toEqual([x, 135, true]);
+      choose(world, answer);
+      play(world);
+      expect(world.phase).toBe("freeworld");
+      // The key alone, where the offer left him: the question and its menu again.
+      world.tick(["confirm"]);
+      play(world);
+      expect(world.eventScene?.choice).toBeTruthy();
+      choose(world, 1);
+      play(world);
+    };
+    // Mỹ Mỹ: pay without the 500 kim, then decline.
+    offer(actorOf(5), 310, 0);
+    world.currency.money = 600;
+    ask(world, actorOf(5));
+    play(world);
+    choose(world, 0);
+    play(world);
+    expect(done(world, 43, shop43.flags.infoPaid)).toBe(true);
+    // Harry: decline.
+    offer(actorOf(6), 350, 1);
   });
 
   it("Harry & Potter: the 500-kim tip, the two fights, a loss kept, and the egg once", () => {

@@ -10,6 +10,15 @@
  * holds this port to. Hầu Vương's frames are baked whole (`shiny/n<nature>`).
  */
 
+import {
+  LEGACY_SHINY_COLOR,
+  analyzeSprite,
+  defaultShinyColor,
+  recolorPixels,
+  shinyTheme,
+  type SpriteAnalysis,
+} from "./ShinyDesigns";
+
 const f = Math.fround;
 
 export type ShinyPaletteDocument = {
@@ -219,24 +228,70 @@ export function shinyProfile(document: ShinyPaletteDocument, visual: number): st
 }
 
 /**
- * `PetShinyPalette.image` for one frame image: a recoloured copy, cached per image and nature like
- * Java's `CACHE`. Undefined until the image has loaded.
+ * A pet frame in its shiny colours (web redesign, owner 2026-11-15): a recoloured copy under one of
+ * the hand-made themes of `ShinyDesigns`, in place of Java's per-nature hue swap (`shinyRgb` above,
+ * kept for reference and its parity test). The theme is the pet's own `shinyColor`, or a fixed one
+ * per visual and nature for a shiny that owns none.
+ *
+ * A visual's colour regions are read once from its reference frame (state 0, first frame), so every
+ * frame and the mirrored copies recolour the same way; until that frame has loaded a frame is read
+ * on its own and not kept. Copies are cached per image and colour, like Java's `CACHE`.
  */
 export class ShinyRecolorCache {
-  private readonly cache = new WeakMap<CanvasImageSource, Map<string, HTMLCanvasElement>>();
+  private readonly cache = new WeakMap<CanvasImageSource, Map<number, HTMLCanvasElement>>();
+  private readonly analyses = new Map<number, SpriteAnalysis>();
   constructor(readonly document: ShinyPaletteDocument) {}
 
   image(
     source: HTMLImageElement,
     nature: number,
     visual: number,
+    color?: number,
+    reference?: HTMLImageElement,
   ): HTMLCanvasElement | HTMLImageElement {
     if (!shinyApplies(nature) || !source.complete || source.naturalWidth === 0) return source;
-    const profile = shinyProfile(this.document, visual),
-      key = `${profile}:${nature}`;
+    // An old shiny keeps Java's swap, except a visual Java only ever baked whole (Hầu Vương): it has
+    // no per-colour swap to keep and takes the new colours, a fixed one per visual and nature.
+    const baked = this.document.framesBaked.includes(visual);
+    if (color === LEGACY_SHINY_COLOR && !baked) return this.legacy(source, nature, visual);
+    const key =
+      color === undefined || color === LEGACY_SHINY_COLOR
+        ? defaultShinyColor(visual, nature)
+        : color;
     let variants = this.cache.get(source);
-    if (!variants) this.cache.set(source, (variants = new Map()));
-    const cached = variants.get(key);
+    const cached = variants?.get(key);
+    if (cached) return cached;
+    let analysis = this.analyses.get(visual),
+      keep = true;
+    if (!analysis) {
+      const from =
+        reference && reference.complete && reference.naturalWidth > 0 ? reference : source;
+      analysis = analyzeSprite(pixelsOf(from).data);
+      if (from === reference || !reference) this.analyses.set(visual, analysis);
+      else keep = false;
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = source.naturalWidth;
+    canvas.height = source.naturalHeight;
+    const g = canvas.getContext("2d", { willReadFrequently: true })!;
+    g.drawImage(source, 0, 0);
+    const pixels = g.getImageData(0, 0, canvas.width, canvas.height);
+    recolorPixels(pixels.data, pixels.width, pixels.height, { theme: shinyTheme(key), analysis });
+    g.putImageData(pixels, 0, 0);
+    if (keep) {
+      if (!variants) this.cache.set(source, (variants = new Map()));
+      variants.set(key, canvas);
+    }
+    return canvas;
+  }
+
+  /** Java's own swap (`PetShinyPalette.image`), for a shiny owned before the redesign. */
+  private legacy(source: HTMLImageElement, nature: number, visual: number): HTMLCanvasElement {
+    const profile = shinyProfile(this.document, visual),
+      // Kept apart from the theme colours (0..12) in the same per-image cache.
+      key = -1000 - nature * 100 - ["default", "120", "1036", "3001"].indexOf(profile);
+    let variants = this.cache.get(source);
+    const cached = variants?.get(key);
     if (cached) return cached;
     const canvas = document.createElement("canvas");
     canvas.width = source.naturalWidth;
@@ -256,7 +311,17 @@ export class ShinyRecolorCache {
       data[i + 2] = to & 0xff;
     }
     g.putImageData(pixels, 0, 0);
+    if (!variants) this.cache.set(source, (variants = new Map()));
     variants.set(key, canvas);
     return canvas;
   }
+}
+
+function pixelsOf(image: HTMLImageElement): ImageData {
+  const canvas = document.createElement("canvas");
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+  const g = canvas.getContext("2d", { willReadFrequently: true })!;
+  g.drawImage(image, 0, 0);
+  return g.getImageData(0, 0, canvas.width, canvas.height);
 }

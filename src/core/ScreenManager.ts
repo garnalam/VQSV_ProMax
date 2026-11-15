@@ -6,7 +6,7 @@ import type { CanvasRenderer } from "../rendering/CanvasRenderer";
  * pointer included; there is no separate pointer callback outside the simulation tick.
  */
 export interface Screen {
-  tick(input: InputSnapshot): void;
+  tick(input: InputSnapshot, sameFrame?: boolean): void;
   /** `alpha`: how far between the last tick and the next this frame is (1 = on the tick). */
   render(renderer: CanvasRenderer, alpha?: number): void;
   /** Whether a frame drawn between ticks would differ from the last one. */
@@ -15,6 +15,10 @@ export interface Screen {
   speedX2Suppressed?(): boolean;
   /** Device pixels per logical pixel for this frame (`CanvasRenderer.setScale`); 1 if absent. */
   presentationScale?(): number;
+  /** `GameFacade.textEntryActive()`: a text field owns typed keys (the phone keyboard opens). */
+  textEntryActive?(): boolean;
+  /** The page is being hidden (web): save what can be resumed exactly. */
+  suspend?(): void;
 }
 
 export class ScreenManager {
@@ -22,15 +26,23 @@ export class ScreenManager {
   replace(screen: Screen): void {
     this.current = screen;
   }
-  tick(input: InputSnapshot): void {
-    this.current?.tick(input);
+  tick(input: InputSnapshot, sameFrame?: boolean): void {
+    this.current?.tick(input, sameFrame);
   }
   render(renderer: CanvasRenderer, alpha = 1): void {
     renderer.setScale(this.current?.presentationScale?.() ?? 1);
+    // A screen draws in the 240x320 UI box unless it asks for the whole canvas (`worldSpace`).
+    renderer.uiSpace();
     this.current?.render(renderer, alpha);
   }
   animating(): boolean {
     return this.current?.animating?.() ?? false;
+  }
+  suspend(): void {
+    this.current?.suspend?.();
+  }
+  textEntryActive(): boolean {
+    return this.current?.textEntryActive?.() ?? false;
   }
   speedX2Suppressed(): boolean {
     return this.current?.speedX2Suppressed?.() ?? false;

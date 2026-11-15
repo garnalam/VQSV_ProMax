@@ -1,4 +1,6 @@
 import { LOGICAL_HEIGHT, LOGICAL_WIDTH } from "../constants";
+import { landPoint } from "../LandCenter";
+import { viewport } from "../Viewport";
 import { KEY, type KeyCode } from "./KeyCode";
 
 /** Pointer coordinates are logical pixels (240x320); -1 means "no such event this tick". */
@@ -13,6 +15,8 @@ export type PointerFields = {
   pressY: number;
   releaseX: number;
   releaseY: number;
+  /** The press came from a finger (web only): a drag on a list scrolls it instead of clicking. */
+  touch: boolean;
 };
 
 export type InputSnapshotInit = {
@@ -34,6 +38,7 @@ const NO_POINTER: PointerFields = {
   pressY: -1,
   releaseX: -1,
   releaseY: -1,
+  touch: false,
 };
 
 /**
@@ -109,20 +114,32 @@ export class InputSnapshot {
     return this.anyPressed(KEY.D0, KEY.ENTER, KEY.SPACE);
   }
 
-  /** `InputSnapshot.softLeftPressed`: F1, Left, or a press in the bottom-left 40x40 corner. */
+  /**
+   * `InputSnapshot.softLeftPressed`: F1, Left, or a press in the bottom-left 40x40 corner (of the
+   * 320x240 screen in landscape, where the softkey labels are drawn).
+   */
   softLeftPressed(): boolean {
-    return (
-      this.anyPressed(KEY.F1, KEY.LEFT) ||
-      this.pointerPressedIn(0, LOGICAL_HEIGHT - 40, 40, LOGICAL_HEIGHT)
-    );
+    return this.anyPressed(KEY.F1, KEY.LEFT) || this.softCornerPressed("left");
   }
 
   /** `InputSnapshot.softRightPressed`: F2, Right, or a press in the bottom-right 40x40 corner. */
   softRightPressed(): boolean {
-    return (
-      this.anyPressed(KEY.F2, KEY.RIGHT) ||
-      this.pointerPressedIn(LOGICAL_WIDTH - 40, LOGICAL_HEIGHT - 40, LOGICAL_WIDTH, LOGICAL_HEIGHT)
-    );
+    return this.anyPressed(KEY.F2, KEY.RIGHT) || this.softCornerPressed("right");
+  }
+
+  private softCornerPressed(side: "left" | "right"): boolean {
+    if (!viewport.landscape)
+      return side === "left"
+        ? this.pointerPressedIn(0, LOGICAL_HEIGHT - 40, 40, LOGICAL_HEIGHT)
+        : this.pointerPressedIn(
+            LOGICAL_WIDTH - 40,
+            LOGICAL_HEIGHT - 40,
+            LOGICAL_WIDTH,
+            LOGICAL_HEIGHT,
+          );
+    if (!this.pointer.pressed) return false;
+    const at = landPoint(this.pointer.pressX, this.pointer.pressY);
+    return at.y >= 200 && (side === "left" ? at.x <= 40 : at.x >= 280);
   }
 
   /** `InputSnapshot.backPressed`: Escape or Backspace. */

@@ -19,6 +19,8 @@ export type SkillScreenView = {
   spriteId: number;
   /** The pet's nature: 7..9 draws it in its shiny palette (`drawSkillDashboardPet`). */
   nature?: number;
+  /** The pet's own shiny colour (`SavedPet.shinyColor`), when it has one. */
+  shinyColor?: number;
   equippedCount: number;
   poolUnlocked: number;
   poolTotal: number;
@@ -35,6 +37,7 @@ export type SkillScreenArt = {
   sprite: (
     spriteId: number,
     nature?: number,
+    shinyColor?: number,
   ) =>
     | {
         frame: SpriteFrame;
@@ -112,7 +115,7 @@ export function drawSkillScreen(
   fill(g, 15, 60, 210, 47, hex(15398900));
   rect(g, 15, 60, 209, 46, 8440277);
   // `drawSkillDashboardPet`: frame 0 of state 0, bottom centre of the box (align 7).
-  const sprite = art.sprite(view.spriteId, view.nature);
+  const sprite = art.sprite(view.spriteId, view.nature, view.shinyColor);
   if (sprite) {
     const b = sprite.bounds,
       x = 18 + Math.trunc((48 - b.width) / 2) - b.x,

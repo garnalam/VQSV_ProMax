@@ -72,6 +72,11 @@ export class PetStatCalculator {
     return this.species.get(speciesId);
   }
 
+  /** Every species row the engine resolves. */
+  allSpecies(): PackSpeciesRow[] {
+    return [...this.species.values()];
+  }
+
   /** Whether this pack carries the growth numbers the engine would use for this species. */
   canResolve(speciesId: number): boolean {
     return this.species.has(speciesId);
@@ -167,9 +172,15 @@ export class PetStatCalculator {
           growth.growthDenominator,
         );
       }
-      case "authored-flat":
-        // The custom bosses keep four constants and read no level or quality at all.
-        return growth.stats[this.statIndex(stat)];
+      case "authored-flat": {
+        // The custom bosses keep four constants and read no quality. ProMax: an owned one (Kim Diễm
+        // Long Vương, Tàn Nguyệt Long Ma) grows to them by level, reaching them at `levelAtFullStats`.
+        const full = growth.stats[this.statIndex(stat)];
+        const cap = growth.levelAtFullStats;
+        return cap === undefined
+          ? full
+          : Math.max(1, Math.floor((full * Math.max(1, Math.min(level, cap))) / cap));
+      }
     }
   }
 
@@ -280,6 +291,26 @@ export class PetStatCalculator {
     const index = BATTLE_STATS.indexOf(stat);
     if (index < 0) throw new Error(`unknown Pet battle stat ${String(stat)}`);
     return index;
+  }
+}
+
+/**
+ * Which way a nature bends each stat of the pet screen's cards (hp, attack, defense, speed): 1 up,
+ * -1 down, 0 untouched. Read off `applyNatureType` below, which is the only place natures bend
+ * stats; the pet screen paints a raised stat green and a lowered one red.
+ */
+export function natureStatTrend(
+  nature: number | undefined,
+): readonly [number, number, number, number] {
+  switch (nature) {
+    case 7:
+      return [-1, -1, 0, 1];
+    case 8:
+      return [-1, 1, 0, -1];
+    case 9:
+      return [1, -1, 0, -1];
+    default:
+      return [0, 0, 0, 0];
   }
 }
 

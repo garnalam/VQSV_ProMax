@@ -133,7 +133,12 @@ async function webTraitCatalog(data: GameData): Promise<DesignTraitCatalog> {
         };
       if (tuned && tuned.type !== row.type)
         throw new Error(`species ${row.speciesId}: balance says ${tuned.type}, Java ${row.type}`);
-      return { speciesId: row.speciesId, type: row.type, value: tuned?.value ?? row.value };
+      return {
+        speciesId: row.speciesId,
+        type: row.type,
+        value: tuned?.value ?? row.value,
+        warmupRounds: tuned?.warmupRounds,
+      };
     }),
   );
 }

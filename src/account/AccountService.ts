@@ -2,7 +2,12 @@ import { SaveRepository } from "../persistence/SaveRepository";
 import { IndexedDbSaveStore, type SaveStore } from "../persistence/save/SaveStore";
 
 /** A signed-in player. `id` never changes; `username` is what they typed when registering. */
-export type Account = { readonly id: string; readonly username: string };
+export type Account = {
+  readonly id: string;
+  readonly username: string;
+  /** The server's `users.role` is `admin`: the menu lists the Admin Tool (the server re-checks). */
+  readonly admin?: boolean;
+};
 
 export type AccountErrorCode =
   "invalidName" | "weakPassword" | "exists" | "unknown" | "wrongPassword";

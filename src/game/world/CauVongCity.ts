@@ -13,6 +13,7 @@
 import type { CauVongCue, CauVongPart, CauVongPetCue } from "./CauVongCutscene";
 import type { FourGatesAction } from "./CauVongFourGates";
 import type { NorthSeaWorld } from "./CauVongNorthSea";
+import { CAFE_ROOM, cauVongCafeArrival } from "./CauVongPrep";
 
 type Say = Extract<CauVongCue, { k: "say" }>;
 export type CityItem = {
@@ -263,9 +264,16 @@ export class CityOwner {
   }
 
   /** `citySideEntrance` in the city (1). */
-  entrance(w: Pick<CityWorld, "at">): { kind: "exit"; room: number; x: number; y: number } | null {
+  entrance(
+    w: Pick<CityWorld, "at">,
+    heroX: number,
+  ): { kind: "exit"; room: number; x: number; y: number } | null {
     for (const [x, y, width, height, room, tx, ty] of this.doc.entrances)
-      if (w.at(x, y, width, height)) return { kind: "exit", room, x: tx, y: ty };
+      if (w.at(x, y, width, height))
+        // The café's Java landing is under its wall (`cauVongCafeArrival`).
+        return room === CAFE_ROOM
+          ? { kind: "exit", room, ...cauVongCafeArrival(heroX) }
+          : { kind: "exit", room, x: tx, y: ty };
     return null;
   }
 

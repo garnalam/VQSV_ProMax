@@ -2,43 +2,90 @@ import { AudioManager, type SoundCue } from "../audio/AudioManager";
 import { GameLoop } from "../core/GameLoop";
 import { GameplayClock } from "../core/GameplayClock";
 import { InputState, bindDomInput } from "../core/input/InputState";
-import { LOGICAL_HEIGHT, LOGICAL_WIDTH } from "../core/constants";
+import { toUi, viewport } from "../core/Viewport";
 import { ScreenManager } from "../core/ScreenManager";
 import { SIMULATION_STEP_MS } from "../core/constants";
 import { GameAssets } from "../game/story/GameAssets";
 import { Pack } from "../pack/Pack";
 import { loadBootAssets, type BootAssets } from "../pack/boot";
+import {
+  applyApkActors,
+  applyApkEvents,
+  type ApkActorsDocument,
+  type ApkEventsDocument,
+} from "../game/world/ApkActors";
+import { applyApkBattleSeats, BATTLE_SEATS } from "../game/battle/BattleSeats";
+import { DEFAULT_BATTLE_DEFINITIONS } from "../game/battle/BattleDefinition";
 import { SaveRepository } from "../persistence/SaveRepository";
+import type { SaveService } from "../persistence/SaveService";
 import { CanvasRenderer } from "../rendering/CanvasRenderer";
 import { BootLoaderRenderer } from "../rendering/BootLoaderRenderer";
 import { BootProgress } from "../pack/BootProgress";
-import { BootScreen } from "../screens/BootScreen";
 import { NewGameScreen } from "../screens/NewGameScreen";
 import { TitleScreen } from "../screens/TitleScreen";
 import { TitleFlowModel, type StartRequest } from "../screens/title/TitleFlowModel";
+import type { Screen } from "../core/ScreenManager";
+import {
+  AccountError,
+  LocalAccountService,
+  type Account,
+  type AccountService,
+} from "../account/AccountService";
+import { LoginOverlay } from "./LoginOverlay";
+import { AdminToolOverlay } from "./AdminToolOverlay";
+import { AdminApi } from "../account/AdminApi";
+import { RemoteAccountService } from "../account/RemoteAccountService";
+import { importJavaSave, parseJavaProperties } from "../persistence/save/JavaSaveImport";
+import { importCatalogFor } from "../persistence/save/JavaSaveCatalog";
+
+const SPEED_KEY = "vqsv.speedX2";
+
+/** What the canvas shows under the login panel. */
+const BLANK: Screen = { tick() {}, render: (r) => r.clear() };
 
 export class GameApp {
   private readonly renderer: CanvasRenderer;
-  private readonly input = new InputState();
+  /** Also fed by the on-screen gamepad (main.ts), which presses keys like a keyboard. */
+  readonly input = new InputState();
   private readonly screens = new ScreenManager();
   private readonly gameplayClock = new GameplayClock();
-  private readonly saves = new SaveRepository();
+  /** Accounts on the Cloudflare server; `VITE_ACCOUNTS=local` keeps them in this browser. */
+  private readonly accounts: AccountService =
+    import.meta.env.VITE_ACCOUNTS === "local"
+      ? new LocalAccountService()
+      : new RemoteAccountService();
+  /** The signed-in account's save; the old pre-account slot only for dev checkpoints. */
+  private saves = new SaveRepository();
+  /** The running session's saver: its last write finishes before another save is read (ProMax). */
+  private activeSaveService: SaveService | null = null;
+  private login: LoginOverlay | null = null;
+  /** The signed-in account; `admin` lists the Admin Tool in the game menu. */
+  private account: Account | null = null;
+  private adminTool: AdminToolOverlay | null = null;
+  private speedX2 = readSpeedPreference();
   private audio: AudioManager | null = null;
   private assets: BootAssets | null = null;
   private gameAssets: GameAssets | null = null;
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new CanvasRenderer(canvas);
     bindDomInput(this.input, canvas, (clientX, clientY) => {
+      // Screens read presses in the 240x320 UI box (`viewport.ui`), wherever it sits on the canvas.
       const bounds = canvas.getBoundingClientRect();
-      return {
-        x: Math.floor(((clientX - bounds.left) * LOGICAL_WIDTH) / bounds.width),
-        y: Math.floor(((clientY - bounds.top) * LOGICAL_HEIGHT) / bounds.height),
-      };
+      return toUi(
+        ((clientX - bounds.left) * viewport.width) / bounds.width,
+        ((clientY - bounds.top) * viewport.height) / bounds.height,
+      );
     });
+  }
+  /** Whether the current screen has a text field open (the phone keyboard follows it). */
+  textEntryActive(): boolean {
+    return this.screens.textEntryActive();
   }
   async start(): Promise<void> {
     // The canvas has to show something while the pack arrives, so the loader draws over the whole
     // boot and hands the frame buffer to the first screen when the files are in.
+    // Size the canvas for the viewport the page shell chose before the loader draws on it.
+    this.renderer.setScale(1);
     const progress = new BootProgress(),
       loader = new BootLoaderRenderer(this.renderer.context, progress);
     loader.start();
@@ -50,6 +97,21 @@ export class GameApp {
         loadBootAssets(pack),
         GameAssets.fromPack(pack),
       ]);
+      // Landscape: the rooms' actors, doors and event spots stand where the APK's scenes put them.
+      const [apkActors, apkEvents] = await Promise.all([
+        pack.json<ApkActorsDocument>("world.apk-actors"),
+        pack.json<ApkEventsDocument>("world.apk-events"),
+      ]);
+      applyApkActors(apkActors, this.gameAssets.rooms, this.assets.sourceEvents);
+      applyApkEvents(apkEvents, this.assets.sourceEvents);
+      // ...and the fights seat their pets on the APK's 320x240 battle screen.
+      if (viewport.landscape) {
+        applyApkBattleSeats();
+        for (const fight of DEFAULT_BATTLE_DEFINITIONS) {
+          Object.assign(fight.combatants.player.origin, BATTLE_SEATS.player);
+          Object.assign(fight.combatants.enemy.origin, BATTLE_SEATS.enemy);
+        }
+      }
     } finally {
       loader.stop();
       progress.close();
@@ -59,8 +121,11 @@ export class GameApp {
     const assets = this.gameAssets!;
     this.renderer.hdTwin = (image) => assets.hdTwin(image);
     this.renderer.hdScale = assets.cauVongHd?.scale ?? 3;
-    if (!(await this.enterParityCheckpoint()))
-      this.screens.replace(new BootScreen(this.assets!, (enabled) => this.enterTitle(enabled)));
+    if (!(await this.enterParityCheckpoint())) this.showLogin();
+    // A phone may kill a hidden tab without warning: save on the way out when that is safe.
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") this.screens.suspend();
+    });
     // M mutes and unmutes the game (remembered for the next visit).
     window.addEventListener("keydown", (event) => {
       if (event.code === "KeyM" && !event.repeat) this.audio?.toggleMute();
@@ -69,7 +134,7 @@ export class GameApp {
       SIMULATION_STEP_MS,
       () =>
         this.gameplayClock.tick(
-          (input) => this.screens.tick(input),
+          (input, sameFrame) => this.screens.tick(input, sameFrame),
           this.input.drainSnapshot(),
           () => this.screens.speedX2Suppressed(),
         ),
@@ -90,7 +155,7 @@ export class GameApp {
     this.gameAssets.battleServices.seedSource = () => 0;
     const parity = await import("../dev/parityCheckpoints"),
       screen = new NewGameScreen(false, this.gameAssets, this.assets, this.saves, () => {
-        void this.showTitle();
+        this.showLogin();
       });
     this.wireGameplay(screen);
     await Promise.all(
@@ -99,6 +164,8 @@ export class GameApp {
         .map(([scene, room]) => this.gameAssets!.prepareRoom(scene, room)),
     );
     if (!parity.applyUrlParityCheckpoint(screen, params)) return false;
+    // Dev only: the checkpoint screen, for poking at it from the console.
+    (window as unknown as { __vqsvScreen?: NewGameScreen }).__vqsvScreen = screen;
     this.screens.replace(screen);
     return true;
   }
@@ -118,48 +185,144 @@ export class GameApp {
     };
     screen.onPresentation = (current) => this.audio?.follow(current.musicContext());
     screen.onSound = (cue) => this.audio?.play(cue as SoundCue);
+    // Only an account the server signed in as `admin` sees the row; the server re-checks the role
+    // on every Admin Tool call, so this only decides what the menu shows.
+    screen.admin = this.account?.admin
+      ? {
+          open: (host) => {
+            this.adminTool ??= new AdminToolOverlay(document.body, new AdminApi());
+            this.adminTool.show(host);
+          },
+        }
+      : null;
     return screen;
   }
-  private enterTitle(enabled: boolean): void {
-    this.audio?.chooseMusic(enabled);
-    void this.showTitle();
-  }
-  private async showTitle(): Promise<void> {
+  /**
+   * The first panel (and where leaving the game returns to): sign in to play on from the
+   * account's save, or register and answer the skip-prologue question.
+   */
+  private showLogin(): void {
+    this.account = null;
+    this.adminTool?.hide();
     this.gameplayClock.setSpeedX2(false);
     this.audio?.playMenu();
+    this.screens.replace(BLANK);
+    this.login ??= new LoginOverlay(document.body, {
+      login: async (username, password) =>
+        this.enter(await this.accounts.login(username, password)),
+      register: async (username, password) =>
+        this.enter(await this.accounts.register(username, password)),
+      identity: this.accounts instanceof RemoteAccountService ? "email" : "username",
+      firstGesture: () => {
+        if (!this.audio?.isEnabled()) this.audio?.chooseMusic(true);
+      },
+      volume: {
+        level: () => this.audio?.volumeLevel() ?? 0,
+        setLevel: (level) => this.audio?.setVolumeLevel(level),
+      },
+      muted: {
+        get: () => this.audio?.isMuted() ?? false,
+        toggle: () => this.audio?.toggleMute(),
+      },
+      speedX2: {
+        get: () => this.speedX2,
+        set: (on) => {
+          this.speedX2 = on;
+          try {
+            localStorage.setItem(SPEED_KEY, on ? "1" : "0");
+          } catch {
+            // Storage blocked: the choice lasts for this visit.
+          }
+        },
+      },
+    });
+    this.login.show();
+  }
+  /** Signed in: play on from the account's save, or ask about the prologue when there is none. */
+  private async enter(account: Account): Promise<void> {
+    this.account = account;
+    this.saves = this.accounts.saves(account);
+    const hasSave = (await this.saves.hasValidSave()) || (await this.carryOverJavaSave(account));
+    this.login?.hide();
+    if (hasSave) {
+      await this.startBoundary({ loadSave: true, skipIntro: false, speedX2: this.speedX2 });
+      return;
+    }
     if (!this.assets) return;
-    const model = new TitleFlowModel(
-      await this.saves.hasValidSave(),
-      await this.saves.hasAnySave(),
-    );
+    const model = new TitleFlowModel(false, await this.saves.hasAnySave());
+    model.mode = "skipIntro";
+    model.speedX2 = this.speedX2;
     this.screens.replace(
       new TitleScreen(
         this.assets,
         model,
         (request) => this.startBoundary(request),
         () => this.saves.deleteAll(),
+        () => this.showLogin(),
       ),
     );
+  }
+  /**
+   * First sign-in of a Java-build player: their Java save is converted into the web game's own
+   * row (the Java row is left as it is). Whatever the web game does not have is left out.
+   */
+  private async carryOverJavaSave(account: Account): Promise<boolean> {
+    if (!this.accounts.legacyJavaSave || !this.gameAssets) return false;
+    try {
+      const text = await this.accounts.legacyJavaSave(account);
+      if (!text) return false;
+      const imported = importJavaSave(text, importCatalogFor(this.gameAssets));
+      if (!imported) {
+        // Still in the opening (or a newer Java format): the player starts from the prologue.
+        const p = parseJavaProperties(text);
+        console.info("VQSV_JAVA_IMPORT_SKIPPED", {
+          version: p.get("version"),
+          mode: p.get("worldResumeMode"),
+          scene: p.get("scene"),
+        });
+        return false;
+      }
+      if (imported.dropped.length) console.info("VQSV_JAVA_IMPORT_DROPPED", imported.dropped);
+      await this.saves.save(imported.save);
+      return true;
+    } catch (error) {
+      // The account has progress we could not carry over: never drop the player into the
+      // prologue as if it were a new account.
+      console.error("VQSV_JAVA_IMPORT", error);
+      throw new AccountError(
+        "unknown",
+        "Không đọc được save cũ của tài khoản này. Hãy báo quản trị viên, đừng chơi lại từ đầu.",
+      );
+    }
   }
   private async startBoundary(request: StartRequest): Promise<void> {
     if (!this.gameAssets || !this.assets) return;
     this.gameplayClock.setSpeedX2(request.speedX2);
+    // A save still being written by the session just left must land before it is read back.
+    await this.activeSaveService?.flush();
+    this.activeSaveService = null;
     const save = request.loadSave ? await this.saves.load() : undefined;
     if (request.loadSave && !save) {
-      await this.showTitle();
+      this.showLogin();
       return;
     }
-    this.screens.replace(
-      this.wireGameplay(
-        new NewGameScreen(
-          request.skipIntro,
-          this.gameAssets,
-          this.assets,
-          this.saves,
-          () => void this.showTitle(),
-          save,
-        ),
-      ),
+    const game = new NewGameScreen(
+      request.skipIntro,
+      this.gameAssets,
+      this.assets,
+      this.saves,
+      () => this.showLogin(),
+      save,
     );
+    this.activeSaveService = game.saveService;
+    this.screens.replace(this.wireGameplay(game));
+  }
+}
+
+function readSpeedPreference(): boolean {
+  try {
+    return localStorage.getItem(SPEED_KEY) === "1";
+  } catch {
+    return false;
   }
 }

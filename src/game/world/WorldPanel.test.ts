@@ -105,7 +105,7 @@ describe("worldPlateAt", () => {
 });
 
 describe("WorldPanel navigation", () => {
-  it("opens the right plate as the nine-row game menu and the left plate as the system menu", () => {
+  it("opens the right plate as the game menu and the left plate as the system menu", () => {
     const panel = new WorldPanel();
     panel.open();
     expect([panel.visible, panel.mode, panel.rowWidgets, panel.labels.length]).toEqual([
@@ -571,7 +571,7 @@ describe("world panel mouse (Java PC QoL)", () => {
     expect(panel.selected).toBe(5);
   });
 
-  it("scrolls the nine-row game menu with the wheel and keeps the cursor in the window", () => {
+  it("scrolls the game menu with the wheel and keeps the cursor in the window", () => {
     const panel = new WorldPanel();
     panel.open();
     panel.wheel(2);
@@ -581,7 +581,7 @@ describe("world panel mouse (Java PC QoL)", () => {
     expect(panel.listScroll).toBe(MENU_LABELS.length - 6);
     panel.wheel(-5);
     expect(panel.listScroll).toBe(0);
-    expect(panel.selected).toBe(3);
+    expect(panel.selected).toBe(MENU_LABELS.length - 6);
   });
 
   it("moves the system menu's cursor with the wheel (it does not scroll)", () => {

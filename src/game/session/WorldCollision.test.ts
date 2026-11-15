@@ -39,7 +39,7 @@ const { scene1Save } = await import("../../dev/parityCheckpoints");
 const { SCENE1_RESUME } = await import("../../persistence/save/migrations");
 const { GameplayHost, gameplaySources } = await import("./GameplayHost");
 const { BADGE_MOC_QUY } = await import("../world/WorldFlags");
-const { DIRECTION_UP, DIRECTION_DOWN } = await import("../world/MapCollision");
+const { DIRECTION_UP, DIRECTION_DOWN, terrainAtWorld } = await import("../world/MapCollision");
 type GameSave = import("../../persistence/save/GameSave").GameSave;
 type Host = InstanceType<typeof GameplayHost>;
 
@@ -117,7 +117,73 @@ function snapshot(host: Host): GameSave {
   return host.snapshot(host.world!);
 }
 
+describe("room arrivals on blocked terrain", () => {
+  it("lands on walkable ground after the forest door opens the dock room", async () => {
+    await assets.prepareRoom(11, 7);
+    const host = await standAt(baseSave(), 1, 4, 426, 113, DIRECTION_UP);
+    const world = host.world!;
+    host.step([]);
+    expect([world.sceneId, world.roomIndex]).toEqual([11, 7]);
+    while (host.mapLoadingActive) host.step([]);
+    expectClearFootprint(world);
+    const start = [world.player.x, world.player.y];
+    for (const key of ["holdUp", "holdDown", "holdLeft", "holdRight"] as const) {
+      host.step([key]);
+      if (start[0] !== world.player.x || start[1] !== world.player.y) break;
+    }
+    expect([world.player.x, world.player.y]).not.toEqual(start);
+  });
+
+  it("frees the hero after a gym vortex drops him in a wall", async () => {
+    const host = await standAt(baseSave({}, 31), 9, 6, 136, 328, DIRECTION_UP);
+    const world = host.world!;
+    const vortex = world.actors.get(3)!;
+    Object.assign(world.player, { x: vortex.x, y: vortex.y });
+    for (let i = 0; i < 37; i++) host.step([]);
+    expect([world.sceneId, world.roomIndex]).toEqual([9, 6]);
+    expectClearFootprint(world);
+  });
+
+  it.each([
+    [11, 7, 176, 112],
+    [7, 12, 192, 48],
+    [9, 6, 168, 224],
+    [10, 7, 264, 368],
+    [11, 0, 40, 256],
+  ])("repairs a save in a wall in room %i:%i", async (scene, room, x, y) => {
+    const host = await standAt(baseSave(), scene, room, x, y, DIRECTION_DOWN);
+    expectClearFootprint(host.world!);
+    expect(host.snapshot(host.world!).location).toMatchObject({ sceneId: scene, roomIndex: room });
+  });
+
+  it("frees a save trapped away from a door's exact arrival when the player walks", async () => {
+    const host = await standAt(baseSave(), 11, 7, 176, 114, DIRECTION_DOWN);
+    const world = host.world!;
+    expect(world.player).toMatchObject({ x: 176, y: 114 });
+    host.step(["holdDown"]);
+    expectClearFootprint(world);
+  });
+});
+
+function expectClearFootprint(world: NonNullable<Host["world"]>): void {
+  const asset = assets.getWorldRoom(world.sceneId, world.roomIndex)!;
+  const map = assets.getCollision(asset.mapId)!;
+  for (const dx of [-8, 0, 7])
+    for (const dy of [-8, 0, 7])
+      expect(terrainAtWorld(map, world.player.x + dx, world.player.y + dy)).toBe(0);
+}
+
 describe("WorldEngine actor collision (VqsvFreeWorldRuntime.actorLookup)", () => {
+  it("rejects a land mount's sideways slide into a wall in room 1:4", async () => {
+    const save = baseSave({}, 25);
+    save.inventory.specials = [1];
+    const host = await standAt(save, 1, 4, 312, 280, 3);
+    const world = host.world!;
+    expect(world.selectRide(0)).toBe("ready");
+    host.step(["holdLeft"]);
+    expect([world.player.x, world.player.y]).toEqual([312, 280]);
+  });
+
   it("a beaten trainer keeps his place and his lines but lets the hero by", async () => {
     // George (5:4 actor 25, NPC) at (92,167); once 5:4:g0 is won his tile opens.
     const host = await standAt(baseSave({ "5:4:0": 3 }), 5, 4, 140, 180, 3);
@@ -221,12 +287,19 @@ describe("Mộc Quỳ trees (VqsvSourceWorldObstacleRuntime)", () => {
       world = host.world!;
     hold(host, "holdDown", 30);
     expect(world.player.y).toBe(156);
-    // `setSourceObstacleMarker(true, 30)`: the action marker, 30 px over each faced tree.
-    expect(world.obstaclePrompts).toContainEqual({ x: 88, y: 147 });
-    expect(world.obstaclePrompts).toContainEqual({ x: 71, y: 146 });
+    // `setSourceObstacleMarker(true, 30)`: the action marker, 30 px over the faced tree. Faced is
+    // `playerInteractsActorSourceMask`: tree 34 (y 176) meets the hero's mask 4 px ahead, tree 7
+    // (y 177) is a pixel beyond it.
+    expect(world.obstaclePrompts).toEqual([{ x: 71, y: 146 }]);
     host.step(["confirm"]);
-    expect(world.actors.get(7)!.state).toBe(1);
-    expect(world.actors.get(34)!.state).toBe(1);
+    expect([world.actors.get(34)!.state, world.actors.get(7)!.state]).toEqual([1, 0]);
+    for (let i = 0; i < 200 && world.actors.get(34)!.state !== 2; i++) host.step([]);
+    expect(world.actors.get(34)!.state).toBe(2);
+    // One step on, against the last tree, its marker shows and 5 cuts it too.
+    hold(host, "holdDown", 4);
+    expect(world.player.y).toBe(160);
+    expect(world.obstaclePrompts).toEqual([{ x: 88, y: 147 }]);
+    host.step(["confirm"]);
     for (let i = 0; i < 200 && world.actors.get(7)!.state !== 2; i++) host.step([]);
     expect([world.actors.get(7)!.state, world.actors.get(34)!.state]).toEqual([2, 2]);
     expect(world.obstaclePrompts).toEqual([]);
@@ -301,5 +374,138 @@ describe("ordinary NPC lines (VqsvSourceNpcDispatchFlow.ordinary)", () => {
     expect(world.npcDialog).toBeNull();
     expect(host.panel.visible).toBe(false);
     expect(world.activeEventGroup).toBeNull();
+  });
+});
+
+describe("Niêm Thổ Đạo Quán's floor holes (NiemThoC3Runtime.GymHoleFall)", () => {
+  it("stepping onto a 9:2 hole spins the hero 16 ticks, then drops him into 9:3 at (112,256)", async () => {
+    await assets.prepareRoom(9, 3);
+    // Hole 2 (behaviour 16) at (97,240): walk down onto it from the floor above.
+    const host = await standAt(baseSave({}, 30), 9, 2, 97, 205, DIRECTION_DOWN),
+      world = host.world!;
+    let ticks = 0;
+    while (world.roomIndex === 2 && ticks < 60) {
+      host.step(["holdDown"]);
+      ticks++;
+    }
+    expect(world.sceneId).toBe(9);
+    expect(world.roomIndex).toBe(3);
+    expect([world.player.x, world.player.y]).toEqual([112, 256]);
+    expect(world.player.direction).toBe(DIRECTION_DOWN);
+    // The hole caught him a few steps in; the fall itself is 16 ticks of spinning.
+    expect(ticks).toBeGreaterThan(16);
+    expect(ticks).toBeLessThan(30);
+  });
+});
+
+describe("Lối vào di tích (4:10): the ledge round the pit is closed", () => {
+  /** Every spot the hero can walk to from (x, y), by single steps. */
+  function reachable(host: Host, x: number, y: number): [number, number][] {
+    const world = host.world! as unknown as {
+        player: { x: number; y: number };
+        walk(commands: string[]): boolean;
+      },
+      seen = new Set([`${x},${y}`]),
+      queue: [number, number][] = [[x, y]];
+    while (queue.length) {
+      const [px, py] = queue.shift()!;
+      for (const key of ["holdUp", "holdDown", "holdLeft", "holdRight"]) {
+        world.player.x = px;
+        world.player.y = py;
+        world.walk([key]);
+        const spot = `${world.player.x},${world.player.y}`;
+        if (seen.has(spot)) continue;
+        seen.add(spot);
+        queue.push([world.player.x, world.player.y]);
+      }
+    }
+    return [...seen].map((spot) => spot.split(",").map(Number) as [number, number]);
+  }
+
+  it("from the west door the pit and the cave are reachable, the ledge, top and east are not", async () => {
+    const host = await standAt(baseSave({}, 43), 4, 10, 8, 320, DIRECTION_UP),
+      spots = reachable(host, 8, 320);
+    expect(spots.some(([x, y]) => Math.abs(x - 120) <= 8 && y <= 88)).toBe(true);
+    expect(spots.some(([x, y]) => x < 40 && y < 200)).toBe(false);
+    expect(spots.some(([, y]) => y < 20)).toBe(false);
+    expect(spots.some(([x]) => x > 200)).toBe(false);
+  });
+
+  it("a save left on the old ledge comes back at the west door", async () => {
+    const host = await standAt(baseSave({}, 43), 4, 10, 0, 95, DIRECTION_DOWN);
+    expect([host.world!.player.x, host.world!.player.y]).toEqual([8, 320]);
+  });
+});
+
+describe("Kiểm tra Phi Không Đĩnh (task 23): the soldier, then Yafei at the airship base", () => {
+  /** Step with a confirm every few ticks; the groups that ran, in order. */
+  function run(host: Host, ticks: number, held: "holdDown" | null = null): string[] {
+    const world = host.world!,
+      groups: string[] = [];
+    for (let i = 0; i < ticks; i++) {
+      host.step(i % 3 === 0 ? ["confirm"] : held ? [held] : []);
+      const g = world.activeEventGroup;
+      const key = g ? `${g.scene}:${g.room}:${g.group}` : null;
+      if (key && groups.at(-1) !== key) groups.push(key);
+    }
+    return groups;
+  }
+
+  it("leaving the gym by its side door after the leader lands on the soldier's rect (4:5:g12)", async () => {
+    await assets.prepareRoom(4, 5);
+    // 9:2 actor 8 (32,320) leads out; `tryGymUpperSideExit` lands at (92,328) facing down.
+    const host = await standAt(
+        baseSave({ "9:2:0": 3, "9:2:1": 3 }, 22),
+        9,
+        2,
+        32,
+        300,
+        DIRECTION_DOWN,
+      ),
+      world = host.world!;
+    for (let i = 0; i < 20 && world.sceneId === 9; i++) host.step(["holdDown"]);
+    expect([world.sceneId, world.roomIndex]).toEqual([4, 5]);
+    // (92, 328), plus the step the held key still takes on the tick of the door: inside g12's
+    // rect [48, 321, 64, 16].
+    expect(world.player.x).toBe(92);
+    expect(world.player.y).toBeGreaterThanOrEqual(321);
+    expect(world.player.y).toBeLessThanOrEqual(337);
+    expect(world.player.direction).toBe(DIRECTION_DOWN);
+    expect(run(host, 300)).toContain("4:5:12");
+    expect(snapshot(host).eventStates?.["4:5:12"]).toBe(3);
+  });
+
+  it("with the soldier heard, Yafei's scene plays on arrival and the task moves on", async () => {
+    const host = await standAt(
+      baseSave({ "9:2:1": 3, "4:5:12": 3 }, 22),
+      4,
+      8,
+      112,
+      260,
+      DIRECTION_UP,
+    );
+    expect(run(host, 400)).toEqual(["4:8:0"]);
+    expect(snapshot(host).progress.mainTaskProgress).toBe(23);
+  });
+
+  it("a save that skipped the soldier still gets Yafei's scene at the base", async () => {
+    const host = await standAt(baseSave({ "9:2:1": 3 }, 22), 4, 8, 112, 260, DIRECTION_UP);
+    expect(run(host, 400)).toEqual(["4:8:0"]);
+    expect(snapshot(host).progress.mainTaskProgress).toBe(23);
+  });
+});
+
+describe("talking across a shop counter (WorldTalkPromptEngine with source masks)", () => {
+  // 11:8's merchant ABell (sprite 24, 141,229) has a 16x53 mask reaching over her counter: the hero
+  // walking up stops at its edge, and from there — not only from inside the counter — he talks.
+  it("the hero walks up to ABell's counter and is spoken to from its edge", async () => {
+    const host = await standAt(baseSave(), 11, 8, 141, 300, DIRECTION_UP),
+      world = host.world!;
+    hold(host, "holdUp", 20);
+    expect(world.player.y).toBe(284);
+    expect(world.talkPrompt?.actorId).toBe(1);
+    host.step(["confirm"]);
+    for (let i = 0; i < 20; i++) host.step([]);
+    expect(world.npcDialog?.speaker).toBe("ABell");
   });
 });

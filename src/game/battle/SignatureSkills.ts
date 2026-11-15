@@ -169,6 +169,11 @@ export class SignatureSkills {
     return this.specs.get(skillId);
   }
 
+  /** A signature's or the shield breaker's plain Power: no condition met, nothing spent. */
+  basePower(skillId: number): number | undefined {
+    return this.shieldBreak.get(skillId)?.power ?? this.specs.get(skillId)?.skill.power;
+  }
+
   /** `SignatureSkillMechanics.mayUse`, the part a fight decides: the HP a sacrifice needs to pay. */
   mayUse(unit: StatusUnit, skillId: number): boolean {
     const spec = this.specs.get(skillId);

@@ -1,7 +1,7 @@
 import type { PackSpeciesRow } from "../../data/GameData";
 import type { BadgeProgression } from "../world/WorldFlags";
 import type { PetCollection } from "../pet/PetCollection";
-import { SPECIES_COUNT } from "../pet/PetCollection";
+import { COLLECTION_SNAPSHOT_LENGTH, collectionFamily } from "../pet/PetCollection";
 import type { BadgeEntry, PetmapRow, RecordStats } from "../world/WorldPanel";
 
 /**
@@ -30,12 +30,15 @@ export function petmapRows(
   species: (id: number) => PackSpeciesRow | undefined,
   collection: PetCollection,
   tab: number,
+  family = 0,
+  variant = 0,
 ): PetmapRow[] {
   const rows: PetmapRow[] = [];
-  for (let id = 0; id < SPECIES_COUNT; id++) {
+  for (let id = 0; id < COLLECTION_SNAPSHOT_LENGTH; id++) {
     const row = species(id);
-    if (!row || !row.validForBattle || row.element !== tab) continue;
-    const status = collection.status(id);
+    if (!row || !row.validForBattle || row.element !== tab || collectionFamily(id) !== family)
+      continue;
+    const status = collection.variantStatus(id, variant);
     rows.push({
       speciesId: id,
       name: row.name || `Pet ${id}`,
@@ -59,7 +62,7 @@ export function recordStats(input: {
     input.collection.countCollected((id) => input.species(id)?.relationClass === relation);
   return {
     owned: input.ownedPets,
-    collected: input.collection.collectedSpeciesCount(),
+    collected: input.collection.allCollectedSpeciesCount(),
     rare: byRelation(1),
     divine: byRelation(2),
     badges: input.badges,
@@ -78,6 +81,7 @@ export function sourcePlayTime(millis: number): string {
 
 /** `badgeStatusText`. */
 export function badgeStatusText(badges: BadgeProgression, id: number): string {
+  if (id === 7 && badges.achieved(id)) return `Bậc ${badges.goldenTier()}`;
   if (!badges.achieved(id)) return "Chưa đạt";
   if (!badges.enhanceable(id)) return "Đã đạt - Không thể cường hóa";
   return badges.enhanced(id) ? "Đã đạt - Đã cường hóa" : "Đã đạt - Chưa cường hóa";
@@ -97,10 +101,14 @@ export function badgeEntries(
     const row = source?.source.find((badge) => badge.id === id);
     entries.push({
       id,
-      name: row?.name ?? `Huy hiệu ${id + 1}`,
-      description: (badges.enhanced(id) ? row?.enhancedDescription : row?.description) ?? "",
+      name: id === 7 ? "Hoàng Kim Chương" : (row?.name ?? `Huy hiệu ${id + 1}`),
+      description:
+        id === 7
+          ? goldenBadgeDescription(badges)
+          : ((badges.enhanced(id) ? row?.enhancedDescription : row?.description) ?? ""),
       status: badgeStatusText(badges, id),
       achieved: badges.achieved(id),
+      goldenRank: id === 7 ? badges.goldenTier() : undefined,
     });
   }
   for (const badge of unified) {
@@ -115,4 +123,15 @@ export function badgeEntries(
     });
   }
   return entries;
+}
+
+function goldenBadgeDescription(badges: BadgeProgression): string {
+  switch (badges.goldenTier()) {
+    case 2:
+      return "Toàn bộ pet\nngân hàng\nlên 5 sao,\nkể cả gửi sau.";
+    case 1:
+      return "Pet dự bị\ntrong đội\nnhận 30% EXP.";
+    default:
+      return "Đủ 281 loài:\nLiệt Hỏa,\nCầu Vồng, V4.";
+  }
 }

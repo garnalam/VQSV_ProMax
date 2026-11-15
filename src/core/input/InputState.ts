@@ -21,6 +21,7 @@ export class InputState {
   private pointerPressY = -1;
   private pointerReleaseX = -1;
   private pointerReleaseY = -1;
+  private pointerTouch = false;
   private wheelRotation = 0;
   private typedText = "";
 
@@ -33,8 +34,9 @@ export class InputState {
     } else this.down.delete(key);
   }
 
-  pressPointer(x: number, y: number): void {
+  pressPointer(x: number, y: number, touch = false): void {
     this.pointerPressed = true;
+    this.pointerTouch = touch;
     this.pointerDown = true;
     this.pointerX = this.pointerPressX = x;
     this.pointerY = this.pointerPressY = y;
@@ -92,6 +94,7 @@ export class InputState {
         pressY: this.pointerPressY,
         releaseX: this.pointerReleaseX,
         releaseY: this.pointerReleaseY,
+        touch: this.pointerTouch,
       },
       wheelRotation: this.wheelRotation,
       typedText: this.typedText,
@@ -129,6 +132,11 @@ const TYPED_CONTROL: Readonly<Record<string, string>> = {
   Tab: "\t",
 };
 
+/** Phone keyboards often leave `code` empty; Enter and Backspace are still named in `key`. */
+function keyFromDomEvent(event: KeyboardEvent): KeyCode | undefined {
+  return keyFromDomCode(event.code) ?? (event.code ? undefined : keyFromDomCode(event.key));
+}
+
 export type LogicalPoint = (clientX: number, clientY: number) => { x: number; y: number };
 
 /**
@@ -141,6 +149,13 @@ export function bindDomInput(
   toLogical: LogicalPoint,
 ): () => void {
   const onKeyDown = (event: KeyboardEvent): void => {
+    // The phone-keyboard proxy (TextEntryProxy) reads its own text from `beforeinput`; here it only
+    // reports keys, and its defaults (deleting, typing) must run.
+    if (event.target instanceof HTMLInputElement) {
+      const key = keyFromDomEvent(event);
+      if (key) state.setKey(key, true);
+      return;
+    }
     if (PREVENT_DEFAULT.has(event.code)) event.preventDefault();
     if ((event.ctrlKey || event.metaKey) && event.code === "KeyV") return; // handled by "paste"
     const key = keyFromDomCode(event.code);
@@ -151,7 +166,7 @@ export function bindDomInput(
     else if (event.key.length === 1) state.typeText(event.key);
   };
   const onKeyUp = (event: KeyboardEvent): void => {
-    const key = keyFromDomCode(event.code);
+    const key = keyFromDomEvent(event);
     if (key) state.setKey(key, false);
   };
   const onPaste = (event: ClipboardEvent): void => {
@@ -164,7 +179,7 @@ export function bindDomInput(
     surface.focus();
     surface.setPointerCapture?.(event.pointerId);
     const p = toLogical(event.clientX, event.clientY);
-    state.pressPointer(p.x, p.y);
+    state.pressPointer(p.x, p.y, event.pointerType === "touch");
   };
   const onPointerUp = (event: PointerEvent): void => {
     if (event.button !== 0) return;

@@ -71,6 +71,14 @@ describe("the thiên phú a pet is worn with", () => {
     expect(talent).toBeGreaterThanOrEqual(0);
     expect(battle.rules.traitRegistry.sanitizePhysicalTraitId(talent!)).toBe(talent);
     expect(battle.profile(battle.partyMember(world.pets[0])).talent?.name).toBeTruthy();
+    // Owner 2026-11-15: the characteristic reads in plain words (`summary`), not the workbook rule.
+    const trait = battle.profile(battle.partyMember(world.pets[0])).trait;
+    const { traits } = JSON.parse(
+      readFileSync("public/pack/balance/pet-design-traits.json", "utf8"),
+    ) as { traits: { speciesId: number; summary: string }[] };
+    const row = traits.find((t) => t.speciesId === world.pets[0].speciesId);
+    expect(row?.summary).toBeTruthy();
+    expect(trait?.description).toBe(row?.summary);
   });
 
   it("is the same talent in the next session and the one after that", () => {

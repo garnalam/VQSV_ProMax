@@ -17,6 +17,8 @@ import type { AcademyBattle } from "./CauVongAcademy";
 import type { CauVongAward, CauVongCue, CauVongPart, CauVongPetCue } from "./CauVongCutscene";
 
 type Say = Extract<CauVongCue, { k: "say" }>;
+/** Java's `Integer.MAX_VALUE` "to the end" bound, as the bake keys the replies ("room:event:from:2147483647"). */
+const TO_END = 2147483647;
 export type QuestItem = { id: number; name: string; description: string };
 
 export type CauVongFourGatesDocument = {
@@ -257,7 +259,7 @@ export class FourGatesOwner {
     const shop = this.doc.shops[String(room)];
     if (shop && w.done(room, shop.flag)) {
       w.clear(room, shop.flag);
-      return this.replay(room, shop.event, shop.farewell, Number.MAX_SAFE_INTEGER);
+      return this.replay(room, shop.event, shop.farewell, TO_END);
     }
     for (const name of this.order) {
       const p = this.doc.parts[name];
@@ -576,7 +578,7 @@ export class FourGatesOwner {
           return say(
             this.buyMushrooms(w, selection === 1 ? 1 : 15) ? t.mushroomBought : t.mushroomNotBought,
           );
-        return this.replay(17, 1, 214, Number.MAX_SAFE_INTEGER);
+        return this.replay(17, 1, 214, TO_END);
       default:
         return null;
     }

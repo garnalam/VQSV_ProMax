@@ -100,6 +100,41 @@ export class EvolutionCatalog {
   rules(species: number): readonly EvolutionRule[] {
     return this.bySpecies.get(species) ?? [];
   }
+  /** Every earlier form that evolves or mutates, directly or in steps, into `species`. */
+  ancestors(species: number): Set<number> {
+    const found = new Set<number>(),
+      queue = [species];
+    while (queue.length) {
+      const target = queue.pop()!;
+      for (const [from, rows] of this.bySpecies)
+        if (!found.has(from) && from !== species && rows.some((row) => row.toSpecies === target)) {
+          found.add(from);
+          queue.push(from);
+        }
+    }
+    return found;
+  }
+  /**
+   * Forms from `fodder` up to `main` along the evolution rules (0 the same species, -1 when
+   * `fodder` is not an earlier form of `main`). Web-only: JavaSE's quality-upgrade distance table
+   * leaves out the special forms (4 → 277, 23 → 274, 28 → 279, 34 → 275, 64 → 276).
+   */
+  formDistance(main: number, fodder: number): number {
+    let level = [main],
+      seen = new Set(level);
+    for (let distance = 0; level.length; distance++) {
+      if (level.includes(fodder)) return distance;
+      const next: number[] = [];
+      for (const target of level)
+        for (const [from, rows] of this.bySpecies)
+          if (!seen.has(from) && rows.some((row) => row.toSpecies === target)) {
+            seen.add(from);
+            next.push(from);
+          }
+      level = next;
+    }
+    return -1;
+  }
   /**
    * `noticeForSpecies(id, level, null)`: the branch the menu row opens. With the baked label the
    * kind is JavaSE's own choice; otherwise the normal branch first, then the first remaining one.
@@ -156,17 +191,64 @@ export function consumeEvolutionMaterials(
 export const evolvedQuality = (current: number, targetDefault: number): number =>
   Math.max(current >= 1 && current <= 5 ? current : 1, Math.min(3, Math.max(1, targetDefault)));
 
+/**
+ * `UnifiedSkillLearnsetCatalog.inheritsSkills`: the two scripted mutations (Liệt Hỏa's 274 from
+ * 23, Thiên Luân's 275 from 34) start over on their own deck; every other edge keeps the old one.
+ */
+const NON_INHERITING_TARGETS = new Set([274, 275]);
+
+/**
+ * The pet `target` becomes, as `VqsvSourceEvolutionRuntime.mutatePet` builds it: the target
+ * species at `evolvedQuality(current, target's default)`, with the target species' own sprite —
+ * never the old form's `visualSpriteId`, which `partyMember` would otherwise prefer.
+ */
+export function evolvedForm(pet: SavedPet, toSpecies: number, services: BattleServices) {
+  const quality = evolvedQuality(pet.quality, services.petStats.defaultQuality(toSpecies));
+  return services.partyMember({
+    ...pet,
+    speciesId: toSpecies,
+    quality,
+    visualSpriteId: undefined,
+    currentHp: undefined,
+    maxHp: undefined,
+  });
+}
+
+/** `mutatePet` → `EvolutionProgression.apply`: species, stars, sprite, full HP and the deck. */
 export function applyEvolution(pet: SavedPet, rule: EvolutionRule, services: BattleServices): void {
-  const oldSkills = [...(pet.skillIds ?? [])],
-    target = services.partyMember({ ...pet, speciesId: rule.toSpecies }),
+  const target = evolvedForm(pet, rule.toSpecies, services),
     maxHp = target.stats.hp;
   pet.speciesId = rule.toSpecies;
-  pet.quality = evolvedQuality(pet.quality, target.quality ?? pet.quality);
+  pet.quality = target.quality;
   pet.visualSpriteId = target.spriteId;
   pet.maxHp = maxHp;
   pet.currentHp = Math.max(1, maxHp);
-  // The baked family pool is the inheritance boundary used by Java. Preserve an existing deck;
-  // evolution-learn candidates are handled by the learn queue after the effect.
-  pet.skillIds = oldSkills;
-  pet.skillPp = services.progression.fullPp(oldSkills);
+  // The family pool is the inheritance boundary used by Java: an inheriting edge keeps the deck
+  // (evolution-learn candidates come from the learn queue after the effect), a non-inheriting one
+  // is dealt the new form's starting deck (`PetSourceAdapter.resetLearnsetDeck`).
+  const skills = NON_INHERITING_TARGETS.has(rule.toSpecies)
+    ? services.progression.initialSkills(rule.toSpecies, pet.level)
+    : [...(pet.skillIds ?? [])];
+  pet.skillIds = skills;
+  pet.skillPp = services.progression.fullPp(skills);
+}
+
+/**
+ * Pets evolved before `applyEvolution` resolved the target's sprite kept their first form's
+ * `visualSpriteId`: one that is an earlier form's sprite goes back to the species' own.
+ */
+export function repairEvolvedSprite(
+  pet: SavedPet,
+  catalog: EvolutionCatalog,
+  spriteOf: (speciesId: number) => number | undefined,
+): boolean {
+  if (pet.visualSpriteId === undefined) return false;
+  const own = spriteOf(pet.speciesId);
+  if (own === undefined || own === pet.visualSpriteId) return false;
+  for (const ancestor of catalog.ancestors(pet.speciesId))
+    if (spriteOf(ancestor) === pet.visualSpriteId) {
+      pet.visualSpriteId = own;
+      return true;
+    }
+  return false;
 }

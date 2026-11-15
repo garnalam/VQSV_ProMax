@@ -1,39 +1,42 @@
 import { describe, expect, it } from "vitest";
 import { dpadDirection, joystickDirection } from "../core/input/TouchGamepad";
 import { KEY } from "../core/input/KeyCode";
-import { fitStage, LANDSCAPE_PAD_SPACE, PORTRAIT_PAD_SPACE } from "./StageLayout";
+import { fitStage, liveArea, PORTRAIT_PAD_SPACE } from "./StageLayout";
 
-describe("game box layout", () => {
-  it("fills a desktop window with a whole-number scale and no pad", () => {
-    expect(fitStage(1920, 969, false)).toMatchObject({ mode: "desktop", scale: 3 });
-    expect(fitStage(1366, 657, false)).toMatchObject({ mode: "desktop", scale: 2 });
-    // Never past x4, however big the screen.
-    expect(fitStage(3840, 2100, false)).toMatchObject({ width: 960, height: 1280, scale: 4 });
+describe("game canvas layout (landscape, 240 tall)", () => {
+  it("fills a desktop window edge to edge, as wide as its shape", () => {
+    const fit = fitStage(1920, 1080, false);
+    expect(fit).toMatchObject({ mode: "desktop", viewWidth: 426, height: 1080 });
+    expect(1920 - fit.width).toBeLessThan(10);
   });
 
-  it("keeps the fractional fit when x1 would waste most of a phone", () => {
-    const fit = fitStage(390, 750, true);
-    expect(fit.mode).toBe("portrait");
-    expect(fit).toMatchObject({ width: 390, height: 520 });
-    expect(750 - fit.height).toBeGreaterThanOrEqual(PORTRAIT_PAD_SPACE);
-  });
-
-  it("puts the box in the middle of a sideways phone, leaving both sides for the pad", () => {
+  it("fills a sideways phone: the canvas widens with the screen, within the limits", () => {
     const fit = fitStage(844, 390, true);
     expect(fit.mode).toBe("landscape");
     expect(fit.height).toBe(390);
-    expect((844 - fit.width) / 2).toBeGreaterThanOrEqual(LANDSCAPE_PAD_SPACE);
+    expect(fit.viewWidth).toBe(518);
+    expect(844 - fit.width).toBeLessThan(4);
+    // A 4:3 screen keeps the APK's own 320x240; an ultra-wide one stops at the widest canvas.
+    expect(fitStage(1024, 768, true).viewWidth).toBe(320);
+    expect(fitStage(3440, 1440, false).viewWidth).toBe(572);
   });
 
-  it("keeps the 3:4 shape everywhere", () => {
+  it("puts the narrowest canvas on top of an upright phone, the pad below", () => {
+    const fit = fitStage(390, 750, true);
+    expect(fit).toMatchObject({ mode: "portrait", viewWidth: 320, width: 390 });
+    expect(750 - fit.height).toBeGreaterThanOrEqual(PORTRAIT_PAD_SPACE);
+  });
+
+  it("never draws past the window", () => {
     for (const [w, h, touch] of [
       [360, 640, true],
       [1024, 768, true],
       [800, 600, false],
+      [2560, 1080, false],
     ] as const) {
       const fit = fitStage(w, h, touch);
-      expect(Math.abs(fit.width / fit.height - 0.75)).toBeLessThan(0.01);
       expect(fit.width).toBeLessThanOrEqual(w);
+      expect(fit.height).toBeLessThanOrEqual(h);
     }
   });
 });
@@ -77,5 +80,29 @@ describe("pad and finger together", () => {
     });
     // The tap does not let go of the pad.
     expect(state.drainSnapshot().isDown(KEY.UP)).toBe(true);
+  });
+});
+
+describe("returning to the game after switching apps (iPhone, sideways)", () => {
+  it("caps a page box left at the old orientation by the window, so the phone stays landscape", () => {
+    // iOS handed back an 844x844 page box on an 844x390 screen: laid out as is, it read as an
+    // upright phone, zoomed the map past the screen and pushed the joystick off it.
+    expect(fitStage(844, 844, true).mode).toBe("portrait");
+    const area = liveArea({ width: 844, height: 844 }, { width: 844, height: 390 });
+    expect(area).toEqual({ width: 844, height: 390 });
+    const fit = fitStage(area.width, area.height, true);
+    expect(fit).toMatchObject({ mode: "landscape", height: 390 });
+    expect(fit.width).toBeLessThanOrEqual(844);
+  });
+
+  it("keeps the page box when it is the smaller one, and ignores a window that measures 0", () => {
+    expect(liveArea({ width: 800, height: 360 }, { width: 844, height: 390 })).toEqual({
+      width: 800,
+      height: 360,
+    });
+    expect(liveArea({ width: 844, height: 390 }, { width: 0, height: 0 })).toEqual({
+      width: 844,
+      height: 390,
+    });
   });
 });

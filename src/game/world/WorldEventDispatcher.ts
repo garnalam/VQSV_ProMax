@@ -38,7 +38,11 @@ export type WorldView = {
   direction: number;
   /** Java's key0 / pointer activation: op16 triggers fire on it, op13 triggers ignore it. */
   activation: boolean;
+  /** Pointer ticks choose an actor by displayed ink rather than the hero's facing query. */
+  actorActivation?: (id: number) => boolean;
   actorAt: (id: number) => { x: number; y: number; visible: boolean } | undefined;
+  /** `playerInteractsActorSourceMask`: the hero faces this actor, by both collision masks. */
+  facesActor?: (id: number) => boolean;
   /** Mirrors WorldRoomCatalog.supportsTransition: an unloadable target leaves the world untouched. */
   supportsTarget: (scene: number, room: number) => boolean;
   /** Whether an op59 torch of this room burns (`switchActivated`). */
@@ -126,6 +130,15 @@ export class WorldEventDispatcher {
   }
   probe(view: WorldView): WorldDispatch | null {
     for (const trigger of this.triggers) {
+      // A latch shared with a spot's other group must also clear while this one is not yet open.
+      if (
+        trigger.kind === "rect" &&
+        !playerIntersectsSourceRect(view.x, view.y, trigger.rect) &&
+        !this.challengers.has(`${trigger.group.scene}:${trigger.group.room}:${trigger.group.group}`)
+      )
+        this.occupiedRects.delete(
+          `${trigger.group.scene}:${trigger.group.room}:${trigger.group.group}`,
+        );
       if (!this.dispatchable(trigger)) continue;
       if (trigger.kind === "rect") {
         const key = `${trigger.group.scene}:${trigger.group.room}:${trigger.group.group}`;
@@ -135,6 +148,24 @@ export class WorldEventDispatcher {
           inside = near || playerIntersectsSourceRect(view.x, view.y, trigger.rect);
         if (inside && !this.occupiedRects.has(key)) {
           this.occupiedRects.add(key);
+          // One spot, one latch: two divine-beast rooms guard a spot's first meeting and its retry
+          // with a single flag (Linh Quang Lộc 10:11 g0/g1, XhtC1 `legendaryTriggerLatched`;
+          // Tương Quân Giải 10:0 g1/g3, XhtC3 `guardianTriggerLatched`), so the retry only fires
+          // once the hero has stepped off and come back. Elsewhere (1:0's notices) a follow-up on
+          // the same rect still takes the next tick, as there.
+          const sharedLatch = trigger.group.scene === 10 && (trigger.group.room === 0 || trigger.group.room === 11);
+          for (const other of sharedLatch ? this.triggers : [])
+            if (
+              other.kind === "rect" &&
+              other !== trigger &&
+              other.rect.x === trigger.rect.x &&
+              other.rect.y === trigger.rect.y &&
+              other.rect.width === trigger.rect.width &&
+              other.rect.height === trigger.rect.height
+            )
+              this.occupiedRects.add(
+                `${other.group.scene}:${other.group.room}:${other.group.group}`,
+              );
           return { kind: "event", trigger };
         }
         // A retired (op42) group stays dispatchable, so the rect only arms again once the
@@ -144,7 +175,11 @@ export class WorldEventDispatcher {
         const actor = view.actorAt(trigger.actorId);
         if (!actor) continue;
         if (view.activation) {
-          if (playerInteractsActor(view.x, view.y, view.direction, actor))
+          if (
+            view.actorActivation?.(trigger.actorId) ??
+            view.facesActor?.(trigger.actorId) ??
+            playerInteractsActor(view.x, view.y, view.direction, actor)
+          )
             return { kind: "event", trigger };
           continue;
         }
@@ -178,7 +213,9 @@ export class WorldEventDispatcher {
           target &&
           switchActor &&
           (target.x !== trigger.gateX || target.y !== trigger.gateY) &&
-          playerInteractsActor(view.x, view.y, view.direction, switchActor)
+          (view.actorActivation?.(trigger.triggerActor) ??
+            view.facesActor?.(trigger.triggerActor) ??
+            playerInteractsActor(view.x, view.y, view.direction, switchActor))
         )
           return { kind: "event", trigger };
       }

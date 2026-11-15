@@ -1,4 +1,12 @@
 import { AccountError, accountMessage } from "../account/AccountService";
+import { installKind, onInstallChange, promptInstall } from "./InstallPrompt";
+import { showIosInstallGuide } from "./IosInstallGuide";
+
+/** What the guide says where the page cannot open an install dialog itself. */
+const INSTALL_STEPS = {
+  inapp:
+    "Ứng dụng này không cho cài game. Nhấn <b>⋯</b> ở góc màn hình, chọn <b>Mở bằng trình duyệt</b> (Chrome hoặc Safari), rồi nhấn lại nút <b>Thêm game vào màn hình chính</b>.",
+};
 
 /** What the login panel's buttons reach in the app. */
 export type LoginHandlers = {
@@ -22,6 +30,7 @@ const ICONS = {
   sound: `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 9h4l5-4v14l-5-4H4z"/><path class="wave" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/><path class="cross" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M16 9.5l5 5M21 9.5l-5 5"/></svg>`,
   close: `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>`,
   user: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="2" d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1z"/></svg>`,
+  phone: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 8.5v6M9 11.5h6"/></svg>`,
   lock: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="2" d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/><circle cx="12" cy="15.5" r="1.5" fill="currentColor"/></svg>`,
 };
 
@@ -47,7 +56,13 @@ const html = `
       <button type="submit" class="primary">Đăng nhập</button>
       <button type="button" class="secondary" data-act="switch">Đăng ký</button>
       <span class="login-rule"></span>
+      <button type="button" class="install-link" data-act="install" hidden>${ICONS.phone}<span>Thêm game vào màn hình chính</span></button>
     </form>
+    <div class="login-install" hidden>
+      <h2>Thêm vào màn hình chính</h2>
+      <p class="install-steps"></p>
+      <button type="button" class="secondary" data-act="closeInstall">Đã hiểu</button>
+    </div>
     <div class="login-settings" hidden>
       <h2>Cài đặt</h2>
       <label class="setting">Âm lượng
@@ -111,6 +126,8 @@ export class LoginOverlay {
       for (const field of ["password", "confirm"]) this.input(field).maxLength = 128;
     }
     this.setMode("login");
+    this.syncInstall();
+    onInstallChange(() => this.syncInstall());
   }
 
   show(): void {
@@ -130,6 +147,7 @@ export class LoginOverlay {
   hide(): void {
     this.root.hidden = true;
     this.settings.hidden = true;
+    this.installGuide.hidden = true;
     (document.activeElement as HTMLElement | null)?.blur?.();
   }
 
@@ -143,8 +161,11 @@ export class LoginOverlay {
       this.message("Hãy liên hệ quản trị viên để lấy lại mật khẩu.", "info");
     else if (act === "settings") {
       this.syncSettings();
+      this.installGuide.hidden = true;
       this.settings.hidden = !this.settings.hidden;
     } else if (act === "closeSettings") this.settings.hidden = true;
+    else if (act === "install") this.install();
+    else if (act === "closeInstall") this.installGuide.hidden = true;
     else if (act === "sound") {
       this.handlers.muted.toggle();
       this.syncSettings();
@@ -198,6 +219,33 @@ export class LoginOverlay {
     this.input("password").autocomplete = register ? "new-password" : "current-password";
     this.input("confirm").value = "";
     this.message("", "info");
+  }
+
+  private get installGuide(): HTMLElement {
+    return this.root.querySelector<HTMLElement>(".login-install")!;
+  }
+
+  private install(): void {
+    const kind = installKind();
+    if (kind === "prompt") {
+      void promptInstall()
+        .then((outcome) => {
+          if (outcome === "accepted")
+            this.message("Đã thêm! Lần sau mở game từ biểu tượng VQSV.", "info");
+        })
+        .catch(() => {});
+    } else if (kind === "ios") {
+      this.settings.hidden = true;
+      showIosInstallGuide();
+    } else if (kind === "inapp") {
+      this.settings.hidden = true;
+      this.root.querySelector(".install-steps")!.innerHTML = INSTALL_STEPS.inapp;
+      this.installGuide.hidden = false;
+    }
+  }
+
+  private syncInstall(): void {
+    this.root.querySelector<HTMLElement>("[data-act=install]")!.hidden = installKind() === "none";
   }
 
   private syncSettings(): void {

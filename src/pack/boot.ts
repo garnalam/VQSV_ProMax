@@ -12,6 +12,8 @@ import type { Pack } from "./Pack";
 export type BootAssets = {
   logo: HTMLImageElement;
   menuBackground: HTMLImageElement;
+  /** The landscape APK's 320x240 title picture (`tex/menu.mid`). */
+  menuBackgroundLand: HTMLImageElement;
   menuParticles: HTMLImageElement;
   panelFont: PanelFontRenderer;
   /** The original game font (font.bin), used wherever the Java rebuild drew with a system font. */
@@ -22,6 +24,8 @@ export type BootAssets = {
   npcEnemyLayout: SourceUiLayout;
   dialogLayout: SourceUiLayout;
   layouts: Map<string, SourceUiLayout>;
+  /** The landscape APK's layouts (320x240) for the screens already laid out on them. */
+  landLayouts: Map<string, SourceUiLayout>;
   effects: Map<string, HTMLImageElement>;
   statusIcons: Map<string, HTMLImageElement>;
   /** `NguyenMocRoutePresentationPolicy.backgroundImage` strips by pack entry name (`backpic`). */
@@ -41,6 +45,7 @@ export async function loadBootAssets(pack: Pack): Promise<BootAssets> {
   const [
     logo,
     menuBackground,
+    menuBackgroundLand,
     menuParticles,
     cellSprites,
     effectNames,
@@ -52,6 +57,7 @@ export async function loadBootAssets(pack: Pack): Promise<BootAssets> {
   ] = await Promise.all([
     pack.image("brand.logo"),
     pack.image("brand.title-background"),
+    pack.image("brand.title-background-land"),
     pack.image("brand.title-particles"),
     Promise.all(pack.cellSprites().map((sprite) => pack.cellSet(sprite))),
     Promise.resolve(pack.names("effect")),
@@ -84,6 +90,15 @@ export async function loadBootAssets(pack: Pack): Promise<BootAssets> {
     layouts = new Map(
       layoutNames.map((name, index) => [name, new SourceUiLayout(layoutDocuments[index])]),
     ),
+    landLayoutNames = pack.names("ui-layout-land"),
+    landLayoutDocuments = await Promise.all(
+      landLayoutNames.map((name) =>
+        pack.json<ConstructorParameters<typeof SourceUiLayout>[0]>(`ui-layout-land.${name}`),
+      ),
+    ),
+    landLayouts = new Map(
+      landLayoutNames.map((name, index) => [name, new SourceUiLayout(landLayoutDocuments[index])]),
+    ),
     [eventRegistry, cauVongRegistry, routes] = await Promise.all([
       pack.json<StorySourceRegistryDocument>("story.event-scenes"),
       pack.json<StorySourceRegistryDocument>("story.cau-vong-event-scenes"),
@@ -92,6 +107,7 @@ export async function loadBootAssets(pack: Pack): Promise<BootAssets> {
   return {
     logo,
     menuBackground,
+    menuBackgroundLand,
     menuParticles,
     panelFont: new PanelFontRenderer(fontGlyphs, fontMetrics),
     sourceFont: new SourceFontRenderer(decodeSourceFont(sourceFontBytes)),
@@ -100,6 +116,7 @@ export async function loadBootAssets(pack: Pack): Promise<BootAssets> {
     npcEnemyLayout: layouts.get("npcEnemy")!,
     dialogLayout: layouts.get("dialog")!,
     layouts,
+    landLayouts,
     effects,
     statusIcons,
     backPics,

@@ -449,6 +449,20 @@ function roster(doc: CauVongPrepDocument, room: number, ctx: PrepContext): PrepA
 }
 
 /** The rooms' exits, checked before and after the step (`sideRoomExit`, `returnTo...`). */
+/** The North Sea's office: its west door leads back to the yard, its north door to the dock (28). */
+const NORTH_SEA_OFFICE_ROOM = 27;
+/**
+ * The yard's east doors (2's native rows 2 and 3, tiles 27,17 and 27,18) into 27. Each lands one
+ * tile inside 27's west door (its rows 0 and 1, tiles 0,30 and 0,29), facing east, as
+ * `CauVongFourGateRoutes.exit` places a native door's arrival.
+ *
+ * Bug fix: Java's `tickAcademy` checks only the yard's hand-written doors, never these two, so the
+ * office (27), the only way to reach the North Sea, could not be entered.
+ */
+const ACADEMY_OFFICE_DOORS: readonly (readonly [number, number, number, number])[] = [
+  [27, 17, 30, 619],
+  [27, 18, 30, 599],
+];
 export function cauVongPrepExit(
   doc: CauVongPrepDocument,
   room: number,
@@ -466,15 +480,37 @@ export function cauVongPrepExit(
       for (const [x, y] of doc.academyCityDoors)
         if (playerSourcePointInRect(player.x, player.y, { x, y, width: 19, height: 19 }))
           return exit(CITY_ROOM, 482, 136);
+      for (const [tx, ty, x, y] of ACADEMY_OFFICE_DOORS)
+        if (
+          playerSourcePointInRect(player.x, player.y, {
+            x: tx * 20,
+            y: ty * 20,
+            width: 20,
+            height: 20,
+          })
+        )
+          return { kind: "exit", room: NORTH_SEA_OFFICE_ROOM, x, y, dir: 1 };
       return null;
     default:
       return null;
   }
 }
+/**
+ * Where the city's café door (`citySideEntrance`, 310..430 × 424..472 in 1) lands in 44.
+ *
+ * Bug fix: Java's (240, 500) is under the café's south wall (its floor ends at y 479), in the closed
+ * black strip between the two door corridors (x 40..79 and 440..479). That strip is walkable, so
+ * the hero stood outside the room and the first step into its exit row (y 520+) threw him back to
+ * the city. He now lands on the floor just inside the corridor under the door he walked through:
+ * 1's door tiles 16 and 20 (x 320 and 400) are 44's west and east doors.
+ */
+export function cauVongCafeArrival(cityX: number): { x: number; y: number } {
+  return { x: cityX < 370 ? 60 : 460, y: 465 };
+}
 /** `citySideEntrance`'s café door, ahead of the city's own exits. */
 export function cauVongPrepCityExit(player: { x: number; y: number }): PrepAction {
   return playerIntersectsSourceRect(player.x, player.y, { x: 310, y: 424, width: 120, height: 48 })
-    ? { kind: "exit", room: CAFE_ROOM, x: 240, y: 500 }
+    ? { kind: "exit", room: CAFE_ROOM, ...cauVongCafeArrival(player.x) }
     : null;
 }
 

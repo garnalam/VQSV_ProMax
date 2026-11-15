@@ -1,6 +1,9 @@
+import { cornerShift, fromUi, viewport } from "../../core/Viewport";
 import type { NpcServicesDocument } from "../world/NpcServices";
 import { WharfTravel } from "../world/WharfTravel";
 import { doubleBattleFallTicks } from "../battle/DoubleEventBattle";
+import { battlePanelPoint } from "../battle/BattleLandscape";
+import { worldPanelPoint } from "../world/WorldLandscape";
 import type { TaskOptionCatalog } from "../quest/TaskOption";
 import type { NpcService } from "../world/NpcServices";
 import {
@@ -58,13 +61,26 @@ import {
   type UnifiedBadgeRecord,
 } from "../record/RecordBook";
 
+import type { AdminGrant } from "../../account/AdminApi";
+import {
+  ADMIN_KIND_LABELS,
+  adminItemChoices,
+  adminSpeciesChoices,
+  experienceForLevels,
+  grantItem,
+  setCurrency,
+  ADMIN_BOSS_SPECIES,
+  type AdminItemChoice,
+  type AdminSpeciesChoice,
+} from "../admin/AdminTool";
+
 /** Special items `useSpecialBagRow` opens a Đồ giám page with. */
 const PETMAP_BOOK_SPECIAL = 5;
 const BADGE_CASE_SPECIAL = 6;
 import type { ChoiceRow } from "../../rendering/SourceChoiceRenderer";
 import type { PetSkillRow, PetSkillSheet } from "../world/WorldPanel";
 import { EvolutionSession } from "../pet/EvolutionSession";
-import type { EvolutionCatalog } from "../pet/Evolution";
+import { repairEvolvedSprite, type EvolutionCatalog } from "../pet/Evolution";
 import { QualityUpgradeSession } from "../pet/QualityUpgradeSession";
 import { ROLL_BOUND } from "../pet/QualityUpgrade";
 import {
@@ -94,6 +110,7 @@ import {
 import { openingBranchRows, openingQuestDetail } from "../world/CauVongOpening";
 import { EVENT_STATE_COMPLETE } from "../world/EventStateLedger";
 import { WorldRuntime, type WorldAction, type WorldSources } from "../world/WorldRuntime";
+import { worldPointerMask } from "../world/WorldPointer";
 import {
   stockOffers,
   type ShopStockDocument,
@@ -111,10 +128,21 @@ import {
 } from "../meta/RegionalChallenges";
 import { claimBattlePassReward, purchaseBattlePassVip } from "../meta/BattlePass";
 import {
+  craftTowerHearts,
+  createTowerState,
+  finishTowerBattle,
+  nurtureTowerPet,
+  sweepTower,
+  towerCanChallenge,
+  towerFloorStatus,
+  towerSweepOffer,
+  type TowerContent,
+  type TowerState,
+} from "../meta/BondingTower";
+import {
   claimDailyBadges,
   dailyBadgeStatus,
   depositPet,
-  petBankCapacity,
   purchasePetBankExpansion,
   releaseBankPet,
   withdrawPet,
@@ -126,6 +154,7 @@ import {
   eggHatchResultText,
   eggReady,
   hatchEgg,
+  previewDraw,
   selectForIncubation,
   type HatchContext,
 } from "../campaign/EggService";
@@ -165,13 +194,18 @@ export type GameplaySources = {
   badgeCatalog?: BadgeCatalogDocument;
   unifiedBadges?: readonly UnifiedBadgeRecord[];
   metaSystems?: MetaSystemsDocument;
+  bondingTower?: TowerContent;
   giftCodes?: GiftCodeDocument;
 };
 
-/** `TextBox.dialog`: pages of four lines, as wide as `dialog.ui` widget 14 (230 px). */
+/**
+ * `TextBox.dialog`: pages of four lines, as wide as `dialog.ui` widget 14 (230 px); in landscape
+ * the box spans the canvas, so its lines are as wide as the canvas less the margins.
+ */
 function dialogPagination(boot: BootAssets): (tagged: string) => string[] {
   const width = boot.dialogLayout.w(14, 230);
-  return (tagged) => boot.textLayout.paginate(tagged, width, 4);
+  return (tagged) =>
+    boot.textLayout.paginate(tagged, viewport.landscape ? viewport.width - 10 : width, 4);
 }
 
 /** Each wharf captain's room with his dock's routes, for the director's way-out graph. */
@@ -200,6 +234,8 @@ export function gameplaySources(assets: GameAssets, boot: BootAssets): GameplayS
       animationTicks: (sprite, state) => assets.animationTicks(sprite, state),
       collisionMask: (sprite, state, tick) => assets.collisionMask(sprite, state, tick),
       hitMask: (sprite, state, tick) => assets.hitMask(sprite, state, tick),
+      pointerMask: (actor) =>
+        worldPointerMask(actor, assets.frame(actor.sprite, actor.state, actor.animationTick)),
       dialogPages: dialogPagination(boot),
       petStats: assets.petStats,
       battleRules: assets.battleRules,
@@ -242,6 +278,7 @@ export function gameplaySources(assets: GameAssets, boot: BootAssets): GameplayS
     badgeCatalog: assets.badgeCatalog,
     unifiedBadges: assets.unifiedBadges,
     metaSystems: assets.metaSystems,
+    bondingTower: assets.bondingTower,
     giftCodes: assets.giftCodes,
     sceneRoom: (scene, room) => assets.getRoom(scene, room),
     worldContract: assets.worldContract,
@@ -262,6 +299,18 @@ export type GameplayHooks = {
   speedX2?: { enabled: () => boolean; toggle: () => void };
   /** JavaSE `settingsLevel` (0..3), backed by the app audio mixer. */
   volume?: { level: () => number; setLevel: (level: number) => void };
+  /** The signed-in account is an admin: the game menu lists "Admin Tool", which opens it. */
+  admin?: { enabled: () => boolean; open: () => void };
+};
+
+/** What the Admin Tool's lists show. */
+export type AdminView = {
+  items: AdminItemChoice[];
+  species: AdminSpeciesChoice[];
+  pets: { slot: number; name: string; level: number }[];
+  money: number;
+  badges: number;
+  bank: { used: number; capacity: number };
 };
 
 /**
@@ -361,6 +410,10 @@ export class GameplayHost {
         )
       : null;
     if (sources.areaMaps) this.panel.areaMap = new AreaMapView(sources.areaMaps);
+    this.panel.adminSource = {
+      enabled: () => this.hooks.admin?.enabled() ?? false,
+      open: () => this.hooks.admin?.open(),
+    };
     this.panel.systemSource = {
       volumeLevel: () => this.hooks.volume?.level() ?? 0,
       setVolumeLevel: (level) => this.hooks.volume?.setLevel(level),
@@ -436,7 +489,9 @@ export class GameplayHost {
             : undefined,
           services = this.sources.world.battle;
         return world && pet && rule && services
-          ? new EvolutionSession(index, pet, rule, world.bag.materials, services)
+          ? new EvolutionSession(index, pet, rule, world.bag.materials, services, (species) =>
+              world.collection.markCollected(species),
+            )
           : null;
       },
       bankCards: () => {
@@ -451,13 +506,19 @@ export class GameplayHost {
         if (!world) return "invalid";
         // `equipmentEngine.applySelection`: the deposited pet's equipment goes back to the bag.
         const held = world.pets[index]?.heldEquipmentId ?? -1,
-          result = depositPet(world.pets, world.campaign, index);
+          result = depositPet(world.pets, world.campaign, index, world.petBankCapacity());
         if (result === "deposited" && held >= 0 && !world.bag.equipment.includes(held))
           world.bag.equipment.push(held);
+        // Hoàng Kim Chương rank 2 raises a deposited pet to 5★ at once.
+        if (result === "deposited") world.synchronizeGoldenBankReward();
         return result;
       },
-      bankWithdraw: (index) =>
-        this.world ? withdrawPet(this.world.pets, this.world.campaign, index) : "invalid",
+      bankWithdraw: (index) => {
+        const world = this.world;
+        if (!world) return "invalid";
+        world.synchronizeGoldenBankReward();
+        return withdrawPet(world.pets, world.campaign, index);
+      },
       bankReleaseProtected: (index) => {
         const pet = this.world?.campaign.petBank[index];
         return !!pet && (this.sources.petSpecies?.divine(pet.speciesId) ?? false);
@@ -574,9 +635,12 @@ export class GameplayHost {
       expandBank: () => {
         const world = this.world;
         if (!world) return "Cần 10 Huy hiệu để mở thêm 100 ô kho Pet.";
+        // Kim Diễm's reward already opened 1.000 slots: nothing left to buy.
+        if (world.kimDiemRewardClaimed())
+          return `Kho Pet đã đạt tối đa ${world.petBankCapacity()} ô.`;
         const result = purchasePetBankExpansion(world.campaign, world.currency);
         return result === "success"
-          ? `Mở rộng thành công. Kho Pet hiện có ${petBankCapacity(world.campaign.petBankExpansionPurchases)} ô.`
+          ? `Mở rộng thành công. Kho Pet hiện có ${world.petBankCapacity()} ô.`
           : result === "max"
             ? "Kho Pet đã đạt tối đa 400 ô."
             : "Cần 10 Huy hiệu để mở thêm 100 ô kho Pet.";
@@ -679,6 +743,101 @@ export class GameplayHost {
         return true;
       },
     };
+    this.panel.towerSource = {
+      view: () => {
+        const world = this.world,
+          content = this.sources.bondingTower;
+        if (!world || !content) return undefined;
+        const state = world.meta.tower ?? createTowerState(),
+          now = Date.now(),
+          offer = towerSweepOffer(state, now),
+          last = state.last,
+          prizes = last?.hearts || last?.fragments;
+        return {
+          highest: state.highest,
+          hearts: state.hearts,
+          fragments: state.fragments,
+          floors: content.floors.map((floor) => ({
+            ...floor,
+            team: floor.team.map((id) => ({ id, name: content.pets[id]?.name ?? `Pet ${id}` })),
+            status: towerFloorStatus(state, floor.floor, now),
+          })),
+          pets: world.pets.map((pet, index) => ({
+            index,
+            name:
+              content.pets[pet.speciesId]?.name ??
+              this.sources.world.petStats.speciesRow(pet.speciesId)?.name ??
+              `Pet ${pet.speciesId}`,
+            level: pet.level,
+            quality: pet.quality,
+            bond: pet.towerBond ?? 0,
+            visualId: pet.visualSpriteId,
+          })),
+          sweep: {
+            used: offer.used,
+            limit: offer.limit,
+            nextCost: offer.cost,
+            group: offer.floors.length
+              ? { start: offer.end - 4, end: offer.end, count: offer.floors.length }
+              : undefined,
+            canSweep:
+              offer.cost !== null && offer.floors.length > 0 && world.currency.badges >= offer.cost,
+            detail:
+              offer.cost === null
+                ? "Đã hết lượt quét hôm nay."
+                : state.highest < 5
+                  ? "Vượt 5 tầng để mở quét tầng."
+                  : !offer.floors.length
+                    ? "Hôm nay đã nhận hết thưởng."
+                    : world.currency.badges < offer.cost
+                      ? "Không đủ huy hiệu."
+                      : offer.cost === 0
+                        ? "Lượt này miễn phí."
+                        : `Lượt này tốn ${offer.cost} huy hiệu.`,
+          },
+          last: last
+            ? last.sweep
+              ? `Quét đến tầng ${last.floor}: +${last.fragments} mảnh, +${last.hearts} tim.`
+              : last.won
+                ? prizes
+                  ? `Thắng tầng ${last.floor}: +${last.fragments} mảnh, +${last.hearts} tim.`
+                  : `Đã thắng luyện tập tầng ${last.floor}.`
+                : `Chưa vượt tầng ${last.floor}.`
+            : undefined,
+        };
+      },
+      challenge: (number) => {
+        const world = this.world,
+          content = this.sources.bondingTower,
+          floor = content?.floors[number - 1];
+        if (!world || !content || !floor) return "Không tìm thấy tầng.";
+        if (!this.canOpenPanel(world) || this.mapLoadingActive) return "Tháp chưa sẵn sàng.";
+        const state = world.meta.tower ?? createTowerState();
+        if (!towerCanChallenge(state, number)) return "Tầng chưa mở.";
+        if (!world.pets.some((pet) => (pet.currentHp ?? pet.maxHp ?? 1) > 0))
+          return "Cần có pet còn sức trong đội.";
+        if (floor.double && world.pets.length < 2) return "Tầng đánh đôi cần ít nhất 2 pet.";
+        if (
+          !world.startBondingTower(floor, content.pets, (won) =>
+            finishTowerBattle(state, number, won, Date.now()),
+          )
+        )
+          return "Chưa thể khiêu chiến.";
+        world.meta.tower = state;
+        return null;
+      },
+      craft: (count) => this.mutateTower((_, state) => craftTowerHearts(state, count)),
+      nurture: (index, count) =>
+        this.mutateTower((world, state) => {
+          const pet = world.pets[index],
+            services = world.battleServices;
+          if (!pet || !services) return "Hãy chọn một pet trong đội.";
+          const baseHp = services.partyMember({ ...pet, towerBond: 0 }).stats.hp;
+          return nurtureTowerPet(state, pet, count, baseHp);
+        }),
+      sweep: () =>
+        this.mutateTower((world, state) => sweepTower(state, world.currency, Date.now())),
+    };
     this.panel.giftCodeSource = {
       redeem: (code) => {
         const world = this.world;
@@ -757,12 +916,14 @@ export class GameplayHost {
             })
           : { owned: 0, collected: 0, rare: 0, divine: 0, badges: 0, playTimeMillis: 0 };
       },
-      petmapRows: (tab) =>
+      petmapRows: (tab, family, variant) =>
         this.world
           ? petmapRows(
               (id) => this.sources.world.petStats.speciesRow(id),
               this.world.collection,
               tab,
+              family,
+              variant,
             )
           : [],
       badges: () =>
@@ -915,6 +1076,99 @@ export class GameplayHost {
     } else if (!this.panel.taskOptionOpen) option.answer = this.panel.takeTaskOptionAnswer() ?? 1;
   }
 
+  /** Admin Tool: what its lists show, or null while no world is on screen. */
+  adminView(): AdminView | null {
+    const world = this.world;
+    if (!world) return null;
+    const catalog = this.sources.world.bagItems,
+      petStats = this.sources.world.petStats;
+    return {
+      items: catalog
+        ? adminItemChoices(catalog, this.sources.world.campaignSystems?.eggs ?? [])
+        : [],
+      species: adminSpeciesChoices(petStats.allSpecies()),
+      pets: world.pets.map((pet, slot) => ({
+        slot,
+        name: petStats.speciesRow(pet.speciesId)?.name ?? `Pet ${pet.speciesId}`,
+        level: pet.level,
+      })),
+      money: world.currency.money,
+      badges: world.currency.badges,
+      bank: {
+        used: world.campaign.petBank.length,
+        capacity: world.petBankCapacity(),
+      },
+    };
+  }
+
+  /**
+   * Admin Tool: apply a grant the server approved, save, and say what happened. Only grants from
+   * `AdminApi.authorize` reach here; the lists' own caps (99 per bag stack, one copy of a piece of
+   * equipment, the bank's capacity) still hold.
+   */
+  applyAdminGrant(grant: AdminGrant): string {
+    const world = this.world;
+    if (!world) return "Chỉ dùng được khi đang ở bản đồ.";
+    const petStats = this.sources.world.petStats;
+    let message: string;
+    switch (grant.action) {
+      case "addItem": {
+        const added = grantItem(
+          {
+            items: world.inventory,
+            equipment: world.bag.equipment,
+            materials: world.bag.materials,
+            specials: world.bag.specials,
+          },
+          grant.kind,
+          grant.id,
+          grant.quantity,
+        );
+        const name =
+          this.adminView()?.items.find((item) => item.kind === grant.kind && item.id === grant.id)
+            ?.name ?? `${ADMIN_KIND_LABELS[grant.kind]} #${grant.id}`;
+        if (!added) return `${name}: lưng bao đã đầy hoặc đã có, không thêm được.`;
+        message = `Đã thêm ${added} × ${name} vào lưng bao.`;
+        break;
+      }
+      case "setCurrency":
+        setCurrency(world.currency, grant.money, grant.badges);
+        message = `Tiền: ${world.currency.money}, huy hiệu: ${world.currency.badges}.`;
+        break;
+      case "buffPet": {
+        const pet = world.pets[grant.slot];
+        if (!pet) return "Không có pet ở ô này.";
+        const before = pet.level,
+          gained = world.addAdminExperience(grant.slot, experienceForLevels(pet, grant.levels));
+        if (gained <= 0) return "Pet đã ở cấp tối đa.";
+        message = `${petStats.speciesRow(pet.speciesId)?.name ?? "Pet"}: cấp ${before} → ${pet.level}.`;
+        break;
+      }
+      case "addPet": {
+        if (ADMIN_BOSS_SPECIES.has(grant.speciesId)) return "Không được thêm pet boss.";
+        const bank = world.campaign.petBank;
+        if (bank.length >= world.petBankCapacity()) return "Ngân hàng sủng vật đã đầy.";
+        const pet = world.createAdminPet(grant.speciesId, grant.nature, BigInt(grant.talentSeed));
+        if (!pet) return "Không tạo được pet này.";
+        pet.slot = bank.length;
+        bank.push(pet);
+        world.synchronizeGoldenBankReward();
+        world.collectOwned(pet);
+        const services = this.sources.world.battle,
+          talent = services
+            ? worldPetCard(pet, pet.slot ?? 0, services).pet?.talent?.name
+            : undefined;
+        message =
+          `Đã thêm ${petStats.speciesRow(grant.speciesId)?.name ?? "pet"} vào ngân hàng sủng vật` +
+          (grant.shiny ? ` (shiny ${grant.nature})` : "") +
+          (talent ? `, thiên phú: ${talent}.` : ".");
+        break;
+      }
+    }
+    this.saves.save(this.snapshot(world));
+    return message;
+  }
+
   private openPendingSkillPanel(): void {
     const world = this.story.worldActive ? this.world : null;
     if (
@@ -1052,14 +1306,20 @@ export class GameplayHost {
       // the six battle command buttons along the same bottom band.
       const battle = this.activeBattle;
       if (battle) {
-        battle.pointer(x, y, world.inventory);
+        const at = battlePanelPoint(battle, x, y);
+        battle.pointer(at.x, at.y, world.inventory);
+        return [];
+      }
+      if (world.battleVisible && world.bondingTowerBattleActive && world.doubleBattle) {
+        world.doubleBattle.pointer(x, y);
         return [];
       }
       if (this.panel.visible) {
         // Click and hover must resolve through one table. Previously click knew these aliases while
         // hover looked up the mode name directly, leaving most service/menu screens mouse-inert.
         const layout = this.panelPointerLayout();
-        if (layout) this.panel.click(layout, x, y);
+        const at = worldPanelPoint(this.panel, x, y);
+        if (layout) this.panel.click(layout, at.x, at.y);
         return [];
       }
       // `CauVongSummoningMinigame.pointer`: an open summon-room board owns the whole screen.
@@ -1075,7 +1335,8 @@ export class GameplayHost {
       // `WorldUi.buttonAt` consumes a HUD press before the actor pointer, even when the
       // source's canOpenSourcePanel() gate rejects it.
       const layout = this.sources.layouts.get("world"),
-        button = layout ? world.hud.buttonAt(layout, x, y) : "none";
+        canvas = fromUi(x, y),
+        button = layout ? world.hud.buttonAt(layout, canvas.x, canvas.y, cornerShift) : "none";
       if (button !== "none") {
         this.pressHudButton(world, button);
         return [];
@@ -1087,7 +1348,16 @@ export class GameplayHost {
       this.hooks.onExit();
       return [];
     }
-    if (this.prelude?.textKind === "dialog" && x >= 86 && x <= 154 && y >= 235 && y <= 253) {
+    // The "Bỏ qua" plate rides the dialog box, which landscape lays against the canvas bottom.
+    const plate = fromUi(x, y),
+      plateY = plate.y - cornerShift("bl").y;
+    if (
+      this.prelude?.textKind === "dialog" &&
+      plate.x >= 86 &&
+      plate.x <= 154 &&
+      plateY >= 235 &&
+      plateY <= 253
+    ) {
       this.story.requestDialogueSkip();
       return [];
     }
@@ -1104,12 +1374,14 @@ export class GameplayHost {
     if (this.mapLoadingActive) return false;
     const battle = this.activeBattle;
     if (battle) {
-      if (!battle.pressScrollbar(x, y)) return false;
+      const at = battlePanelPoint(battle, x, y);
+      if (!battle.pressScrollbar(at.x, at.y)) return false;
       if (battle.scrollbarDragging) this.capture = "battle";
       return true;
     }
     if (this.panelOpen) {
-      if (!this.panel.pressScrollbar(x, y)) return false;
+      const at = worldPanelPoint(this.panel, x, y);
+      if (!this.panel.pressScrollbar(at.x, at.y, this.panelPointerLayout())) return false;
       if (this.panel.scrollbarDragging) this.capture = "panel";
       return true;
     }
@@ -1121,23 +1393,26 @@ export class GameplayHost {
     if (this.mapLoadingActive) return;
     if (this.capture === "battle") {
       const battle = this.activeBattle;
-      if (battle?.scrollbarDragging) battle.dragScrollbar(y);
+      if (battle?.scrollbarDragging) battle.dragScrollbar(battlePanelPoint(battle, x, y).y);
       else this.capture = null;
       return;
     }
     if (this.capture === "panel") {
-      if (this.panel.scrollbarDragging) this.panel.dragScrollbar(y);
+      if (this.panel.scrollbarDragging)
+        this.panel.dragScrollbar(worldPanelPoint(this.panel, x, y).y);
       else this.capture = null;
       return;
     }
     const battle = this.activeBattle;
     if (battle) {
-      battle.hover(x, y);
+      const at = battlePanelPoint(battle, x, y);
+      battle.hover(at.x, at.y);
       return;
     }
     if (this.panelOpen) {
       const layout = this.panelPointerLayout();
-      if (layout) this.panel.hover(layout, x, y);
+      const at = worldPanelPoint(this.panel, x, y);
+      if (layout) this.panel.hover(layout, at.x, at.y);
     }
   }
 
@@ -1193,6 +1468,25 @@ export class GameplayHost {
     else if (this.panelOpen) this.panel.wheel(steps);
   }
 
+  /**
+   * Web only: the page is being hidden (app switched, screen locked), and a phone may kill the tab
+   * without warning. Saves like an autosave, but only while the hero stands free with nothing open,
+   * so the save resumes exactly where play stopped. True when a save was queued.
+   */
+  saveBeforeSuspend(): boolean {
+    const world = this.world;
+    if (!world || !this.story.worldActive || this.mapLoadingActive || this.panel.visible)
+      return false;
+    if (!world.restingForSuspendSave) return false;
+    this.saves.save(this.snapshot(world));
+    return true;
+  }
+
+  /** A list a finger may swipe is on screen: the battle's, or an open panel (web touch only). */
+  get swipeScrollable(): boolean {
+    return !this.mapLoadingActive && (this.activeBattle !== null || this.panelOpen);
+  }
+
   /** The battle that owns the pointer: the world's, while its screen is up. */
   private get activeBattle() {
     const world = this.story.worldActive ? this.world : null;
@@ -1242,11 +1536,17 @@ export class GameplayHost {
 
   /**
    * `mainTaskCursor`: the story director's task when it runs, else the task index the scripts
-   * announced through op45.
+   * announced through op45. Once op45 has announced the last task (48), which is also what opens
+   * the Cầu Vồng portal (8:1, `ROOM_PORTALS`), the card follows it as JavaSE does
+   * (`session.story.mainTaskProgress`): a director left behind cannot hide the Cầu Vồng rows from a
+   * hero already walking there.
    */
   private mainTaskIndex(): number {
-    const world = this.world;
-    return this.director ? this.director.mainTask : (world?.questState.mainTaskProgress ?? -1);
+    const announced = this.world?.questState.mainTaskProgress ?? -1;
+    if (!this.director) return announced;
+    return announced >= OPENING_QUEST_TASK
+      ? Math.max(this.director.mainTask, announced)
+      : this.director.mainTask;
   }
 
   /** What `task.ui` lists: `mTask.mid` up to the current task, and the branch tasks held. */
@@ -1258,6 +1558,13 @@ export class GameplayHost {
       branches: this.director?.log.branchTasks() ?? [],
       openingRows: this.openingQuestRows(),
       openingBranchRows: this.openingBranchQuestRows(),
+      goldenCollection: this.world
+        ? {
+            species: this.world.collection.allCollectedSpeciesCount(),
+            shiny: this.world.collection.goldenShinyCollectedCount(),
+            rank: this.world.flags.badges.goldenTier(),
+          }
+        : undefined,
     };
   }
   /** `openingQuestRows` tab 1 from task 48 on: the Cầu Vồng branch rows. */
@@ -1413,15 +1720,18 @@ export class GameplayHost {
         egg,
         roster: world.pets,
         bank: world.campaign.petBank,
-        bankCapacity: petBankCapacity(world.campaign.petBankExpansionPurchases),
+        bankCapacity: world.petBankCapacity(),
         collected: (id) => world.collection.collected(id),
-        create: (id) => world.createHatchedPet(id),
+        // ProMax: an egg hatches shiny 2% of the time (30% with Long Vương Hộ Phù held).
+        create: (id) =>
+          world.createHatchedPet(id, 5, (lane, bound) => previewDraw(egg, lane, bound)),
         specials: world.bag.specials,
       },
       result = hatchEgg(context, kind, systems.eggTiers ?? { rates: [], species: [] });
     if (result.outcome === "not-ready") return EGG_TEXT.hatchNotReady;
     if (result.outcome !== "hatched") return null;
-    world.collection.markCollected(result.speciesId);
+    world.collection.markCollected(result.speciesId, result.nature, result.shinyColor);
+    world.synchronizeGoldenBankReward();
     world.recordBattlePassEvent("EGG_HATCHED");
     const name =
       this.sources.world.petStats.speciesRow(result.speciesId)?.name ?? `Pet ${result.speciesId}`;
@@ -1511,19 +1821,25 @@ export class GameplayHost {
     const bag = this.sources.world.bagItems,
       mine = world.pets[index]?.heldEquipmentId ?? -1;
     if (!bag) return [];
-    return this.ownedEquipment(world).map((id) => {
-      // `sourceEquipmentItem`: the unified record first (Cầu Vồng pieces included).
-      const row = bag.equipment(id),
-        worn = world.pets.some((pet) => (pet.heldEquipmentId ?? -1) === id);
-      return {
-        id,
-        name: row?.name ?? `Trang sức ${id}`,
-        value: mine === id ? "Đã mang theo" : worn ? "Bị mang theo" : "",
-        description: row?.description ?? "",
-        icon: row?.icon ?? 0,
-        ...(row?.iconKey ? { iconKey: row.iconKey } : {}),
-      };
-    });
+    // Bug fix: the team charms (Bùa hộ trận 5037-5057) share the equipment list with the pet pieces,
+    // so Java offered them here too, where wearing one did nothing — they work only from the charm
+    // panel. They are left out, except one a pet already wears from an old save so it can come off.
+    const charms = this.sources.world.rainbowCharms;
+    return this.ownedEquipment(world)
+      .filter((id) => !charms?.byRuntimeId(id) || id === mine)
+      .map((id) => {
+        // `sourceEquipmentItem`: the unified record first (Cầu Vồng pieces included).
+        const row = bag.equipment(id),
+          worn = world.pets.some((pet) => (pet.heldEquipmentId ?? -1) === id);
+        return {
+          id,
+          name: row?.name ?? `Trang sức ${id}`,
+          value: mine === id ? "Đã mang theo" : worn ? "Bị mang theo" : "",
+          description: row?.description ?? "",
+          icon: row?.icon ?? 0,
+          ...(row?.iconKey ? { iconKey: row.iconKey } : {}),
+        };
+      });
   }
 
   /**
@@ -1583,6 +1899,7 @@ export class GameplayHost {
       level: pet.level,
       spriteId: setup.spriteId ?? -1,
       nature: pet.nature,
+      shinyColor: pet.shinyColor,
       equipped: skills.filter((id) => id >= 0).map((id) => row(id, 0, false)),
       pool: entries.map((entry) =>
         row(entry[0], pools!.poolState(entry, skills, pet.level), true, entry),
@@ -1627,7 +1944,9 @@ export class GameplayHost {
       rule = pet ? this.sources.evolutions?.notice(pet.speciesId) : undefined,
       services = this.sources.world.battle;
     return pet && rule && services
-      ? new EvolutionSession(index, pet, rule, world.bag.materials, services)
+      ? new EvolutionSession(index, pet, rule, world.bag.materials, services, (species) =>
+          world.collection.markCollected(species),
+        )
       : null;
   }
 
@@ -1649,7 +1968,11 @@ export class GameplayHost {
         bank: world.campaign.petBank,
         equipment: world.bag.equipment,
         rules: {
-          formDistance: (a, b) => pools?.formDistance(a, b) ?? (a === b ? 0 : -1),
+          // JavaSE's table first; the evolution rules fill in the special forms it leaves out.
+          formDistance: (a, b) => {
+            const java = pools?.formDistance(a, b) ?? (a === b ? 0 : -1);
+            return java >= 0 ? java : (this.sources.evolutions?.formDistance(a, b) ?? -1);
+          },
           protectedPet: (pet) => pools?.releaseProtected(pet.speciesId) ?? false,
           maxHp: (pet) => services.partyMember(pet).stats.hp,
         },
@@ -1701,7 +2024,9 @@ export class GameplayHost {
    */
   pressRide(world: WorldRuntime): void {
     if (world.activeRideIndex >= 0) {
-      if (world.phase === "freeworld" || world.phase === "returnWorld") world.dismountRide();
+      // Web bug fix: not over the clouds, the water or the thorns of Cầu Vồng (`canLeaveRide`).
+      if ((world.phase === "freeworld" || world.phase === "returnWorld") && world.canLeaveRide(-1))
+        world.dismountRide();
       return;
     }
     if (!this.canOpenPanel(world) || this.panel.visible) return;
@@ -1734,6 +2059,15 @@ export class GameplayHost {
       save,
     );
     world.presentsPanels = true;
+    // Pets evolved by an older build kept their first form's sprite: give them their own back.
+    const evolutions = this.sources.evolutions,
+      services = this.sources.world.battle;
+    if (evolutions && services) {
+      const spriteOf = (speciesId: number) =>
+        services.partyMember({ speciesId, level: 1, quality: 1 }).spriteId;
+      for (const pet of [...world.pets, ...world.campaign.petBank])
+        repairEvolvedSprite(pet, evolutions, spriteOf);
+    }
     const fashion = this.sources.metaSystems?.fashion.records.find(
       (row) => row.key === world.meta.fashion.selected,
     );
@@ -1794,6 +2128,20 @@ export class GameplayHost {
       !world.raceBlocksPanel &&
       (world.phase === "freeworld" || world.phase === "returnWorld")
     );
+  }
+
+  private mutateTower(
+    action: (world: WorldRuntime, state: TowerState) => string | null,
+  ): string | null {
+    const world = this.world;
+    if (!world || !this.sources.bondingTower || !this.canOpenPanel(world) || this.mapLoadingActive)
+      return "Tháp chưa sẵn sàng.";
+    const state = world.meta.tower ?? createTowerState();
+    const error = action(world, state);
+    if (error) return error;
+    world.meta.tower = state;
+    this.saves.save(this.snapshot(world));
+    return null;
   }
 
   /** Java: `if (!panel.visible && keyBack && canOpenSourcePanel()) open; else if (visible) tick`. */

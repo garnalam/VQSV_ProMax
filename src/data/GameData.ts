@@ -94,7 +94,12 @@ export type PackSpeciesGrowth =
       fiveStarLevelOne: number[];
       fiveStarLevelFifty: number[];
     }
-  | { kind: "authored-flat"; record: PackSpeciesRecordIdentity; stats: number[] };
+  | {
+      kind: "authored-flat";
+      record: PackSpeciesRecordIdentity;
+      stats: number[];
+      levelAtFullStats?: number;
+    };
 
 /** Which branch of `BattleSpeciesRow.rawStat` resolves this species' own-form stat. */
 export type PackSpeciesStatPath =
@@ -507,6 +512,8 @@ export type PackDesignTraitBalance = {
   unit: string;
   limits: DesignTraitLimits;
   description: string;
+  /** Owner 2026-11-15: the same rule in plain words, shown to the player in place of `description`. */
+  summary?: string;
   matchesJavaExport: boolean;
   /** HV-01 / TL-01: the form characteristic a mutation pet fights with instead of its workbook row. */
   exclusiveTrait?: string;
@@ -514,6 +521,8 @@ export type PackDesignTraitBalance = {
   cooldownTurns?: number;
   /** TL-01: the control statuses that never take hold, by canonical name. */
   immuneStatuses?: string[];
+  /** Kim Chỉ Ốc (owner 2026-11-15): rounds on the field before its guard works, again after each entry. */
+  warmupRounds?: number;
 };
 
 /** The workbook's two ceiling policies, spelled out once in `limitsText` instead of 280 times. */

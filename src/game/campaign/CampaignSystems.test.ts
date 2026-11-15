@@ -14,6 +14,7 @@ import {
   eggDraw,
   hatchFromPool,
   hatchUnified,
+  rollHatchNature,
   type HatchContext,
 } from "./EggService";
 
@@ -30,8 +31,8 @@ describe("campaign foundation services", () => {
     const state = defaultCampaignState(7),
       currency = { badges: 20 },
       roster = [pet(1), pet(2, 0)];
-    expect(depositPet(roster, state, 0)).toBe("last-living");
-    expect(depositPet(roster, state, 1)).toBe("deposited");
+    expect(depositPet(roster, state, 0, 100)).toBe("last-living");
+    expect(depositPet(roster, state, 1, 100)).toBe("deposited");
     expect(state.petBank).toHaveLength(1);
     expect(withdrawPet(roster, state, 0)).toBe("withdrawn");
     expect(purchasePetBankExpansion(state, currency)).toBe("success");
@@ -56,6 +57,25 @@ describe("campaign foundation services", () => {
     expect(eggDraw("20261109", 0, "egg.species", 8)).toBe(2);
     expect(eggDraw("20261109", 3, "egg.v4.species.11", 49)).toBe(17);
     expect(eggDraw("-7354118725018551212", 12, "egg.qualityTier", 10000)).toBe(7147);
+  });
+
+  it.each([
+    [false, 1, 9],
+    [false, 2, 2],
+    // The owner's rate is 30% (ProMax shipped 50%).
+    [true, 29, 9],
+    [true, 30, 2],
+  ])("rolls the source hatch nature (boosted %s, roll %i)", (boosted, chance, nature) => {
+    const draws: string[] = [];
+    expect(
+      rollHatchNature((lane: string) => {
+        draws.push(lane);
+        return lane === "egg.shinyChance" ? chance : 2;
+      }, boosted),
+    ).toBe(nature);
+    expect(draws).toEqual(
+      nature === 2 ? ["egg.shinyChance"] : ["egg.shinyChance", "egg.shinyForm"],
+    );
   });
 
   it("hatches the unified egg into the bank when the party is full and queues the next egg", () => {

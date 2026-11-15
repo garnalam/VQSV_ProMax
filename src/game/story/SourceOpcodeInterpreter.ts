@@ -109,10 +109,9 @@ export type RuntimeStoryEvent =
    */
   | { type: "countText"; speaker: string; template: string; counter: number }
   /**
-   * op83 `[yes, no]`, Jones' exchange (`NiemThoC2Runtime.JonesExchange`): JavaSE turns the source's
-   * yes/no into a four-row menu — the source egg for the yes branch's op31 money (`pay`), the two
-   * V4 eggs bought outright (then the group completes at `done`), or leave (`leave`: the no
-   * branch's op42, without its farewell line). `next` holds the raw record numbers until compiled.
+   * op83 `[yes, no]`, Jones' exchange (`NiemThoC2Runtime.JonesExchange`): buy an ordinary
+   * egg for the yes branch's op31 money (`pay`), or leave via the no branch (`leave`).
+   * `next` holds the raw record numbers until compiled.
    */
   | {
       type: "eggExchange";
@@ -120,7 +119,6 @@ export type RuntimeStoryEvent =
       cost: number;
       pay: number;
       leave: number;
-      done: number;
     }
   /**
    * op88 `[target, _]` (`NiemThoC1Runtime.Task9Challenge`): with six pets in the party and the Pet
@@ -334,7 +332,6 @@ export class SourceOpcodeInterpreter {
           cost: payment.amount,
           pay,
           leave: at(no + 1),
-          done,
         };
       } else if (branch.event.type === "waitForActor")
         events[branch.at] = {
@@ -619,7 +616,6 @@ export class SourceOpcodeInterpreter {
           cost: 0,
           pay: 0,
           leave: 0,
-          done: 0,
         },
       ];
     if (opcode === 88) return [{ type: "petsFull", next: s[0] ?? 0 }];
@@ -812,6 +808,22 @@ function subsetMatches(actual: unknown, expected: unknown): boolean {
   );
 }
 
+/**
+ * A patch's `load` into a room the matched program also loads arrives where the program does: the
+ * game lays `world/apk-events.json` over the source records (`applyApkEvents`), which moves some
+ * arrival points onto the APK maps (10:14:0's return to 1:3 is y 176 there, 192 in the JAR). A
+ * patch written against the JAR's point used to stop matching in the game and threw on every tick,
+ * freezing Hỏa Phượng Hoàng's capture (and any reload in the room) for good.
+ */
+function keepArrival(event: RuntimeStoryEvent, current: RuntimeStoryEvent[]): RuntimeStoryEvent {
+  if (event.type !== "load") return event;
+  const source = current.find(
+    (candidate): candidate is Extract<RuntimeStoryEvent, { type: "load" }> =>
+      candidate.type === "load" && candidate.scene === event.scene && candidate.room === event.room,
+  );
+  return source ? { ...event, x: source.x, y: source.y } : event;
+}
+
 /** Apply route patches from the last position backwards so earlier `at` values stay valid. */
 function applyPatches(events: RuntimeStoryEvent[], options: SourceRouteOptions): void {
   const patches = [...(options.patches ?? [])].sort((a, b) => b.at - a.at);
@@ -826,7 +838,7 @@ function applyPatches(events: RuntimeStoryEvent[], options: SourceRouteOptions):
       );
     const replacement: RuntimeStoryEvent[] =
       "with" in patch
-        ? patch.with
+        ? patch.with.map((event) => keepArrival(event, current))
         : [
             {
               type: "atomic",

@@ -75,6 +75,26 @@ describe("AreaMapView (state 4)", () => {
     expect(view.tick(["back"])).toBe(true);
   });
 
+  it("lets a finger drag the area no further than the held arrows go", () => {
+    const view = new AreaMapView(catalog);
+    view.open(1, 1, { width: 448, height: 320 }, []);
+    // Mid-slide a drag does nothing, as held arrows do nothing.
+    view.drag(0, -50);
+    expect(view.sliding).toBe(true);
+    while (view.sliding) view.tick([]);
+    expect([view.offsetX, view.offsetY]).toEqual([0, 140]);
+    // Up: the 200 px area's bottom stops at the legend band (320 - 30 - 200 = 90).
+    view.drag(0, -500);
+    expect(view.offsetY).toBe(90);
+    // Down: the area's top is already on screen, so (like the up arrow) it stays put.
+    view.drag(0, 500);
+    expect(view.offsetY).toBe(90);
+    // Sideways: the 240 px area already fills the 240 px screen, so it stays put.
+    view.drag(-40, 0);
+    view.drag(40, 0);
+    expect(view.offsetX).toBe(0);
+  });
+
   it("keeps the pan and the hero's box between openings", () => {
     const view = new AreaMapView(catalog);
     view.open(1, 1, { width: 448, height: 320 }, []);

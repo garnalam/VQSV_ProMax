@@ -8,6 +8,9 @@ import {
   type WorldPanel,
 } from "../game/world/WorldPanel";
 import { sourcePlayTime } from "../game/record/RecordBook";
+import { COLLECTION_FAMILY_NAMES } from "../game/pet/PetCollection";
+import { drawGoldenBadgeIcon } from "./GoldenBadgeIcon";
+import { shinyTheme } from "./ShinyDesigns";
 import { thumbHeight, thumbY } from "../ui/UiScrollbarMath";
 
 /**
@@ -20,7 +23,10 @@ export type RecordArt = {
   /** A sprite-257 UI cell. */
   cell: (index: number) => HTMLImageElement | undefined;
   /** A pet's idle frame (state 0, frame 0) and its top-left offset. */
-  idle: (spriteId: number) => { image: HTMLImageElement; ox: number; oy: number } | undefined;
+  idle: (
+    spriteId: number,
+    shinyColor?: number,
+  ) => { image: HTMLImageElement | HTMLCanvasElement; ox: number; oy: number } | undefined;
   /** A unified badge's icon by stable key. */
   badgeIcon: (key: string) => HTMLImageElement | undefined;
 };
@@ -33,8 +39,13 @@ export type RecordLayouts = {
 const hex = (value: number) => `#${((value & 0xffffff) | 0x1000000).toString(16).slice(1)}`;
 const token = (value: number | undefined) => (value === undefined ? 0 : value);
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
-const ready = (image: HTMLImageElement | undefined): image is HTMLImageElement =>
-  !!image && image.complete && image.naturalWidth > 0;
+const ready = (
+  image: HTMLImageElement | HTMLCanvasElement | undefined,
+): image is HTMLImageElement | HTMLCanvasElement =>
+  !!image &&
+  ("complete" in image
+    ? image.complete && image.naturalWidth > 0
+    : image.width > 0 && image.height > 0);
 
 const BADGE_SLOT_WIDGETS = [17, 18, 19, 20, 21, 22, 23, 24];
 const BADGE_ICON_WIDGETS = [25, 26, 27, 28, 29, 30, 31, 32];
@@ -52,6 +63,9 @@ const PETMAP_TAB_LABELS = [13, 14, 15, 16, 17, 18, 19];
 const PETMAP_ROW_BACKGROUNDS = [25, 29, 33, 37, 41];
 const PETMAP_ROW_MARKERS = [44, 45, 46, 47, 48];
 const PETMAP_ROW_NAMES = [27, 31, 35, 39, 43];
+/** The page's form: the original, else the shiny colour's name (`SHINY_THEMES`). */
+const petmapVariantName = (variant: number): string =>
+  variant <= 0 ? "Gốc" : shinyTheme(variant - 1).name;
 
 /** `badgeGridFirst`: the first display index of the two visible rows. */
 export function badgeGridFirst(selected: number, count: number): number {
@@ -224,7 +238,16 @@ export function drawRecordPanel(
     fillBand(layout, 22, 0x51d069, 72);
     drawCell(layout, 49);
     drawCell(layout, 50);
-    textWide(layout, 2, layout.text(2, "Minh hoa"), -28, 84, color(layout.widget(2), 0xd0010e));
+    centredLine(`< ${COLLECTION_FAMILY_NAMES[panel.petmapFamily]} >`, 42, 51, 85, 0xd0010e);
+    // "< form >" with the arrows at the edges, the colour's name clipped between them.
+    font.drawTagged(g, "<", 127, 51, hex(0xd0010e));
+    font.drawTagged(g, ">", 190 - font.taggedWidth(">"), 51, hex(0xd0010e));
+    g.save();
+    g.beginPath();
+    g.rect(134, 49, 49, 14);
+    g.clip();
+    centredLine(petmapVariantName(panel.petmapVariant), 134, 51, 49, 0xd0010e);
+    g.restore();
     PETMAP_TAB_CELLS.forEach((cellId, i) => {
       const on = i === panel.petmapTab,
         label = layout.widget(PETMAP_TAB_LABELS[i]);
@@ -269,7 +292,7 @@ export function drawRecordPanel(
       );
       // `drawSpriteIdleTopLeft`: only a pet already seen shows its picture.
       if (row.seen && row.spriteId >= 0) {
-        const idle = art.idle(row.spriteId);
+        const idle = art.idle(row.spriteId, panel.petmapShinyColor);
         if (idle && ready(idle.image))
           g.drawImage(idle.image, layout.x(21, 104) + idle.ox, layout.y(21, 172) + idle.oy);
       }
@@ -287,7 +310,7 @@ export function drawRecordPanel(
       g.fillStyle = hex(jh === 0 || jh === -1 ? 0xc6f0ff : jh);
       g.fillRect(thumb.x, top, Math.max(1, thumb.w), Math.max(8, height));
     }
-    text(layout, 49, layout.text(49, "Xac dinh"), color(layout.widget(49), 0xffffff));
+    text(layout, 49, "Đổi mục", color(layout.widget(49), 0xffffff));
     text(layout, 50, layout.text(50, "Quay lai"), color(layout.widget(50), 0xffffff));
     return;
   }
@@ -346,6 +369,10 @@ export function drawRecordPanel(
         x = badgeGridX(slot, visible),
         y = badgeGridY(slot);
       cellAt(index === selected ? chosen : normal, x, y);
+      if (badge.goldenRank === 2) {
+        drawGoldenBadgeIcon(g, x + 1, y + 1);
+        continue;
+      }
       if (badge.icon) {
         const icon = art.badgeIcon(badge.icon);
         if (ready(icon)) {
@@ -375,6 +402,10 @@ export function drawRecordPanel(
         );
       const icon = layout.widget(BADGE_ICON_WIDGETS[i]);
       if (icon) {
+        if (entries[i]?.goldenRank === 2) {
+          drawGoldenBadgeIcon(g, icon.x, icon.y);
+          return;
+        }
         const alt = token(icon.altId);
         cellAt(
           entries[i]?.achieved ? 46 + i : alt >= 0 ? alt : token(icon.imageId),
@@ -391,7 +422,7 @@ export function drawRecordPanel(
   const box = layout.widget(14);
   if (box && badge.description) {
     const lines: string[] = [];
-    for (const paragraph of badge.description.split("#n")) {
+    for (const paragraph of badge.description.split(/#n|\n/)) {
       let current = "";
       for (const word of paragraph.trim().split(/\s+/)) {
         if (!word) continue;
@@ -440,6 +471,10 @@ export function drawRecordPanel(
   marquee(15, layout.text(15, "Trang thai"), layout.w(15, 24));
   marquee(16, badge.status, layout.w(16, 40));
   if (badge.achieved) {
+    if (badge.goldenRank === 2) {
+      drawGoldenBadgeIcon(g, BADGE_PREVIEW_X, BADGE_PREVIEW_Y, true);
+      return;
+    }
     // `badgePreviewImage`: the badge fitted into 60 px of a 64 px square.
     const image = badge.icon ? art.badgeIcon(badge.icon) : art.cell(46 + badge.id);
     if (ready(image)) {

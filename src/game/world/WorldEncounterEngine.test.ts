@@ -99,6 +99,32 @@ describe("WorldEncounterEngine (JavaSE golden)", () => {
     expect([village.request, village.encounterStepsRemaining]).toEqual([null, 1]);
   });
 
+  it.each([
+    [false, 2, 1],
+    // The owner's rate is 30% (ProMax shipped 50%).
+    [true, 29, 9],
+    [true, 30, 1],
+  ])("applies the amulet to wild Shiny odds (equipped %s, roll %i)", (equipped, chance, nature) => {
+    const engine = new WorldEncounterEngine(doc, {
+      entry: (lane) => (lane === "world.encounter.customNatureChance" ? chance : 0),
+      inclusive: (lane, min, max) => (lane === "world.encounter.customNature" ? max : min),
+    });
+    const result = engine.afterSuccessfulMovement(
+      {
+        timersEnabled: true,
+        scene: 1,
+        room: 1,
+        rideSuppressesEncounters: false,
+        mainTaskProgress: 1,
+        rareEncounterBonusPercent: 0,
+        shinyGearEquipped: equipped,
+      },
+      { temporaryActorTicks: 0, avoidMonsterTicks: 0, encounterStepsRemaining: 1 },
+      () => 0,
+    );
+    expect(result.request?.nature).toBe(nature);
+  });
+
   it("raises the stars with the main task (qualityForRoll)", () => {
     expect([qualityForRoll(5, 84), qualityForRoll(5, 85)]).toEqual([1, 2]);
     expect([qualityForRoll(20, 64), qualityForRoll(20, 94), qualityForRoll(20, 95)]).toEqual([

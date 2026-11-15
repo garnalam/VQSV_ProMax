@@ -65,6 +65,22 @@ export function previewDraw(egg: EggState, lane: string, bound: number): number 
   return eggDraw(ensureEggSeed(egg), egg.drawIndex, lane, bound);
 }
 
+/** Kim Diễm's Long Vương Hộ Phù: hatch Shiny odds (owner: 30%, not ProMax's 50%). */
+export const KIM_DIEM_AMULET_SHINY_PERCENT = 30;
+/** Standard hatch Shiny odds. */
+export const HATCH_SHINY_PERCENT = 2;
+
+/** `EggService.rollHatchNature`: standard or Kim Diễm amulet odds, then one of three forms. */
+export function rollHatchNature(
+  draw: (lane: string, bound: number) => number,
+  boosted: boolean,
+): number {
+  return draw("egg.shinyChance", 100) <
+    (boosted ? KIM_DIEM_AMULET_SHINY_PERCENT : HATCH_SHINY_PERCENT)
+    ? 7 + draw("egg.shinyForm", 3)
+    : 2;
+}
+
 /** `completeHatch` with `rememberSpecies`: the type only grows for a species not met before. */
 function completeHatch(egg: EggState, speciesId: number): void {
   const known = (egg.knownSpecies ??= new Array(KNOWN_SPECIES).fill(-1));
@@ -115,7 +131,16 @@ export function availableEggIds(specials: readonly number[], eggIds: readonly nu
 }
 
 export type HatchOutcome = "inactive" | "not-ready" | "creation-failed" | "hatched";
-export type HatchResult = { outcome: HatchOutcome; speciesId: number; storage: number };
+export type HatchResult =
+  | { outcome: Exclude<HatchOutcome, "hatched">; speciesId: number; storage: number }
+  | {
+      outcome: "hatched";
+      speciesId: number;
+      storage: number;
+      nature?: number;
+      /** The hatched shiny's colour (`SavedPet.shinyColor`), for the Đồ giám's colour page. */
+      shinyColor?: number;
+    };
 export type HatchContext = {
   egg: EggState;
   roster: SavedPet[];
@@ -148,7 +173,13 @@ function place(c: HatchContext, speciesId: number, storage: number): HatchResult
     c.specials.splice(at, 1);
     activateNextQueuedEgg(c.egg, eggCount(c.specials, itemId), itemId);
   }
-  return { outcome: "hatched", speciesId, storage };
+  return {
+    outcome: "hatched",
+    speciesId,
+    storage,
+    ...(pet.nature === undefined ? {} : { nature: pet.nature }),
+    ...(pet.shinyColor === undefined ? {} : { shinyColor: pet.shinyColor }),
+  };
 }
 
 /** `hatchUnified`: a 50/25/15/8/2-style quality band, then an unowned species of that band. */

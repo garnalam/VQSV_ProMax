@@ -61,6 +61,39 @@ const ENTER_ICON =
 const EXIT_ICON =
   '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
 
+/** Opened from the home screen (the manifest's `display`): already without browser bars. */
+export function launchedAsApp(): boolean {
+  return (
+    window.matchMedia?.("(display-mode: fullscreen), (display-mode: standalone)").matches ?? false
+  );
+}
+
+/**
+ * Goes full screen on the player's first press, key or tap: a page may not do it on load, only
+ * inside a gesture (`pointerup` / `keydown` / `click` count as one; `pointerdown` from a finger
+ * does not). Once it worked, or the player left full screen by hand, it stops trying.
+ */
+export function enterFullscreenOnFirstGesture(): void {
+  if (!fullscreenSupported() || launchedAsApp()) return;
+  const events = ["pointerup", "keydown", "click"] as const;
+  let done = false;
+  const stop = (): void => {
+    done = true;
+    for (const name of events) document.removeEventListener(name, attempt, true);
+  };
+  function attempt(event: Event): void {
+    if (done || isFullscreen()) return stop();
+    // The toggle decides on its own press, and the install button needs the gesture for the
+    // browser's install dialog.
+    if (event.target instanceof Element && event.target.closest("#fullscreen, [data-act=install]"))
+      return;
+    void enter().then(stop, () => {
+      // Refused (no gesture recognised): the next press tries again.
+    });
+  }
+  for (const name of events) document.addEventListener(name, attempt, true);
+}
+
 /** Adds the toggle to `parent`, or nothing when this browser cannot go full screen. */
 export function mountFullscreenButton(parent: HTMLElement): HTMLButtonElement | null {
   if (!fullscreenSupported()) return null;

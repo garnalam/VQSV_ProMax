@@ -166,6 +166,15 @@ export class StatusWebRules {
     );
   }
 
+  /**
+   * Bug fix: the Power a Hỗn Loạn / Quỷ Mị self-hit takes from a unified skill (a Cầu Vồng skill or
+   * a signature). The self-hit is "its own damage, none of its effects", so it is the record's plain
+   * Power; without it the damage formula refused the skill and the fight threw mid-round.
+   */
+  selfHitPower(skillId: number): number | undefined {
+    return this.rainbow?.record(skillId)?.power ?? this.signatures?.basePower(skillId);
+  }
+
   /** The description a Cầu Vồng or signature skill carries in its own record. */
   skillDescription(skillId: number): string | undefined {
     return (

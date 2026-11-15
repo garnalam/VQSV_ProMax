@@ -9,12 +9,15 @@ import { AiV2EnemyController } from "./engine/AiV2EnemyController";
 import { BattleCore } from "./engine/BattleCore";
 import { BasicEnemyAi } from "./engine/EnemyController";
 import type { SavedPet } from "../../persistence/save/GameSave";
+import { DivinePetSeal } from "../pet/DivinePetSeal";
+import { rollShinyColor } from "../../rendering/ShinyDesigns";
 import type { BattleContext } from "../story/SourceOpcodeInterpreter";
 import type { SourceItemData } from "../story/GameAssets";
 import type { GroupRef } from "../world/WorldEventCatalog";
 import { enumName } from "./ai/BattleAiEncounterCatalog";
 import { BattleDefinitionRegistry, type BattleDefinition } from "./BattleDefinition";
 import { BattleRuntime } from "./BattleRuntime";
+import { BATTLE_SEATS } from "./BattleSeats";
 import type { BattleCharms, BattleKind, BattleSetup, CombatantSetup } from "./engine/BattleTypes";
 import { ENCOUNTER_NATURE_FALLBACK } from "./engine/BattleTypes";
 import { settleBattle } from "./engine/BattleSettlement";
@@ -179,6 +182,8 @@ export function createEventBattle(
       enemy,
       inventory: bag,
       charms: charms?.(!!event.npcEnemyEntry),
+      sceneId: event.sceneId,
+      capturePolicy: event.npcEnemyEntry ? "TRAINER_OWNED_FORBIDDEN" : "WILD_ALLOWED",
     },
     core = services.newCore(setup, event.symbol),
     definition = coreDefinition({
@@ -209,7 +214,8 @@ export function createEventBattle(
       core,
       party,
       services,
-      settle: () => settleBattle(core, party, inventory, services.progression),
+      settle: () =>
+        settleBattle(core, party, inventory, services.progression, services.petBank?.()),
       entryPresentation: true,
       shopCurrency,
     },
@@ -274,14 +280,17 @@ export function createWildBattle(
   charms?: BattleCharms,
   shopCurrency?: { money: number; badges: number },
 ): BattleRuntime {
-  const enemy = [
-      services.encounterPet(
-        request.speciesId,
-        request.level,
-        Math.max(1, request.quality),
-        request.nature >= 0 ? request.nature : ENCOUNTER_NATURE_FALLBACK,
-      ),
-    ],
+  const wild = services.encounterPet(
+    request.speciesId,
+    request.level,
+    Math.max(1, request.quality),
+    request.nature >= 0 ? request.nature : ENCOUNTER_NATURE_FALLBACK,
+  );
+  // A wild shiny comes in any of the 13 colours (the Đồ giám has a page for each); the colour is
+  // kept on the setup, so a catch keeps the colour the fight showed.
+  if (wild.nature >= 7 && wild.nature <= 9 && wild.shinyColor === undefined)
+    wild.shinyColor = rollShinyColor();
+  const enemy = [wild],
     player = party.find((pet) => (pet.currentHp ?? 1) > 0) ?? party[0],
     playerSetup = services.partyMember(player),
     bag: Record<number, number> = {};
@@ -326,7 +335,8 @@ export function createWildBattle(
       core,
       party,
       services,
-      settle: () => settleBattle(core, party, inventory, services.progression),
+      settle: () =>
+        settleBattle(core, party, inventory, services.progression, services.petBank?.()),
       entryPresentation: true,
       shopCurrency,
     },
@@ -352,6 +362,12 @@ export function createSourceTrainerBattle(
     quality?: number;
     skills?: readonly (readonly number[])[];
     profile?: PackBattleAiProfile;
+    /** The scene the fight happens in (Cầu Vồng item recovery reads it). */
+    sceneId?: number;
+    /** Authored boss stats (Kim Diễm Long Vương) instead of the species' own. */
+    encounterStats?: CombatantSetup["stats"];
+    /** A share of the stats by species (Đại Điện's hidden Divine pets keep their seal). */
+    enemyStatPercent?: (speciesId: number) => number;
   },
   party: SavedPet[],
   inventory: Record<string, number>,
@@ -368,6 +384,9 @@ export function createSourceTrainerBattle(
         request.quality ?? -1,
         nature,
       );
+      if (request.encounterStats) pet.stats = { ...request.encounterStats };
+      if (request.enemyStatPercent)
+        pet.stats = DivinePetSeal.scaleStats(pet.stats, request.enemyStatPercent(speciesId));
       const deck = request.skills?.[member];
       return deck && deck.length > 0 ? { ...pet, skillIds: [...deck] } : pet;
     }),
@@ -384,6 +403,8 @@ export function createSourceTrainerBattle(
     enemy,
     inventory: bag,
     charms,
+    sceneId: request.sceneId,
+    capturePolicy: "TRAINER_OWNED_FORBIDDEN",
   };
   const core = request.profile
       ? profiledCore(services, setup, request.profile)
@@ -416,10 +437,49 @@ export function createSourceTrainerBattle(
       core,
       party,
       services,
-      settle: () => settleBattle(core, party, inventory, services.progression),
+      settle: () =>
+        settleBattle(core, party, inventory, services.progression, services.petBank?.()),
       entryPresentation: true,
       shopCurrency,
     },
+  );
+}
+
+/** Seat a practice opponent with the standard trainer entry and no persistent settlement. */
+export function createSinglePracticeBattle(
+  services: BattleServices,
+  setup: BattleSetup,
+  party: SavedPet[],
+  profile: PackBattleAiProfile,
+  actorId: number,
+  playerActorSpriteId: number,
+): BattleRuntime {
+  const first = setup.enemy[0];
+  const encounter: BattleContext["encounter"] = [first.speciesId, first.level, first.nature];
+  const definition = coreDefinition({
+    id: `source-encounter-${encounter.join("-")}`,
+    player: party[0],
+    playerSetup: setup.player[0],
+    enemy: [...setup.enemy],
+    npcEntry: true,
+    presentation: { playerActorSpriteId, enemyActorSpriteId: first.spriteId ?? 0 },
+    partySize: party.length,
+    captureAllowed: false,
+  });
+  return new BattleRuntime(
+    {
+      actorId,
+      encounter,
+      flags: [0, 1],
+      mode: [0, 2],
+      branchTargets: [],
+    },
+    new BattleDefinitionRegistry([definition]),
+    services.rules,
+    undefined,
+    [],
+    [],
+    { core: profiledCore(services, setup, profile), party, services, entryPresentation: true },
   );
 }
 
@@ -440,6 +500,8 @@ function profiledCore(
     {
       ...setup,
       badgeProfile: setup.badgeProfile ?? services.badgeProfile(),
+      goldenPartyExperiencePercent:
+        setup.goldenPartyExperiencePercent ?? services.goldenPartyExperiencePercent(),
       postExpBadgeHeal:
         setup.postExpBadgeHeal ?? ((speciesId) => services.postExpBadgeHeal(speciesId)),
       enemy: setup.enemy.map((pet, member) =>
@@ -475,8 +537,8 @@ function coreDefinition(input: {
   return {
     id: input.id,
     combatants: {
-      player: combatant("player", playerSetup, { x: 70, y: 223 }),
-      enemy: combatant("enemy", enemy[0], { x: 177, y: 103 }),
+      player: combatant("player", playerSetup, { ...BATTLE_SEATS.player }),
+      enemy: combatant("enemy", enemy[0], { ...BATTLE_SEATS.enemy }),
     },
     phases: input.npcEntry
       ? [

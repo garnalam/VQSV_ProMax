@@ -172,8 +172,18 @@ export const shopTitle = (category: number) =>
         ? "NGUYÊN LIỆU CẦU VỒNG"
         : "CỬA HÀNG CẦU VỒNG";
 /** `render`'s main menu. */
-export const shopMainMenu = (category: number) =>
-  category === 0 ? ["Mua vật phẩm", "Bán vật phẩm", "Rời đi"] : ["Mua / trao đổi", "Rời đi"];
+/**
+ * Web-only (owner 2026-11-15): a Cầu Vồng merchant also keeps the pet bank, so a pet can be
+ * deposited without the trip back to Liệt Hỏa. The mutation document's counter (category 3) does not.
+ */
+export const SHOP_PET_BANK_ROW = "Ngân hàng sủng vật";
+const SHOP_SELL_ROW = "Bán vật phẩm";
+export const shopMainMenu = (category: number): string[] =>
+  category === 0
+    ? ["Mua vật phẩm", SHOP_SELL_ROW, SHOP_PET_BANK_ROW, "Rời đi"]
+    : category === 3
+      ? ["Mua / trao đổi", "Rời đi"]
+      : ["Mua / trao đổi", SHOP_PET_BANK_ROW, "Rời đi"];
 
 /** What the panel reads from the world while it is open. */
 export type CauVongShopSource = {
@@ -197,6 +207,8 @@ export class CauVongShopPanelState {
   selling = false;
   message = "";
   offers: CauVongShopOffer[] = [];
+  /** Set when the panel closed on the pet bank row: the host opens the bank in its place. */
+  bankRequested = false;
 
   open(category: number, doc: CauVongShopsDocument | undefined): void {
     this.category = category;
@@ -208,6 +220,7 @@ export class CauVongShopPanelState {
     this.scroll = 0;
     this.qty = 1;
     this.message = "";
+    this.bankRequested = false;
   }
   private buyOffers(doc: CauVongShopsDocument | undefined): CauVongShopOffer[] {
     if (!doc) return [];
@@ -265,7 +278,12 @@ export class CauVongShopPanelState {
         else if (pressed.includes("confirm")) {
           if (this.menu === 0) {
             if (this.selected === size - 1) return true;
-            this.selling = this.selected === 1;
+            const row = shopMainMenu(this.category)[this.selected];
+            if (row === SHOP_PET_BANK_ROW) {
+              this.bankRequested = true;
+              return true;
+            }
+            this.selling = row === SHOP_SELL_ROW;
             this.offers =
               this.selling && doc && purse ? shopSellable(doc, purse) : this.buyOffers(doc);
             this.selected = 0;

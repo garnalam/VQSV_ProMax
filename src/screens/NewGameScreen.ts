@@ -3,10 +3,30 @@ import type { BootAssets } from "../pack/boot";
 import { roomBackdropColor, roomBackPic } from "../game/world/RoomBackdrop";
 import { gameplayCommands, gameplayShortcuts, type InputCommand } from "../core/input/GameCommand";
 import type { InputSnapshot } from "../core/input/InputSnapshot";
+import { SWIPE_START, TouchSwipe } from "../core/input/TouchSwipe";
+import type { AreaMapView } from "../game/world/AreaMap";
 import { KEY } from "../core/input/KeyCode";
 import { JavaRandom } from "../core/JavaRandom";
 import type { Screen } from "../core/ScreenManager";
-import type { CanvasRenderer } from "../rendering/CanvasRenderer";
+import { drawCanvasCopy, fillCanvas, type CanvasRenderer } from "../rendering/CanvasRenderer";
+import { battleFrameX, cornerShift, viewport, type Corner } from "../core/Viewport";
+import {
+  LAND_WORLD_PET,
+  landWorldFit,
+  landWorldPanel,
+  landWorldPet,
+  LEFT_KEY,
+  LEFT_KEY_SOURCE,
+  RIGHT_KEY,
+  RIGHT_KEY_SOURCE,
+  SOFTKEY_TOP,
+  TOP_END,
+  type LandWorldFit,
+  type LandWorldPanel,
+} from "../game/world/WorldLandscape";
+import { LOGICAL_HEIGHT, LOGICAL_WIDTH } from "../core/constants";
+import { inLandSpace, LAND_BOTTOM, LAND_CENTER } from "../core/LandCenter";
+import { fitCamera } from "../game/world/Camera";
 import type { GameAssets, SpriteFrame } from "../game/story/GameAssets";
 import type { StorySceneRuntime } from "../game/story/StorySceneRuntime";
 import type { StoryActor as IntroActor } from "../game/story/StoryActor";
@@ -39,6 +59,7 @@ import { drawCauVongIncubator } from "../rendering/CauVongIncubatorRenderer";
 import { drawWardrobe } from "../rendering/WardrobeRenderer";
 import { drawFashionShop } from "../rendering/FashionShopRenderer";
 import { drawBattlePass, drawChallenge } from "../rendering/MetaSystemsRenderer";
+import { drawBondingTower } from "../rendering/BondingTowerRenderer";
 import { battleUiState } from "../game/battle/BattleUiState";
 import type { GameSave } from "../persistence/SaveRepository";
 import type { SaveRepository } from "../persistence/SaveRepository";
@@ -64,6 +85,9 @@ import { GameplayHost, gameplaySources, type SessionStart } from "../game/sessio
 import { cauVongDrawOrder } from "../game/world/CauVongDrawOrder";
 import { CAU_VONG_EXPRESSION_SPRITE } from "../game/world/CauVongCutscene";
 import { renderCauVongMinigame } from "../game/world/CauVongMinigameView";
+
+/** Landscape: the plain colour of the bands beside a narrow room or a portrait-box screen. */
+const SIDE_BAND_COLOR = "#142d60";
 
 /**
  * The gameplay screen: turns the tick's input into commands for `GameplayHost` and draws what the
@@ -94,15 +118,20 @@ export class NewGameScreen implements Screen {
   /** Parity harness: stop simulating so a checkpoint frame stays on screen. */
   frozen = false;
   private battleBackground: HTMLCanvasElement | null = null;
+  /** Landscape: the sheet a source-laid-out world panel is painted on (`drawLandWorldPanel`). */
+  private panelSheet: HTMLCanvasElement | null = null;
   /**
    * A simultaneous 2v2 (`VqsvDoubleBattleRuntime`) the screen is playing over the world. While it is
    * set it owns the input and the frame; the world under it stays where the fight opened.
    */
   doubleBattle: DoubleBattleRuntime | null = null;
+  private readonly swipe = new TouchSwipe();
   /** Smooths walking and camera pans between the 15 Hz ticks (presentation only). */
   private readonly motion = new MotionInterpolator();
   /** The x2 speed the HUD checkbox shows and toggles; the app wires it to its gameplay clock. */
   speed: { enabled: () => boolean; toggle: () => void } | null = null;
+  /** Set by the app for an admin account: opens the Admin Tool over this session. */
+  admin: { open: (host: GameplayHost) => void } | null = null;
   /** The three-step JavaSE settings meter, wired to the app's persisted audio mixer. */
   volume: { level: () => number; setLevel: (level: number) => void } | null = null;
   /** Told after every tick what the screen is showing, so the app can pick the music for it. */
@@ -137,6 +166,10 @@ export class NewGameScreen implements Screen {
           level: () => this.volume?.level() ?? 0,
           setLevel: (level) => this.volume?.setLevel(level),
         },
+        admin: {
+          enabled: () => this.admin !== null,
+          open: () => this.admin?.open(this.host),
+        },
       },
       start,
     );
@@ -160,17 +193,37 @@ export class NewGameScreen implements Screen {
    * One simulation tick (`GameplayState.tick`): the pointer press, if any, is applied first and may
    * add commands for this same tick; then the keyboard-derived commands run.
    */
-  tick(input: InputSnapshot): void {
+  tick(input: InputSnapshot, sameFrame = false): void {
     if (this.frozen) return;
     const pointer = input.pointer;
-    // A press on a scrollbar is the bar's; any other press is a click.
-    const fromPointer =
-      pointer.pressed && !this.host.pointerPress(pointer.pressX, pointer.pressY)
-        ? this.host.pointer(pointer.pressX, pointer.pressY)
-        : [];
-    // Moving the mouse drags a held thumb, or moves the cursor onto the row under it (PC QoL).
-    if (pointer.moved && pointer.x >= 0) this.host.pointerMove(pointer.x, pointer.y);
-    if (pointer.released) this.host.pointerRelease();
+    // A press on a scrollbar is the bar's; any other press is a click. A finger on a list waits:
+    // dragged, it scrolls (TouchSwipe); lifted in place, it is the click.
+    const fromPointer: InputCommand[] = [];
+    const areaMap =
+      this.host.panel.visible && this.host.panel.mode === "areaMap"
+        ? this.host.panel.areaMap
+        : null;
+    if (areaMap || this.mapDrag) this.dragAreaMap(input, areaMap, fromPointer);
+    else {
+      if (pointer.pressed && !this.host.pointerPress(pointer.pressX, pointer.pressY)) {
+        if (pointer.touch && this.host.swipeScrollable)
+          this.swipe.press(pointer.pressX, pointer.pressY);
+        else fromPointer.push(...this.host.pointer(pointer.pressX, pointer.pressY));
+      }
+      if (pointer.moved && pointer.x >= 0) {
+        if (this.swipe.active) {
+          const result = this.swipe.move(pointer.y);
+          if (result.kind === "wheel") this.host.wheel(result.steps);
+        }
+        // Moving the mouse drags a held thumb, or moves the cursor onto the row under it (PC QoL).
+        else this.host.pointerMove(pointer.x, pointer.y);
+      }
+      if (pointer.released) {
+        const tap = this.swipe.release();
+        if (tap) fromPointer.push(...this.host.pointer(tap.x, tap.y));
+        this.host.pointerRelease();
+      }
+    }
     if (input.wheelRotation !== 0) this.host.wheel(input.wheelRotation);
     // JavaSE's settings/help screens still own the two phone softkeys. GameplayCommand intentionally
     // has no generic softkey commands, so route F1/F2 only while these panels are active.
@@ -188,11 +241,75 @@ export class NewGameScreen implements Screen {
     if (world && shortcuts.task) this.host.openTask(world);
     if (world && shortcuts.ride) this.host.pressRide(world);
     if (input.typedText) this.host.panel.typeText(input.typedText);
-    this.step([...gameplayCommands(input), ...panelSoftkeys, ...fromPointer]);
+    this.step(
+      [
+        ...gameplayCommands(input, { textEntryActive: this.textEntryActive() }),
+        ...panelSoftkeys,
+        ...fromPointer,
+      ],
+      sameFrame,
+    );
+  }
+
+  /** A finger (or held mouse) on the open area map: where it went down and how far it has panned. */
+  private mapDrag: { startX: number; startY: number; x: number; y: number; moved: boolean } | null =
+    null;
+  /**
+   * Web only: the area map pans under a dragged finger or mouse, as the held arrows do. A press
+   * that never moves is the source's click on release (the legend band closes the map).
+   */
+  private dragAreaMap(
+    input: InputSnapshot,
+    view: AreaMapView | null,
+    fromPointer: InputCommand[],
+  ): void {
+    const pointer = input.pointer;
+    if (pointer.pressed && view)
+      this.mapDrag = {
+        startX: pointer.pressX,
+        startY: pointer.pressY,
+        x: pointer.pressX,
+        y: pointer.pressY,
+        moved: false,
+      };
+    const drag = this.mapDrag;
+    if (!drag) return;
+    if (pointer.moved && pointer.x >= 0 && view) {
+      // The pointer comes in UI-box px; the map is drawn in canvas px (landscape: box × scale).
+      const scale = viewport.landscape ? viewport.ui.scale : 1;
+      if (
+        !drag.moved &&
+        Math.hypot(pointer.x - drag.startX, pointer.y - drag.startY) * scale >= SWIPE_START
+      )
+        drag.moved = true;
+      if (drag.moved) {
+        const dx = Math.trunc((pointer.x - drag.x) * scale),
+          dy = Math.trunc((pointer.y - drag.y) * scale);
+        if (dx !== 0 || dy !== 0) {
+          view.drag(dx, dy);
+          drag.x += dx / scale;
+          drag.y += dy / scale;
+        }
+      }
+    }
+    if (pointer.released) {
+      if (!drag.moved && view) fromPointer.push(...this.host.pointer(drag.startX, drag.startY));
+      this.mapDrag = null;
+      this.host.pointerRelease();
+    }
+  }
+  /** The page is being hidden: a 2v2 fight is mid-way, so only the world may save. */
+  suspend(): void {
+    if (!this.frozen && !this.doubleBattle) this.host.saveBeforeSuspend();
+  }
+
+  /** `GameFacade.textEntryActive()`: only the gift-code box takes typed text. */
+  textEntryActive(): boolean {
+    return this.host.panel.visible && this.host.panel.mode === "giftCode";
   }
 
   /** Advance one tick with already-derived commands (also used by scripted traces). */
-  step(commands: InputCommand[]): void {
+  step(commands: InputCommand[], sameFrame = false): void {
     if (this.frozen) return;
     if (this.doubleBattle) {
       this.doubleBattle.handleInput(commands);
@@ -200,7 +317,9 @@ export class NewGameScreen implements Screen {
       return;
     }
     const before = this.motionTarget();
-    this.motion.capture(before?.actors ?? null, before?.camera ?? null, before?.actors.values());
+    // ProMax: both x2 ticks share one render interval, so keep the start of the first step.
+    if (!sameFrame)
+      this.motion.capture(before?.actors ?? null, before?.camera ?? null, before?.actors.values());
     const menu = this.menuOwnsInput();
     this.host.step(commands);
     this.emitSounds(commands, menu);
@@ -308,6 +427,7 @@ export class NewGameScreen implements Screen {
     this.motion.alpha = this.frozen ? 1 : alpha;
     // `VqsvSceneView.render`: the loading screen replaces the frame, the world is not drawn under it.
     if (this.host.mapLoadingActive) {
+      r.uiSpace();
       this.drawMapLoading(r.context);
       return;
     }
@@ -319,7 +439,7 @@ export class NewGameScreen implements Screen {
         if (world) this.drawWorldBattleBackground(r, world);
         else {
           g.fillStyle = "#000";
-          g.fillRect(0, 0, 240, 320);
+          fillCanvas(g);
         }
       });
       return;
@@ -332,7 +452,7 @@ export class NewGameScreen implements Screen {
     if (this.host.story.worldActive && this.world) {
       this.renderWorldSession(r);
       // `startBars(12, …)` opens over the room the boat landed in.
-      if (travel) this.drawWharfBars(r.context, travel);
+      if (travel) this.drawWharfBars(r, travel);
       return;
     }
     if (this.prelude) {
@@ -349,6 +469,7 @@ export class NewGameScreen implements Screen {
       this.runtime.cameraY,
       this.runtime.actors,
     );
+    r.uiSpace();
     this.drawParticles(g);
     this.drawEffect(g);
     if (this.runtime.currentText) this.text(r);
@@ -356,7 +477,13 @@ export class NewGameScreen implements Screen {
   /** `VqsvMapLoadingRuntime.render`: black, the source progress bar, and one elemental tip. */
   private drawMapLoading(g: CanvasRenderingContext2D): void {
     const loading = this.world?.mapLoading;
-    if (loading) loading.render(g, this.boot.panelFont);
+    if (!loading) return;
+    // Landscape: black over the whole canvas, the bar against the 320x240 screen's bottom edge.
+    if (viewport.landscape) {
+      g.fillStyle = "#000000";
+      fillCanvas(g);
+    }
+    inLandSpace(g, LAND_BOTTOM, () => loading.render(g, this.boot.panelFont));
   }
   private drawWorld(
     r: CanvasRenderer,
@@ -365,35 +492,84 @@ export class NewGameScreen implements Screen {
     cameraX: number,
     cameraY: number,
     actors: Map<number, IntroActor>,
+    shake: { x: number; y: number } = { x: 0, y: 0 },
+    /** The free world's own room (see `roomAsset`), not the cutscene's staging of it. */
+    worldRoom = false,
   ): void {
     const g = r.context;
     r.clear();
     // `rainbowPresentation.shakeOffset`: Cầu Vồng's source shake moves the world by 0 or 1 px.
     const cauVongView = scene === 98 ? this.world?.cauVongPresentation : undefined;
-    if (cauVongView) {
-      cameraX -= cauVongView.shakeOffset;
-      cameraY -= cauVongView.shakeOffset;
-    }
-    const room = this.assets.getRoom(scene, roomIndex),
+    // The world fills the whole canvas (landscape); the caller goes back to `uiSpace` for the UI.
+    r.worldSpace();
+    const room = this.roomAsset(scene, roomIndex, worldRoom),
       layers = room ? this.assets.maps.get(room.mapId) : undefined,
-      camera = this.motion.camera(actors, { x: cameraX, y: cameraY });
+      view = this.viewCamera(scene, roomIndex, actors, cameraX, cameraY, worldRoom),
+      // The shakes move the fitted view, so a centred room still trembles.
+      jolt = cauVongView?.shakeOffset ?? 0,
+      camera = { x: view.x - shake.x - jolt, y: view.y - shake.y - jolt },
+      // An APK map's picture starts at the room's origin (game x = -originX).
+      mapCamera = { x: camera.x + (room?.originX ?? 0), y: camera.y + (room?.originY ?? 0) };
     if (!layers) {
       g.fillStyle = "#081050";
-      g.fillRect(0, 0, 240, 320);
+      fillCanvas(g);
       this.drawActorSet(g, actors, 1, camera);
       return;
     }
     this.drawRoomBackdrop(g, scene, roomIndex);
-    for (const i of [1, 2]) if (layers[i]) this.drawMapLayer(g, layers[i], camera);
+    for (const i of [1, 2]) if (layers[i]) this.drawMapLayer(g, layers[i], mapCamera);
+    this.drawMapGutters(g, [layers[1], layers[2]], mapCamera);
+    // Landscape shows the bands beside a narrow room; the source's screen ended at the room's edge,
+    // so scripts park actors just outside it. Nothing of the room's cast is drawn past the map.
+    g.save();
+    this.clipToMap(g, [layers[1], layers[2]], mapCamera);
     // Cầu Vồng rooms keep JavaSE's source-row order (`cauVongDrawOrder`).
     const cauVong = scene === 98;
     this.drawActorSet(g, actors, 2, camera, undefined, true, cauVong);
     // `PLAYER_SHADOW` under the free-world hero, before the actors that may stand in front of it.
     if (actors === this.world?.actors) this.drawPlayerShadow(g, actors, camera);
     this.drawActorSet(g, actors, 1, camera, undefined, true, cauVong);
-    if (layers[3]) this.drawMapLayer(g, layers[3], camera);
+    if (layers[3]) this.drawMapLayer(g, layers[3], mapCamera);
     this.drawActorSet(g, actors, 0, camera, undefined, true, cauVong);
     if (cauVongView && this.world) this.drawCauVongOverlay(g, this.world, actors, camera);
+    g.restore();
+    if (cauVongView) this.drawCauVongCurtain(g, cauVongView);
+  }
+  /** The camera a room is drawn with this frame: interpolated, then fitted to the canvas. */
+  private viewCamera(
+    scene: number,
+    roomIndex: number,
+    actors: Map<number, IntroActor>,
+    x: number,
+    y: number,
+    worldRoom = false,
+  ): { x: number; y: number } {
+    return fitCamera(
+      this.roomAsset(scene, roomIndex, worldRoom),
+      this.motion.camera(actors, { x, y }),
+    );
+  }
+  /**
+   * The room a frame is drawn on. A cutscene stages `getRoom`, where the opening's 5:1 is the
+   * cinematic `introRoom1`; the free world, its source events and its battles stand in the world's
+   * own room (`getWorldRoom`, which the collision uses too), so Cửa Hắc Thạch Thành is drawn as itself.
+   */
+  private roomAsset(scene: number, roomIndex: number, worldRoom: boolean) {
+    return worldRoom
+      ? this.assets.getWorldRoom(scene, roomIndex)
+      : this.assets.getRoom(scene, roomIndex);
+  }
+  /** Landscape only: clips to the part of the canvas the map picture covers. */
+  private clipToMap(
+    g: CanvasRenderingContext2D,
+    layers: readonly (HTMLImageElement | undefined)[],
+    camera: { x: number; y: number },
+  ): void {
+    const base = layers.find((layer) => layer?.complete && layer.naturalWidth > 0);
+    if (!viewport.landscape || !base) return;
+    g.beginPath();
+    g.rect(-camera.x, -camera.y, base.naturalWidth, base.naturalHeight);
+    g.clip();
   }
   /**
    * `VqsvSceneView` in scene 98 after the actor layers: op49's effects, each actor's expression
@@ -413,7 +589,7 @@ export class NewGameScreen implements Screen {
       for (const chest of world.cauVongTreasures) {
         const x = chest.x - camera.x,
           y = chest.y - camera.y;
-        if (x < -30 || x > 270 || y < -30 || y > 350) continue;
+        if (x < -30 || x > viewport.width + 30 || y < -30 || y > viewport.height + 30) continue;
         const [sx, sy, w, h] = regions[chest.open ? 55 : 54];
         g.drawImage(this.assets.cauVongUi(), sx, sy, w, h, x - Math.floor(w / 2), y - h, w, h);
       }
@@ -438,28 +614,55 @@ export class NewGameScreen implements Screen {
         actor.y + actor.renderOffsetY - 44 - camera.y,
       );
     }
-    const view = world.cauVongPresentation;
+  }
+  /**
+   * `rainbowPresentation.render`: the white flash and the curtain bars, over the whole canvas (the
+   * bars close from its top and bottom edges whatever its shape).
+   */
+  private drawCauVongCurtain(
+    g: CanvasRenderingContext2D,
+    view: NonNullable<WorldRuntime["cauVongPresentation"]>,
+  ): void {
     if (view.flashing) {
       g.fillStyle = "#ffffff";
-      g.fillRect(0, 0, 240, 320);
+      fillCanvas(g);
     }
     const height = view.curtainHeight;
     if (height > 0) {
       g.fillStyle = "#000000";
-      g.fillRect(0, 0, 240, height);
-      g.fillRect(0, 320 - height, 240, height);
+      g.fillRect(0, 0, viewport.width, height);
+      g.fillRect(0, viewport.height - height, viewport.width, height);
     }
   }
   /** `VqsvSceneView.renderWorld`: the room's fill colour, then its back-pic strip tiled across. */
   private drawRoomBackdrop(g: CanvasRenderingContext2D, scene: number, room: number): void {
     g.fillStyle = roomBackdropColor(scene, room);
-    g.fillRect(0, 0, 240, 320);
+    fillCanvas(g);
     const name = roomBackPic(scene, room),
       strip = name ? this.boot.backPics.get(name) : undefined;
     if (!strip?.complete || strip.naturalWidth <= 0) return;
     // `renderSourceBackPic`: 240 / width copies from the left edge, screen-fixed.
-    const copies = Math.trunc(240 / strip.naturalWidth);
+    const copies = Math.ceil(viewport.width / strip.naturalWidth);
     for (let i = 0; i < copies; i++) g.drawImage(strip, i * strip.naturalWidth, 0);
+  }
+  /**
+   * Landscape: a room narrower than the canvas is centred, with a band either side the map does not
+   * reach. Both bands are one plain dark blue (`SIDE_BAND_COLOR`), the same in every room.
+   */
+  private drawMapGutters(
+    g: CanvasRenderingContext2D,
+    layers: readonly (HTMLImageElement | undefined)[],
+    camera: { x: number; y: number },
+  ): void {
+    const base = layers.find((layer) => layer?.complete && layer.naturalWidth > 0);
+    if (!viewport.landscape || !base) return;
+    const left = Math.max(0, -camera.x),
+      rightEdge = base.naturalWidth - camera.x,
+      right = Math.max(0, viewport.width - rightEdge);
+    if (left <= 0 && right <= 0) return;
+    g.fillStyle = SIDE_BAND_COLOR;
+    if (left > 0) g.fillRect(0, 0, left, viewport.height);
+    if (right > 0) g.fillRect(rightEdge, 0, right, viewport.height);
   }
   /**
    * One map layer, cut to the 240x320 viewport. A whole-map `drawImage` with a negative offset asks
@@ -473,8 +676,8 @@ export class NewGameScreen implements Screen {
     if (!layer.complete || layer.naturalWidth === 0) return;
     const sx = Math.max(0, camera.x),
       sy = Math.max(0, camera.y),
-      w = Math.min(240 - (sx - camera.x), layer.naturalWidth - sx),
-      h = Math.min(320 - (sy - camera.y), layer.naturalHeight - sy);
+      w = Math.min(viewport.width - (sx - camera.x), layer.naturalWidth - sx),
+      h = Math.min(viewport.height - (sy - camera.y), layer.naturalHeight - sy);
     if (w <= 0 || h <= 0) return;
     g.drawImage(layer, sx, sy, w, h, sx - camera.x, sy - camera.y, w, h);
   }
@@ -569,7 +772,7 @@ export class NewGameScreen implements Screen {
    */
   private drawTanNguyetDefeatCard(g: CanvasRenderingContext2D): void {
     g.fillStyle = "#000";
-    g.fillRect(0, 0, 240, 320);
+    fillCanvas(g);
     const card = this.assets.pack.imageElement("custom-boss.tan-nguyet-defeat");
     if (!card.complete || card.naturalWidth === 0) return;
     g.save();
@@ -596,10 +799,12 @@ export class NewGameScreen implements Screen {
     const fill = (x: number, y: number, w: number, h: number) => {
       if (w > 0 && h > 0) g.fillRect(x, y, w, h);
     };
-    fill(0, 0, 240, cy - r);
+    const width = viewport.width,
+      height = viewport.height;
+    fill(0, 0, width, cy - r);
     fill(0, cy - r, cx - r, r * 2);
-    fill(0, cy + r, 240, 320 - (cy + r));
-    fill(cx + r, cy - r, 240 - (cx + r), r * 2);
+    fill(0, cy + r, width, height - (cy + r));
+    fill(cx + r, cy - r, width - (cx + r), r * 2);
   }
   /** `VqsvSourceLaserRuntime.fillBeam`: a green (0x00ff00) band with a white core. */
   private drawLaserBeam(
@@ -636,7 +841,7 @@ export class NewGameScreen implements Screen {
           : actor.direction,
       mirror = orientation === 3,
       // `anim.setPaletteNature(paletteNature)`: the pet companion in its shiny palette.
-      sprite = this.assets.shinySprite(actor.sprite, actor.paletteNature),
+      sprite = this.assets.shinySprite(actor.sprite, actor.paletteNature, actor.paletteColor),
       key = `${actor.id}:${sprite}`,
       next = this.assets.frame(sprite, actor.state, actor.animationTick),
       nextImage = next ? this.assets.imageFor(next, mirror) : undefined;
@@ -655,7 +860,7 @@ export class NewGameScreen implements Screen {
     const image = this.assets.imageFor(frame, drawMirror);
     if (image.complete && image.naturalWidth > 0)
       g.drawImage(
-        this.assets.shinyImage(image, actor.paletteNature, sprite),
+        this.assets.shinyImage(image, actor.paletteNature, sprite, actor.paletteColor),
         Math.floor(at.x + actor.renderOffsetX - camera.x + (drawMirror ? frame.mox : frame.ox)),
         Math.floor(at.y + actor.renderOffsetY - camera.y + (drawMirror ? frame.moy : frame.oy)),
       );
@@ -796,16 +1001,16 @@ export class NewGameScreen implements Screen {
       t = this.runtime.effectTick;
     if (effect === "solid-black") {
       g.fillStyle = "#000";
-      g.fillRect(0, 0, 240, 320);
+      fillCanvas(g);
     } else if (effect === "fade-out") {
       g.fillStyle = `rgba(0,0,0,${Math.min(255, t * 17) / 255})`;
-      g.fillRect(0, 0, 240, 320);
+      fillCanvas(g);
     } else if (effect === "fade-in") {
       g.fillStyle = `rgba(0,0,0,${Math.max(0, 255 - t * 17) / 255})`;
-      g.fillRect(0, 0, 240, 320);
+      fillCanvas(g);
     } else if (effect === "flash" && t <= 1) {
       g.fillStyle = t % 3 === 0 ? "#fff" : "#000";
-      g.fillRect(0, 0, 240, 320);
+      fillCanvas(g);
     } else if (effect.startsWith("circle")) {
       const open = effect === "circle-open",
         radius = open ? 25 + t * 10 : Math.max(0, 160 - t * 10);
@@ -833,9 +1038,9 @@ export class NewGameScreen implements Screen {
         this.battleBackground.height = g.canvas.height;
         this.battleBackground.getContext("2d")!.drawImage(g.canvas, 0, 0);
       } else {
-        r.clear();
-        g.drawImage(this.battleBackground, 0, 0, 240, 320);
+        drawCanvasCopy(g, this.battleBackground);
       }
+      r.uiSpace();
       this.battleRenderer.render(g, prelude.battle, this.motion.alpha);
       return;
     }
@@ -848,6 +1053,13 @@ export class NewGameScreen implements Screen {
       prelude.cameraY,
       prelude.actors,
     );
+    const preludeCamera = this.viewCamera(
+      prelude.renderScene,
+      prelude.renderRoom,
+      prelude.actors,
+      prelude.cameraX,
+      prelude.cameraY,
+    );
     for (const effect of prelude.actorEffects) {
       const actor = prelude.actors.get(effect.actor);
       if (actor?.visible)
@@ -856,11 +1068,12 @@ export class NewGameScreen implements Screen {
           259,
           effect.state,
           effect.tick,
-          actor.x - prelude.cameraX,
-          actor.y - prelude.cameraY - 40,
+          actor.x - preludeCamera.x,
+          actor.y - preludeCamera.y - 40,
           false,
         );
     }
+    r.uiSpace();
     this.drawPreludeEffect(g, prelude);
     if (prelude.currentText) this.drawPreludeText(g, prelude);
   }
@@ -874,6 +1087,7 @@ export class NewGameScreen implements Screen {
       this.battleBackground = null;
       r.clear();
       this.drawCauVongMinigame(g, minigame);
+      this.fillUiBands(r);
       return;
     }
     if (world.tanNguyetDefeatCardVisible) {
@@ -890,8 +1104,7 @@ export class NewGameScreen implements Screen {
         this.battleBackground.height = g.canvas.height;
         this.battleBackground.getContext("2d")!.drawImage(g.canvas, 0, 0);
       } else {
-        r.clear();
-        g.drawImage(this.battleBackground, 0, 0, 240, 320);
+        drawCanvasCopy(g, this.battleBackground);
       }
     } else if (eventScene) {
       // A free-world source event owns its own actor visibility, camera and op9 overlay. Rendering
@@ -902,13 +1115,23 @@ export class NewGameScreen implements Screen {
         r,
         eventScene.renderScene,
         eventScene.renderRoom,
-        // op24: `VqsvSceneView` translates the view by the shake offset.
-        eventScene.cameraX - eventScene.shakeOffset.x,
-        eventScene.cameraY - eventScene.shakeOffset.y,
+        eventScene.cameraX,
+        eventScene.cameraY,
         eventScene.actors,
+        // op24: `VqsvSceneView` translates the view by the shake offset.
+        eventScene.shakeOffset,
+        true,
+      );
+      const eventCamera = this.viewCamera(
+        eventScene.renderScene,
+        eventScene.renderRoom,
+        eventScene.actors,
+        eventScene.cameraX,
+        eventScene.cameraY,
+        true,
       );
       if (eventScene.renderScene === world.sceneId && eventScene.renderRoom === world.roomIndex)
-        this.drawDarkRoom(g, world.darkRoomView, { x: eventScene.cameraX, y: eventScene.cameraY });
+        this.drawDarkRoom(g, world.darkRoomView, eventCamera);
       for (const effect of eventScene.actorEffects) {
         const actor = eventScene.actors.get(effect.actor);
         if (actor?.visible)
@@ -917,18 +1140,35 @@ export class NewGameScreen implements Screen {
             259,
             effect.state,
             effect.tick,
-            actor.x - eventScene.cameraX,
-            actor.y - eventScene.cameraY - 40,
+            actor.x - eventCamera.x,
+            actor.y - eventCamera.y - 40,
             false,
           );
       }
+      r.uiSpace();
       this.drawPreludeEffect(g, eventScene);
     } else {
       this.battleBackground = null;
-      this.drawWorld(r, world.sceneId, world.roomIndex, world.cameraX, world.cameraY, world.actors);
+      this.drawWorld(
+        r,
+        world.sceneId,
+        world.roomIndex,
+        world.cameraX,
+        world.cameraY,
+        world.actors,
+        undefined,
+        true,
+      );
       // `renderSourceActorMarkers`: while no panel owns the frame, the action marker (sprite 259,
       // state 7) floats over each tree or rock the hero can clear.
-      const markerCamera = this.motion.camera(world.actors, { x: world.cameraX, y: world.cameraY });
+      const markerCamera = this.viewCamera(
+        world.sceneId,
+        world.roomIndex,
+        world.actors,
+        world.cameraX,
+        world.cameraY,
+        true,
+      );
       // `VqsvQuestMarkerRuntime.render`: side-quest markers over their NPCs.
       for (const marker of world.questMarkers)
         this.drawSprite(
@@ -954,6 +1194,7 @@ export class NewGameScreen implements Screen {
       // `VqsvDarkRoomPresentation.render` comes after the whole world pass, markers included.
       this.drawDarkRoom(g, world.darkRoomView, markerCamera);
     }
+    r.uiSpace();
     // `NguyenMocC4RaceRuntime.renderOverlay`: the countdown picture centred, else the run's time.
     const race = world.raceOverlay;
     if (race && "countdown" in race) {
@@ -964,25 +1205,31 @@ export class NewGameScreen implements Screen {
     // An op53 award opens badge.ui while its group still holds the scene: the panel owns the frame.
     if (eventScene && !this.host.panel.visible) {
       if (eventScene.currentText) this.drawPreludeText(g, eventScene);
-      if (eventScene.choice) this.drawChoiceBox(g, eventScene.choice);
+      const choice = eventScene.choice;
+      if (choice) inLandSpace(g, LAND_CENTER, () => this.drawChoiceBox(g, choice));
       return;
     }
     // Tàn Nguyệt Long Ma's `TextBox.msgWarm` notice over the room.
     const bossNotice = world.tanNguyetNotice;
     if (bossNotice !== null) {
-      this.petUi.drawWarningBox(
-        g,
-        bossNotice,
-        TAN_NGUYET_WORLD_TEXT.prompt,
-        world.presentationTick,
+      inLandSpace(g, LAND_CENTER, () =>
+        this.petUi.drawWarningBox(
+          g,
+          bossNotice,
+          TAN_NGUYET_WORLD_TEXT.prompt,
+          world.presentationTick,
+        ),
       );
       return;
     }
     if (world.repelPromptVisible) {
-      if (world.repelPromptText)
-        this.drawTaskTipRaw(g, world.repelPromptText, world.presentationTick);
-      const choice = world.repelPromptChoice;
-      if (choice) this.drawChoiceBox(g, choice);
+      // Landscape: the line and the box at full size in the middle of the 320x240 screen.
+      inLandSpace(g, LAND_CENTER, () => {
+        if (world.repelPromptText)
+          this.drawTaskTipRaw(g, world.repelPromptText, world.presentationTick);
+        const choice = world.repelPromptChoice;
+        if (choice) this.drawChoiceBox(g, choice);
+      });
       return;
     }
     // `VqsvSourceNpcDialogueFlow`: a service NPC's line (`TextBox.dialog`) before its panel opens.
@@ -1017,10 +1264,132 @@ export class NewGameScreen implements Screen {
       return;
     }
     if (world.phase === "returnTask")
-      this.drawTaskTipRaw(g, world.currentText, world.presentationTick);
+      inLandSpace(g, LAND_CENTER, () =>
+        this.drawTaskTipRaw(g, world.currentText, world.presentationTick),
+      );
     // `VqsvSceneView` draws `worldUi` only while no panel owns the frame, then the panel above the map.
+    const land = landWorldPanel(this.host.panel),
+      fit = land ? null : landWorldFit(this.host.panel);
+    if (land) this.drawLandWorldPanel(r, world, land);
+    else if (fit) this.drawFitWorldPanel(r, world, fit);
+    else if (landWorldPet(this.host.panel)) {
+      // The short dashboard at full size, where the fight's goes (`LAND_PET_STATE`).
+      const k = r.backingScale,
+        e = k * (battleFrameX() + LAND_WORLD_PET.x),
+        f = k * LAND_WORLD_PET.y;
+      this.drawWorldPanelsWith(r, world, k, e, f, true);
+    } else this.drawWorldPanels(r, g, world);
+  }
+  /** `drawWorldPanels` under one transform (`a = d = scale`, then `e, f`) in both spaces. */
+  private drawWorldPanelsWith(
+    r: CanvasRenderer,
+    world: WorldRuntime,
+    scale: number,
+    e: number,
+    f: number,
+    land = false,
+  ): void {
+    const g = r.context,
+      place = () => g.setTransform(scale, 0, 0, scale, e, f),
+      shim = {
+        context: g,
+        backingScale: r.backingScale,
+        worldSpace: place,
+        uiSpace: place,
+      } as unknown as CanvasRenderer;
+    place();
+    g.imageSmoothingEnabled = false;
+    this.drawWorldPanels(shim, g, world, land);
+    r.uiSpace();
+  }
+  /**
+   * Landscape: a JavaSE card (`landWorldFit`) scaled to fit the 320x240 screen, its dim spread over
+   * the rest of the screen. The edges are kept on whole device pixels so the two dims meet cleanly.
+   */
+  private drawFitWorldPanel(r: CanvasRenderer, world: WorldRuntime, fit: LandWorldFit): void {
+    const g = r.context,
+      k = r.backingScale,
+      ox = k * (battleFrameX() + fit.x),
+      oy = k * fit.y,
+      s = k * fit.scale,
+      x0 = Math.round(ox + fit.region.x * s),
+      y0 = Math.round(oy + fit.region.y * s),
+      x1 = Math.round(ox + (fit.region.x + fit.region.w) * s),
+      y1 = Math.round(oy + (fit.region.y + fit.region.h) * s);
+    g.save();
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.fillStyle = fit.dim;
+    g.beginPath();
+    g.rect(0, 0, g.canvas.width, g.canvas.height);
+    g.rect(x0, y0, x1 - x0, y1 - y0);
+    g.fill("evenodd");
+    g.beginPath();
+    g.rect(x0, y0, x1 - x0, y1 - y0);
+    g.clip();
+    this.drawWorldPanelsWith(r, world, s, ox, oy);
+    g.restore();
+    r.uiSpace();
+  }
+  /**
+   * Landscape: a panel laid out on a source `.ui` is drawn at full size where the APK puts it
+   * (`landWorldPanel`). It is painted on its own 240x320 sheet, then the body, the game menu's
+   * banner and the two softkeys are laid on the 320x240 screen, each moved by its own shift.
+   */
+  private drawLandWorldPanel(r: CanvasRenderer, world: WorldRuntime, land: LandWorldPanel): void {
+    const k = r.backingScale,
+      sheet = (this.panelSheet ??= document.createElement("canvas"));
+    if (sheet.width !== LOGICAL_WIDTH * k || sheet.height !== LOGICAL_HEIGHT * k) {
+      sheet.width = LOGICAL_WIDTH * k;
+      sheet.height = LOGICAL_HEIGHT * k;
+    }
+    const s = sheet.getContext("2d")!;
+    s.setTransform(1, 0, 0, 1, 0, 0);
+    s.clearRect(0, 0, sheet.width, sheet.height);
+    s.setTransform(k, 0, 0, k, 0, 0);
+    s.imageSmoothingEnabled = false;
+    const onSheet = {
+      context: s,
+      backingScale: k,
+      worldSpace: () => s.setTransform(k, 0, 0, k, 0, 0),
+      uiSpace: () => s.setTransform(k, 0, 0, k, 0, 0),
+    } as unknown as CanvasRenderer;
+    this.drawWorldPanels(onSheet, s, world);
+    const g = r.context,
+      lay = (
+        part: { x: number; y: number; w: number; h: number },
+        shift: { x: number; y: number },
+      ) =>
+        g.drawImage(
+          sheet,
+          part.x * k,
+          part.y * k,
+          part.w * k,
+          part.h * k,
+          part.x + shift.x,
+          part.y + shift.y,
+          part.w,
+          part.h,
+        );
+    g.setTransform(k, 0, 0, k, k * battleFrameX(), 0);
+    g.imageSmoothingEnabled = false;
+    const bodyTop = land.top ? TOP_END : 0;
+    lay({ x: 0, y: bodyTop, w: LOGICAL_WIDTH, h: SOFTKEY_TOP - bodyTop }, land);
+    if (land.top) lay({ x: 0, y: 0, w: LOGICAL_WIDTH, h: TOP_END }, land.top);
+    lay(LEFT_KEY_SOURCE, LEFT_KEY);
+    lay(RIGHT_KEY_SOURCE, RIGHT_KEY);
+    r.uiSpace();
+  }
+  /** The open world panel (or, with none, the talk prompt and the world HUD). */
+  private drawWorldPanels(
+    r: CanvasRenderer,
+    g: CanvasRenderingContext2D,
+    world: WorldRuntime,
+    /** Landscape's full-size pet dashboard: short, without the world HUD under it. */
+    land = false,
+  ): void {
     const art = this.worldPanelArt;
-    if (this.host.panel.visible && this.host.panel.isCard) this.drawPanelCard(g);
+    if (this.host.panel.visible && this.host.panel.isCard)
+      inLandSpace(g, LAND_CENTER, () => this.drawPanelCard(g));
     else if (this.host.panel.visible && this.host.panel.mode === "pet") {
       // JavaSE `renderPetStateOverlay` (world: "Xác định"), then `renderSourcePetSetting`,
       // `renderSourceReleaseConfirm` and `TextBox.msgWarm` over it.
@@ -1029,7 +1398,11 @@ export class NewGameScreen implements Screen {
       // JavaSE closes the game menu before it opens the pet state, so `worldUi` (the room banner,
       // the shortcut toggle and the softkey plates) stays under the dashboard, except while the
       // release confirmation is up.
-      if (panel.petStage !== "confirmRelease") this.drawWorldHud(g, world);
+      if (panel.petStage !== "confirmRelease" && !land) {
+        r.worldSpace();
+        this.drawWorldHud(g, world);
+        r.uiSpace();
+      }
       // `choice.ui` ("Đạo cụ", "Vật phẩm trang sức") closes the dashboard while it is up.
       const choice = panel.petChoiceView,
         choiceLayout = this.boot.layouts.get("choice"),
@@ -1084,12 +1457,12 @@ export class NewGameScreen implements Screen {
             font: this.boot.panelFont,
             fx: (name) => this.assets.pack.imageElement(`quality-fx.${name}`),
             pet: (pet) => this.host.petLook(pet),
-            sprite: (spriteId, x, y, w, h, at, nature) => {
-              const visual = this.assets.shinySprite(spriteId, nature),
+            sprite: (spriteId, x, y, w, h, at, nature, shinyColor) => {
+              const visual = this.assets.shinySprite(spriteId, nature, shinyColor),
                 frame = this.assets.frame(visual, 0, at),
                 bounds = this.assets.animationBounds(visual, 0);
               if (!frame || !bounds) return;
-              const image = this.assets.petImage(frame, visual, nature);
+              const image = this.assets.petImage(frame, visual, nature, false, shinyColor);
               if (!image) return;
               g.drawImage(
                 image,
@@ -1106,11 +1479,13 @@ export class NewGameScreen implements Screen {
           g,
           {
             font: this.boot.panelFont,
-            sprite: (spriteId, nature) => {
-              const visual = this.assets.shinySprite(spriteId, nature),
+            sprite: (spriteId, nature, shinyColor) => {
+              const visual = this.assets.shinySprite(spriteId, nature, shinyColor),
                 frame = this.assets.frameAtCursor(visual, 0, 0),
                 bounds = this.assets.animationBounds(visual, 0),
-                image = frame ? this.assets.petImage(frame, visual, nature) : undefined;
+                image = frame
+                  ? this.assets.petImage(frame, visual, nature, false, shinyColor)
+                  : undefined;
               return frame && bounds && image ? { frame, bounds, image } : undefined;
             },
           },
@@ -1141,6 +1516,7 @@ export class NewGameScreen implements Screen {
             tab: panel.petTab,
           },
           tick,
+          land,
         );
       const petsetting = this.boot.layouts.get("petsetting"),
         msgconfirm = this.boot.layouts.get("msgconfirm"),
@@ -1272,6 +1648,12 @@ export class NewGameScreen implements Screen {
       (this.host.panel.mode === "battlePass" || this.host.panel.mode === "battlePassHelp")
     ) {
       drawBattlePass(g, this.host.panel, this.boot.panelFont);
+    } else if (this.host.panel.visible && this.host.panel.mode === "bondingTower") {
+      const panel = this.host.panel;
+      drawBondingTower(g, this.boot.panelFont, panel.bondingTower, panel.towerSource.view(), {
+        icon: this.assets.pack.imageElement("bonding-tower-art.tower.png"),
+        portrait: (id) => this.assets.pack.imageElement(`bonding-tower-art.${id}.png`),
+      });
     } else if (
       this.host.panel.visible &&
       (
@@ -1382,12 +1764,16 @@ export class NewGameScreen implements Screen {
         this.boot.panelFont,
       );
     } else if (this.host.panel.visible && this.host.panel.mode === "areaMap") {
+      // Landscape: the map spreads over the whole canvas (`areaMapScreen`), not the UI box.
       const view = this.host.panel.areaMap;
-      if (view)
+      if (view) {
+        if (viewport.landscape) r.worldSpace();
         drawAreaMap(g, view, {
           font: this.boot.sourceFont,
           sprite: (sprite, state, tick, x, y) => this.drawSprite(g, sprite, state, tick, x, y),
         });
+        if (viewport.landscape) r.uiSpace();
+      }
     } else if (
       this.host.panel.visible &&
       (this.host.panel.mode === "record" ||
@@ -1406,9 +1792,16 @@ export class NewGameScreen implements Screen {
           {
             font: this.boot.panelFont,
             cell: (i) => this.boot.cell(257, i),
-            idle: (spriteId) => {
-              const frame = this.assets.frameAtCursor(spriteId, 0, 0);
-              return frame ? { image: this.assets.imageFor(frame), ox: 0, oy: 0 } : undefined;
+            // A colour page draws every picture in its shiny colour (nature 7 only marks it shiny).
+            idle: (spriteId, shinyColor) => {
+              const visual = this.assets.shinySprite(spriteId),
+                frame = this.assets.frameAtCursor(visual, 0, 0);
+              if (!frame) return undefined;
+              const image =
+                shinyColor === undefined
+                  ? this.assets.imageFor(frame)
+                  : this.assets.petImage(frame, visual, 7, false, shinyColor);
+              return image ? { image, ox: 0, oy: 0 } : undefined;
             },
             badgeIcon: (key) => this.assets.pack.imageElement(`badge-icons.${key}`),
           },
@@ -1443,8 +1836,12 @@ export class NewGameScreen implements Screen {
           { taskProgress: this.host.taskProgress() },
         );
     } else {
+      // The talk bubble stands over an actor and the HUD pins to the screen corners: both are
+      // drawn on the whole canvas.
+      r.worldSpace();
       this.drawTalkPrompt(g, world);
       this.drawWorldHud(g, world);
+      r.uiSpace();
     }
   }
   /** `VqsvTalkPromptRuntime.render`: the speech bubble over the NPC the player faces. */
@@ -1453,7 +1850,14 @@ export class NewGameScreen implements Screen {
     if (!prompt) return;
     const actor = world.actors.get(prompt.actorId),
       at = actor ? this.motion.actor(world.actors, actor.id, actor) : { x: prompt.x, y: prompt.y },
-      camera = this.motion.camera(world.actors, { x: world.cameraX, y: world.cameraY });
+      camera = this.viewCamera(
+        world.sceneId,
+        world.roomIndex,
+        world.actors,
+        world.cameraX,
+        world.cameraY,
+        true,
+      );
     this.drawSprite(
       g,
       TALK_PROMPT.sprite,
@@ -1473,6 +1877,14 @@ export class NewGameScreen implements Screen {
       hud = world.hud,
       font = this.boot.panelFont;
     if (!layout) return;
+    // Drawn on the whole canvas (\`worldSpace\`), full size: in landscape each control keeps its
+    // place against its own corner of the screen (\`cornerShift\`), as the APK's world.ui does.
+    const pin = (corner: Corner) => {
+      const d = cornerShift(corner);
+      g.setTransform(base.a, base.b, base.c, base.d, base.e + d.x * base.a, base.f + d.y * base.d);
+    };
+    const base = g.getTransform();
+    pin("tl");
     // The banner drops in at widget 1 (aligned to its top-left), the name scrolls in widget 6.
     if (hud.titleAnimationTick >= 0) {
       const banner = layout.widget(ROOM_TITLE.bannerWidget),
@@ -1496,6 +1908,7 @@ export class NewGameScreen implements Screen {
       }
     }
     // The shortcut toggle: a rounded plate with an arrow that points the way the strip will move.
+    pin("bl");
     const t = SHORTCUT_TOGGLE;
     g.fillStyle = "#0b3d50";
     g.beginPath();
@@ -1518,8 +1931,12 @@ export class NewGameScreen implements Screen {
           frame = this.assets.heldFrame(257, shortcut.animation, hud.shortcutAnimationTick);
         if (frame) this.blit(g, frame, widget?.x ?? shortcut.x, widget?.y ?? shortcut.y);
       }
-    drawWorldPlates(g, this.worldPanelArt, layout);
+    pin("tl");
+    const bottomLeft = cornerShift("bl"),
+      bottomRight = cornerShift("br");
+    drawWorldPlates(g, this.worldPanelArt, layout, bottomLeft, bottomRight);
     // `drawSpeedCheckbox`.
+    pin("tr");
     const speed = this.speed?.enabled() ?? false,
       { boxX, boxY } = SPEED_CHECKBOX,
       ink = speed ? "#fff16a" : "#ffffff";
@@ -1535,6 +1952,7 @@ export class NewGameScreen implements Screen {
       g.stroke();
     }
     font.draw(g, "x2", boxX + 14, boxY, ink);
+    g.setTransform(base);
   }
   /** The one-line notice card (a shortcut whose panel is not ported yet). */
   private drawPanelCard(g: CanvasRenderingContext2D): void {
@@ -1545,7 +1963,7 @@ export class NewGameScreen implements Screen {
       h = 62,
       y = Math.floor((320 - h) / 2) - 10;
     g.fillStyle = "rgba(0, 18, 28, 0.55)";
-    g.fillRect(0, 0, 240, 320);
+    fillCanvas(g);
     g.fillStyle = "#0b3d50";
     g.beginPath();
     g.roundRect(x + 2, y + 3, w, h, 8);
@@ -1560,9 +1978,9 @@ export class NewGameScreen implements Screen {
     g.fill();
     g.fillStyle = "#f0a43c";
     g.fillRect(x, y + 21, w, 2);
-    font.centered(g, "Thông báo", x, y + 6, w, "#ffffff");
-    font.centered(g, panel.notice, x, y + 32, w, "#14384a");
-    font.centered(g, "Nhấn 5 để đóng", x, y + h - 14, w, "#6e93a5");
+    font.centered(g, "Thông báo", x, w, y + 6, "#ffffff");
+    font.centered(g, panel.notice, x, w, y + 32, "#14384a");
+    font.centered(g, "Nhấn 5 để đóng", x, w, y + h - 14, "#6e93a5");
   }
   /** A world sprite frame with its anchor at x,y. */
   private blit(g: CanvasRenderingContext2D, frame: SpriteFrame, x: number, y: number): void {
@@ -1579,7 +1997,7 @@ export class NewGameScreen implements Screen {
     if (tick < 10) {
       if (tick % 3 === 1) {
         g.fillStyle = "#fff";
-        g.fillRect(0, 0, 240, 320);
+        fillCanvas(g);
       }
       return;
     }
@@ -1605,7 +2023,7 @@ export class NewGameScreen implements Screen {
       for (let i = 1; i < 6; i++)
         g.fillRect(240 - progress - i * 15, half, Math.max(0, 15 - i * 3), 160);
     }
-    if (progress >= 240) g.fillRect(0, 0, 240, 320);
+    if (progress >= 240) fillCanvas(g);
   }
   /**
    * Seat a simultaneous 2v2 over the world and fetch every pet sheet it can show — both rosters and
@@ -1635,11 +2053,11 @@ export class NewGameScreen implements Screen {
     if (!travel.oceanVisible) {
       this.drawWorldBattleBackground(r, world);
       g.fillStyle = `rgba(0,0,0,${travel.fadeAlpha / 255})`;
-      g.fillRect(0, 0, 240, 320);
+      fillCanvas(g);
       return;
     }
     g.fillStyle = "#000";
-    g.fillRect(0, 0, 240, 320);
+    fillCanvas(g);
     const layer = (index: number) => {
       const image = this.assets.pack.imageElement(
         `wharf.maps/${WHARF_OCEAN_MAP}/layer-${index}.png`,
@@ -1657,28 +2075,60 @@ export class NewGameScreen implements Screen {
       travel.boatY,
     );
     layer(3);
-    this.drawWharfBars(g, travel);
+    this.fillUiBands(r);
+    this.drawWharfBars(r, travel);
   }
-  private drawWharfBars(g: CanvasRenderingContext2D, travel: WharfTravel): void {
+  /**
+   * Landscape: a whole screen drawn in the 240x320 UI box (the ocean crossing, a Cầu Vồng
+   * minigame) leaves bands either side of it, painted the same plain colour as a narrow room's
+   * (`drawMapGutters`).
+   */
+  private fillUiBands(r: CanvasRenderer): void {
+    if (!viewport.landscape) return;
+    const g = r.context,
+      k = r.backingScale,
+      { scale, x } = viewport.ui,
+      left = Math.round(k * x),
+      right = Math.round(k * (x + 240 * scale)),
+      width = g.canvas.width,
+      height = g.canvas.height;
+    if (left <= 0 && right >= width) return;
+    g.save();
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.fillStyle = SIDE_BAND_COLOR;
+    if (left > 0) g.fillRect(0, 0, left, height);
+    if (right < width) g.fillRect(right, 0, width - right, height);
+    g.restore();
+  }
+  /** `startBars`: black bars closing from the canvas's top and bottom edges, across its width. */
+  private drawWharfBars(r: CanvasRenderer, travel: WharfTravel): void {
     const bars = travel.bars;
     if (!bars) return;
+    const g = r.context;
+    r.worldSpace();
     g.fillStyle = "#000";
-    g.fillRect(0, 0, 240, bars.top);
-    g.fillRect(0, 320 - bars.bottom, 240, bars.bottom);
+    g.fillRect(0, 0, viewport.width, bars.top);
+    g.fillRect(0, viewport.height - bars.bottom, viewport.width, bars.bottom);
+    r.uiSpace();
   }
   private drawWorldBattleBackground(r: CanvasRenderer, world: WorldRuntime): void {
     const g = r.context;
     r.clear();
-    const room = this.assets.getRoom(world.sceneId, world.roomIndex),
+    r.worldSpace();
+    const room = this.assets.getWorldRoom(world.sceneId, world.roomIndex),
       layers = room ? this.assets.maps.get(room.mapId) : undefined,
-      camera = { x: world.cameraX, y: world.cameraY };
-    if (!layers) return;
+      camera = fitCamera(room, { x: world.cameraX, y: world.cameraY }),
+      mapX = -camera.x - (room?.originX ?? 0),
+      mapY = -camera.y - (room?.originY ?? 0);
+    if (!layers) return r.uiSpace();
     this.drawRoomBackdrop(g, world.sceneId, world.roomIndex);
-    for (const i of [1, 2]) if (layers[i]) g.drawImage(layers[i], -camera.x, -camera.y);
+    for (const i of [1, 2]) if (layers[i]) g.drawImage(layers[i], mapX, mapY);
+    this.drawMapGutters(g, [layers[1], layers[2]], { x: -mapX, y: -mapY });
     this.drawActorSet(g, world.actors, 1, camera, (actor) => actor.variant === 0, true);
     this.drawActorSet(g, world.actors, 2, camera, (actor) => actor.variant === 0, false);
-    if (layers[3]) g.drawImage(layers[3], -camera.x, -camera.y);
+    if (layers[3]) g.drawImage(layers[3], mapX, mapY);
     this.drawActorSet(g, world.actors, 0, camera, (actor) => actor.variant === 0, false);
+    r.uiSpace();
   }
   private drawSavePrompt(g: CanvasRenderingContext2D, message: string, selected: number): void {
     const frame = this.boot.cell(257, 124),
@@ -1724,11 +2174,29 @@ export class NewGameScreen implements Screen {
     if (world.currentText) this.drawTaskTipRaw(g, world.currentText, world.presentationTick);
   }
   private drawWorldDialog(g: CanvasRenderingContext2D, speaker: string, text: string): void {
-    const frame = this.boot.cell(257, 129),
-      tab = this.boot.cell(257, 130);
-    if (frame) g.drawImage(frame, 0, 256);
-    this.drawSpeakerTab(g, tab, speaker, 62);
-    this.wrap(g, text, 6, 264, 230, 12, "#000");
+    this.bottomBand(g, (width) => {
+      const frame = this.boot.cell(257, 129),
+        tab = this.boot.cell(257, 130);
+      if (frame) drawBandFrame(g, frame, 256, width);
+      this.drawSpeakerTab(g, tab, speaker, 62);
+      this.wrap(g, text, 6, 264, width - 10, 12, "#000");
+    });
+  }
+  /**
+   * A box laid against the bottom of the 240x320 screen (`dialog.ui`): in landscape it is drawn on
+   * the whole canvas at full size, against the canvas's bottom edge and as wide as the canvas, as
+   * the APK's 320x240 dialog.ui does. `body` gets that width (240 in portrait).
+   */
+  private bottomBand(g: CanvasRenderingContext2D, body: (width: number) => void): void {
+    if (!viewport.landscape) {
+      body(LOGICAL_WIDTH);
+      return;
+    }
+    const k = g.getTransform().a / viewport.ui.scale;
+    g.save();
+    g.setTransform(k, 0, 0, k, 0, k * (viewport.height - LOGICAL_HEIGHT));
+    body(viewport.width);
+    g.restore();
   }
   /**
    * The speaker tab (cell 257:130, 62 px) at (1, 231) with the name in it; returns its width. A name
@@ -1784,29 +2252,34 @@ export class NewGameScreen implements Screen {
   private drawBattleBackgroundWorld(r: CanvasRenderer, prelude: StorySceneRuntime): void {
     const g = r.context;
     r.clear();
+    r.worldSpace();
     const room = this.assets.getRoom(prelude.renderScene, prelude.renderRoom),
       layers = room ? this.assets.maps.get(room.mapId) : undefined,
-      camera = { x: prelude.cameraX, y: prelude.cameraY };
-    if (!layers) return;
+      camera = fitCamera(room, { x: prelude.cameraX, y: prelude.cameraY }),
+      mapX = -camera.x - (room?.originX ?? 0),
+      mapY = -camera.y - (room?.originY ?? 0);
+    if (!layers) return r.uiSpace();
     this.drawRoomBackdrop(g, prelude.renderScene, prelude.renderRoom);
-    for (const i of [1, 2]) if (layers[i]) g.drawImage(layers[i], -camera.x, -camera.y);
+    for (const i of [1, 2]) if (layers[i]) g.drawImage(layers[i], mapX, mapY);
+    this.drawMapGutters(g, [layers[1], layers[2]], { x: -mapX, y: -mapY });
     this.drawActorSet(g, prelude.actors, 1, camera, (actor) => actor.variant === 0, true);
     this.drawActorSet(g, prelude.actors, 2, camera, (actor) => actor.variant === 0, false);
-    if (layers[3]) g.drawImage(layers[3], -camera.x, -camera.y);
+    if (layers[3]) g.drawImage(layers[3], mapX, mapY);
     this.drawActorSet(g, prelude.actors, 0, camera, (actor) => actor.variant === 0, false);
+    r.uiSpace();
   }
   private drawPreludeEffect(g: CanvasRenderingContext2D, prelude: StorySceneRuntime): void {
     const t = prelude.effectTick;
     if (prelude.effect === "fade-out") {
       g.fillStyle = `rgba(0,0,0,${Math.min(255, t * 17) / 255})`;
-      g.fillRect(0, 0, 240, 320);
+      fillCanvas(g);
     } else if (prelude.effect === "fade-in") {
       g.fillStyle = `rgba(0,0,0,${Math.max(0, 255 - t * 17) / 255})`;
-      g.fillRect(0, 0, 240, 320);
+      fillCanvas(g);
     } else if (prelude.effect === "icon") {
       const icon = this.boot.effect("ikon-1")!;
       g.fillStyle = "#000";
-      g.fillRect(0, 0, 240, 320);
+      fillCanvas(g);
       g.globalAlpha = Math.min(1, (t * 10) / 255);
       g.drawImage(icon, 120 - icon.width / 2, 100 - icon.height / 2);
       g.globalAlpha = 1;
@@ -1815,7 +2288,7 @@ export class NewGameScreen implements Screen {
       const [, name, x, y] = prelude.effect.split(":"),
         image = this.boot.effect(name);
       g.fillStyle = "#000";
-      g.fillRect(0, 0, 240, 320);
+      fillCanvas(g);
       if (image) {
         g.globalAlpha = Math.min(1, (t * 10) / 255);
         g.drawImage(image, Number(x), Number(y));
@@ -1827,7 +2300,7 @@ export class NewGameScreen implements Screen {
     const text = prelude.currentText!.slice(0, prelude.visibleChars);
     if (prelude.textKind === "full") {
       g.fillStyle = "#000";
-      g.fillRect(0, 0, 240, 320);
+      fillCanvas(g);
       this.wrap(g, text, 60, 90, 120, 12, "#ffffff");
       return;
     }
@@ -1873,9 +2346,22 @@ export class NewGameScreen implements Screen {
     mode = 0,
     portrait?: { index: number; offset: number },
   ): void {
+    this.bottomBand(g, (width) =>
+      this.drawDialogBand(g, width, speaker, text, breaks, mode, portrait),
+    );
+  }
+  private drawDialogBand(
+    g: CanvasRenderingContext2D,
+    width: number,
+    speaker: string,
+    text: string,
+    breaks: readonly number[],
+    mode: number,
+    portrait?: { index: number; offset: number },
+  ): void {
     const frame = this.boot.cell(257, 129),
       tab = this.boot.cell(257, 130);
-    if (frame) g.drawImage(frame, 0, 256);
+    if (frame) drawBandFrame(g, frame, 256, width);
     // `renderDialogFrame`: a box of mode -1 has no speaker tab. A long name widens the tab, and the
     // "Bỏ qua" plate moves right by as much, keeping its gap to the tab.
     const grow = mode >= 0 ? this.drawSpeakerTab(g, tab, speaker) - SPEAKER_TAB_WIDTH : 0,
@@ -1885,7 +2371,7 @@ export class NewGameScreen implements Screen {
     if (portrait) {
       const face = this.assets.cauVongPortrait(portrait.index);
       if (face.complete && face.naturalWidth > 0) {
-        const center = portrait.index === 0 ? 30 : 210;
+        const center = portrait.index === 0 ? 30 : width - 30;
         g.drawImage(
           face,
           center + portrait.offset - Math.trunc(face.naturalWidth / 2),
@@ -1902,7 +2388,7 @@ export class NewGameScreen implements Screen {
     g.strokeRect(plateX + 1, 236, 65, 15);
     this.boot.panelFont.centered(g, "Bỏ qua", plateX, 68, 238, "#ffffff");
     if (!breaks.length) {
-      this.wrap(g, text, 6, 264, 230, 12, "#000000");
+      this.wrap(g, text, 6, 264, width - 10, 12, "#000000");
       return;
     }
     [0, ...breaks].forEach((start, i) => {
@@ -1979,7 +2465,7 @@ export class NewGameScreen implements Screen {
       h = this.runtime.textFull ? 230 : 50;
     if (this.runtime.textFull) {
       g.fillStyle = "#000";
-      g.fillRect(0, 0, 240, 320);
+      fillCanvas(g);
     } else {
       g.fillStyle = "#000";
       g.fillRect(x - 4, y - 4, w + 8, h + 8);
@@ -2008,4 +2494,38 @@ export class NewGameScreen implements Screen {
         (line, i) => line && this.boot.panelFont.draw(g, line, x, y + i * lineHeight, color),
       );
   }
+}
+
+/**
+ * The dialog frame (cell 257:129, 240x64) at `y`, `width` wide: as drawn when it fits, else its
+ * 16 px ends kept and its middle stretched, nearest-pixel.
+ */
+function drawBandFrame(
+  g: CanvasRenderingContext2D,
+  frame: HTMLImageElement,
+  y: number,
+  width: number,
+): void {
+  if (width <= frame.width) {
+    g.drawImage(frame, 0, y);
+    return;
+  }
+  const edge = 16,
+    middle = frame.width - edge * 2,
+    smoothing = g.imageSmoothingEnabled;
+  g.imageSmoothingEnabled = false;
+  g.drawImage(frame, 0, 0, edge, frame.height, 0, y, edge, frame.height);
+  g.drawImage(frame, edge, 0, middle, frame.height, edge, y, width - edge * 2, frame.height);
+  g.drawImage(
+    frame,
+    frame.width - edge,
+    0,
+    edge,
+    frame.height,
+    width - edge,
+    y,
+    edge,
+    frame.height,
+  );
+  g.imageSmoothingEnabled = smoothing;
 }

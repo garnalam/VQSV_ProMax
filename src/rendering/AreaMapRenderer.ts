@@ -4,6 +4,7 @@ import {
   AREA_MAP_SCREEN,
   AreaMapView,
   areaCellW,
+  areaMapScreen,
 } from "../game/world/AreaMap";
 import type { SourceFontRenderer } from "./font/SourceFontRenderer";
 
@@ -142,9 +143,12 @@ export function drawAreaMap(g: CanvasRenderingContext2D, view: AreaMapView, art:
   }
 
   // The legend band: each label is written in its swatch's colour (`n.a(g, s, x, y)` keeps it).
-  const top = AREA_MAP_SCREEN.h - 30;
+  // A wide (landscape) screen stretches the band and centres the three entries on it.
+  const screen = areaMapScreen(),
+    top = screen.h - 30,
+    shift = Math.trunc((screen.w - AREA_MAP_SCREEN.w) / 2);
   g.fillStyle = hex(1862801);
-  g.fillRect(0, top, AREA_MAP_SCREEN.w, 30);
+  g.fillRect(0, top, screen.w, 30);
   const legend: [number, number, number, string][] = [
     [0x00ff00, 15, 35, "Cửa ra vào"],
     [2758133, 90, 110, "Bến tàu"],
@@ -152,7 +156,7 @@ export function drawAreaMap(g: CanvasRenderingContext2D, view: AreaMapView, art:
   ];
   for (const [color, swatchX, textX, label] of legend) {
     g.fillStyle = hex(color);
-    g.fillRect(swatchX, AREA_MAP_SCREEN.h - 22, 16, 16);
-    font.draw(g, label, textX, AREA_MAP_SCREEN.h - 18, hex(color));
+    g.fillRect(shift + swatchX, screen.h - 22, 16, 16);
+    font.draw(g, label, shift + textX, screen.h - 18, hex(color));
   }
 }

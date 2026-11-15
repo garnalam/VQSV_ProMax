@@ -17,4 +17,6 @@ export type StoryActor = {
   sourceOrder?: number;
   /** `VqsvWorldActors.paletteNature`: 7..9 draws the pet companion in its shiny palette. */
   paletteNature?: number;
+  /** The companion's own shiny colour (`SavedPet.shinyColor`). */
+  paletteColor?: number;
 };

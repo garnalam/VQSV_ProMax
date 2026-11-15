@@ -12,7 +12,11 @@ import { contains, PET_STATE, petIndexAt } from "../battle/BattleListLayout";
 import { SKILL_SLOTS } from "../battle/engine/PetProgression";
 import type { PendingSkillLearn } from "../../persistence/save/GameSave";
 import { PET_ITEM_USED, PET_PROMPT } from "../pet/PetScreen";
-import { CHOICE_VISIBLE_ROWS, type ChoiceRow } from "../../rendering/SourceChoiceRenderer";
+import {
+  CHOICE_THUMB_TRAVEL_HEIGHT,
+  CHOICE_VISIBLE_ROWS,
+  type ChoiceRow,
+} from "../../rendering/SourceChoiceRenderer";
 import { SKILL_VISIBLE_ROWS, type SkillScreenView } from "../../rendering/SkillScreenRenderer";
 import type { SkillState } from "../pet/PetSkillPool";
 import type { QualityUpgradeSession } from "../pet/QualityUpgradeSession";
@@ -48,6 +52,8 @@ export type PetSkillSheet = {
   spriteId: number;
   /** The pet's nature: 7..9 draws it in its shiny palette (`sourceSkillPetNature`). */
   nature?: number;
+  /** The pet's own shiny colour (`SavedPet.shinyColor`), when it has one. */
+  shinyColor?: number;
   equipped: PetSkillRow[];
   pool: PetSkillRow[];
   poolUnlocked: number;
@@ -56,10 +62,18 @@ export type PetSkillSheet = {
 /** The pet dashboard's six quick cards and four pages (`battlePetStateDetailUi`). */
 export const PET_VISIBLE_ROWS = 6;
 export const PET_TABS = 4;
-import { AREA_MAP_CLOSE_RECT, type AreaMapDoor, type AreaMapView } from "./AreaMap";
+import { fromUi, viewport } from "../../core/Viewport";
+import {
+  AREA_MAP_CLOSE_RECT,
+  AREA_MAP_LEGEND_H,
+  type AreaMapDoor,
+  type AreaMapView,
+} from "./AreaMap";
 import { choiceRowAt } from "./WorldHud";
+import { COLLECTION_FAMILY_NAMES, COLLECTION_VARIANT_COUNT } from "../pet/PetCollection";
 import { CauVongShopPanelState, type CauVongShopSource } from "./CauVongShop";
 import { CauVongIncubatorPanelState, type CauVongIncubatorSource } from "./CauVongIncubatorPanel";
+import { BondingTowerPanelState, type TowerPanelSource } from "./BondingTowerPanel";
 import {
   clampIndexIntoVisible,
   dragScroll,
@@ -103,6 +117,7 @@ export type WorldPanelMode =
   | "giftCode"
   | "battlePass"
   | "battlePassHelp"
+  | "bondingTower"
   | "worldShop"
   | "worldShopSell"
   | "worldShopSellConfirm"
@@ -122,6 +137,7 @@ export const MENU_ROW_PORTABLE_SHOP = 0;
 export const MENU_ROW_FASHION = 6;
 export const MENU_ROW_CHALLENGE = 7;
 export const MENU_ROW_BATTLE_PASS = 8;
+export const MENU_ROW_BONDING_TOWER = 9;
 /** `GAMEMENU` row 1, "Sủng vật" (`petstate.ui`). */
 export const MENU_ROW_PET = 1;
 /** `GAMEMENU` row 2, "Lưng bao" (`bag.ui`). */
@@ -281,6 +297,8 @@ export type PetmapRow = {
 };
 /** One `badge.ui` entry, in display order (`badgeDisplayIds`). */
 export type BadgeEntry = {
+  /** Hoàng Kim Chương's rank (1 or 2) once it is held; other badges leave it unset. */
+  goldenRank?: number;
   id: number;
   name: string;
   description: string;
@@ -349,7 +367,11 @@ export const MENU_LABELS = [
   "Thời trang",
   "Tái đấu & Giftcode",
   "Thẻ Fan Cứng VQSV",
+  "Tháp Gắn Kết",
 ];
+/** The row an admin account sees after the nine game rows (web only; the server checks the role). */
+export const ADMIN_MENU_LABEL = "Admin Tool";
+export const MENU_ROW_ADMIN = MENU_LABELS.length;
 export const SYSTEM_LABELS = [
   "Tiếp tục trò chơi",
   "Trợ giúp chơi",
@@ -367,6 +389,7 @@ export const MENU_TITLE_TOKENS = [
   "Thời trang",
   "Quà tặng",
   "Thẻ Fan Cứng",
+  "Tháp Gắn Kết",
 ];
 
 export type WorldPlate = "system" | "menu";
@@ -435,6 +458,14 @@ export function rideCardAt(x: number, y: number): number {
 }
 
 export class WorldPanel {
+  readonly bondingTower = new BondingTowerPanelState();
+  towerSource: TowerPanelSource = {
+    view: () => undefined,
+    challenge: () => "Chưa thể khiêu chiến.",
+    craft: () => "Chưa thể ghép trái tim.",
+    nurture: () => "Chưa thể bồi dưỡng.",
+    sweep: () => "Chưa thể quét tầng.",
+  };
   systemSource = {
     volumeLevel: () => 0,
     setVolumeLevel: (_level: number) => {},
@@ -442,6 +473,8 @@ export class WorldPanel {
     toggleSpeedX2: () => {},
     exitToTitle: () => {},
   };
+  /** The Admin Tool row: shown only while `enabled` (the signed-in account is an admin). */
+  adminSource = { enabled: () => false, open: () => {} };
   helpPage = 0;
   settingsLevel = 0;
   visible = false;
@@ -453,15 +486,17 @@ export class WorldPanel {
   private readonly pressed: InputCommand[] = [];
   /** Where the held scrollbar thumb was grabbed, or null. */
   private scrollGrab: number | null = null;
+  /** The pet item/equipment choice list's bar while its thumb or track is held (ProMax). */
+  private choiceScrollBar: ScrollbarGeometry | undefined;
 
   /** Java's `open(Scene)`: the cursor survives a close, so re-opening resumes where it left off. */
   open(): void {
     this.visible = true;
     this.mode = "gamemenu";
     this.pressed.length = 0;
-    this.selected = clamp(this.selected, 0, MENU_LABELS.length - 1);
+    this.selected = clamp(this.selected, 0, this.menuRowCount - 1);
     this.listScroll = 0;
-    this.keepSelectedVisible(MENU_LABELS.length);
+    this.keepSelectedVisible(this.menuRowCount);
     this.openedTicks = 0;
   }
 
@@ -476,7 +511,7 @@ export class WorldPanel {
 
   close(): void {
     this.visible = false;
-    this.scrollGrab = null;
+    this.releaseScrollbar();
     this.pressed.length = 0;
     this.savePhase = 0;
     this.saveMessage = "";
@@ -878,7 +913,7 @@ export class WorldPanel {
     else if (pressed.includes("back")) {
       this.mode = "gamemenu";
       this.selected = MENU_ROW_FASHION;
-      this.keepSelectedVisible(MENU_LABELS.length);
+      this.keepSelectedVisible(this.menuRowCount);
     } else if (pressed.includes("confirm")) {
       const row = rows[this.selected];
       if (!row) return;
@@ -958,7 +993,7 @@ export class WorldPanel {
     else if (pressed.includes("back")) {
       this.mode = "gamemenu";
       this.selected = MENU_ROW_CHALLENGE;
-      this.keepSelectedVisible(MENU_LABELS.length);
+      this.keepSelectedVisible(this.menuRowCount);
     } else if (pressed.includes("confirm")) {
       if (this.selected === 1) this.openGiftCode();
       else {
@@ -1024,7 +1059,7 @@ export class WorldPanel {
     else if (pressed.includes("back")) {
       this.mode = "gamemenu";
       this.selected = MENU_ROW_BATTLE_PASS;
-      this.keepSelectedVisible(MENU_LABELS.length);
+      this.keepSelectedVisible(this.menuRowCount);
     } else if (pressed.includes("confirm")) {
       const state = this.battlePassSource.state();
       this.battlePassMessage =
@@ -1773,6 +1808,11 @@ export class WorldPanel {
           text: "Nơi này không thể sử dụng sủng vật cưỡi",
           prompt: CONTINUE_PROMPT_5,
         };
+      else if (outcome === "airborne")
+        this.rideMessage = {
+          text: "Hãy về lại mặt đất rồi mới đổi sủng vật cưỡi",
+          prompt: CONTINUE_PROMPT_5,
+        };
       else this.close();
     }
   }
@@ -1994,7 +2034,7 @@ export class WorldPanel {
       this.mode = "gamemenu";
       this.selected = MENU_ROW_BAG;
       this.listScroll = 0;
-      this.keepSelectedVisible(MENU_LABELS.length);
+      this.keepSelectedVisible(this.menuRowCount);
       this.openedTicks = 0;
     }
   }
@@ -2234,6 +2274,7 @@ export class WorldPanel {
       level: sheet.level,
       spriteId: sheet.spriteId,
       nature: sheet.nature,
+      shinyColor: sheet.shinyColor,
       equippedCount: sheet.equipped.length,
       poolUnlocked: sheet.poolUnlocked,
       poolTotal: sheet.pool.length,
@@ -2633,7 +2674,7 @@ export class WorldPanel {
       this.mode = "gamemenu";
       this.selected = MENU_ROW_PET;
       this.listScroll = 0;
-      this.keepSelectedVisible(MENU_LABELS.length);
+      this.keepSelectedVisible(this.menuRowCount);
       this.openedTicks = 0;
     } else if (pressed.includes("confirm")) {
       if (count === 0) return;
@@ -2775,7 +2816,7 @@ export class WorldPanel {
       this.mode = "gamemenu";
       this.selected = MENU_ROW_TASK;
       this.listScroll = 0; // `resetGameMenuViewport`
-      this.keepSelectedVisible(MENU_LABELS.length);
+      this.keepSelectedVisible(this.menuRowCount);
       this.openedTicks = 0;
     }
   }
@@ -2838,7 +2879,7 @@ export class WorldPanel {
     /** `recordAccess(specialRewards, 5)`: the Sủng vật sách tranh is held. */
     hasPetmapBook: () => boolean;
     stats: () => RecordStats;
-    petmapRows: (tab: number) => PetmapRow[];
+    petmapRows: (tab: number, family: number, variant: number) => PetmapRow[];
     badges: () => BadgeEntry[];
   } = {
     hasPetmapBook: () => false,
@@ -2851,11 +2892,28 @@ export class WorldPanel {
   /** `recordMessageMode`'s line ("Không đạt được sủng vật sách tranh đạo cụ"). */
   recordMessage: BagMessage | null = null;
   petmapTab = 0;
+  /** The Đồ giám page: the family (0 Liệt Hỏa, 1 Cầu Vồng, 2 V4)... */
+  petmapFamily = 0;
+  /** ...and the form: 0 the original, 1..13 shiny colour 0..12 (`COLLECTION_VARIANT_COUNT`). */
+  petmapVariant = 0;
+  /** The shiny colour the page's pictures are drawn in, or undefined on the original page. */
+  get petmapShinyColor(): number | undefined {
+    return this.petmapVariant === 0 ? undefined : this.petmapVariant - 1;
+  }
+  changePetmapPage(family: number, variant: number): void {
+    const families = COLLECTION_FAMILY_NAMES.length,
+      variants = COLLECTION_VARIANT_COUNT;
+    this.petmapFamily = ((Math.trunc(family) % families) + families) % families;
+    this.petmapVariant = ((Math.trunc(variant) % variants) + variants) % variants;
+    this.selected = 0;
+    this.listScroll = 0;
+    this.openedTicks = 0;
+  }
   private petmapReturnToBag: { selected: number; scroll: number } | null = null;
   private badgeReturnToBag: { selected: number; scroll: number } | null = null;
 
   get petmapRows(): PetmapRow[] {
-    return this.recordSource.petmapRows(this.petmapTab);
+    return this.recordSource.petmapRows(this.petmapTab, this.petmapFamily, this.petmapVariant);
   }
   get badgeEntries(): BadgeEntry[] {
     return this.recordSource.badges();
@@ -2881,7 +2939,7 @@ export class WorldPanel {
       this.mode = "gamemenu";
       this.selected = MENU_ROW_RECORD;
       this.listScroll = 0;
-      this.keepSelectedVisible(MENU_LABELS.length);
+      this.keepSelectedVisible(this.menuRowCount);
       this.openedTicks = 0;
     } else if (pressed.includes("confirm")) {
       if (this.recordSelected === 0) {
@@ -2901,6 +2959,7 @@ export class WorldPanel {
     this.mode = "petmap";
     this.selected = 0;
     this.petmapTab = 0;
+    this.changePetmapPage(0, 0);
     this.listScroll = 0;
     this.openedTicks = 0;
   }
@@ -3080,7 +3139,10 @@ export class WorldPanel {
     this.keepSelectedVisible(size);
     this.openedTicks = 0;
   }
-  /** `tickPetmap`: up/down within the tab, left/right turn the tab, 5 does nothing. */
+  /**
+   * `tickPetmap`: up/down within the tab, left/right turn the tab; 5 turns the page (ProMax): each
+   * family's original form and 13 shiny colours, then the next family.
+   */
   private tickPetmap(pressed: readonly InputCommand[]): void {
     const rows = this.petmapRows,
       max = Math.max(0, rows.length - 1);
@@ -3102,6 +3164,14 @@ export class WorldPanel {
         this.selected = 0;
         this.listScroll = 0;
       }
+    } else if (pressed.includes("confirm")) {
+      const page =
+        (this.petmapFamily * COLLECTION_VARIANT_COUNT + this.petmapVariant + 1) %
+        (COLLECTION_FAMILY_NAMES.length * COLLECTION_VARIANT_COUNT);
+      this.changePetmapPage(
+        Math.trunc(page / COLLECTION_VARIANT_COUNT),
+        page % COLLECTION_VARIANT_COUNT,
+      );
     } else if (pressed.includes("back")) {
       const bag = this.petmapReturnToBag;
       this.petmapReturnToBag = null;
@@ -3161,7 +3231,18 @@ export class WorldPanel {
   }
 
   get labels(): string[] {
-    return this.mode === "gamesystem" ? SYSTEM_LABELS : this.mode === "gamemenu" ? MENU_LABELS : [];
+    return this.mode === "gamesystem"
+      ? SYSTEM_LABELS
+      : this.mode === "gamemenu"
+        ? this.menuLabels
+        : [];
+  }
+  /** The game menu's rows: the nine of `MENU_LABELS`, plus "Admin Tool" for an admin account. */
+  get menuLabels(): string[] {
+    return this.adminSource.enabled() ? [...MENU_LABELS, ADMIN_MENU_LABEL] : MENU_LABELS;
+  }
+  get menuRowCount(): number {
+    return this.menuLabels.length;
   }
   get rowWidgets(): number[] {
     return this.mode === "gamesystem"
@@ -3172,11 +3253,12 @@ export class WorldPanel {
   }
   /** `drawGameMenuRows`' `first`: the row index drawn in the top slot. */
   get firstVisibleRow(): number {
-    return clamp(this.listScroll, 0, Math.max(0, MENU_LABELS.length - GAME_MENU_VISIBLE_ROWS));
+    return clamp(this.listScroll, 0, Math.max(0, this.menuRowCount - GAME_MENU_VISIBLE_ROWS));
   }
 
   /** `MENU_TITLE_TOKENS[selected]`: the token line under the title bar. */
   get menuTitle(): string {
+    if (this.selected === MENU_ROW_ADMIN) return this.adminSource.enabled() ? ADMIN_MENU_LABEL : "";
     return MENU_TITLE_TOKENS[this.selected] ?? "";
   }
 
@@ -3287,6 +3369,16 @@ export class WorldPanel {
       if (pressed.includes("back") || pressed.includes("confirm")) this.mode = "battlePass";
       return;
     }
+    if (this.mode === "bondingTower") {
+      const next = this.bondingTower.tick(pressed, this.towerSource);
+      if (next === "battle") this.close();
+      else if (next === "menu") {
+        this.mode = "gamemenu";
+        this.select(MENU_ROW_BONDING_TOWER);
+        this.keepSelectedVisible(MENU_LABELS.length);
+      }
+      return;
+    }
     if (this.mode === "convenience") {
       this.tickConvenience(pressed);
       return;
@@ -3317,7 +3409,10 @@ export class WorldPanel {
       return;
     }
     if (this.mode === "cauVongShop") {
-      if (this.cauVongShop.tick(pressed, this.cauVongShopSource)) this.close();
+      if (this.cauVongShop.tick(pressed, this.cauVongShopSource)) {
+        if (this.cauVongShop.bankRequested) this.openPetBank();
+        else this.close();
+      }
       return;
     }
     if (this.mode === "cauVongIncubator") {
@@ -3363,7 +3458,7 @@ export class WorldPanel {
     else if (pressed.includes("down")) this.selected = clamp(this.selected + 1, 0, max);
     else if (pressed.includes("confirm")) this.confirm();
     else if (pressed.includes("back")) this.close();
-    if (this.mode === "gamemenu") this.keepSelectedVisible(MENU_LABELS.length);
+    if (this.mode === "gamemenu") this.keepSelectedVisible(this.menuRowCount);
   }
 
   private sourceChoiceIndexAt(layout: SourceUiLayout, x: number, y: number): number {
@@ -3534,6 +3629,10 @@ export class WorldPanel {
    */
   click(layout: SourceUiLayout, x: number, y: number): boolean {
     if (!this.visible) return false;
+    if (this.mode === "bondingTower") {
+      this.pressed.push(...this.bondingTower.click(x, y, this.towerSource.view()));
+      return true;
+    }
     if (this.mode === "wharf") {
       this.clickWharf(layout, x, y);
       return true;
@@ -3784,6 +3883,14 @@ export class WorldPanel {
       return true;
     }
     if (this.mode === "petmap") {
+      // The page title (ProMax): "< family >" and "< form >", each half turning back or on.
+      if (y >= 49 && y < 71 && x >= 41 && x < 191) {
+        const family = x < 127,
+          step = x < (family ? 84 : 159) ? -1 : 1;
+        if (family) this.changePetmapPage(this.petmapFamily + step, this.petmapVariant);
+        else this.changePetmapPage(this.petmapFamily, this.petmapVariant + step);
+        return true;
+      }
       const tab = this.petmapTabAt(layout, x, y),
         slot = this.petmapRowAt(layout, x, y);
       if (tab >= 0 && tab !== this.petmapTab) {
@@ -3793,7 +3900,8 @@ export class WorldPanel {
       } else if (slot >= 0) {
         const index = this.visibleListStart(this.petmapRows.length) + slot;
         if (index < this.petmapRows.length) this.select(index);
-      } else if (panelBackHit(x, y)) this.pressed.push("back");
+      } else if (panelConfirmHit(x, y)) this.pressed.push("confirm");
+      else if (panelBackHit(x, y)) this.pressed.push("back");
       return true;
     }
     if (this.mode === "badge") {
@@ -3841,7 +3949,10 @@ export class WorldPanel {
     }
     if (this.mode === "areaMap") {
       // `a(0, 270, w, 30)`: a press on the legend band closes the map; anywhere else does nothing.
-      if (y >= AREA_MAP_CLOSE_RECT.y && y < AREA_MAP_CLOSE_RECT.y + AREA_MAP_CLOSE_RECT.h)
+      // Landscape: the map fills the canvas, so its band is the canvas's bottom 30 px.
+      if (viewport.landscape) {
+        if (fromUi(x, y).y >= viewport.height - AREA_MAP_LEGEND_H) this.areaMapClose = true;
+      } else if (y >= AREA_MAP_CLOSE_RECT.y && y < AREA_MAP_CLOSE_RECT.y + AREA_MAP_CLOSE_RECT.h)
         this.areaMapClose = true;
       return true;
     }
@@ -4030,6 +4141,8 @@ export class WorldPanel {
         return;
       }
       if (this.petStage === "itemChoice" || this.petStage === "equipChoice") {
+        // A press already queued as confirm keeps the row it confirmed.
+        if (this.pressed.includes("confirm")) return;
         const index = this.sourceChoiceIndexAt(layout, x, y),
           cursor = this.petStage === "itemChoice" ? this.itemChoice : this.equipChoice;
         if (index >= 0) cursor.selected = index;
@@ -4117,7 +4230,7 @@ export class WorldPanel {
   }
 
   /**
-   * `VqsvPanelRuntime.mouseWheel`: the game menu (nine rows in a six-row window) scrolls and keeps the
+   * `VqsvPanelRuntime.mouseWheel`: the game menu scrolls in its six-row window and keeps the
    * cursor inside the window; the system menu moves its cursor.
    */
   wheel(steps: number): void {
@@ -4258,13 +4371,35 @@ export class WorldPanel {
   }
 
   /** `pointerPressedScrollbar`: the thumb is grabbed, the track pages. True when the bar took it. */
-  pressScrollbar(x: number, y: number): boolean {
+  pressScrollbar(x: number, y: number, layout?: SourceUiLayout): boolean {
+    this.releaseScrollbar();
+    // ProMax: the pet item/equipment choice list's bar (widgets 50/51) can be dragged and paged too.
+    const view = this.mode === "pet" && !this.petMessage ? this.petChoiceView : null;
+    const track = view && layout?.widget(50);
+    if (track && view.rows.length > CHOICE_VISIBLE_ROWS) {
+      this.choiceScrollBar = {
+        x: track.x,
+        y: track.y,
+        w: layout?.widget(51)?.w ?? track.w,
+        h: track.h,
+        rowCount: view.rows.length,
+        visibleRows: CHOICE_VISIBLE_ROWS,
+        minThumbHeight: CHOICE_THUMB_TRAVEL_HEIGHT,
+        fixedThumbHeight: CHOICE_THUMB_TRAVEL_HEIGHT,
+      };
+    }
     const bar = this.scrollbar;
     if (!bar) return false;
-    const pressed = pressScrollbar(x, y, this.listScroll, bar);
-    if (!pressed) return false;
+    const pressed = pressScrollbar(x, y, view?.scroll ?? this.listScroll, bar);
+    if (!pressed) {
+      this.choiceScrollBar = undefined;
+      return false;
+    }
     if ("drag" in pressed) this.scrollGrab = pressed.drag;
-    else this.applyScroll(pressed.scroll);
+    else {
+      this.applyScroll(pressed.scroll);
+      this.choiceScrollBar = undefined;
+    }
     return true;
   }
   get scrollbarDragging(): boolean {
@@ -4274,22 +4409,24 @@ export class WorldPanel {
   dragScrollbar(y: number): void {
     const bar = this.scrollbar;
     if (this.scrollGrab === null || !bar) {
-      this.scrollGrab = null;
+      this.releaseScrollbar();
       return;
     }
     this.applyScroll(dragScroll(y, this.scrollGrab, bar));
   }
   releaseScrollbar(): void {
     this.scrollGrab = null;
+    this.choiceScrollBar = undefined;
   }
 
   /** `scrollbarGeometry`: the game menu's and the task list's bars (the system menu has none). */
   private get scrollbar(): ScrollbarGeometry | undefined {
     if (!this.visible) return undefined;
+    if (this.mode === "pet" && this.petChoiceView) return this.choiceScrollBar;
     if (this.mode === "gamemenu")
       return {
         ...GAME_MENU_SCROLLBAR,
-        rowCount: MENU_LABELS.length,
+        rowCount: this.menuRowCount,
         visibleRows: GAME_MENU_VISIBLE_ROWS,
       };
     if (this.mode === "task") {
@@ -4302,10 +4439,21 @@ export class WorldPanel {
   }
   /** `applyScrollbarScroll`: move the window and pull the cursor back inside it. */
   private applyScroll(next: number): void {
+    if (this.choiceScrollBar) {
+      const cursor = this.petStage === "itemChoice" ? this.itemChoice : this.equipChoice;
+      cursor.scroll = next;
+      cursor.selected = clampIndexIntoVisible(
+        cursor.selected,
+        next,
+        this.choiceScrollBar.rowCount,
+        CHOICE_VISIBLE_ROWS,
+      );
+      return;
+    }
     const [rows, visible] =
       this.mode === "task"
         ? [this.taskRows.length, TASK_VISIBLE_ROWS]
-        : [MENU_LABELS.length, GAME_MENU_VISIBLE_ROWS];
+        : [this.menuRowCount, GAME_MENU_VISIBLE_ROWS];
     this.listScroll = clamp(next, 0, Math.max(0, rows - visible));
     this.select(clampIndexIntoVisible(this.selected, this.listScroll, rows, visible));
   }
@@ -4333,7 +4481,7 @@ export class WorldPanel {
 
   /** `gameMenuIndexAtSlot`: the visible slot maps through the scrolled viewport. */
   indexAtSlot(slot: number): number {
-    return clamp(this.firstVisibleRow + slot, 0, MENU_LABELS.length - 1);
+    return clamp(this.firstVisibleRow + slot, 0, this.menuRowCount - 1);
   }
 
   /**
@@ -4360,6 +4508,12 @@ export class WorldPanel {
       }
       return;
     }
+    if (this.mode === "gamemenu" && this.selected === MENU_ROW_ADMIN) {
+      if (!this.adminSource.enabled()) return;
+      this.close();
+      this.adminSource.open();
+      return;
+    }
     if (this.mode === "gamemenu" && this.selected === MENU_ROW_PET) {
       this.openPets();
       return;
@@ -4378,6 +4532,12 @@ export class WorldPanel {
     }
     if (this.mode === "gamemenu" && this.selected === MENU_ROW_BATTLE_PASS) {
       this.openBattlePass();
+      return;
+    }
+    if (this.mode === "gamemenu" && this.selected === MENU_ROW_BONDING_TOWER) {
+      this.mode = "bondingTower";
+      this.openedTicks = 0;
+      this.bondingTower.open();
       return;
     }
     if (this.mode === "gamemenu" && this.selected === MENU_ROW_BAG) {
@@ -4415,7 +4575,7 @@ export class WorldPanel {
         this.mode = "gamemenu";
         this.selected = MENU_ROW_SAVE;
         this.listScroll = 0; // `resetGameMenuViewport`
-        this.keepSelectedVisible(MENU_LABELS.length);
+        this.keepSelectedVisible(this.menuRowCount);
         this.openedTicks = 0;
         this.saveMessage = "";
       }
@@ -4436,7 +4596,7 @@ export class WorldPanel {
     }
   }
 
-  /** `keepSelectedVisible(MENU_LABELS.length)` after every gamesystem-free tick. */
+  /** `keepSelectedVisible(this.menuRowCount)` after every gamesystem-free tick. */
   private keepSelectedVisible(rowCount: number): void {
     const visibleRows = this.mode === "gamemenu" ? GAME_MENU_VISIBLE_ROWS : 5,
       maxScroll = Math.max(0, rowCount - visibleRows);

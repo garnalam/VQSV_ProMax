@@ -1,5 +1,6 @@
 import type { PackLearnsetEntry } from "../../../data/GameData";
 import type { SavedPet } from "../../../persistence/save/GameSave";
+import { applyTowerBond, towerBondStat } from "../../meta/BondingTower";
 import type { PetStatCalculator } from "../PetStatCalculator";
 
 /** `PetLevel.MAX`. */
@@ -109,7 +110,10 @@ export class PetProgression {
     if (pet.level >= MAX_PET_LEVEL || amount <= 0) return result;
     pet.experience = (pet.experience ?? 0) + amount;
     const statLine = (level: number): [number, number, number, number] => {
-      const stats = this.petStats.coreStats(pet.speciesId, level, pet.quality, pet.nature ?? 0);
+      const stats = applyTowerBond(
+        this.petStats.coreStats(pet.speciesId, level, pet.quality, pet.nature ?? 0),
+        pet.towerBond,
+      );
       return [stats.hp, stats.attack, stats.defense, stats.speed];
     };
     const levelBefore = pet.level;
@@ -125,9 +129,9 @@ export class PetProgression {
       pet.level++;
       pet.experience -= requiredExp(pet.level);
       result.levelsGained++;
-      const stats = this.petStats.coreStats(pet.speciesId, pet.level, pet.quality, pet.nature ?? 0);
-      pet.maxHp = stats.hp;
-      pet.currentHp = stats.hp;
+      const [hp] = statLine(pet.level);
+      pet.maxHp = hp;
+      pet.currentHp = hp;
       const ids = (pet.skillIds ??= []);
       for (const id of this.unlocked(pet.speciesId, pet.level)) {
         if (ids.includes(id) || this.unlocked(pet.speciesId, before).includes(id)) continue;
@@ -154,7 +158,10 @@ export class PetProgression {
 
   /** A full heal: HP to the maximum for its level and every slot's PP to its skill's maximum. */
   restore(pet: SavedPet): void {
-    pet.maxHp = this.petStats.coreStats(pet.speciesId, pet.level, pet.quality, pet.nature ?? 0).hp;
+    pet.maxHp = towerBondStat(
+      this.petStats.coreStats(pet.speciesId, pet.level, pet.quality, pet.nature ?? 0).hp,
+      pet.towerBond,
+    );
     pet.currentHp = pet.maxHp;
     pet.skillPp = (pet.skillIds ?? []).map((id) => this.ppMax(id));
   }

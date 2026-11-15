@@ -42,7 +42,7 @@
     "note": "Reproduces all 280 workbook values exactly, and is the same clamp Java applies to the four damage-reduction families, so those 26 rows agree with the Java export too."
   },
   "limitsText": {
-    "capsRemoved": "Đã bỏ trần hiệu quả, số tầng cộng dồn và số lần tối đa mỗi trận. Dấu đơn vẫn không cộng dồn; điều kiện, thời hạn và nhịp kích hoạt theo mô tả. HP/PP hồi không vượt tối đa của pet/chiêu; DEF còn lại không âm.",
+    "capsRemoved": "Đã bỏ trần hiệu quả và số lần tối đa mỗi trận. Năm họ đặc tính tích tầng cộng dồn tối đa 3 tầng. Dấu đơn vẫn không cộng dồn; điều kiện, thời hạn và nhịp kích hoạt theo mô tả. HP/PP hồi không vượt tối đa của pet/chiêu; DEF còn lại không âm.",
     "damageReductionCappedAt100": "Giảm sát thương tối đa 100%. Điều kiện và nhịp kích hoạt theo mô tả."
   },
   "boss": {
@@ -73,7 +73,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đòn trực tiếp đầu sau khi vào sân tăng 66% damage nếu đi trước. Giữa hai lần ít nhất 3 lượt.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần ra sân, nếu được ra đòn trước đối thủ thì đòn tấn công đầu tiên gây thêm 66% sát thương. Dùng xong phải chờ 3 lượt mới kích hoạt lại."
     },
     {
       "speciesId": 1,
@@ -89,7 +90,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "HP dưới 50%: chiêu damage kế tiếp +126 Power, sau đó trả 5% HP tối đa, không tự gục. 1 lần/3 lượt, không kích nếu HP không đủ trả.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Khi HP còn dưới 50%, chiêu tấn công tiếp theo được cộng 126 uy lực, đổi lại pet mất 5% HP tối đa (không bao giờ tự làm mình gục; không đủ HP để trả thì không kích hoạt). Cứ 3 lượt kích hoạt được 1 lần."
     },
     {
       "speciesId": 2,
@@ -104,8 +106,9 @@
       "value": 18,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Nhận damage trực tiếp: Sức mạnh +18% trong 3 lượt, cộng dồn không giới hạn số tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
-      "matchesJavaExport": true
+      "description": "Nhận damage trực tiếp: Sức mạnh +18% trong 3 lượt, cộng dồn tối đa 3 tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần bị đánh trúng, Sức mạnh tăng 18% trong 3 lượt; tăng chồng được tối đa 3 lần (mỗi lượt cộng thêm 1 lần). Mất hết khi pet rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 3,
@@ -121,7 +124,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đòn trực tiếp đầu khi HP trên 70% tăng 84% damage. 1 lần/vào sân, hồi 3 lượt.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi HP còn trên 70%, đòn tấn công đầu tiên sau khi ra sân gây thêm 84% sát thương. Mỗi lần ra sân dùng được 1 lần, sau đó chờ 3 lượt."
     },
     {
       "speciesId": 4,
@@ -136,8 +140,9 @@
       "value": 30,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +30%, cộng dồn không giới hạn số tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
-      "matchesJavaExport": true
+      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +30%, cộng dồn tối đa 3 tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
+      "matchesJavaExport": true,
+      "summary": "Cuối mỗi lượt mà pet ra đòn trước đối thủ, Linh xảo tăng 30% trong 2 lượt; tăng chồng được tối đa 3 lần. Lượt nào bị đối thủ ra đòn trước, hoặc pet rời sân, thì mất hết phần đã tăng."
     },
     {
       "speciesId": 5,
@@ -153,7 +158,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Khi một đòn trực tiếp làm mất ít nhất 8% HP tối đa, phản 72% damage thực mất; tối đa 1 lần/lượt. Không phản hit phụ/phản lại; không áp status.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi trúng một đòn làm mất từ 8% HP tối đa trở lên, pet đánh trả kẻ tấn công bằng 72% lượng HP vừa mất. Mỗi lượt tối đa 1 lần. Không đánh trả đòn phụ hay đòn phản, và không gây thêm hiệu ứng xấu."
     },
     {
       "speciesId": 6,
@@ -169,7 +175,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Sau khi bị đòn Hỏa trực tiếp làm mất HP nhưng chưa gục: hồi 20% HP tối đa, tối đa 1 lần/2 lượt. Không miễn Hỏa, không hút từ phản đòn/DOT; chịu giảm hồi.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi bị chiêu hệ Hỏa đánh mất HP mà chưa gục, pet hồi ngay 20% HP tối đa. Cứ 2 lượt kích hoạt được 1 lần. Pet vẫn chịu sát thương Hỏa bình thường; đòn phản và sát thương mỗi lượt không kích hoạt; hiệu ứng giảm hồi máu vẫn có tác dụng."
     },
     {
       "speciesId": 7,
@@ -185,7 +192,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Sau khi bị đòn Hỏa trực tiếp làm mất HP nhưng chưa gục: hồi 30% HP tối đa, tối đa 1 lần/2 lượt. Không miễn Hỏa, không hút từ phản đòn/DOT; chịu giảm hồi.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi bị chiêu hệ Hỏa đánh mất HP mà chưa gục, pet hồi ngay 30% HP tối đa. Cứ 2 lượt kích hoạt được 1 lần. Pet vẫn chịu sát thương Hỏa bình thường; đòn phản và sát thương mỗi lượt không kích hoạt; hiệu ứng giảm hồi máu vẫn có tác dụng."
     },
     {
       "speciesId": 8,
@@ -201,7 +209,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Sau khi bị đòn Hỏa trực tiếp làm mất HP nhưng chưa gục: hồi 30% HP tối đa, tối đa 1 lần/2 lượt. Không miễn Hỏa, không hút từ phản đòn/DOT; chịu giảm hồi.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi bị chiêu hệ Hỏa đánh mất HP mà chưa gục, pet hồi ngay 30% HP tối đa. Cứ 2 lượt kích hoạt được 1 lần. Pet vẫn chịu sát thương Hỏa bình thường; đòn phản và sát thương mỗi lượt không kích hoạt; hiệu ứng giảm hồi máu vẫn có tác dụng."
     },
     {
       "speciesId": 9,
@@ -217,7 +226,8 @@
       "unit": "%",
       "limits": "damageReductionCappedAt100",
       "description": "Giảm 60% damage trực tiếp đầu tiên nhận trong mỗi lượt. Không giảm DOT/chi phí HP; không kích phản đòn.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Trong mỗi lượt, đòn tấn công đầu tiên trúng pet bị giảm 60% sát thương. Không giảm sát thương mỗi lượt (như Gieo Hạt, Hủ Thực) hay HP pet tự trả khi dùng chiêu."
     },
     {
       "speciesId": 10,
@@ -233,7 +243,8 @@
       "unit": "%",
       "limits": "damageReductionCappedAt100",
       "description": "Giảm 90% damage trực tiếp đầu tiên nhận trong mỗi lượt. Không giảm DOT/chi phí HP; không kích phản đòn.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Trong mỗi lượt, đòn tấn công đầu tiên trúng pet bị giảm 90% sát thương. Không giảm sát thương mỗi lượt (như Gieo Hạt, Hủ Thực) hay HP pet tự trả khi dùng chiêu."
     },
     {
       "speciesId": 11,
@@ -249,7 +260,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đánh mục tiêu đang giảm Linh xảo: damage +54%. Không tự làm chậm; không cộng dồn từ nhiều dấu.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đánh đối thủ đang bị giảm Linh xảo thì gây thêm 54% sát thương. Pet không tự làm chậm đối thủ; đối thủ bị giảm Linh xảo nhiều lần cũng chỉ tính một lần."
     },
     {
       "speciesId": 12,
@@ -265,7 +277,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đánh mục tiêu đang giảm Linh xảo: damage +54%. Không tự làm chậm; không cộng dồn từ nhiều dấu.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đánh đối thủ đang bị giảm Linh xảo thì gây thêm 54% sát thương. Pet không tự làm chậm đối thủ; đối thủ bị giảm Linh xảo nhiều lần cũng chỉ tính một lần."
     },
     {
       "speciesId": 13,
@@ -281,7 +294,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Dùng 2 chiêu trực tiếp khác nhau liên tiếp: chiêu trực tiếp tiếp theo +90 Power rồi xóa đà. Không tích từ hit phụ; khống chế bỏ lượt/đổi pet xóa đà.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Dùng 2 chiêu tấn công khác nhau liên tiếp thì chiêu tấn công kế tiếp được cộng 90 uy lực, sau đó đếm lại từ đầu. Bị khống chế mất lượt hoặc rời sân thì mất chuỗi."
     },
     {
       "speciesId": 14,
@@ -297,7 +311,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Dùng 2 chiêu trực tiếp khác nhau liên tiếp: chiêu trực tiếp tiếp theo +96 Power rồi xóa đà. Không tích từ hit phụ; khống chế bỏ lượt/đổi pet xóa đà.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Dùng 2 chiêu tấn công khác nhau liên tiếp thì chiêu tấn công kế tiếp được cộng 96 uy lực, sau đó đếm lại từ đầu. Bị khống chế mất lượt hoặc rời sân thì mất chuỗi."
     },
     {
       "speciesId": 15,
@@ -313,7 +328,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Khi HP từ trên 30% xuống 30% hoặc thấp hơn nhưng còn sống: hồi 120% HP tối đa sau đòn. Không hồi sinh khi đã gục; chịu chống hồi.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi HP tụt từ trên 30% xuống còn 30% trở xuống mà chưa gục, pet hồi ngay 120% HP tối đa (không vượt quá HP tối đa). Không cứu được nếu đã gục; hiệu ứng giảm hồi máu vẫn có tác dụng."
     },
     {
       "speciesId": 16,
@@ -329,7 +345,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Tự đặt thành công Gieo Hạt/Hủ Thực lên địch: hồi 20% HP tối đa. Tối đa 1 lần/2 lượt; refresh khi hiệu ứng còn nguyên không kích.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần gây được Gieo Hạt hoặc Hủ Thực lên đối thủ, pet hồi 20% HP tối đa. Cứ 2 lượt kích hoạt được 1 lần. Gây lại lên đối thủ đang có sẵn hiệu ứng đó thì không tính."
     },
     {
       "speciesId": 17,
@@ -345,7 +362,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Tự đặt thành công Gieo Hạt/Hủ Thực lên địch: hồi 30% HP tối đa. Tối đa 1 lần/2 lượt; refresh khi hiệu ứng còn nguyên không kích.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần gây được Gieo Hạt hoặc Hủ Thực lên đối thủ, pet hồi 30% HP tối đa. Cứ 2 lượt kích hoạt được 1 lần. Gây lại lên đối thủ đang có sẵn hiệu ứng đó thì không tính."
     },
     {
       "speciesId": 18,
@@ -361,7 +379,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Tự đặt thành công Gieo Hạt/Hủ Thực lên địch: hồi 30% HP tối đa. Tối đa 1 lần/2 lượt; refresh khi hiệu ứng còn nguyên không kích.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần gây được Gieo Hạt hoặc Hủ Thực lên đối thủ, pet hồi 30% HP tối đa. Cứ 2 lượt kích hoạt được 1 lần. Gây lại lên đối thủ đang có sẵn hiệu ứng đó thì không tính."
     },
     {
       "speciesId": 19,
@@ -377,7 +396,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Sau khi mất HP bởi đòn trực tiếp, trả 12% HP tối đa người dùng. 1 lần/lượt, không phản dây chuyền.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần bị đánh mất HP, kẻ tấn công cũng mất lượng HP bằng 12% HP tối đa của pet này. Mỗi lượt 1 lần; hai bên có đặc tính phản đòn cũng không phản qua phản lại."
     },
     {
       "speciesId": 20,
@@ -393,7 +413,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Sau khi mất HP bởi đòn trực tiếp, trả 18% HP tối đa người dùng. 1 lần/lượt, không phản dây chuyền.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần bị đánh mất HP, kẻ tấn công cũng mất lượng HP bằng 18% HP tối đa của pet này. Mỗi lượt 1 lần; hai bên có đặc tính phản đòn cũng không phản qua phản lại."
     },
     {
       "speciesId": 21,
@@ -409,7 +430,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Sau khi mất HP bởi đòn trực tiếp, trả 18% HP tối đa người dùng. 1 lần/lượt, không phản dây chuyền.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần bị đánh mất HP, kẻ tấn công cũng mất lượng HP bằng 18% HP tối đa của pet này. Mỗi lượt 1 lần; hai bên có đặc tính phản đòn cũng không phản qua phản lại."
     },
     {
       "speciesId": 22,
@@ -425,7 +447,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đòn trực tiếp vào mục tiêu đang Giam Cầm tăng 48% damage. Không tự khóa đổi pet; đổi mục tiêu không giữ lợi thế.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đánh đối thủ đang bị Giam Cầm thì gây thêm 48% sát thương. Pet không tự Giam Cầm đối thủ; đổi sang đối thủ khác thì mất lợi thế."
     },
     {
       "speciesId": 23,
@@ -441,7 +464,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Khi dùng chiêu hồi và mục tiêu đang dưới 50% HP, hồi thêm 30% HP tối đa mục tiêu. 1 lần/3 lượt; chịu giảm hồi, không kích lại thụ động.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng chiêu hồi máu cho pet đang dưới 50% HP, pet được hồi thêm 30% HP tối đa của nó. Cứ 3 lượt kích hoạt được 1 lần; hiệu ứng giảm hồi máu vẫn có tác dụng."
     },
     {
       "speciesId": 24,
@@ -456,8 +480,9 @@
       "value": 20,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu Power 0: dự trữ 20% HP tối đa, cộng dồn không giới hạn số tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
-      "matchesJavaExport": true
+      "description": "Dùng chiêu Power 0: dự trữ 20% HP tối đa, cộng dồn tối đa 3 tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần dùng chiêu không gây sát thương (chiêu hỗ trợ), pet tích 20% HP tối đa vào \"kho hồi máu\" trong 4 lượt, tích chồng tối đa 3 lần. Chiêu hồi máu tiếp theo sẽ hồi thêm toàn bộ lượng đã tích. Kho không tự hồi máu; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 25,
@@ -472,8 +497,9 @@
       "value": 30,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn không giới hạn số tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
-      "matchesJavaExport": true
+      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn tối đa 3 tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần dùng chiêu không gây sát thương (chiêu hỗ trợ), pet tích 30% HP tối đa vào \"kho hồi máu\" trong 4 lượt, tích chồng tối đa 3 lần. Chiêu hồi máu tiếp theo sẽ hồi thêm toàn bộ lượng đã tích. Kho không tự hồi máu; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 26,
@@ -489,7 +515,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Sau chiêu Power 0: chiêu damage kế tiếp +60 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 60 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
     },
     {
       "speciesId": 27,
@@ -505,7 +532,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Sau chiêu Power 0: chiêu damage kế tiếp +102 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 102 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
     },
     {
       "speciesId": 28,
@@ -521,7 +549,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Khi tự rút thành công bằng chiêu đổi pet: pet vào nhận khiên 30% HP tối đa trong 2 lượt. 1 lần/3 lượt; khiên tuyệt kỹ và đặc tính lấy giá trị cao hơn, không cộng dồn. Không kích khi đổi bị chặn.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi pet tự rút khỏi sân bằng chiêu đổi pet, pet vào thay nhận khiên chắn bằng 30% HP tối đa trong 2 lượt. Cứ 3 lượt kích hoạt được 1 lần. Nếu đã có khiên từ tuyệt kỹ thì chỉ giữ khiên lớn hơn. Không kích hoạt khi bị chặn đổi pet."
     },
     {
       "speciesId": 29,
@@ -537,7 +566,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +78 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 78 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
     },
     {
       "speciesId": 30,
@@ -553,7 +583,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Tẩy thực sự ít nhất 1 debuff bằng chiêu: hồi thêm 30% HP tối đa cho mục tiêu đã được tẩy, 1 lần/3 lượt. Không kích từ buff miễn debuff.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng chiêu giải trừ xóa được ít nhất 1 hiệu ứng xấu, pet được giải trừ hồi thêm 30% HP tối đa. Cứ 3 lượt kích hoạt được 1 lần. Chiêu chỉ chặn trước hiệu ứng xấu (không xóa được gì) thì không tính."
     },
     {
       "speciesId": 31,
@@ -569,7 +600,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Chiêu hỗ trợ trực tiếp nhắm bản thân/đồng minh thành công: thêm khiên 40% HP tối đa mục tiêu trong 2 lượt. 1 lần/3 lượt; không cộng dồn.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng thành công chiêu hỗ trợ lên chính mình hoặc đồng đội, pet đó nhận thêm khiên chắn bằng 40% HP tối đa trong 2 lượt. Cứ 3 lượt kích hoạt được 1 lần; khiên không cộng dồn."
     },
     {
       "speciesId": 32,
@@ -585,7 +617,9 @@
       "unit": "%",
       "limits": "damageReductionCappedAt100",
       "description": "Giảm 90% damage trực tiếp đầu tiên nhận trong mỗi lượt. Không giảm DOT/chi phí HP; không kích phản đòn.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Sau khi pet ra sân đủ 2 lượt, trong mỗi lượt đòn tấn công đầu tiên trúng pet bị giảm 90% sát thương. Mỗi lần ra sân (kể cả thu về rồi cho ra lại) phải chờ lại 2 lượt từ đầu. Không giảm sát thương mỗi lượt (như Gieo Hạt, Hủ Thực) hay HP pet tự trả khi dùng chiêu.",
+      "warmupRounds": 2
     },
     {
       "speciesId": 33,
@@ -601,7 +635,8 @@
       "unit": "PP",
       "limits": "capsRemoved",
       "description": "Thực sự gỡ buff địch bằng chiêu: hoàn 10 PP cho chính chiêu đó, 1 lần/3 lượt, không vượt PP tối đa. Không kích từ chiêu Power 0 sao chép thất bại.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng chiêu xóa được hiệu ứng tăng chỉ số của đối thủ, chiêu đó được hoàn lại 10 PP (không vượt PP tối đa). Cứ 3 lượt kích hoạt được 1 lần."
     },
     {
       "speciesId": 34,
@@ -617,7 +652,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "HP trên 60%: DEF +70%. HP dưới 40%: cuối lượt hồi 20% HP tối đa, 1 lần/2 lượt. Không có hiệu lực ở dải 40–60%; chịu giảm hồi.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi HP trên 60%: Phòng ngự tăng 70%. Khi HP dưới 40%: cuối lượt hồi 20% HP tối đa (cứ 2 lượt 1 lần). Khi HP trong khoảng 40–60% thì không có tác dụng gì; hiệu ứng giảm hồi máu vẫn có tác dụng."
     },
     {
       "speciesId": 35,
@@ -633,7 +669,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Nếu mục tiêu có Linh xảo cao hơn bản thân, bỏ qua 48% DEF khi đánh trực tiếp. không tự được đi trước.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi đánh đối thủ có Linh xảo cao hơn mình, đòn tấn công bỏ qua 48% Phòng ngự của đối thủ. Không giúp pet ra đòn trước."
     },
     {
       "speciesId": 36,
@@ -649,7 +686,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Nếu mục tiêu có Linh xảo cao hơn bản thân, bỏ qua 78% DEF khi đánh trực tiếp. không tự được đi trước.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi đánh đối thủ có Linh xảo cao hơn mình, đòn tấn công bỏ qua 78% Phòng ngự của đối thủ. Không giúp pet ra đòn trước."
     },
     {
       "speciesId": 37,
@@ -665,7 +703,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Sau đòn trực tiếp làm mất HP, nhận khiên bằng 30% HP tối đa, tối đa 1 lần/2 lượt; tồn tại 2 lượt. Khiên không cộng dồn; DOT không kích.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Sau khi bị đánh mất HP, pet nhận khiên chắn bằng 30% HP tối đa, giữ trong 2 lượt. Cứ 2 lượt kích hoạt được 1 lần; khiên không cộng dồn; sát thương mỗi lượt (như Gieo Hạt) không kích hoạt."
     },
     {
       "speciesId": 38,
@@ -681,7 +720,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Sau đòn trực tiếp làm mất HP, nhận khiên bằng 50% HP tối đa, tối đa 1 lần/2 lượt; tồn tại 2 lượt. Khiên không cộng dồn; DOT không kích.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Sau khi bị đánh mất HP, pet nhận khiên chắn bằng 50% HP tối đa, giữ trong 2 lượt. Cứ 2 lượt kích hoạt được 1 lần; khiên không cộng dồn; sát thương mỗi lượt (như Gieo Hạt) không kích hoạt."
     },
     {
       "speciesId": 39,
@@ -697,7 +737,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Sau khi mất HP bởi đòn trực tiếp, trả 18% HP tối đa người dùng. 1 lần/lượt, không phản dây chuyền.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần bị đánh mất HP, kẻ tấn công cũng mất lượng HP bằng 18% HP tối đa của pet này. Mỗi lượt 1 lần; hai bên có đặc tính phản đòn cũng không phản qua phản lại."
     },
     {
       "speciesId": 40,
@@ -713,7 +754,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Sau khi mất HP bởi đòn trực tiếp, trả 18% HP tối đa người dùng. 1 lần/lượt, không phản dây chuyền.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần bị đánh mất HP, kẻ tấn công cũng mất lượng HP bằng 18% HP tối đa của pet này. Mỗi lượt 1 lần; hai bên có đặc tính phản đòn cũng không phản qua phản lại."
     },
     {
       "speciesId": 41,
@@ -729,7 +771,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Khi HP từ trên 30% xuống 30% hoặc thấp hơn nhưng chưa gục: nhận khiên 120% HP tối đa trong 2 lượt. Không cứu một đòn chí tử.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi HP tụt từ trên 30% xuống còn 30% trở xuống mà chưa gục, pet nhận khiên chắn bằng 120% HP tối đa trong 2 lượt. Không cứu được đòn đánh gục ngay."
     },
     {
       "speciesId": 42,
@@ -745,7 +788,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Khi HP từ trên 30% xuống 30% hoặc thấp hơn nhưng chưa gục: nhận khiên 120% HP tối đa trong 2 lượt. Không cứu một đòn chí tử.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi HP tụt từ trên 30% xuống còn 30% trở xuống mà chưa gục, pet nhận khiên chắn bằng 120% HP tối đa trong 2 lượt. Không cứu được đòn đánh gục ngay."
     },
     {
       "speciesId": 43,
@@ -761,7 +805,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "DOT do bản thân đặt làm địch mất HP cuối lượt: hồi 10% HP tối đa. Tối đa 1 lần/lượt, không kích khi DOT bị chặn; không hồi từ DOT đồng đội.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi hiệu ứng mất máu mỗi lượt do pet gây ra (như Gieo Hạt, Hủ Thực) làm đối thủ mất HP cuối lượt, pet hồi 10% HP tối đa. Mỗi lượt tối đa 1 lần; hiệu ứng do đồng đội gây ra không tính."
     },
     {
       "speciesId": 44,
@@ -777,7 +822,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "DOT do bản thân đặt làm địch mất HP cuối lượt: hồi 20% HP tối đa. Tối đa 1 lần/lượt, không kích khi DOT bị chặn; không hồi từ DOT đồng đội.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi hiệu ứng mất máu mỗi lượt do pet gây ra (như Gieo Hạt, Hủ Thực) làm đối thủ mất HP cuối lượt, pet hồi 20% HP tối đa. Mỗi lượt tối đa 1 lần; hiệu ứng do đồng đội gây ra không tính."
     },
     {
       "speciesId": 45,
@@ -793,7 +839,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Sau chiêu Power 0: chiêu damage kế tiếp +96 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 96 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
     },
     {
       "speciesId": 46,
@@ -809,7 +856,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Sau chiêu Power 0: chiêu damage kế tiếp +102 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 102 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
     },
     {
       "speciesId": 47,
@@ -821,11 +869,12 @@
       "type": "first_hit_guard",
       "factor": 10,
       "sourceValue": 10,
-      "value": 100,
+      "value": 30,
       "unit": "%",
       "limits": "damageReductionCappedAt100",
-      "description": "Giảm 100% damage trực tiếp đầu tiên nhận trong mỗi lượt. Không giảm DOT/chi phí HP; không kích phản đòn.",
-      "matchesJavaExport": true
+      "description": "Giảm 30% damage trực tiếp đầu tiên nhận trong mỗi lượt. Không giảm DOT/chi phí HP; không kích phản đòn.",
+      "matchesJavaExport": true,
+      "summary": "Trong mỗi lượt, đòn tấn công đầu tiên trúng pet bị giảm 30% sát thương. Không giảm sát thương mỗi lượt (như Gieo Hạt, Hủ Thực) hay HP pet tự trả khi dùng chiêu."
     },
     {
       "speciesId": 48,
@@ -841,7 +890,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đòn trực tiếp gây mất ít nhất 8% HP tối đa: giảm 40% Linh xảo kẻ đánh trong 2 lượt. 1 lần/2 lượt; không cộng dồn, tẩy được.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi trúng đòn làm mất từ 8% HP tối đa trở lên, kẻ tấn công bị giảm 40% Linh xảo trong 2 lượt. Cứ 2 lượt kích hoạt được 1 lần; không cộng dồn và có thể bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 49,
@@ -857,7 +907,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đòn trực tiếp gây mất ít nhất 8% HP tối đa: giảm 60% Linh xảo kẻ đánh trong 2 lượt. 1 lần/2 lượt; không cộng dồn, tẩy được.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi trúng đòn làm mất từ 8% HP tối đa trở lên, kẻ tấn công bị giảm 60% Linh xảo trong 2 lượt. Cứ 2 lượt kích hoạt được 1 lần; không cộng dồn và có thể bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 50,
@@ -873,7 +924,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đòn trực tiếp gây mất ít nhất 8% HP tối đa: giảm 70% Linh xảo kẻ đánh trong 2 lượt. 1 lần/2 lượt; không cộng dồn, tẩy được.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi trúng đòn làm mất từ 8% HP tối đa trở lên, kẻ tấn công bị giảm 70% Linh xảo trong 2 lượt. Cứ 2 lượt kích hoạt được 1 lần; không cộng dồn và có thể bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 51,
@@ -888,8 +940,9 @@
       "value": 30,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +30%, cộng dồn không giới hạn số tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
-      "matchesJavaExport": true
+      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +30%, cộng dồn tối đa 3 tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
+      "matchesJavaExport": true,
+      "summary": "Cuối mỗi lượt mà pet ra đòn trước đối thủ, Linh xảo tăng 30% trong 2 lượt; tăng chồng được tối đa 3 lần. Lượt nào bị đối thủ ra đòn trước, hoặc pet rời sân, thì mất hết phần đã tăng."
     },
     {
       "speciesId": 52,
@@ -904,8 +957,9 @@
       "value": 40,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +40%, cộng dồn không giới hạn số tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
-      "matchesJavaExport": true
+      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +40%, cộng dồn tối đa 3 tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
+      "matchesJavaExport": true,
+      "summary": "Cuối mỗi lượt mà pet ra đòn trước đối thủ, Linh xảo tăng 40% trong 2 lượt; tăng chồng được tối đa 3 lần. Lượt nào bị đối thủ ra đòn trước, hoặc pet rời sân, thì mất hết phần đã tăng."
     },
     {
       "speciesId": 53,
@@ -920,8 +974,9 @@
       "value": 40,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +40%, cộng dồn không giới hạn số tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
-      "matchesJavaExport": true
+      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +40%, cộng dồn tối đa 3 tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
+      "matchesJavaExport": true,
+      "summary": "Cuối mỗi lượt mà pet ra đòn trước đối thủ, Linh xảo tăng 40% trong 2 lượt; tăng chồng được tối đa 3 lần. Lượt nào bị đối thủ ra đòn trước, hoặc pet rời sân, thì mất hết phần đã tăng."
     },
     {
       "speciesId": 54,
@@ -937,7 +992,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đòn trực tiếp đầu sau khi vào sân tăng 66% damage nếu đi trước. Giữa hai lần ít nhất 3 lượt.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần ra sân, nếu được ra đòn trước đối thủ thì đòn tấn công đầu tiên gây thêm 66% sát thương. Dùng xong phải chờ 3 lượt mới kích hoạt lại."
     },
     {
       "speciesId": 55,
@@ -953,7 +1009,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đánh mục tiêu dưới 35% HP: hồi 210% damage thực làm mất HP; 1 lần/2 lượt. Không hút từ khiên.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đánh đối thủ còn dưới 35% HP thì pet hút máu: hồi lượng HP bằng 210% sát thương gây ra. Cứ 2 lượt kích hoạt được 1 lần. Sát thương vào khiên chắn không được tính."
     },
     {
       "speciesId": 56,
@@ -969,7 +1026,8 @@
       "unit": "%",
       "limits": "damageReductionCappedAt100",
       "description": "Giảm 70% damage trực tiếp nhận từ mục tiêu đang bị giảm chính xác. Không ảnh hưởng đòn chắc trúng bỏ qua chính xác.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi bị đối thủ đang bị giảm chính xác tấn công, pet chịu ít hơn 70% sát thương. Không có tác dụng với đòn luôn trúng."
     },
     {
       "speciesId": 57,
@@ -985,7 +1043,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đặt mới Mị Hoặc/Ngủ thành công: chiêu hồi tiếp theo hồi thêm 30% HP tối đa mục tiêu. 1 dấu, 2 lượt; tẩy dấu/đổi pet xóa.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi gây được Mị Hoặc hoặc Ngủ lên đối thủ, chiêu hồi máu kế tiếp trong 2 lượt hồi thêm 30% HP tối đa của pet được hồi. Không cộng dồn; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 58,
@@ -1001,7 +1060,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Khi tự rút thành công bằng chiêu đổi pet: pet vào nhận khiên 40% HP tối đa trong 2 lượt. 1 lần/3 lượt; khiên tuyệt kỹ và đặc tính lấy giá trị cao hơn, không cộng dồn. Không kích khi đổi bị chặn.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi pet tự rút khỏi sân bằng chiêu đổi pet, pet vào thay nhận khiên chắn bằng 40% HP tối đa trong 2 lượt. Cứ 3 lượt kích hoạt được 1 lần. Nếu đã có khiên từ tuyệt kỹ thì chỉ giữ khiên lớn hơn. Không kích hoạt khi bị chặn đổi pet."
     },
     {
       "speciesId": 59,
@@ -1017,7 +1077,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "DOT do bản thân đặt làm địch mất HP cuối lượt: hồi 20% HP tối đa. Tối đa 1 lần/lượt, không kích khi DOT bị chặn; không hồi từ DOT đồng đội.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi hiệu ứng mất máu mỗi lượt do pet gây ra (như Gieo Hạt, Hủ Thực) làm đối thủ mất HP cuối lượt, pet hồi 20% HP tối đa. Mỗi lượt tối đa 1 lần; hiệu ứng do đồng đội gây ra không tính."
     },
     {
       "speciesId": 60,
@@ -1033,7 +1094,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Địch có buff DEF: bỏ qua 72% DEF của địch cho damage trực tiếp. không đổi DEF gốc.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi đối thủ đang được tăng Phòng ngự, đòn tấn công của pet bỏ qua 72% Phòng ngự của đối thủ."
     },
     {
       "speciesId": 61,
@@ -1049,7 +1111,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Địch có buff DEF: bỏ qua 78% DEF của địch cho damage trực tiếp. không đổi DEF gốc.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi đối thủ đang được tăng Phòng ngự, đòn tấn công của pet bỏ qua 78% Phòng ngự của đối thủ."
     },
     {
       "speciesId": 62,
@@ -1065,7 +1128,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Tẩy thực sự ít nhất 1 debuff bằng chiêu: hồi thêm 30% HP tối đa cho mục tiêu đã được tẩy, 1 lần/3 lượt. Không kích từ buff miễn debuff.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng chiêu giải trừ xóa được ít nhất 1 hiệu ứng xấu, pet được giải trừ hồi thêm 30% HP tối đa. Cứ 3 lượt kích hoạt được 1 lần. Chiêu chỉ chặn trước hiệu ứng xấu (không xóa được gì) thì không tính."
     },
     {
       "speciesId": 63,
@@ -1081,7 +1145,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Sau đòn trực tiếp làm mất HP, nhận khiên bằng 60% HP tối đa, tối đa 1 lần/2 lượt; tồn tại 2 lượt. Khiên không cộng dồn; DOT không kích.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Sau khi bị đánh mất HP, pet nhận khiên chắn bằng 60% HP tối đa, giữ trong 2 lượt. Cứ 2 lượt kích hoạt được 1 lần; khiên không cộng dồn; sát thương mỗi lượt (như Gieo Hạt) không kích hoạt."
     },
     {
       "speciesId": 64,
@@ -1097,7 +1162,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Dùng 2 chiêu trực tiếp khác nhau liên tiếp: chiêu trực tiếp tiếp theo +60 Power rồi xóa đà. Không tích từ hit phụ; khống chế bỏ lượt/đổi pet xóa đà.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Dùng 2 chiêu tấn công khác nhau liên tiếp thì chiêu tấn công kế tiếp được cộng 60 uy lực, sau đó đếm lại từ đầu. Bị khống chế mất lượt hoặc rời sân thì mất chuỗi."
     },
     {
       "speciesId": 65,
@@ -1112,8 +1178,9 @@
       "value": 48,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 48 Power, cộng dồn không giới hạn số tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
-      "matchesJavaExport": false
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 48 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "matchesJavaExport": false,
+      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 48 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
     },
     {
       "speciesId": 66,
@@ -1128,8 +1195,9 @@
       "value": 66,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 66 Power, cộng dồn không giới hạn số tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
-      "matchesJavaExport": false
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 66 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "matchesJavaExport": false,
+      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 66 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
     },
     {
       "speciesId": 67,
@@ -1144,8 +1212,9 @@
       "value": 84,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 84 Power, cộng dồn không giới hạn số tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
-      "matchesJavaExport": false
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 84 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "matchesJavaExport": false,
+      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 84 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
     },
     {
       "speciesId": 68,
@@ -1160,8 +1229,9 @@
       "value": 30,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +30%, cộng dồn không giới hạn số tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
-      "matchesJavaExport": true
+      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +30%, cộng dồn tối đa 3 tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
+      "matchesJavaExport": true,
+      "summary": "Cuối mỗi lượt mà pet ra đòn trước đối thủ, Linh xảo tăng 30% trong 2 lượt; tăng chồng được tối đa 3 lần. Lượt nào bị đối thủ ra đòn trước, hoặc pet rời sân, thì mất hết phần đã tăng."
     },
     {
       "speciesId": 69,
@@ -1176,8 +1246,9 @@
       "value": 40,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +40%, cộng dồn không giới hạn số tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
-      "matchesJavaExport": true
+      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +40%, cộng dồn tối đa 3 tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
+      "matchesJavaExport": true,
+      "summary": "Cuối mỗi lượt mà pet ra đòn trước đối thủ, Linh xảo tăng 40% trong 2 lượt; tăng chồng được tối đa 3 lần. Lượt nào bị đối thủ ra đòn trước, hoặc pet rời sân, thì mất hết phần đã tăng."
     },
     {
       "speciesId": 70,
@@ -1192,8 +1263,9 @@
       "value": 24,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn không giới hạn số tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
-      "matchesJavaExport": true
+      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn tối đa 3 tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần dùng chiêu tấn công cùng hệ với pet, sát thương hệ đó tăng 24% trong 3 lượt, tăng chồng tối đa 3 lần. Chỉ tích khi chiêu thật sự gây sát thương; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 71,
@@ -1208,8 +1280,9 @@
       "value": 24,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn không giới hạn số tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
-      "matchesJavaExport": true
+      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn tối đa 3 tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần dùng chiêu tấn công cùng hệ với pet, sát thương hệ đó tăng 24% trong 3 lượt, tăng chồng tối đa 3 lần. Chỉ tích khi chiêu thật sự gây sát thương; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 72,
@@ -1225,7 +1298,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đòn damage hệ chính tăng 72% damage, trả 3% HP tối đa sau khi gây damage, tối đa 1 lần/lượt. Không kích nếu HP không đủ; chi phí không gây gục.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Chiêu tấn công cùng hệ với pet gây thêm 72% sát thương, đổi lại pet mất 3% HP tối đa sau đòn (mỗi lượt tối đa 1 lần). Không đủ HP thì không kích hoạt; không bao giờ tự làm mình gục."
     },
     {
       "speciesId": 73,
@@ -1241,7 +1315,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đòn damage hệ chính tăng 72% damage, trả 3% HP tối đa sau khi gây damage, tối đa 1 lần/lượt. Không kích nếu HP không đủ; chi phí không gây gục.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Chiêu tấn công cùng hệ với pet gây thêm 72% sát thương, đổi lại pet mất 3% HP tối đa sau đòn (mỗi lượt tối đa 1 lần). Không đủ HP thì không kích hoạt; không bao giờ tự làm mình gục."
     },
     {
       "speciesId": 74,
@@ -1257,7 +1332,8 @@
       "unit": "PP",
       "limits": "capsRemoved",
       "description": "Thực sự gỡ buff địch bằng chiêu: hoàn 10 PP cho chính chiêu đó, 1 lần/3 lượt, không vượt PP tối đa. Không kích từ chiêu Power 0 sao chép thất bại.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng chiêu xóa được hiệu ứng tăng chỉ số của đối thủ, chiêu đó được hoàn lại 10 PP (không vượt PP tối đa). Cứ 3 lượt kích hoạt được 1 lần."
     },
     {
       "speciesId": 75,
@@ -1272,8 +1348,9 @@
       "value": 30,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu damage hệ chính: damage hệ đó +30% trong 3 lượt, cộng dồn không giới hạn số tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
-      "matchesJavaExport": true
+      "description": "Dùng chiêu damage hệ chính: damage hệ đó +30% trong 3 lượt, cộng dồn tối đa 3 tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần dùng chiêu tấn công cùng hệ với pet, sát thương hệ đó tăng 30% trong 3 lượt, tăng chồng tối đa 3 lần. Chỉ tích khi chiêu thật sự gây sát thương; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 76,
@@ -1289,7 +1366,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "DOT do bản thân đặt làm địch mất HP cuối lượt: hồi 10% HP tối đa. Tối đa 1 lần/lượt, không kích khi DOT bị chặn; không hồi từ DOT đồng đội.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi hiệu ứng mất máu mỗi lượt do pet gây ra (như Gieo Hạt, Hủ Thực) làm đối thủ mất HP cuối lượt, pet hồi 10% HP tối đa. Mỗi lượt tối đa 1 lần; hiệu ứng do đồng đội gây ra không tính."
     },
     {
       "speciesId": 77,
@@ -1305,7 +1383,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "DOT do bản thân đặt làm địch mất HP cuối lượt: hồi 10% HP tối đa. Tối đa 1 lần/lượt, không kích khi DOT bị chặn; không hồi từ DOT đồng đội.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi hiệu ứng mất máu mỗi lượt do pet gây ra (như Gieo Hạt, Hủ Thực) làm đối thủ mất HP cuối lượt, pet hồi 10% HP tối đa. Mỗi lượt tối đa 1 lần; hiệu ứng do đồng đội gây ra không tính."
     },
     {
       "speciesId": 78,
@@ -1321,7 +1400,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "DOT do bản thân đặt làm địch mất HP cuối lượt: hồi 20% HP tối đa. Tối đa 1 lần/lượt, không kích khi DOT bị chặn; không hồi từ DOT đồng đội.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi hiệu ứng mất máu mỗi lượt do pet gây ra (như Gieo Hạt, Hủ Thực) làm đối thủ mất HP cuối lượt, pet hồi 20% HP tối đa. Mỗi lượt tối đa 1 lần; hiệu ứng do đồng đội gây ra không tính."
     },
     {
       "speciesId": 79,
@@ -1337,7 +1417,8 @@
       "unit": "%",
       "limits": "damageReductionCappedAt100",
       "description": "Sau khi chiêu trực tiếp trúng mục tiêu chưa bị giảm damage: giảm 40% damage của mục tiêu trong 2 lượt, 1 lần/3 lượt. Không cộng dồn với giảm damage mạnh hơn; tẩy được.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi chiêu tấn công trúng đối thủ chưa bị giảm sát thương, đối thủ gây ít hơn 40% sát thương trong 2 lượt. Cứ 3 lượt kích hoạt được 1 lần. Nếu đối thủ đang bị giảm mạnh hơn thì giữ mức mạnh hơn; có thể bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 80,
@@ -1353,7 +1434,8 @@
       "unit": "%",
       "limits": "damageReductionCappedAt100",
       "description": "Sau khi chiêu trực tiếp trúng mục tiêu chưa bị giảm damage: giảm 60% damage của mục tiêu trong 2 lượt, 1 lần/3 lượt. Không cộng dồn với giảm damage mạnh hơn; tẩy được.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi chiêu tấn công trúng đối thủ chưa bị giảm sát thương, đối thủ gây ít hơn 60% sát thương trong 2 lượt. Cứ 3 lượt kích hoạt được 1 lần. Nếu đối thủ đang bị giảm mạnh hơn thì giữ mức mạnh hơn; có thể bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 81,
@@ -1369,7 +1451,8 @@
       "unit": "%",
       "limits": "damageReductionCappedAt100",
       "description": "Sau khi chiêu trực tiếp trúng mục tiêu chưa bị giảm damage: giảm 70% damage của mục tiêu trong 2 lượt, 1 lần/3 lượt. Không cộng dồn với giảm damage mạnh hơn; tẩy được.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi chiêu tấn công trúng đối thủ chưa bị giảm sát thương, đối thủ gây ít hơn 70% sát thương trong 2 lượt. Cứ 3 lượt kích hoạt được 1 lần. Nếu đối thủ đang bị giảm mạnh hơn thì giữ mức mạnh hơn; có thể bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 82,
@@ -1385,7 +1468,8 @@
       "unit": "PP",
       "limits": "capsRemoved",
       "description": "Thực sự gỡ buff địch bằng chiêu: hoàn 10 PP cho chính chiêu đó, 1 lần/3 lượt, không vượt PP tối đa. Không kích từ chiêu Power 0 sao chép thất bại.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng chiêu xóa được hiệu ứng tăng chỉ số của đối thủ, chiêu đó được hoàn lại 10 PP (không vượt PP tối đa). Cứ 3 lượt kích hoạt được 1 lần."
     },
     {
       "speciesId": 83,
@@ -1401,7 +1485,8 @@
       "unit": "PP",
       "limits": "capsRemoved",
       "description": "Thực sự gỡ buff địch bằng chiêu: hoàn 10 PP cho chính chiêu đó, 1 lần/3 lượt, không vượt PP tối đa. Không kích từ chiêu Power 0 sao chép thất bại.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng chiêu xóa được hiệu ứng tăng chỉ số của đối thủ, chiêu đó được hoàn lại 10 PP (không vượt PP tối đa). Cứ 3 lượt kích hoạt được 1 lần."
     },
     {
       "speciesId": 84,
@@ -1417,7 +1502,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Khi một đòn trực tiếp làm mất ít nhất 8% HP tối đa, phản 72% damage thực mất; tối đa 1 lần/lượt. Không phản hit phụ/phản lại; không áp status.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi trúng một đòn làm mất từ 8% HP tối đa trở lên, pet đánh trả kẻ tấn công bằng 72% lượng HP vừa mất. Mỗi lượt tối đa 1 lần. Không đánh trả đòn phụ hay đòn phản, và không gây thêm hiệu ứng xấu."
     },
     {
       "speciesId": 85,
@@ -1433,7 +1519,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Khi một đòn trực tiếp làm mất ít nhất 8% HP tối đa, phản 72% damage thực mất; tối đa 1 lần/lượt. Không phản hit phụ/phản lại; không áp status.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi trúng một đòn làm mất từ 8% HP tối đa trở lên, pet đánh trả kẻ tấn công bằng 72% lượng HP vừa mất. Mỗi lượt tối đa 1 lần. Không đánh trả đòn phụ hay đòn phản, và không gây thêm hiệu ứng xấu."
     },
     {
       "speciesId": 86,
@@ -1449,7 +1536,8 @@
       "unit": "%",
       "limits": "damageReductionCappedAt100",
       "description": "Giảm 100% damage của đòn trực tiếp đầu nhận sau khi vào sân, tối đa 1 lần/vào sân, hồi 3 lượt. Không né đòn/không miễn DOT; hit tiếp theo bình thường.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đòn tấn công đầu tiên trúng pet sau khi ra sân bị giảm 100% sát thương. Mỗi lần ra sân 1 lần, sau đó chờ 3 lượt. Không né đòn, không chặn sát thương mỗi lượt; các đòn sau tính bình thường."
     },
     {
       "speciesId": 87,
@@ -1465,7 +1553,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đánh mục tiêu dưới 35% HP: hồi 250% damage thực làm mất HP; 1 lần/2 lượt. Không hút từ khiên.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đánh đối thủ còn dưới 35% HP thì pet hút máu: hồi lượng HP bằng 250% sát thương gây ra. Cứ 2 lượt kích hoạt được 1 lần. Sát thương vào khiên chắn không được tính."
     },
     {
       "speciesId": 88,
@@ -1481,7 +1570,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Đặt mới debuff bằng chiêu: nhận 1 dấu âm trong 2 lượt; chiêu trực tiếp kế tiếp +78 Power rồi xóa dấu. Không tích từ DOT tick, tối đa 1 dấu.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Khi dùng chiêu gây được hiệu ứng xấu mới, chiêu tấn công kế tiếp trong 2 lượt được cộng 78 uy lực. Mất máu mỗi lượt không tính là gây hiệu ứng mới; không cộng dồn."
     },
     {
       "speciesId": 89,
@@ -1497,7 +1587,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đòn trực tiếp đầu khi HP trên 70% tăng 84% damage. 1 lần/vào sân, hồi 3 lượt.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi HP còn trên 70%, đòn tấn công đầu tiên sau khi ra sân gây thêm 84% sát thương. Mỗi lần ra sân dùng được 1 lần, sau đó chờ 3 lượt."
     },
     {
       "speciesId": 90,
@@ -1513,7 +1604,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đòn trực tiếp đầu khi HP trên 70% tăng 84% damage. 1 lần/vào sân, hồi 3 lượt.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi HP còn trên 70%, đòn tấn công đầu tiên sau khi ra sân gây thêm 84% sát thương. Mỗi lần ra sân dùng được 1 lần, sau đó chờ 3 lượt."
     },
     {
       "speciesId": 91,
@@ -1529,7 +1621,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Tẩy thực sự ít nhất 1 debuff bằng chiêu: hồi thêm 20% HP tối đa cho mục tiêu đã được tẩy, 1 lần/3 lượt. Không kích từ buff miễn debuff.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng chiêu giải trừ xóa được ít nhất 1 hiệu ứng xấu, pet được giải trừ hồi thêm 20% HP tối đa. Cứ 3 lượt kích hoạt được 1 lần. Chiêu chỉ chặn trước hiệu ứng xấu (không xóa được gì) thì không tính."
     },
     {
       "speciesId": 92,
@@ -1545,7 +1638,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Tẩy thực sự ít nhất 1 debuff bằng chiêu: hồi thêm 30% HP tối đa cho mục tiêu đã được tẩy, 1 lần/3 lượt. Không kích từ buff miễn debuff.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng chiêu giải trừ xóa được ít nhất 1 hiệu ứng xấu, pet được giải trừ hồi thêm 30% HP tối đa. Cứ 3 lượt kích hoạt được 1 lần. Chiêu chỉ chặn trước hiệu ứng xấu (không xóa được gì) thì không tính."
     },
     {
       "speciesId": 93,
@@ -1561,7 +1655,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Chiêu hỗ trợ trực tiếp nhắm bản thân/đồng minh thành công: thêm khiên 30% HP tối đa mục tiêu trong 2 lượt. 1 lần/3 lượt; không cộng dồn.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng thành công chiêu hỗ trợ lên chính mình hoặc đồng đội, pet đó nhận thêm khiên chắn bằng 30% HP tối đa trong 2 lượt. Cứ 3 lượt kích hoạt được 1 lần; khiên không cộng dồn."
     },
     {
       "speciesId": 94,
@@ -1577,7 +1672,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Chiêu hỗ trợ trực tiếp nhắm bản thân/đồng minh thành công: thêm khiên 30% HP tối đa mục tiêu trong 2 lượt. 1 lần/3 lượt; không cộng dồn.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng thành công chiêu hỗ trợ lên chính mình hoặc đồng đội, pet đó nhận thêm khiên chắn bằng 30% HP tối đa trong 2 lượt. Cứ 3 lượt kích hoạt được 1 lần; khiên không cộng dồn."
     },
     {
       "speciesId": 95,
@@ -1593,7 +1689,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đánh mục tiêu đang giảm Linh xảo: damage +36%. Không tự làm chậm; không cộng dồn từ nhiều dấu.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đánh đối thủ đang bị giảm Linh xảo thì gây thêm 36% sát thương. Pet không tự làm chậm đối thủ; đối thủ bị giảm Linh xảo nhiều lần cũng chỉ tính một lần."
     },
     {
       "speciesId": 96,
@@ -1609,7 +1706,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đánh mục tiêu đang giảm Linh xảo: damage +54%. Không tự làm chậm; không cộng dồn từ nhiều dấu.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đánh đối thủ đang bị giảm Linh xảo thì gây thêm 54% sát thương. Pet không tự làm chậm đối thủ; đối thủ bị giảm Linh xảo nhiều lần cũng chỉ tính một lần."
     },
     {
       "speciesId": 97,
@@ -1625,7 +1723,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Địch có buff DEF: bỏ qua 72% DEF của địch cho damage trực tiếp. không đổi DEF gốc.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi đối thủ đang được tăng Phòng ngự, đòn tấn công của pet bỏ qua 72% Phòng ngự của đối thủ."
     },
     {
       "speciesId": 98,
@@ -1641,7 +1740,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Địch có buff DEF: bỏ qua 78% DEF của địch cho damage trực tiếp. không đổi DEF gốc.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi đối thủ đang được tăng Phòng ngự, đòn tấn công của pet bỏ qua 78% Phòng ngự của đối thủ."
     },
     {
       "speciesId": 99,
@@ -1656,8 +1756,9 @@
       "value": 50,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +50%, cộng dồn không giới hạn số tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
-      "matchesJavaExport": true
+      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +50%, cộng dồn tối đa 3 tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
+      "matchesJavaExport": true,
+      "summary": "Cuối mỗi lượt mà pet ra đòn trước đối thủ, Linh xảo tăng 50% trong 2 lượt; tăng chồng được tối đa 3 lần. Lượt nào bị đối thủ ra đòn trước, hoặc pet rời sân, thì mất hết phần đã tăng."
     },
     {
       "speciesId": 100,
@@ -1673,7 +1774,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Tự đặt thành công Gieo Hạt/Hủ Thực lên địch: hồi 20% HP tối đa. Tối đa 1 lần/2 lượt; refresh khi hiệu ứng còn nguyên không kích.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần gây được Gieo Hạt hoặc Hủ Thực lên đối thủ, pet hồi 20% HP tối đa. Cứ 2 lượt kích hoạt được 1 lần. Gây lại lên đối thủ đang có sẵn hiệu ứng đó thì không tính."
     },
     {
       "speciesId": 101,
@@ -1689,7 +1791,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Tự đặt thành công Gieo Hạt/Hủ Thực lên địch: hồi 30% HP tối đa. Tối đa 1 lần/2 lượt; refresh khi hiệu ứng còn nguyên không kích.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần gây được Gieo Hạt hoặc Hủ Thực lên đối thủ, pet hồi 30% HP tối đa. Cứ 2 lượt kích hoạt được 1 lần. Gây lại lên đối thủ đang có sẵn hiệu ứng đó thì không tính."
     },
     {
       "speciesId": 102,
@@ -1705,7 +1808,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Tự đặt thành công Gieo Hạt/Hủ Thực lên địch: hồi 30% HP tối đa. Tối đa 1 lần/2 lượt; refresh khi hiệu ứng còn nguyên không kích.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần gây được Gieo Hạt hoặc Hủ Thực lên đối thủ, pet hồi 30% HP tối đa. Cứ 2 lượt kích hoạt được 1 lần. Gây lại lên đối thủ đang có sẵn hiệu ứng đó thì không tính."
     },
     {
       "speciesId": 103,
@@ -1721,7 +1825,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Tự đặt thành công Gieo Hạt/Hủ Thực lên địch: hồi 30% HP tối đa. Tối đa 1 lần/2 lượt; refresh khi hiệu ứng còn nguyên không kích.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần gây được Gieo Hạt hoặc Hủ Thực lên đối thủ, pet hồi 30% HP tối đa. Cứ 2 lượt kích hoạt được 1 lần. Gây lại lên đối thủ đang có sẵn hiệu ứng đó thì không tính."
     },
     {
       "speciesId": 104,
@@ -1737,7 +1842,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đặt mới Mị Hoặc/Ngủ thành công: chiêu hồi tiếp theo hồi thêm 20% HP tối đa mục tiêu. 1 dấu, 2 lượt; tẩy dấu/đổi pet xóa.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi gây được Mị Hoặc hoặc Ngủ lên đối thủ, chiêu hồi máu kế tiếp trong 2 lượt hồi thêm 20% HP tối đa của pet được hồi. Không cộng dồn; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 105,
@@ -1753,7 +1859,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đặt mới Mị Hoặc/Ngủ thành công: chiêu hồi tiếp theo hồi thêm 30% HP tối đa mục tiêu. 1 dấu, 2 lượt; tẩy dấu/đổi pet xóa.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi gây được Mị Hoặc hoặc Ngủ lên đối thủ, chiêu hồi máu kế tiếp trong 2 lượt hồi thêm 30% HP tối đa của pet được hồi. Không cộng dồn; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 106,
@@ -1769,7 +1876,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đặt mới Mị Hoặc/Ngủ thành công: chiêu hồi tiếp theo hồi thêm 30% HP tối đa mục tiêu. 1 dấu, 2 lượt; tẩy dấu/đổi pet xóa.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi gây được Mị Hoặc hoặc Ngủ lên đối thủ, chiêu hồi máu kế tiếp trong 2 lượt hồi thêm 30% HP tối đa của pet được hồi. Không cộng dồn; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 107,
@@ -1785,7 +1893,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +48 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 48 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
     },
     {
       "speciesId": 108,
@@ -1801,7 +1910,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +66 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 66 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
     },
     {
       "speciesId": 109,
@@ -1817,7 +1927,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +84 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 84 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
     },
     {
       "speciesId": 110,
@@ -1833,7 +1944,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Sau khi mất HP bởi đòn trực tiếp, trả 12% HP tối đa người dùng. 1 lần/lượt, không phản dây chuyền.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần bị đánh mất HP, kẻ tấn công cũng mất lượng HP bằng 12% HP tối đa của pet này. Mỗi lượt 1 lần; hai bên có đặc tính phản đòn cũng không phản qua phản lại."
     },
     {
       "speciesId": 111,
@@ -1849,7 +1961,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Sau khi mất HP bởi đòn trực tiếp, trả 18% HP tối đa người dùng. 1 lần/lượt, không phản dây chuyền.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần bị đánh mất HP, kẻ tấn công cũng mất lượng HP bằng 18% HP tối đa của pet này. Mỗi lượt 1 lần; hai bên có đặc tính phản đòn cũng không phản qua phản lại."
     },
     {
       "speciesId": 112,
@@ -1865,7 +1978,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Sau khi mất HP bởi đòn trực tiếp, trả 18% HP tối đa người dùng. 1 lần/lượt, không phản dây chuyền.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần bị đánh mất HP, kẻ tấn công cũng mất lượng HP bằng 18% HP tối đa của pet này. Mỗi lượt 1 lần; hai bên có đặc tính phản đòn cũng không phản qua phản lại."
     },
     {
       "speciesId": 113,
@@ -1881,7 +1995,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đòn trực tiếp đầu sau khi vào sân tăng 66% damage nếu đi trước. Giữa hai lần ít nhất 3 lượt.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần ra sân, nếu được ra đòn trước đối thủ thì đòn tấn công đầu tiên gây thêm 66% sát thương. Dùng xong phải chờ 3 lượt mới kích hoạt lại."
     },
     {
       "speciesId": 114,
@@ -1896,8 +2011,9 @@
       "value": 30,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn không giới hạn số tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
-      "matchesJavaExport": true
+      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn tối đa 3 tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần dùng chiêu không gây sát thương (chiêu hỗ trợ), pet tích 30% HP tối đa vào \"kho hồi máu\" trong 4 lượt, tích chồng tối đa 3 lần. Chiêu hồi máu tiếp theo sẽ hồi thêm toàn bộ lượng đã tích. Kho không tự hồi máu; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 115,
@@ -1913,7 +2029,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đòn trực tiếp vào mục tiêu đang Giam Cầm tăng 48% damage. Không tự khóa đổi pet; đổi mục tiêu không giữ lợi thế.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đánh đối thủ đang bị Giam Cầm thì gây thêm 48% sát thương. Pet không tự Giam Cầm đối thủ; đổi sang đối thủ khác thì mất lợi thế."
     },
     {
       "speciesId": 116,
@@ -1929,7 +2046,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Chiêu hỗ trợ trực tiếp nhắm bản thân/đồng minh thành công: thêm khiên 30% HP tối đa mục tiêu trong 2 lượt. 1 lần/3 lượt; không cộng dồn.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng thành công chiêu hỗ trợ lên chính mình hoặc đồng đội, pet đó nhận thêm khiên chắn bằng 30% HP tối đa trong 2 lượt. Cứ 3 lượt kích hoạt được 1 lần; khiên không cộng dồn."
     },
     {
       "speciesId": 117,
@@ -1945,7 +2063,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Địch còn buff: damage hệ chính +36%. Kiểm tra trước khi đòn gỡ buff; không có buff thì không tăng.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi đối thủ đang có hiệu ứng tăng chỉ số, chiêu tấn công cùng hệ với pet gây thêm 36% sát thương (tính cả khi chính đòn đó xóa hiệu ứng tăng chỉ số)."
     },
     {
       "speciesId": 118,
@@ -1961,7 +2080,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Địch còn buff: damage hệ chính +48%. Kiểm tra trước khi đòn gỡ buff; không có buff thì không tăng.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi đối thủ đang có hiệu ứng tăng chỉ số, chiêu tấn công cùng hệ với pet gây thêm 48% sát thương (tính cả khi chính đòn đó xóa hiệu ứng tăng chỉ số)."
     },
     {
       "speciesId": 119,
@@ -1977,7 +2097,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Địch còn buff: damage hệ chính +48%. Kiểm tra trước khi đòn gỡ buff; không có buff thì không tăng.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi đối thủ đang có hiệu ứng tăng chỉ số, chiêu tấn công cùng hệ với pet gây thêm 48% sát thương (tính cả khi chính đòn đó xóa hiệu ứng tăng chỉ số)."
     },
     {
       "speciesId": 120,
@@ -1993,7 +2114,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Địch còn buff: damage hệ chính +60%. Kiểm tra trước khi đòn gỡ buff; không có buff thì không tăng.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi đối thủ đang có hiệu ứng tăng chỉ số, chiêu tấn công cùng hệ với pet gây thêm 60% sát thương (tính cả khi chính đòn đó xóa hiệu ứng tăng chỉ số)."
     },
     {
       "speciesId": 121,
@@ -2008,8 +2130,9 @@
       "value": 48,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 48 Power, cộng dồn không giới hạn số tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
-      "matchesJavaExport": false
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 48 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "matchesJavaExport": false,
+      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 48 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
     },
     {
       "speciesId": 122,
@@ -2024,8 +2147,9 @@
       "value": 66,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 66 Power, cộng dồn không giới hạn số tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
-      "matchesJavaExport": false
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 66 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "matchesJavaExport": false,
+      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 66 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
     },
     {
       "speciesId": 123,
@@ -2040,8 +2164,9 @@
       "value": 84,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 84 Power, cộng dồn không giới hạn số tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
-      "matchesJavaExport": false
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 84 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "matchesJavaExport": false,
+      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 84 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
     },
     {
       "speciesId": 124,
@@ -2056,8 +2181,9 @@
       "value": 78,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 78 Power, cộng dồn không giới hạn số tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
-      "matchesJavaExport": false
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 78 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "matchesJavaExport": false,
+      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 78 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
     },
     {
       "speciesId": 125,
@@ -2073,7 +2199,8 @@
       "unit": "%",
       "limits": "damageReductionCappedAt100",
       "description": "Giảm 60% damage trực tiếp đầu tiên nhận trong mỗi lượt. Không giảm DOT/chi phí HP; không kích phản đòn.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Trong mỗi lượt, đòn tấn công đầu tiên trúng pet bị giảm 60% sát thương. Không giảm sát thương mỗi lượt (như Gieo Hạt, Hủ Thực) hay HP pet tự trả khi dùng chiêu."
     },
     {
       "speciesId": 126,
@@ -2089,7 +2216,8 @@
       "unit": "%",
       "limits": "damageReductionCappedAt100",
       "description": "Giảm 80% damage trực tiếp đầu tiên nhận trong mỗi lượt. Không giảm DOT/chi phí HP; không kích phản đòn.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Trong mỗi lượt, đòn tấn công đầu tiên trúng pet bị giảm 80% sát thương. Không giảm sát thương mỗi lượt (như Gieo Hạt, Hủ Thực) hay HP pet tự trả khi dùng chiêu."
     },
     {
       "speciesId": 127,
@@ -2105,7 +2233,8 @@
       "unit": "%",
       "limits": "damageReductionCappedAt100",
       "description": "Giảm 90% damage trực tiếp đầu tiên nhận trong mỗi lượt. Không giảm DOT/chi phí HP; không kích phản đòn.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Trong mỗi lượt, đòn tấn công đầu tiên trúng pet bị giảm 90% sát thương. Không giảm sát thương mỗi lượt (như Gieo Hạt, Hủ Thực) hay HP pet tự trả khi dùng chiêu."
     },
     {
       "speciesId": 128,
@@ -2121,7 +2250,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Dùng 2 chiêu trực tiếp khác nhau liên tiếp: chiêu trực tiếp tiếp theo +90 Power rồi xóa đà. Không tích từ hit phụ; khống chế bỏ lượt/đổi pet xóa đà.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Dùng 2 chiêu tấn công khác nhau liên tiếp thì chiêu tấn công kế tiếp được cộng 90 uy lực, sau đó đếm lại từ đầu. Bị khống chế mất lượt hoặc rời sân thì mất chuỗi."
     },
     {
       "speciesId": 129,
@@ -2137,7 +2267,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Sau đòn trực tiếp làm mất HP, nhận khiên bằng 50% HP tối đa, tối đa 1 lần/2 lượt; tồn tại 2 lượt. Khiên không cộng dồn; DOT không kích.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Sau khi bị đánh mất HP, pet nhận khiên chắn bằng 50% HP tối đa, giữ trong 2 lượt. Cứ 2 lượt kích hoạt được 1 lần; khiên không cộng dồn; sát thương mỗi lượt (như Gieo Hạt) không kích hoạt."
     },
     {
       "speciesId": 130,
@@ -2153,7 +2284,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Sau chiêu Power 0: chiêu damage kế tiếp +60 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 60 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
     },
     {
       "speciesId": 131,
@@ -2169,7 +2301,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Sau chiêu Power 0: chiêu damage kế tiếp +84 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 84 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
     },
     {
       "speciesId": 132,
@@ -2185,7 +2318,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Sau chiêu Power 0: chiêu damage kế tiếp +102 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 102 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
     },
     {
       "speciesId": 133,
@@ -2201,7 +2335,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đòn damage hệ chính tăng 72% damage, trả 3% HP tối đa sau khi gây damage, tối đa 1 lần/lượt. Không kích nếu HP không đủ; chi phí không gây gục.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Chiêu tấn công cùng hệ với pet gây thêm 72% sát thương, đổi lại pet mất 3% HP tối đa sau đòn (mỗi lượt tối đa 1 lần). Không đủ HP thì không kích hoạt; không bao giờ tự làm mình gục."
     },
     {
       "speciesId": 134,
@@ -2217,7 +2352,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "HP trên 60%: DEF +40%. HP dưới 40%: cuối lượt hồi 20% HP tối đa, 1 lần/2 lượt. Không có hiệu lực ở dải 40–60%; chịu giảm hồi.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi HP trên 60%: Phòng ngự tăng 40%. Khi HP dưới 40%: cuối lượt hồi 20% HP tối đa (cứ 2 lượt 1 lần). Khi HP trong khoảng 40–60% thì không có tác dụng gì; hiệu ứng giảm hồi máu vẫn có tác dụng."
     },
     {
       "speciesId": 135,
@@ -2233,7 +2369,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "HP trên 60%: DEF +70%. HP dưới 40%: cuối lượt hồi 20% HP tối đa, 1 lần/2 lượt. Không có hiệu lực ở dải 40–60%; chịu giảm hồi.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi HP trên 60%: Phòng ngự tăng 70%. Khi HP dưới 40%: cuối lượt hồi 20% HP tối đa (cứ 2 lượt 1 lần). Khi HP trong khoảng 40–60% thì không có tác dụng gì; hiệu ứng giảm hồi máu vẫn có tác dụng."
     },
     {
       "speciesId": 136,
@@ -2248,8 +2385,9 @@
       "value": 18,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu damage hệ chính: damage hệ đó +18% trong 3 lượt, cộng dồn không giới hạn số tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
-      "matchesJavaExport": true
+      "description": "Dùng chiêu damage hệ chính: damage hệ đó +18% trong 3 lượt, cộng dồn tối đa 3 tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần dùng chiêu tấn công cùng hệ với pet, sát thương hệ đó tăng 18% trong 3 lượt, tăng chồng tối đa 3 lần. Chỉ tích khi chiêu thật sự gây sát thương; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 137,
@@ -2264,8 +2402,9 @@
       "value": 24,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn không giới hạn số tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
-      "matchesJavaExport": true
+      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn tối đa 3 tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần dùng chiêu tấn công cùng hệ với pet, sát thương hệ đó tăng 24% trong 3 lượt, tăng chồng tối đa 3 lần. Chỉ tích khi chiêu thật sự gây sát thương; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 138,
@@ -2280,8 +2419,9 @@
       "value": 24,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn không giới hạn số tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
-      "matchesJavaExport": true
+      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn tối đa 3 tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần dùng chiêu tấn công cùng hệ với pet, sát thương hệ đó tăng 24% trong 3 lượt, tăng chồng tối đa 3 lần. Chỉ tích khi chiêu thật sự gây sát thương; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 139,
@@ -2296,8 +2436,9 @@
       "value": 24,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn không giới hạn số tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
-      "matchesJavaExport": true
+      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn tối đa 3 tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần dùng chiêu tấn công cùng hệ với pet, sát thương hệ đó tăng 24% trong 3 lượt, tăng chồng tối đa 3 lần. Chỉ tích khi chiêu thật sự gây sát thương; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 140,
@@ -2313,7 +2454,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đánh mục tiêu đang giảm Linh xảo: damage +36%. Không tự làm chậm; không cộng dồn từ nhiều dấu.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đánh đối thủ đang bị giảm Linh xảo thì gây thêm 36% sát thương. Pet không tự làm chậm đối thủ; đối thủ bị giảm Linh xảo nhiều lần cũng chỉ tính một lần."
     },
     {
       "speciesId": 141,
@@ -2329,7 +2471,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đánh mục tiêu đang giảm Linh xảo: damage +48%. Không tự làm chậm; không cộng dồn từ nhiều dấu.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đánh đối thủ đang bị giảm Linh xảo thì gây thêm 48% sát thương. Pet không tự làm chậm đối thủ; đối thủ bị giảm Linh xảo nhiều lần cũng chỉ tính một lần."
     },
     {
       "speciesId": 142,
@@ -2345,7 +2488,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đánh mục tiêu đang giảm Linh xảo: damage +54%. Không tự làm chậm; không cộng dồn từ nhiều dấu.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đánh đối thủ đang bị giảm Linh xảo thì gây thêm 54% sát thương. Pet không tự làm chậm đối thủ; đối thủ bị giảm Linh xảo nhiều lần cũng chỉ tính một lần."
     },
     {
       "speciesId": 143,
@@ -2361,7 +2505,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Đặt mới debuff bằng chiêu: nhận 1 dấu âm trong 2 lượt; chiêu trực tiếp kế tiếp +48 Power rồi xóa dấu. Không tích từ DOT tick, tối đa 1 dấu.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Khi dùng chiêu gây được hiệu ứng xấu mới, chiêu tấn công kế tiếp trong 2 lượt được cộng 48 uy lực. Mất máu mỗi lượt không tính là gây hiệu ứng mới; không cộng dồn."
     },
     {
       "speciesId": 144,
@@ -2377,7 +2522,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Đặt mới debuff bằng chiêu: nhận 1 dấu âm trong 2 lượt; chiêu trực tiếp kế tiếp +66 Power rồi xóa dấu. Không tích từ DOT tick, tối đa 1 dấu.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Khi dùng chiêu gây được hiệu ứng xấu mới, chiêu tấn công kế tiếp trong 2 lượt được cộng 66 uy lực. Mất máu mỗi lượt không tính là gây hiệu ứng mới; không cộng dồn."
     },
     {
       "speciesId": 145,
@@ -2393,7 +2539,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Đặt mới debuff bằng chiêu: nhận 1 dấu âm trong 2 lượt; chiêu trực tiếp kế tiếp +84 Power rồi xóa dấu. Không tích từ DOT tick, tối đa 1 dấu.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Khi dùng chiêu gây được hiệu ứng xấu mới, chiêu tấn công kế tiếp trong 2 lượt được cộng 84 uy lực. Mất máu mỗi lượt không tính là gây hiệu ứng mới; không cộng dồn."
     },
     {
       "speciesId": 146,
@@ -2409,7 +2556,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Tẩy thực sự ít nhất 1 debuff bằng chiêu: hồi thêm 30% HP tối đa cho mục tiêu đã được tẩy, 1 lần/3 lượt. Không kích từ buff miễn debuff.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng chiêu giải trừ xóa được ít nhất 1 hiệu ứng xấu, pet được giải trừ hồi thêm 30% HP tối đa. Cứ 3 lượt kích hoạt được 1 lần. Chiêu chỉ chặn trước hiệu ứng xấu (không xóa được gì) thì không tính."
     },
     {
       "speciesId": 147,
@@ -2425,7 +2573,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Tẩy thực sự ít nhất 1 debuff bằng chiêu: hồi thêm 30% HP tối đa cho mục tiêu đã được tẩy, 1 lần/3 lượt. Không kích từ buff miễn debuff.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng chiêu giải trừ xóa được ít nhất 1 hiệu ứng xấu, pet được giải trừ hồi thêm 30% HP tối đa. Cứ 3 lượt kích hoạt được 1 lần. Chiêu chỉ chặn trước hiệu ứng xấu (không xóa được gì) thì không tính."
     },
     {
       "speciesId": 148,
@@ -2441,7 +2590,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Tẩy thực sự ít nhất 1 debuff bằng chiêu: hồi thêm 30% HP tối đa cho mục tiêu đã được tẩy, 1 lần/3 lượt. Không kích từ buff miễn debuff.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng chiêu giải trừ xóa được ít nhất 1 hiệu ứng xấu, pet được giải trừ hồi thêm 30% HP tối đa. Cứ 3 lượt kích hoạt được 1 lần. Chiêu chỉ chặn trước hiệu ứng xấu (không xóa được gì) thì không tính."
     },
     {
       "speciesId": 149,
@@ -2457,7 +2607,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +48 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 48 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
     },
     {
       "speciesId": 150,
@@ -2473,7 +2624,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +84 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 84 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
     },
     {
       "speciesId": 151,
@@ -2489,7 +2641,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +84 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 84 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
     },
     {
       "speciesId": 152,
@@ -2504,8 +2657,9 @@
       "value": 12,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Nhận damage trực tiếp: Sức mạnh +12% trong 3 lượt, cộng dồn không giới hạn số tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
-      "matchesJavaExport": true
+      "description": "Nhận damage trực tiếp: Sức mạnh +12% trong 3 lượt, cộng dồn tối đa 3 tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần bị đánh trúng, Sức mạnh tăng 12% trong 3 lượt; tăng chồng được tối đa 3 lần (mỗi lượt cộng thêm 1 lần). Mất hết khi pet rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 153,
@@ -2520,8 +2674,9 @@
       "value": 18,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Nhận damage trực tiếp: Sức mạnh +18% trong 3 lượt, cộng dồn không giới hạn số tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
-      "matchesJavaExport": true
+      "description": "Nhận damage trực tiếp: Sức mạnh +18% trong 3 lượt, cộng dồn tối đa 3 tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần bị đánh trúng, Sức mạnh tăng 18% trong 3 lượt; tăng chồng được tối đa 3 lần (mỗi lượt cộng thêm 1 lần). Mất hết khi pet rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 154,
@@ -2536,8 +2691,9 @@
       "value": 18,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Nhận damage trực tiếp: Sức mạnh +18% trong 3 lượt, cộng dồn không giới hạn số tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
-      "matchesJavaExport": true
+      "description": "Nhận damage trực tiếp: Sức mạnh +18% trong 3 lượt, cộng dồn tối đa 3 tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần bị đánh trúng, Sức mạnh tăng 18% trong 3 lượt; tăng chồng được tối đa 3 lần (mỗi lượt cộng thêm 1 lần). Mất hết khi pet rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 155,
@@ -2552,8 +2708,9 @@
       "value": 18,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Nhận damage trực tiếp: Sức mạnh +18% trong 3 lượt, cộng dồn không giới hạn số tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
-      "matchesJavaExport": true
+      "description": "Nhận damage trực tiếp: Sức mạnh +18% trong 3 lượt, cộng dồn tối đa 3 tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần bị đánh trúng, Sức mạnh tăng 18% trong 3 lượt; tăng chồng được tối đa 3 lần (mỗi lượt cộng thêm 1 lần). Mất hết khi pet rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 156,
@@ -2569,7 +2726,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Sau chiêu Power 0: chiêu damage kế tiếp +60 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 60 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
     },
     {
       "speciesId": 157,
@@ -2585,7 +2743,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Sau chiêu Power 0: chiêu damage kế tiếp +102 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 102 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
     },
     {
       "speciesId": 158,
@@ -2601,7 +2760,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Địch có buff DEF: bỏ qua 72% DEF của địch cho damage trực tiếp. không đổi DEF gốc.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi đối thủ đang được tăng Phòng ngự, đòn tấn công của pet bỏ qua 72% Phòng ngự của đối thủ."
     },
     {
       "speciesId": 159,
@@ -2617,7 +2777,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Khi HP từ trên 30% xuống 30% hoặc thấp hơn nhưng chưa gục: nhận khiên 80% HP tối đa trong 2 lượt. Không cứu một đòn chí tử.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi HP tụt từ trên 30% xuống còn 30% trở xuống mà chưa gục, pet nhận khiên chắn bằng 80% HP tối đa trong 2 lượt. Không cứu được đòn đánh gục ngay."
     },
     {
       "speciesId": 160,
@@ -2633,7 +2794,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Khi HP từ trên 30% xuống 30% hoặc thấp hơn nhưng chưa gục: nhận khiên 100% HP tối đa trong 2 lượt. Không cứu một đòn chí tử.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi HP tụt từ trên 30% xuống còn 30% trở xuống mà chưa gục, pet nhận khiên chắn bằng 100% HP tối đa trong 2 lượt. Không cứu được đòn đánh gục ngay."
     },
     {
       "speciesId": 161,
@@ -2649,7 +2811,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Khi HP từ trên 30% xuống 30% hoặc thấp hơn nhưng chưa gục: nhận khiên 120% HP tối đa trong 2 lượt. Không cứu một đòn chí tử.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi HP tụt từ trên 30% xuống còn 30% trở xuống mà chưa gục, pet nhận khiên chắn bằng 120% HP tối đa trong 2 lượt. Không cứu được đòn đánh gục ngay."
     },
     {
       "speciesId": 162,
@@ -2665,7 +2828,8 @@
       "unit": "PP",
       "limits": "capsRemoved",
       "description": "Thực sự gỡ buff địch bằng chiêu: hoàn 10 PP cho chính chiêu đó, 1 lần/3 lượt, không vượt PP tối đa. Không kích từ chiêu Power 0 sao chép thất bại.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng chiêu xóa được hiệu ứng tăng chỉ số của đối thủ, chiêu đó được hoàn lại 10 PP (không vượt PP tối đa). Cứ 3 lượt kích hoạt được 1 lần."
     },
     {
       "speciesId": 163,
@@ -2681,7 +2845,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đòn trực tiếp đầu khi HP trên 70% tăng 60% damage. 1 lần/vào sân, hồi 3 lượt.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi HP còn trên 70%, đòn tấn công đầu tiên sau khi ra sân gây thêm 60% sát thương. Mỗi lần ra sân dùng được 1 lần, sau đó chờ 3 lượt."
     },
     {
       "speciesId": 164,
@@ -2697,7 +2862,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đòn trực tiếp đầu khi HP trên 70% tăng 84% damage. 1 lần/vào sân, hồi 3 lượt.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi HP còn trên 70%, đòn tấn công đầu tiên sau khi ra sân gây thêm 84% sát thương. Mỗi lần ra sân dùng được 1 lần, sau đó chờ 3 lượt."
     },
     {
       "speciesId": 165,
@@ -2713,7 +2879,8 @@
       "unit": "%",
       "limits": "damageReductionCappedAt100",
       "description": "Giảm 100% damage của đòn trực tiếp đầu nhận sau khi vào sân, tối đa 1 lần/vào sân, hồi 3 lượt. Không né đòn/không miễn DOT; hit tiếp theo bình thường.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đòn tấn công đầu tiên trúng pet sau khi ra sân bị giảm 100% sát thương. Mỗi lần ra sân 1 lần, sau đó chờ 3 lượt. Không né đòn, không chặn sát thương mỗi lượt; các đòn sau tính bình thường."
     },
     {
       "speciesId": 166,
@@ -2729,7 +2896,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Dùng 2 chiêu trực tiếp khác nhau liên tiếp: chiêu trực tiếp tiếp theo +90 Power rồi xóa đà. Không tích từ hit phụ; khống chế bỏ lượt/đổi pet xóa đà.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Dùng 2 chiêu tấn công khác nhau liên tiếp thì chiêu tấn công kế tiếp được cộng 90 uy lực, sau đó đếm lại từ đầu. Bị khống chế mất lượt hoặc rời sân thì mất chuỗi."
     },
     {
       "speciesId": 167,
@@ -2745,7 +2913,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Dùng 2 chiêu trực tiếp khác nhau liên tiếp: chiêu trực tiếp tiếp theo +90 Power rồi xóa đà. Không tích từ hit phụ; khống chế bỏ lượt/đổi pet xóa đà.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Dùng 2 chiêu tấn công khác nhau liên tiếp thì chiêu tấn công kế tiếp được cộng 90 uy lực, sau đó đếm lại từ đầu. Bị khống chế mất lượt hoặc rời sân thì mất chuỗi."
     },
     {
       "speciesId": 168,
@@ -2760,8 +2929,9 @@
       "value": 20,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu Power 0: dự trữ 20% HP tối đa, cộng dồn không giới hạn số tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
-      "matchesJavaExport": true
+      "description": "Dùng chiêu Power 0: dự trữ 20% HP tối đa, cộng dồn tối đa 3 tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần dùng chiêu không gây sát thương (chiêu hỗ trợ), pet tích 20% HP tối đa vào \"kho hồi máu\" trong 4 lượt, tích chồng tối đa 3 lần. Chiêu hồi máu tiếp theo sẽ hồi thêm toàn bộ lượng đã tích. Kho không tự hồi máu; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 169,
@@ -2776,8 +2946,9 @@
       "value": 30,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn không giới hạn số tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
-      "matchesJavaExport": true
+      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn tối đa 3 tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần dùng chiêu không gây sát thương (chiêu hỗ trợ), pet tích 30% HP tối đa vào \"kho hồi máu\" trong 4 lượt, tích chồng tối đa 3 lần. Chiêu hồi máu tiếp theo sẽ hồi thêm toàn bộ lượng đã tích. Kho không tự hồi máu; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 170,
@@ -2792,8 +2963,9 @@
       "value": 30,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn không giới hạn số tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
-      "matchesJavaExport": true
+      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn tối đa 3 tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần dùng chiêu không gây sát thương (chiêu hỗ trợ), pet tích 30% HP tối đa vào \"kho hồi máu\" trong 4 lượt, tích chồng tối đa 3 lần. Chiêu hồi máu tiếp theo sẽ hồi thêm toàn bộ lượng đã tích. Kho không tự hồi máu; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 171,
@@ -2808,8 +2980,9 @@
       "value": 30,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn không giới hạn số tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
-      "matchesJavaExport": true
+      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn tối đa 3 tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần dùng chiêu không gây sát thương (chiêu hỗ trợ), pet tích 30% HP tối đa vào \"kho hồi máu\" trong 4 lượt, tích chồng tối đa 3 lần. Chiêu hồi máu tiếp theo sẽ hồi thêm toàn bộ lượng đã tích. Kho không tự hồi máu; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 172,
@@ -2825,7 +2998,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Địch có buff DEF: bỏ qua 48% DEF của địch cho damage trực tiếp. không đổi DEF gốc.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi đối thủ đang được tăng Phòng ngự, đòn tấn công của pet bỏ qua 48% Phòng ngự của đối thủ."
     },
     {
       "speciesId": 173,
@@ -2841,7 +3015,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Địch có buff DEF: bỏ qua 66% DEF của địch cho damage trực tiếp. không đổi DEF gốc.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi đối thủ đang được tăng Phòng ngự, đòn tấn công của pet bỏ qua 66% Phòng ngự của đối thủ."
     },
     {
       "speciesId": 174,
@@ -2857,7 +3032,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Địch có buff DEF: bỏ qua 78% DEF của địch cho damage trực tiếp. không đổi DEF gốc.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi đối thủ đang được tăng Phòng ngự, đòn tấn công của pet bỏ qua 78% Phòng ngự của đối thủ."
     },
     {
       "speciesId": 175,
@@ -2873,7 +3049,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Sau đòn trực tiếp làm mất HP, nhận khiên bằng 30% HP tối đa, tối đa 1 lần/2 lượt; tồn tại 2 lượt. Khiên không cộng dồn; DOT không kích.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Sau khi bị đánh mất HP, pet nhận khiên chắn bằng 30% HP tối đa, giữ trong 2 lượt. Cứ 2 lượt kích hoạt được 1 lần; khiên không cộng dồn; sát thương mỗi lượt (như Gieo Hạt) không kích hoạt."
     },
     {
       "speciesId": 176,
@@ -2889,7 +3066,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Sau đòn trực tiếp làm mất HP, nhận khiên bằng 50% HP tối đa, tối đa 1 lần/2 lượt; tồn tại 2 lượt. Khiên không cộng dồn; DOT không kích.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Sau khi bị đánh mất HP, pet nhận khiên chắn bằng 50% HP tối đa, giữ trong 2 lượt. Cứ 2 lượt kích hoạt được 1 lần; khiên không cộng dồn; sát thương mỗi lượt (như Gieo Hạt) không kích hoạt."
     },
     {
       "speciesId": 177,
@@ -2905,7 +3083,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Sau đòn trực tiếp làm mất HP, nhận khiên bằng 50% HP tối đa, tối đa 1 lần/2 lượt; tồn tại 2 lượt. Khiên không cộng dồn; DOT không kích.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Sau khi bị đánh mất HP, pet nhận khiên chắn bằng 50% HP tối đa, giữ trong 2 lượt. Cứ 2 lượt kích hoạt được 1 lần; khiên không cộng dồn; sát thương mỗi lượt (như Gieo Hạt) không kích hoạt."
     },
     {
       "speciesId": 178,
@@ -2921,7 +3100,8 @@
       "unit": "%",
       "limits": "damageReductionCappedAt100",
       "description": "Giảm 90% damage trực tiếp đầu tiên nhận trong mỗi lượt. Không giảm DOT/chi phí HP; không kích phản đòn.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Trong mỗi lượt, đòn tấn công đầu tiên trúng pet bị giảm 90% sát thương. Không giảm sát thương mỗi lượt (như Gieo Hạt, Hủ Thực) hay HP pet tự trả khi dùng chiêu."
     },
     {
       "speciesId": 179,
@@ -2937,7 +3117,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Khi dùng chiêu hồi và mục tiêu đang dưới 50% HP, hồi thêm 20% HP tối đa mục tiêu. 1 lần/3 lượt; chịu giảm hồi, không kích lại thụ động.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng chiêu hồi máu cho pet đang dưới 50% HP, pet được hồi thêm 20% HP tối đa của nó. Cứ 3 lượt kích hoạt được 1 lần; hiệu ứng giảm hồi máu vẫn có tác dụng."
     },
     {
       "speciesId": 180,
@@ -2953,7 +3134,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Khi dùng chiêu hồi và mục tiêu đang dưới 50% HP, hồi thêm 30% HP tối đa mục tiêu. 1 lần/3 lượt; chịu giảm hồi, không kích lại thụ động.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng chiêu hồi máu cho pet đang dưới 50% HP, pet được hồi thêm 30% HP tối đa của nó. Cứ 3 lượt kích hoạt được 1 lần; hiệu ứng giảm hồi máu vẫn có tác dụng."
     },
     {
       "speciesId": 181,
@@ -2969,7 +3151,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Khi dùng chiêu hồi và mục tiêu đang dưới 50% HP, hồi thêm 30% HP tối đa mục tiêu. 1 lần/3 lượt; chịu giảm hồi, không kích lại thụ động.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng chiêu hồi máu cho pet đang dưới 50% HP, pet được hồi thêm 30% HP tối đa của nó. Cứ 3 lượt kích hoạt được 1 lần; hiệu ứng giảm hồi máu vẫn có tác dụng."
     },
     {
       "speciesId": 182,
@@ -2985,7 +3168,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Đặt mới debuff bằng chiêu: nhận 1 dấu âm trong 2 lượt; chiêu trực tiếp kế tiếp +78 Power rồi xóa dấu. Không tích từ DOT tick, tối đa 1 dấu.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Khi dùng chiêu gây được hiệu ứng xấu mới, chiêu tấn công kế tiếp trong 2 lượt được cộng 78 uy lực. Mất máu mỗi lượt không tính là gây hiệu ứng mới; không cộng dồn."
     },
     {
       "speciesId": 183,
@@ -3001,7 +3185,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Khi tự rút thành công bằng chiêu đổi pet: pet vào nhận khiên 40% HP tối đa trong 2 lượt. 1 lần/3 lượt; khiên tuyệt kỹ và đặc tính lấy giá trị cao hơn, không cộng dồn. Không kích khi đổi bị chặn.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi pet tự rút khỏi sân bằng chiêu đổi pet, pet vào thay nhận khiên chắn bằng 40% HP tối đa trong 2 lượt. Cứ 3 lượt kích hoạt được 1 lần. Nếu đã có khiên từ tuyệt kỹ thì chỉ giữ khiên lớn hơn. Không kích hoạt khi bị chặn đổi pet."
     },
     {
       "speciesId": 184,
@@ -3017,7 +3202,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Sau chiêu Power 0: chiêu damage kế tiếp +102 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 102 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
     },
     {
       "speciesId": 185,
@@ -3033,7 +3219,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Khi HP từ trên 30% xuống 30% hoặc thấp hơn nhưng chưa gục: nhận khiên 140% HP tối đa trong 2 lượt. Không cứu một đòn chí tử.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi HP tụt từ trên 30% xuống còn 30% trở xuống mà chưa gục, pet nhận khiên chắn bằng 140% HP tối đa trong 2 lượt. Không cứu được đòn đánh gục ngay."
     },
     {
       "speciesId": 186,
@@ -3049,7 +3236,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đánh mục tiêu dưới 35% HP: hồi 250% damage thực làm mất HP; 1 lần/2 lượt. Không hút từ khiên.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đánh đối thủ còn dưới 35% HP thì pet hút máu: hồi lượng HP bằng 250% sát thương gây ra. Cứ 2 lượt kích hoạt được 1 lần. Sát thương vào khiên chắn không được tính."
     },
     {
       "speciesId": 187,
@@ -3065,7 +3253,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "DOT do bản thân đặt làm địch mất HP cuối lượt: hồi 10% HP tối đa. Tối đa 1 lần/lượt, không kích khi DOT bị chặn; không hồi từ DOT đồng đội.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi hiệu ứng mất máu mỗi lượt do pet gây ra (như Gieo Hạt, Hủ Thực) làm đối thủ mất HP cuối lượt, pet hồi 10% HP tối đa. Mỗi lượt tối đa 1 lần; hiệu ứng do đồng đội gây ra không tính."
     },
     {
       "speciesId": 188,
@@ -3081,7 +3270,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "DOT do bản thân đặt làm địch mất HP cuối lượt: hồi 20% HP tối đa. Tối đa 1 lần/lượt, không kích khi DOT bị chặn; không hồi từ DOT đồng đội.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi hiệu ứng mất máu mỗi lượt do pet gây ra (như Gieo Hạt, Hủ Thực) làm đối thủ mất HP cuối lượt, pet hồi 20% HP tối đa. Mỗi lượt tối đa 1 lần; hiệu ứng do đồng đội gây ra không tính."
     },
     {
       "speciesId": 189,
@@ -3097,7 +3287,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Tẩy thực sự ít nhất 1 debuff bằng chiêu: hồi thêm 40% HP tối đa cho mục tiêu đã được tẩy, 1 lần/3 lượt. Không kích từ buff miễn debuff.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng chiêu giải trừ xóa được ít nhất 1 hiệu ứng xấu, pet được giải trừ hồi thêm 40% HP tối đa. Cứ 3 lượt kích hoạt được 1 lần. Chiêu chỉ chặn trước hiệu ứng xấu (không xóa được gì) thì không tính."
     },
     {
       "speciesId": 190,
@@ -3113,7 +3304,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Sau đòn trực tiếp làm mất HP, nhận khiên bằng 30% HP tối đa, tối đa 1 lần/2 lượt; tồn tại 2 lượt. Khiên không cộng dồn; DOT không kích.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Sau khi bị đánh mất HP, pet nhận khiên chắn bằng 30% HP tối đa, giữ trong 2 lượt. Cứ 2 lượt kích hoạt được 1 lần; khiên không cộng dồn; sát thương mỗi lượt (như Gieo Hạt) không kích hoạt."
     },
     {
       "speciesId": 191,
@@ -3129,7 +3321,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Sau đòn trực tiếp làm mất HP, nhận khiên bằng 50% HP tối đa, tối đa 1 lần/2 lượt; tồn tại 2 lượt. Khiên không cộng dồn; DOT không kích.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Sau khi bị đánh mất HP, pet nhận khiên chắn bằng 50% HP tối đa, giữ trong 2 lượt. Cứ 2 lượt kích hoạt được 1 lần; khiên không cộng dồn; sát thương mỗi lượt (như Gieo Hạt) không kích hoạt."
     },
     {
       "speciesId": 192,
@@ -3145,7 +3338,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Địch còn buff: damage hệ chính +72%. Kiểm tra trước khi đòn gỡ buff; không có buff thì không tăng.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi đối thủ đang có hiệu ứng tăng chỉ số, chiêu tấn công cùng hệ với pet gây thêm 72% sát thương (tính cả khi chính đòn đó xóa hiệu ứng tăng chỉ số)."
     },
     {
       "speciesId": 193,
@@ -3161,7 +3355,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Chiêu hỗ trợ trực tiếp nhắm bản thân/đồng minh thành công: thêm khiên 20% HP tối đa mục tiêu trong 2 lượt. 1 lần/3 lượt; không cộng dồn.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng thành công chiêu hỗ trợ lên chính mình hoặc đồng đội, pet đó nhận thêm khiên chắn bằng 20% HP tối đa trong 2 lượt. Cứ 3 lượt kích hoạt được 1 lần; khiên không cộng dồn."
     },
     {
       "speciesId": 194,
@@ -3177,7 +3372,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Chiêu hỗ trợ trực tiếp nhắm bản thân/đồng minh thành công: thêm khiên 30% HP tối đa mục tiêu trong 2 lượt. 1 lần/3 lượt; không cộng dồn.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng thành công chiêu hỗ trợ lên chính mình hoặc đồng đội, pet đó nhận thêm khiên chắn bằng 30% HP tối đa trong 2 lượt. Cứ 3 lượt kích hoạt được 1 lần; khiên không cộng dồn."
     },
     {
       "speciesId": 195,
@@ -3193,7 +3389,8 @@
       "unit": "%",
       "limits": "damageReductionCappedAt100",
       "description": "Sau khi chiêu trực tiếp trúng mục tiêu chưa bị giảm damage: giảm 80% damage của mục tiêu trong 2 lượt, 1 lần/3 lượt. Không cộng dồn với giảm damage mạnh hơn; tẩy được.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi chiêu tấn công trúng đối thủ chưa bị giảm sát thương, đối thủ gây ít hơn 80% sát thương trong 2 lượt. Cứ 3 lượt kích hoạt được 1 lần. Nếu đối thủ đang bị giảm mạnh hơn thì giữ mức mạnh hơn; có thể bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 196,
@@ -3209,7 +3406,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đánh mục tiêu đang giảm Linh xảo: damage +36%. Không tự làm chậm; không cộng dồn từ nhiều dấu.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đánh đối thủ đang bị giảm Linh xảo thì gây thêm 36% sát thương. Pet không tự làm chậm đối thủ; đối thủ bị giảm Linh xảo nhiều lần cũng chỉ tính một lần."
     },
     {
       "speciesId": 197,
@@ -3225,7 +3423,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đánh mục tiêu đang giảm Linh xảo: damage +54%. Không tự làm chậm; không cộng dồn từ nhiều dấu.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đánh đối thủ đang bị giảm Linh xảo thì gây thêm 54% sát thương. Pet không tự làm chậm đối thủ; đối thủ bị giảm Linh xảo nhiều lần cũng chỉ tính một lần."
     },
     {
       "speciesId": 198,
@@ -3241,7 +3440,8 @@
       "unit": "PP",
       "limits": "capsRemoved",
       "description": "Thực sự gỡ buff địch bằng chiêu: hoàn 10 PP cho chính chiêu đó, 1 lần/3 lượt, không vượt PP tối đa. Không kích từ chiêu Power 0 sao chép thất bại.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng chiêu xóa được hiệu ứng tăng chỉ số của đối thủ, chiêu đó được hoàn lại 10 PP (không vượt PP tối đa). Cứ 3 lượt kích hoạt được 1 lần."
     },
     {
       "speciesId": 199,
@@ -3257,7 +3457,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đánh mục tiêu dưới 35% HP: hồi 150% damage thực làm mất HP; 1 lần/2 lượt. Không hút từ khiên.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đánh đối thủ còn dưới 35% HP thì pet hút máu: hồi lượng HP bằng 150% sát thương gây ra. Cứ 2 lượt kích hoạt được 1 lần. Sát thương vào khiên chắn không được tính."
     },
     {
       "speciesId": 200,
@@ -3273,7 +3474,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đánh mục tiêu dưới 35% HP: hồi 220% damage thực làm mất HP; 1 lần/2 lượt. Không hút từ khiên.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đánh đối thủ còn dưới 35% HP thì pet hút máu: hồi lượng HP bằng 220% sát thương gây ra. Cứ 2 lượt kích hoạt được 1 lần. Sát thương vào khiên chắn không được tính."
     },
     {
       "speciesId": 201,
@@ -3289,7 +3491,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đặt mới Mị Hoặc/Ngủ thành công: chiêu hồi tiếp theo hồi thêm 40% HP tối đa mục tiêu. 1 dấu, 2 lượt; tẩy dấu/đổi pet xóa.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi gây được Mị Hoặc hoặc Ngủ lên đối thủ, chiêu hồi máu kế tiếp trong 2 lượt hồi thêm 40% HP tối đa của pet được hồi. Không cộng dồn; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 202,
@@ -3305,7 +3508,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đòn trực tiếp vào mục tiêu đang Giam Cầm tăng 30% damage. Không tự khóa đổi pet; đổi mục tiêu không giữ lợi thế.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đánh đối thủ đang bị Giam Cầm thì gây thêm 30% sát thương. Pet không tự Giam Cầm đối thủ; đổi sang đối thủ khác thì mất lợi thế."
     },
     {
       "speciesId": 203,
@@ -3321,7 +3525,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đòn trực tiếp vào mục tiêu đang Giam Cầm tăng 42% damage. Không tự khóa đổi pet; đổi mục tiêu không giữ lợi thế.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đánh đối thủ đang bị Giam Cầm thì gây thêm 42% sát thương. Pet không tự Giam Cầm đối thủ; đổi sang đối thủ khác thì mất lợi thế."
     },
     {
       "speciesId": 204,
@@ -3337,7 +3542,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đòn trực tiếp vào mục tiêu đang Giam Cầm tăng 48% damage. Không tự khóa đổi pet; đổi mục tiêu không giữ lợi thế.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đánh đối thủ đang bị Giam Cầm thì gây thêm 48% sát thương. Pet không tự Giam Cầm đối thủ; đổi sang đối thủ khác thì mất lợi thế."
     },
     {
       "speciesId": 205,
@@ -3353,7 +3559,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Sau khi mất HP bởi đòn trực tiếp, trả 12% HP tối đa người dùng. 1 lần/lượt, không phản dây chuyền.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần bị đánh mất HP, kẻ tấn công cũng mất lượng HP bằng 12% HP tối đa của pet này. Mỗi lượt 1 lần; hai bên có đặc tính phản đòn cũng không phản qua phản lại."
     },
     {
       "speciesId": 206,
@@ -3369,7 +3576,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Sau khi mất HP bởi đòn trực tiếp, trả 18% HP tối đa người dùng. 1 lần/lượt, không phản dây chuyền.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần bị đánh mất HP, kẻ tấn công cũng mất lượng HP bằng 18% HP tối đa của pet này. Mỗi lượt 1 lần; hai bên có đặc tính phản đòn cũng không phản qua phản lại."
     },
     {
       "speciesId": 207,
@@ -3385,7 +3593,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Sau khi mất HP bởi đòn trực tiếp, trả 18% HP tối đa người dùng. 1 lần/lượt, không phản dây chuyền.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần bị đánh mất HP, kẻ tấn công cũng mất lượng HP bằng 18% HP tối đa của pet này. Mỗi lượt 1 lần; hai bên có đặc tính phản đòn cũng không phản qua phản lại."
     },
     {
       "speciesId": 208,
@@ -3400,8 +3609,9 @@
       "value": 20,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu Power 0: dự trữ 20% HP tối đa, cộng dồn không giới hạn số tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
-      "matchesJavaExport": true
+      "description": "Dùng chiêu Power 0: dự trữ 20% HP tối đa, cộng dồn tối đa 3 tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần dùng chiêu không gây sát thương (chiêu hỗ trợ), pet tích 20% HP tối đa vào \"kho hồi máu\" trong 4 lượt, tích chồng tối đa 3 lần. Chiêu hồi máu tiếp theo sẽ hồi thêm toàn bộ lượng đã tích. Kho không tự hồi máu; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 209,
@@ -3416,8 +3626,9 @@
       "value": 30,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn không giới hạn số tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
-      "matchesJavaExport": true
+      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn tối đa 3 tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần dùng chiêu không gây sát thương (chiêu hỗ trợ), pet tích 30% HP tối đa vào \"kho hồi máu\" trong 4 lượt, tích chồng tối đa 3 lần. Chiêu hồi máu tiếp theo sẽ hồi thêm toàn bộ lượng đã tích. Kho không tự hồi máu; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 210,
@@ -3432,8 +3643,9 @@
       "value": 30,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn không giới hạn số tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
-      "matchesJavaExport": true
+      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn tối đa 3 tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần dùng chiêu không gây sát thương (chiêu hỗ trợ), pet tích 30% HP tối đa vào \"kho hồi máu\" trong 4 lượt, tích chồng tối đa 3 lần. Chiêu hồi máu tiếp theo sẽ hồi thêm toàn bộ lượng đã tích. Kho không tự hồi máu; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 211,
@@ -3448,8 +3660,9 @@
       "value": 30,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn không giới hạn số tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
-      "matchesJavaExport": true
+      "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn tối đa 3 tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần dùng chiêu không gây sát thương (chiêu hỗ trợ), pet tích 30% HP tối đa vào \"kho hồi máu\" trong 4 lượt, tích chồng tối đa 3 lần. Chiêu hồi máu tiếp theo sẽ hồi thêm toàn bộ lượng đã tích. Kho không tự hồi máu; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 212,
@@ -3465,7 +3678,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +48 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 48 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
     },
     {
       "speciesId": 213,
@@ -3481,7 +3695,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +84 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 84 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
     },
     {
       "speciesId": 214,
@@ -3496,8 +3711,9 @@
       "value": 48,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 48 Power, cộng dồn không giới hạn số tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
-      "matchesJavaExport": false
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 48 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "matchesJavaExport": false,
+      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 48 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
     },
     {
       "speciesId": 215,
@@ -3512,8 +3728,9 @@
       "value": 66,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 66 Power, cộng dồn không giới hạn số tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
-      "matchesJavaExport": false
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 66 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "matchesJavaExport": false,
+      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 66 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
     },
     {
       "speciesId": 216,
@@ -3528,8 +3745,9 @@
       "value": 84,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 84 Power, cộng dồn không giới hạn số tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
-      "matchesJavaExport": false
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 84 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "matchesJavaExport": false,
+      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 84 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
     },
     {
       "speciesId": 217,
@@ -3545,7 +3763,8 @@
       "unit": "Lượt",
       "limits": "capsRemoved",
       "description": "Đòn trực tiếp đầu khi mục tiêu chưa Giam Cầm: Giam Cầm 10 lượt, 1 lần/3 lượt. Chỉ khóa đổi pet/vật phẩm; không làm mất lượt đánh.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đòn tấn công đầu tiên vào đối thủ chưa bị Giam Cầm sẽ Giam Cầm đối thủ 10 lượt (cứ 3 lượt 1 lần). Giam Cầm chỉ cấm đổi pet và dùng vật phẩm, đối thủ vẫn đánh bình thường."
     },
     {
       "speciesId": 218,
@@ -3561,7 +3780,8 @@
       "unit": "Lượt",
       "limits": "capsRemoved",
       "description": "Đòn trực tiếp đầu khi mục tiêu chưa Giam Cầm: Giam Cầm 10 lượt, 1 lần/3 lượt. Chỉ khóa đổi pet/vật phẩm; không làm mất lượt đánh.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đòn tấn công đầu tiên vào đối thủ chưa bị Giam Cầm sẽ Giam Cầm đối thủ 10 lượt (cứ 3 lượt 1 lần). Giam Cầm chỉ cấm đổi pet và dùng vật phẩm, đối thủ vẫn đánh bình thường."
     },
     {
       "speciesId": 219,
@@ -3577,7 +3797,8 @@
       "unit": "Lượt",
       "limits": "capsRemoved",
       "description": "Đòn trực tiếp đầu khi mục tiêu chưa Giam Cầm: Giam Cầm 10 lượt, 1 lần/3 lượt. Chỉ khóa đổi pet/vật phẩm; không làm mất lượt đánh.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đòn tấn công đầu tiên vào đối thủ chưa bị Giam Cầm sẽ Giam Cầm đối thủ 10 lượt (cứ 3 lượt 1 lần). Giam Cầm chỉ cấm đổi pet và dùng vật phẩm, đối thủ vẫn đánh bình thường."
     },
     {
       "speciesId": 220,
@@ -3593,7 +3814,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "HP dưới 50%: chiêu damage kế tiếp +90 Power, sau đó trả 5% HP tối đa, không tự gục. 1 lần/3 lượt, không kích nếu HP không đủ trả.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Khi HP còn dưới 50%, chiêu tấn công tiếp theo được cộng 90 uy lực, đổi lại pet mất 5% HP tối đa (không bao giờ tự làm mình gục; không đủ HP để trả thì không kích hoạt). Cứ 3 lượt kích hoạt được 1 lần."
     },
     {
       "speciesId": 221,
@@ -3609,7 +3831,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "HP dưới 50%: chiêu damage kế tiếp +132 Power, sau đó trả 5% HP tối đa, không tự gục. 1 lần/3 lượt, không kích nếu HP không đủ trả.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Khi HP còn dưới 50%, chiêu tấn công tiếp theo được cộng 132 uy lực, đổi lại pet mất 5% HP tối đa (không bao giờ tự làm mình gục; không đủ HP để trả thì không kích hoạt). Cứ 3 lượt kích hoạt được 1 lần."
     },
     {
       "speciesId": 222,
@@ -3624,8 +3847,9 @@
       "value": 18,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu damage hệ chính: damage hệ đó +18% trong 3 lượt, cộng dồn không giới hạn số tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
-      "matchesJavaExport": true
+      "description": "Dùng chiêu damage hệ chính: damage hệ đó +18% trong 3 lượt, cộng dồn tối đa 3 tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần dùng chiêu tấn công cùng hệ với pet, sát thương hệ đó tăng 18% trong 3 lượt, tăng chồng tối đa 3 lần. Chỉ tích khi chiêu thật sự gây sát thương; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 223,
@@ -3640,8 +3864,9 @@
       "value": 24,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn không giới hạn số tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
-      "matchesJavaExport": true
+      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn tối đa 3 tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần dùng chiêu tấn công cùng hệ với pet, sát thương hệ đó tăng 24% trong 3 lượt, tăng chồng tối đa 3 lần. Chỉ tích khi chiêu thật sự gây sát thương; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 224,
@@ -3656,8 +3881,9 @@
       "value": 24,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn không giới hạn số tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
-      "matchesJavaExport": true
+      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn tối đa 3 tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần dùng chiêu tấn công cùng hệ với pet, sát thương hệ đó tăng 24% trong 3 lượt, tăng chồng tối đa 3 lần. Chỉ tích khi chiêu thật sự gây sát thương; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 225,
@@ -3672,8 +3898,9 @@
       "value": 24,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn không giới hạn số tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
-      "matchesJavaExport": true
+      "description": "Dùng chiêu damage hệ chính: damage hệ đó +24% trong 3 lượt, cộng dồn tối đa 3 tầng. Chỉ tích sau khi gây damage; tẩy được, đổi pet xóa.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần dùng chiêu tấn công cùng hệ với pet, sát thương hệ đó tăng 24% trong 3 lượt, tăng chồng tối đa 3 lần. Chỉ tích khi chiêu thật sự gây sát thương; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 226,
@@ -3689,7 +3916,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +48 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 48 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
     },
     {
       "speciesId": 227,
@@ -3705,7 +3933,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +66 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 66 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
     },
     {
       "speciesId": 228,
@@ -3721,7 +3950,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +84 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 84 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
     },
     {
       "speciesId": 229,
@@ -3737,7 +3967,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Địch còn buff: damage hệ chính +36%. Kiểm tra trước khi đòn gỡ buff; không có buff thì không tăng.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi đối thủ đang có hiệu ứng tăng chỉ số, chiêu tấn công cùng hệ với pet gây thêm 36% sát thương (tính cả khi chính đòn đó xóa hiệu ứng tăng chỉ số)."
     },
     {
       "speciesId": 230,
@@ -3753,7 +3984,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Địch còn buff: damage hệ chính +48%. Kiểm tra trước khi đòn gỡ buff; không có buff thì không tăng.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi đối thủ đang có hiệu ứng tăng chỉ số, chiêu tấn công cùng hệ với pet gây thêm 48% sát thương (tính cả khi chính đòn đó xóa hiệu ứng tăng chỉ số)."
     },
     {
       "speciesId": 231,
@@ -3769,7 +4001,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Địch còn buff: damage hệ chính +60%. Kiểm tra trước khi đòn gỡ buff; không có buff thì không tăng.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi đối thủ đang có hiệu ứng tăng chỉ số, chiêu tấn công cùng hệ với pet gây thêm 60% sát thương (tính cả khi chính đòn đó xóa hiệu ứng tăng chỉ số)."
     },
     {
       "speciesId": 232,
@@ -3785,7 +4018,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đánh mục tiêu đang giảm Linh xảo: damage +36%. Không tự làm chậm; không cộng dồn từ nhiều dấu.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đánh đối thủ đang bị giảm Linh xảo thì gây thêm 36% sát thương. Pet không tự làm chậm đối thủ; đối thủ bị giảm Linh xảo nhiều lần cũng chỉ tính một lần."
     },
     {
       "speciesId": 233,
@@ -3801,7 +4035,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đánh mục tiêu đang giảm Linh xảo: damage +48%. Không tự làm chậm; không cộng dồn từ nhiều dấu.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đánh đối thủ đang bị giảm Linh xảo thì gây thêm 48% sát thương. Pet không tự làm chậm đối thủ; đối thủ bị giảm Linh xảo nhiều lần cũng chỉ tính một lần."
     },
     {
       "speciesId": 234,
@@ -3817,7 +4052,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đánh mục tiêu đang giảm Linh xảo: damage +48%. Không tự làm chậm; không cộng dồn từ nhiều dấu.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đánh đối thủ đang bị giảm Linh xảo thì gây thêm 48% sát thương. Pet không tự làm chậm đối thủ; đối thủ bị giảm Linh xảo nhiều lần cũng chỉ tính một lần."
     },
     {
       "speciesId": 235,
@@ -3833,7 +4069,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đánh mục tiêu đang giảm Linh xảo: damage +54%. Không tự làm chậm; không cộng dồn từ nhiều dấu.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đánh đối thủ đang bị giảm Linh xảo thì gây thêm 54% sát thương. Pet không tự làm chậm đối thủ; đối thủ bị giảm Linh xảo nhiều lần cũng chỉ tính một lần."
     },
     {
       "speciesId": 236,
@@ -3849,7 +4086,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đòn damage hệ chính tăng 48% damage, trả 3% HP tối đa sau khi gây damage, tối đa 1 lần/lượt. Không kích nếu HP không đủ; chi phí không gây gục.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Chiêu tấn công cùng hệ với pet gây thêm 48% sát thương, đổi lại pet mất 3% HP tối đa sau đòn (mỗi lượt tối đa 1 lần). Không đủ HP thì không kích hoạt; không bao giờ tự làm mình gục."
     },
     {
       "speciesId": 237,
@@ -3865,7 +4103,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đòn damage hệ chính tăng 72% damage, trả 3% HP tối đa sau khi gây damage, tối đa 1 lần/lượt. Không kích nếu HP không đủ; chi phí không gây gục.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Chiêu tấn công cùng hệ với pet gây thêm 72% sát thương, đổi lại pet mất 3% HP tối đa sau đòn (mỗi lượt tối đa 1 lần). Không đủ HP thì không kích hoạt; không bao giờ tự làm mình gục."
     },
     {
       "speciesId": 238,
@@ -3881,7 +4120,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Khi dùng chiêu hồi và mục tiêu đang dưới 50% HP, hồi thêm 20% HP tối đa mục tiêu. 1 lần/3 lượt; chịu giảm hồi, không kích lại thụ động.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng chiêu hồi máu cho pet đang dưới 50% HP, pet được hồi thêm 20% HP tối đa của nó. Cứ 3 lượt kích hoạt được 1 lần; hiệu ứng giảm hồi máu vẫn có tác dụng."
     },
     {
       "speciesId": 239,
@@ -3897,7 +4137,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Khi dùng chiêu hồi và mục tiêu đang dưới 50% HP, hồi thêm 30% HP tối đa mục tiêu. 1 lần/3 lượt; chịu giảm hồi, không kích lại thụ động.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng chiêu hồi máu cho pet đang dưới 50% HP, pet được hồi thêm 30% HP tối đa của nó. Cứ 3 lượt kích hoạt được 1 lần; hiệu ứng giảm hồi máu vẫn có tác dụng."
     },
     {
       "speciesId": 240,
@@ -3913,7 +4154,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Khi dùng chiêu hồi và mục tiêu đang dưới 50% HP, hồi thêm 30% HP tối đa mục tiêu. 1 lần/3 lượt; chịu giảm hồi, không kích lại thụ động.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng chiêu hồi máu cho pet đang dưới 50% HP, pet được hồi thêm 30% HP tối đa của nó. Cứ 3 lượt kích hoạt được 1 lần; hiệu ứng giảm hồi máu vẫn có tác dụng."
     },
     {
       "speciesId": 241,
@@ -3929,7 +4171,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Khi dùng chiêu hồi và mục tiêu đang dưới 50% HP, hồi thêm 30% HP tối đa mục tiêu. 1 lần/3 lượt; chịu giảm hồi, không kích lại thụ động.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng chiêu hồi máu cho pet đang dưới 50% HP, pet được hồi thêm 30% HP tối đa của nó. Cứ 3 lượt kích hoạt được 1 lần; hiệu ứng giảm hồi máu vẫn có tác dụng."
     },
     {
       "speciesId": 242,
@@ -3944,8 +4187,9 @@
       "value": 48,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 48 Power, cộng dồn không giới hạn số tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
-      "matchesJavaExport": false
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 48 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "matchesJavaExport": false,
+      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 48 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
     },
     {
       "speciesId": 243,
@@ -3960,8 +4204,9 @@
       "value": 66,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 66 Power, cộng dồn không giới hạn số tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
-      "matchesJavaExport": false
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 66 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "matchesJavaExport": false,
+      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 66 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
     },
     {
       "speciesId": 244,
@@ -3976,8 +4221,9 @@
       "value": 84,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 84 Power, cộng dồn không giới hạn số tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
-      "matchesJavaExport": false
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 84 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "matchesJavaExport": false,
+      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 84 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
     },
     {
       "speciesId": 245,
@@ -3993,7 +4239,8 @@
       "unit": "%",
       "limits": "damageReductionCappedAt100",
       "description": "Giảm 40% damage trực tiếp nhận từ mục tiêu đang bị giảm chính xác. Không ảnh hưởng đòn chắc trúng bỏ qua chính xác.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi bị đối thủ đang bị giảm chính xác tấn công, pet chịu ít hơn 40% sát thương. Không có tác dụng với đòn luôn trúng."
     },
     {
       "speciesId": 246,
@@ -4009,7 +4256,8 @@
       "unit": "%",
       "limits": "damageReductionCappedAt100",
       "description": "Giảm 60% damage trực tiếp nhận từ mục tiêu đang bị giảm chính xác. Không ảnh hưởng đòn chắc trúng bỏ qua chính xác.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi bị đối thủ đang bị giảm chính xác tấn công, pet chịu ít hơn 60% sát thương. Không có tác dụng với đòn luôn trúng."
     },
     {
       "speciesId": 247,
@@ -4025,7 +4273,8 @@
       "unit": "%",
       "limits": "damageReductionCappedAt100",
       "description": "Giảm 70% damage trực tiếp nhận từ mục tiêu đang bị giảm chính xác. Không ảnh hưởng đòn chắc trúng bỏ qua chính xác.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi bị đối thủ đang bị giảm chính xác tấn công, pet chịu ít hơn 70% sát thương. Không có tác dụng với đòn luôn trúng."
     },
     {
       "speciesId": 248,
@@ -4040,8 +4289,9 @@
       "value": 12,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Nhận damage trực tiếp: Sức mạnh +12% trong 3 lượt, cộng dồn không giới hạn số tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
-      "matchesJavaExport": true
+      "description": "Nhận damage trực tiếp: Sức mạnh +12% trong 3 lượt, cộng dồn tối đa 3 tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần bị đánh trúng, Sức mạnh tăng 12% trong 3 lượt; tăng chồng được tối đa 3 lần (mỗi lượt cộng thêm 1 lần). Mất hết khi pet rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 249,
@@ -4056,8 +4306,9 @@
       "value": 18,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Nhận damage trực tiếp: Sức mạnh +18% trong 3 lượt, cộng dồn không giới hạn số tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
-      "matchesJavaExport": true
+      "description": "Nhận damage trực tiếp: Sức mạnh +18% trong 3 lượt, cộng dồn tối đa 3 tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần bị đánh trúng, Sức mạnh tăng 18% trong 3 lượt; tăng chồng được tối đa 3 lần (mỗi lượt cộng thêm 1 lần). Mất hết khi pet rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 250,
@@ -4072,8 +4323,9 @@
       "value": 18,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Nhận damage trực tiếp: Sức mạnh +18% trong 3 lượt, cộng dồn không giới hạn số tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
-      "matchesJavaExport": true
+      "description": "Nhận damage trực tiếp: Sức mạnh +18% trong 3 lượt, cộng dồn tối đa 3 tầng. Tối đa 1 tầng/lượt; tẩy được, đổi pet xóa.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần bị đánh trúng, Sức mạnh tăng 18% trong 3 lượt; tăng chồng được tối đa 3 lần (mỗi lượt cộng thêm 1 lần). Mất hết khi pet rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 251,
@@ -4089,7 +4341,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Tự đặt thành công Gieo Hạt/Hủ Thực lên địch: hồi 20% HP tối đa. Tối đa 1 lần/2 lượt; refresh khi hiệu ứng còn nguyên không kích.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần gây được Gieo Hạt hoặc Hủ Thực lên đối thủ, pet hồi 20% HP tối đa. Cứ 2 lượt kích hoạt được 1 lần. Gây lại lên đối thủ đang có sẵn hiệu ứng đó thì không tính."
     },
     {
       "speciesId": 252,
@@ -4105,7 +4358,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Tự đặt thành công Gieo Hạt/Hủ Thực lên địch: hồi 30% HP tối đa. Tối đa 1 lần/2 lượt; refresh khi hiệu ứng còn nguyên không kích.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần gây được Gieo Hạt hoặc Hủ Thực lên đối thủ, pet hồi 30% HP tối đa. Cứ 2 lượt kích hoạt được 1 lần. Gây lại lên đối thủ đang có sẵn hiệu ứng đó thì không tính."
     },
     {
       "speciesId": 253,
@@ -4121,7 +4375,8 @@
       "unit": "%",
       "limits": "damageReductionCappedAt100",
       "description": "Giảm 100% damage của đòn trực tiếp đầu nhận sau khi vào sân, tối đa 1 lần/vào sân, hồi 3 lượt. Không né đòn/không miễn DOT; hit tiếp theo bình thường.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đòn tấn công đầu tiên trúng pet sau khi ra sân bị giảm 100% sát thương. Mỗi lần ra sân 1 lần, sau đó chờ 3 lượt. Không né đòn, không chặn sát thương mỗi lượt; các đòn sau tính bình thường."
     },
     {
       "speciesId": 254,
@@ -4137,7 +4392,8 @@
       "unit": "%",
       "limits": "damageReductionCappedAt100",
       "description": "Giảm 100% damage của đòn trực tiếp đầu nhận sau khi vào sân, tối đa 1 lần/vào sân, hồi 3 lượt. Không né đòn/không miễn DOT; hit tiếp theo bình thường.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đòn tấn công đầu tiên trúng pet sau khi ra sân bị giảm 100% sát thương. Mỗi lần ra sân 1 lần, sau đó chờ 3 lượt. Không né đòn, không chặn sát thương mỗi lượt; các đòn sau tính bình thường."
     },
     {
       "speciesId": 255,
@@ -4153,7 +4409,8 @@
       "unit": "%",
       "limits": "damageReductionCappedAt100",
       "description": "Giảm 100% damage của đòn trực tiếp đầu nhận sau khi vào sân, tối đa 1 lần/vào sân, hồi 3 lượt. Không né đòn/không miễn DOT; hit tiếp theo bình thường.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đòn tấn công đầu tiên trúng pet sau khi ra sân bị giảm 100% sát thương. Mỗi lần ra sân 1 lần, sau đó chờ 3 lượt. Không né đòn, không chặn sát thương mỗi lượt; các đòn sau tính bình thường."
     },
     {
       "speciesId": 256,
@@ -4169,7 +4426,8 @@
       "unit": "%",
       "limits": "damageReductionCappedAt100",
       "description": "Giảm 100% damage của đòn trực tiếp đầu nhận sau khi vào sân, tối đa 1 lần/vào sân, hồi 3 lượt. Không né đòn/không miễn DOT; hit tiếp theo bình thường.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đòn tấn công đầu tiên trúng pet sau khi ra sân bị giảm 100% sát thương. Mỗi lần ra sân 1 lần, sau đó chờ 3 lượt. Không né đòn, không chặn sát thương mỗi lượt; các đòn sau tính bình thường."
     },
     {
       "speciesId": 257,
@@ -4185,7 +4443,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đánh mục tiêu đang có DOT của bản thân: hồi 100% damage thực làm mất HP, 1 lần/2 lượt. Không hút từ khiên.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đánh đối thủ đang dính hiệu ứng mất máu mỗi lượt do pet gây ra thì pet hút máu: hồi lượng HP bằng 100% sát thương gây ra. Cứ 2 lượt kích hoạt được 1 lần. Sát thương vào khiên chắn không được tính."
     },
     {
       "speciesId": 258,
@@ -4201,7 +4460,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đánh mục tiêu đang có DOT của bản thân: hồi 140% damage thực làm mất HP, 1 lần/2 lượt. Không hút từ khiên.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đánh đối thủ đang dính hiệu ứng mất máu mỗi lượt do pet gây ra thì pet hút máu: hồi lượng HP bằng 140% sát thương gây ra. Cứ 2 lượt kích hoạt được 1 lần. Sát thương vào khiên chắn không được tính."
     },
     {
       "speciesId": 259,
@@ -4217,7 +4477,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Đánh mục tiêu đang có DOT của bản thân: hồi 170% damage thực làm mất HP, 1 lần/2 lượt. Không hút từ khiên.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Đánh đối thủ đang dính hiệu ứng mất máu mỗi lượt do pet gây ra thì pet hút máu: hồi lượng HP bằng 170% sát thương gây ra. Cứ 2 lượt kích hoạt được 1 lần. Sát thương vào khiên chắn không được tính."
     },
     {
       "speciesId": 260,
@@ -4233,7 +4494,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Chiêu hỗ trợ trực tiếp nhắm bản thân/đồng minh thành công: thêm khiên 20% HP tối đa mục tiêu trong 2 lượt. 1 lần/3 lượt; không cộng dồn.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng thành công chiêu hỗ trợ lên chính mình hoặc đồng đội, pet đó nhận thêm khiên chắn bằng 20% HP tối đa trong 2 lượt. Cứ 3 lượt kích hoạt được 1 lần; khiên không cộng dồn."
     },
     {
       "speciesId": 261,
@@ -4249,7 +4511,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Chiêu hỗ trợ trực tiếp nhắm bản thân/đồng minh thành công: thêm khiên 30% HP tối đa mục tiêu trong 2 lượt. 1 lần/3 lượt; không cộng dồn.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng thành công chiêu hỗ trợ lên chính mình hoặc đồng đội, pet đó nhận thêm khiên chắn bằng 30% HP tối đa trong 2 lượt. Cứ 3 lượt kích hoạt được 1 lần; khiên không cộng dồn."
     },
     {
       "speciesId": 262,
@@ -4265,7 +4528,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Chiêu hỗ trợ trực tiếp nhắm bản thân/đồng minh thành công: thêm khiên 30% HP tối đa mục tiêu trong 2 lượt. 1 lần/3 lượt; không cộng dồn.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng thành công chiêu hỗ trợ lên chính mình hoặc đồng đội, pet đó nhận thêm khiên chắn bằng 30% HP tối đa trong 2 lượt. Cứ 3 lượt kích hoạt được 1 lần; khiên không cộng dồn."
     },
     {
       "speciesId": 263,
@@ -4281,7 +4545,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Khi DOT Gieo Hạt do bản thân đặt gây mất HP cuối lượt: lần hồi kế tiếp trong 2 lượt thêm 20% HP tối đa mục tiêu. 1 dấu, không cộng dồn; đổi pet/tẩy dấu xóa.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi Gieo Hạt do pet gây ra làm đối thủ mất HP cuối lượt, chiêu hồi máu kế tiếp trong 2 lượt hồi thêm 20% HP tối đa của pet được hồi. Không cộng dồn; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 264,
@@ -4297,7 +4562,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Khi DOT Gieo Hạt do bản thân đặt gây mất HP cuối lượt: lần hồi kế tiếp trong 2 lượt thêm 30% HP tối đa mục tiêu. 1 dấu, không cộng dồn; đổi pet/tẩy dấu xóa.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi Gieo Hạt do pet gây ra làm đối thủ mất HP cuối lượt, chiêu hồi máu kế tiếp trong 2 lượt hồi thêm 30% HP tối đa của pet được hồi. Không cộng dồn; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 265,
@@ -4313,7 +4579,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Khi DOT Gieo Hạt do bản thân đặt gây mất HP cuối lượt: lần hồi kế tiếp trong 2 lượt thêm 30% HP tối đa mục tiêu. 1 dấu, không cộng dồn; đổi pet/tẩy dấu xóa.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi Gieo Hạt do pet gây ra làm đối thủ mất HP cuối lượt, chiêu hồi máu kế tiếp trong 2 lượt hồi thêm 30% HP tối đa của pet được hồi. Không cộng dồn; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 266,
@@ -4329,7 +4596,8 @@
       "unit": "%",
       "limits": "damageReductionCappedAt100",
       "description": "Sau khi chiêu trực tiếp trúng mục tiêu chưa bị giảm damage: giảm 40% damage của mục tiêu trong 2 lượt, 1 lần/3 lượt. Không cộng dồn với giảm damage mạnh hơn; tẩy được.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi chiêu tấn công trúng đối thủ chưa bị giảm sát thương, đối thủ gây ít hơn 40% sát thương trong 2 lượt. Cứ 3 lượt kích hoạt được 1 lần. Nếu đối thủ đang bị giảm mạnh hơn thì giữ mức mạnh hơn; có thể bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 267,
@@ -4345,7 +4613,8 @@
       "unit": "%",
       "limits": "damageReductionCappedAt100",
       "description": "Sau khi chiêu trực tiếp trúng mục tiêu chưa bị giảm damage: giảm 60% damage của mục tiêu trong 2 lượt, 1 lần/3 lượt. Không cộng dồn với giảm damage mạnh hơn; tẩy được.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi chiêu tấn công trúng đối thủ chưa bị giảm sát thương, đối thủ gây ít hơn 60% sát thương trong 2 lượt. Cứ 3 lượt kích hoạt được 1 lần. Nếu đối thủ đang bị giảm mạnh hơn thì giữ mức mạnh hơn; có thể bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 268,
@@ -4361,7 +4630,8 @@
       "unit": "%",
       "limits": "damageReductionCappedAt100",
       "description": "Sau khi chiêu trực tiếp trúng mục tiêu chưa bị giảm damage: giảm 70% damage của mục tiêu trong 2 lượt, 1 lần/3 lượt. Không cộng dồn với giảm damage mạnh hơn; tẩy được.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi chiêu tấn công trúng đối thủ chưa bị giảm sát thương, đối thủ gây ít hơn 70% sát thương trong 2 lượt. Cứ 3 lượt kích hoạt được 1 lần. Nếu đối thủ đang bị giảm mạnh hơn thì giữ mức mạnh hơn; có thể bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 269,
@@ -4376,8 +4646,9 @@
       "value": 50,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +50%, cộng dồn không giới hạn số tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
-      "matchesJavaExport": true
+      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +50%, cộng dồn tối đa 3 tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
+      "matchesJavaExport": true,
+      "summary": "Cuối mỗi lượt mà pet ra đòn trước đối thủ, Linh xảo tăng 50% trong 2 lượt; tăng chồng được tối đa 3 lần. Lượt nào bị đối thủ ra đòn trước, hoặc pet rời sân, thì mất hết phần đã tăng."
     },
     {
       "speciesId": 270,
@@ -4393,7 +4664,8 @@
       "unit": "%",
       "limits": "damageReductionCappedAt100",
       "description": "Giảm 100% damage trực tiếp đầu tiên nhận trong mỗi lượt. Không giảm DOT/chi phí HP; không kích phản đòn.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Trong mỗi lượt, đòn tấn công đầu tiên trúng pet bị giảm 100% sát thương. Không giảm sát thương mỗi lượt (như Gieo Hạt, Hủ Thực) hay HP pet tự trả khi dùng chiêu."
     },
     {
       "speciesId": 271,
@@ -4408,8 +4680,9 @@
       "value": 40,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Dùng chiêu Power 0: dự trữ 40% HP tối đa, cộng dồn không giới hạn số tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
-      "matchesJavaExport": true
+      "description": "Dùng chiêu Power 0: dự trữ 40% HP tối đa, cộng dồn tối đa 3 tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
+      "matchesJavaExport": true,
+      "summary": "Mỗi lần dùng chiêu không gây sát thương (chiêu hỗ trợ), pet tích 40% HP tối đa vào \"kho hồi máu\" trong 4 lượt, tích chồng tối đa 3 lần. Chiêu hồi máu tiếp theo sẽ hồi thêm toàn bộ lượng đã tích. Kho không tự hồi máu; mất khi rời sân hoặc bị chiêu giải trừ xóa."
     },
     {
       "speciesId": 272,
@@ -4425,7 +4698,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Đặt mới debuff bằng chiêu: nhận 1 dấu âm trong 2 lượt; chiêu trực tiếp kế tiếp +90 Power rồi xóa dấu. Không tích từ DOT tick, tối đa 1 dấu.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Khi dùng chiêu gây được hiệu ứng xấu mới, chiêu tấn công kế tiếp trong 2 lượt được cộng 90 uy lực. Mất máu mỗi lượt không tính là gây hiệu ứng mới; không cộng dồn."
     },
     {
       "speciesId": 273,
@@ -4441,7 +4715,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Tẩy thực sự ít nhất 1 debuff bằng chiêu: hồi thêm 40% HP tối đa cho mục tiêu đã được tẩy, 1 lần/3 lượt. Không kích từ buff miễn debuff.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi dùng chiêu giải trừ xóa được ít nhất 1 hiệu ứng xấu, pet được giải trừ hồi thêm 40% HP tối đa. Cứ 3 lượt kích hoạt được 1 lần. Chiêu chỉ chặn trước hiệu ứng xấu (không xóa được gì) thì không tính."
     },
     {
       "speciesId": 274,
@@ -4459,7 +4734,8 @@
       "description": "Nếu đối thủ có Linh xảo cao hơn sau buff/debuff, được ưu tiên hành động và đòn sát thương đầu tiên lên chính đối thủ tăng 15%; hồi chiêu 2 lượt.",
       "matchesJavaExport": false,
       "exclusiveTrait": "HV-01",
-      "cooldownTurns": 2
+      "cooldownTurns": 2,
+      "summary": "Khi đối thủ có Linh xảo cao hơn (tính cả tăng/giảm trong trận), pet vẫn được ra đòn trước và đòn tấn công đầu tiên vào đối thủ đó gây thêm 15% sát thương. Dùng xong chờ 2 lượt."
     },
     {
       "speciesId": 275,
@@ -4477,7 +4753,15 @@
       "description": "Miễn nhiễm Mê Muội, Quấn Quanh hoặc Giam Cầm, Tê Liệt, Hóa Đá, Hỗn Loạn và Ngủ; giảm 25% sát thương trực tiếp nhận vào.",
       "matchesJavaExport": false,
       "exclusiveTrait": "TL-01",
-      "immuneStatuses": ["dazed", "bind", "paralysis", "petrification", "confusion", "sleep"]
+      "immuneStatuses": [
+        "dazed",
+        "bind",
+        "paralysis",
+        "petrification",
+        "confusion",
+        "sleep"
+      ],
+      "summary": "Không bao giờ bị Mê Muội, Quấn Quanh, Giam Cầm, Tê Liệt, Hóa Đá, Hỗn Loạn hay Ngủ, và chịu ít hơn 25% sát thương từ mọi đòn tấn công."
     },
     {
       "speciesId": 276,
@@ -4493,7 +4777,8 @@
       "unit": "Power",
       "limits": "capsRemoved",
       "description": "Dùng 2 chiêu trực tiếp khác nhau liên tiếp: chiêu trực tiếp tiếp theo +96 Power rồi xóa đà. Không tích từ hit phụ; khống chế bỏ lượt/đổi pet xóa đà.",
-      "matchesJavaExport": false
+      "matchesJavaExport": false,
+      "summary": "Dùng 2 chiêu tấn công khác nhau liên tiếp thì chiêu tấn công kế tiếp được cộng 96 uy lực, sau đó đếm lại từ đầu. Bị khống chế mất lượt hoặc rời sân thì mất chuỗi."
     },
     {
       "speciesId": 277,
@@ -4508,8 +4793,9 @@
       "value": 40,
       "unit": "%",
       "limits": "capsRemoved",
-      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +40%, cộng dồn không giới hạn số tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
-      "matchesJavaExport": true
+      "description": "Cuối lượt đã hành động trước đối thủ, nhận Linh xảo +40%, cộng dồn tối đa 3 tầng, 2 lượt. Đi sau hoặc đổi pet xóa các tầng.",
+      "matchesJavaExport": true,
+      "summary": "Cuối mỗi lượt mà pet ra đòn trước đối thủ, Linh xảo tăng 40% trong 2 lượt; tăng chồng được tối đa 3 lần. Lượt nào bị đối thủ ra đòn trước, hoặc pet rời sân, thì mất hết phần đã tăng."
     },
     {
       "speciesId": 278,
@@ -4525,7 +4811,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Khi HP từ trên 30% xuống 30% hoặc thấp hơn nhưng chưa gục: nhận khiên 140% HP tối đa trong 2 lượt. Không cứu một đòn chí tử.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi HP tụt từ trên 30% xuống còn 30% trở xuống mà chưa gục, pet nhận khiên chắn bằng 140% HP tối đa trong 2 lượt. Không cứu được đòn đánh gục ngay."
     },
     {
       "speciesId": 279,
@@ -4541,7 +4828,8 @@
       "unit": "%",
       "limits": "capsRemoved",
       "description": "Khi tự rút thành công bằng chiêu đổi pet: pet vào nhận khiên 40% HP tối đa trong 2 lượt. 1 lần/3 lượt; khiên tuyệt kỹ và đặc tính lấy giá trị cao hơn, không cộng dồn. Không kích khi đổi bị chặn.",
-      "matchesJavaExport": true
+      "matchesJavaExport": true,
+      "summary": "Khi pet tự rút khỏi sân bằng chiêu đổi pet, pet vào thay nhận khiên chắn bằng 40% HP tối đa trong 2 lượt. Cứ 3 lượt kích hoạt được 1 lần. Nếu đã có khiên từ tuyệt kỹ thì chỉ giữ khiên lớn hơn. Không kích hoạt khi bị chặn đổi pet."
     }
   ]
 }

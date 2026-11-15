@@ -72,23 +72,18 @@ describe("Jones' exchange (4:5:g15: op79, op84, op83)", () => {
       );
     expect(counts).not.toBeNull();
     expect(Number(counts![1]) + Number(counts![2])).toBe(202);
-    expect(played.choices[0].options).toEqual([
-      "Trứng sủng vật - 5000",
-      "Trứng Pet V4 - 7000",
-      "Trứng Pet thần V4 - 150000",
-      "Rời đi",
-    ]);
+    expect(played.choices[0].options).toEqual(["Trứng sủng vật - 5000", "Rời đi"]);
     expect(played.saved.currency?.money).toBe(15000);
     expect(played.saved.inventory.specials).toContain(0);
     expect(played.saved.eventStates?.["4:5:15"]).toBe(3);
   }, 60000);
 
-  it("sells a V4 egg at its baked price", async () => {
-    const played = await playGroup(jonesSave(160000), 4, 5, 15, { choices: [2] });
-    expect(played.lines).toContain("Đã mua Trứng Pet thần V4 x1.");
-    expect(played.saved.currency?.money).toBe(10000);
-    expect(played.saved.inventory.specials).toContain(12);
-    expect(played.saved.eventStates?.["4:5:15"]).toBe(3);
+  it("leaves the exchange without charging or granting an egg", async () => {
+    const played = await playGroup(jonesSave(160000), 4, 5, 15, { choices: [1] });
+    expect(played.saved.currency?.money).toBe(160000);
+    expect(played.saved.inventory.specials).not.toContain(0);
+    expect(played.saved.inventory.specials).not.toContain(11);
+    expect(played.saved.inventory.specials).not.toContain(12);
   }, 60000);
 
   it("refuses the swap without the money and leaves the group open", async () => {

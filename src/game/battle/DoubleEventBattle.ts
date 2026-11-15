@@ -116,6 +116,8 @@ export function doubleBattleSetup(
     encounterKey: key,
     inventory: bag,
     charms: charms?.(trainerOwned),
+    sceneId: event.sceneId,
+    capturePolicy: trainerOwned ? "TRAINER_OWNED_FORBIDDEN" : "WILD_ALLOWED",
   };
 }
 
@@ -156,6 +158,8 @@ export function tanNguyetBattleSetup(
     enemyProfile: services.trainerProfile,
     companionProfile: services.companionProfile,
     inventory: bag,
+    sceneId: TAN_NGUYET_BOSS.sceneId,
+    capturePolicy: "TRAINER_OWNED_FORBIDDEN",
     charms: charms?.(true),
     boss: "tan-nguyet-long-ma",
   };
@@ -194,6 +198,8 @@ export function newDoubleBattleCore(
     {
       ...setup,
       badgeProfile: setup.badgeProfile ?? services.badgeProfile(),
+      goldenPartyExperiencePercent:
+        setup.goldenPartyExperiencePercent ?? services.goldenPartyExperiencePercent(),
       enemy: setup.enemy.map((pet, member) => services.enemyTalentPet(pet, member, symbol, seed)),
       companion: setup.companion.map((pet, index) =>
         services.enemyTalentPet(pet, setup.enemy.length + index, symbol, seed),
@@ -244,8 +250,9 @@ export function settleDoubleBattle(
 ): DoubleSettlement {
   const request = core.request;
   if (request.kind !== "ended") throw new Error("settle a 2v2 only after it has ended");
-  const outcome = request.outcome,
-    owners = party.slice(0, core.playerCount);
+  const outcome = request.outcome;
+  if (outcome.winner === "none") throw new Error("a retreat has no 2v2 settlement");
+  const owners = party.slice(0, core.playerCount);
   owners.forEach((pet, member) => {
     const unit = core.playerUnit(member);
     pet.currentHp = unit.hp();
@@ -311,7 +318,7 @@ export function createTanNguyetBattle(
   );
 }
 
-function doubleBattleOnScreen(
+export function doubleBattleOnScreen(
   services: BattleServices,
   setup: DoubleBattleSetup,
   symbol: string,

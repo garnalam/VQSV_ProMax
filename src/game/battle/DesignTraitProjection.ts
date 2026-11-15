@@ -13,7 +13,6 @@ import {
   SHIELD_STATUS_ID,
   StatusInstance,
   signatureSkillOwned,
-  toShort,
   type StatusDefinition,
   type StatusRandom,
 } from "./StatusState";
@@ -289,6 +288,20 @@ export class DesignTraitProjection {
    */
   applyPermanentStatsBeforeEntry(unit: DesignTraitUnit): void {
     this.applyPermanentStatsOnce(unit, -1, 1, 0);
+  }
+
+  applyEncounterStatFactors(
+    unit: DesignTraitUnit,
+    [hp, attack, defense, speed]: readonly [number, number, number, number],
+  ): void {
+    this.applyPermanentStatsBeforeEntry(unit);
+    const { baseStats } = unit;
+    baseStats.hp = Math.max(1, Math.floor(baseStats.hp * hp));
+    baseStats.attack = Math.max(1, Math.floor(baseStats.attack * attack));
+    baseStats.defense = Math.max(1, Math.floor(baseStats.defense * defense));
+    baseStats.speed = Math.max(1, Math.floor(baseStats.speed * speed));
+    unit.restoreStatsForCheck();
+    unit.setHp(unit.maxHp());
   }
 
   /** `PetTraitBattleProjection.projectPermanentStats`: the four base stats a talent can reshape. */
@@ -1002,10 +1015,10 @@ export class DesignTraitProjection {
       unit.baseStats.defense,
       unit.baseStats.speed,
     );
-    unit.baseStats.hp = toShort(projected.maxHp);
-    unit.baseStats.attack = toShort(projected.strength);
-    unit.baseStats.defense = toShort(projected.defense);
-    unit.baseStats.speed = toShort(projected.agility);
+    unit.baseStats.hp = unit.statValue(projected.maxHp);
+    unit.baseStats.attack = unit.statValue(projected.strength);
+    unit.baseStats.defense = unit.statValue(projected.defense);
+    unit.baseStats.speed = unit.statValue(projected.agility);
     unit.restoreSourceStatusState();
     unit.setHp(projectHpRatio(oldHp, oldMaxHp, unit.maxHp()));
     unit.traitBattleState.markPermanentStatsApplied();
@@ -1044,7 +1057,11 @@ export class DesignTraitProjection {
    * that is refused instead.
    */
   private refuseSignatureConditionSource(unit: DesignTraitUnit, what: string): void {
-    if (this.mechanics.catalog.bySpecies(unit.speciesId) === undefined) return;
+    if (
+      !unit.designTraitState.enabled ||
+      this.mechanics.catalog.bySpecies(unit.speciesId) === undefined
+    )
+      return;
     throw new Error(
       `SignatureSkillMechanics.${what} reached species ${unit.speciesId} without the design trait` +
         " enabled, so it would read PetDesignSkillCatalog.conditionSource; that catalogue is a later slice",

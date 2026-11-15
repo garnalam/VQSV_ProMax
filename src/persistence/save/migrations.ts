@@ -185,6 +185,40 @@ function v32ToV33(save: Raw): Raw {
   };
 }
 
+/**
+ * v34: the web shiny redesign gives every new shiny one of the hand-made colours. A shiny already
+ * owned (roster or bank, nature 7..9) keeps the look it had: it is marked with the legacy colour
+ * (-1), Java's palette. Any colour a v33 save carries came from a build before the release, so a
+ * shiny is marked whatever it holds.
+ */
+function v33ToV34(save: Raw): Raw {
+  const legacy = (value: unknown) =>
+    Array.isArray(value)
+      ? value.map((pet) => {
+          const raw = asRecord(pet),
+            nature = typeof raw.nature === "number" ? raw.nature : 0;
+          return nature >= 7 && nature <= 9 ? { ...raw, shinyColor: -1 } : pet;
+        })
+      : value;
+  const meta = asRecord(save.meta),
+    campaign = asRecord(meta.campaign);
+  return {
+    ...save,
+    version: 34,
+    pets: legacy(save.pets),
+    ...(save.meta === undefined
+      ? {}
+      : {
+          meta: {
+            ...meta,
+            ...(meta.campaign === undefined
+              ? {}
+              : { campaign: { ...campaign, petBank: legacy(campaign.petBank) } }),
+          },
+        }),
+  };
+}
+
 const MIGRATIONS: Readonly<Record<number, Migration>> = {
   23: v23ToV24,
   24: v24ToV25,
@@ -196,6 +230,7 @@ const MIGRATIONS: Readonly<Record<number, Migration>> = {
   30: v30ToV31,
   31: v31ToV32,
   32: v32ToV33,
+  33: v33ToV34,
 };
 
 /** The schema version a stored value claims, or undefined when it is not a VQSV web save. */

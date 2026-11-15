@@ -1,4 +1,9 @@
 import type { SourceRoutePatch } from "../story/SourceOpcodeInterpreter";
+import { defaultShinyColor, giveShinyColor } from "../../rendering/ShinyDesigns";
+import {
+  claimCollectionReward,
+  synchronizeGoldenBadgeBankReward,
+} from "../pet/GoldenBadgeBankReward";
 import {
   ENTRY_COMPLETES,
   KEYED_CHESTS,
@@ -14,9 +19,12 @@ import {
   downstreamLeafShore,
   isPlatform,
   platformCanAdvance,
+  platformAheadPoint,
   platformShore,
+  platformSpotOnTrack,
   platformTerrainAhead,
   platformTravelTerrain,
+  walkableArea,
   type PlatformRideState,
 } from "./PlatformRide";
 import {
@@ -66,6 +74,7 @@ import {
 } from "../economy/BattleRewards";
 import type { PackBattleAiEncounterRow } from "../../data/GameData";
 import { BATTLE_RESULT_LOST, BattleRuntime } from "../battle/BattleRuntime";
+import { createBondingTowerBattle } from "../battle/BondingTowerBattle";
 import type { BattleServices } from "../battle/engine/BattleServices";
 import { ENCOUNTER_NATURE_FALLBACK } from "../battle/engine/BattleTypes";
 import { settleBattle, type BattleSettlementReport } from "../battle/engine/BattleSettlement";
@@ -108,11 +117,20 @@ import {
   TERRAIN_BADGE_GATED,
   TERRAIN_BLOCKED,
   terrainAtWorld,
+  mapBottom,
+  mapLeft,
+  mapRight,
+  mapTop,
   type MapCollision,
 } from "./MapCollision";
+import { cameraGoal, roomClamp } from "./Camera";
 import { EventStateLedger } from "./EventStateLedger";
 import { BattleRandom } from "../battle/BattleRandom";
 import { MapLoadingRuntime } from "./MapLoadingRuntime";
+import { safeRoomArrival, wasBlockedArrival } from "./RoomArrivalSafety";
+import { worldPointerNear, worldPointerTarget } from "./WorldPointer";
+import { landPoint } from "../../core/LandCenter";
+import { viewport } from "../../core/Viewport";
 import { WorldEventDispatcher, type WorldView } from "./WorldEventDispatcher";
 import {
   settledActorStates,
@@ -135,7 +153,8 @@ import {
   type RoomPortal,
   type SourceDoor,
 } from "./WorldTransition";
-import { BADGE_THUY_LAM, WorldFlags } from "./WorldFlags";
+import { BADGE_HOA_PHONG, BADGE_THUY_LAM, WorldFlags } from "./WorldFlags";
+import { centeredPoint } from "../../core/LandCenter";
 import { choiceRowAt, talkEligible, TALK_PROMPT, WorldHud } from "./WorldHud";
 import {
   type CauVongCollisionDocument,
@@ -258,6 +277,12 @@ import {
   SUMMON_MENU_BASE,
   SummoningOwner,
   summoningRoom,
+  KIM_DIEM_AMULET_ID,
+  KIM_DIEM_BANK_CAPACITY,
+  KIM_DIEM_BATTLE_KEY,
+  KIM_DIEM_REWARD_RECEIPT,
+  KIM_DIEM_ROOM,
+  SUMMON_PREFIX,
   type CauVongSummoningDocument,
   type SummonWorld,
 } from "./CauVongSummoning";
@@ -372,7 +397,7 @@ import {
 } from "./ActorCollision";
 import type { CollisionMask } from "../story/GameAssets";
 import { FIRST_MATERIAL_ID, GOLDEN_KEY_ID, REPEL_ID, type BagCatalog } from "../inventory/Bag";
-import { PetCollection, SPECIES_COUNT } from "../pet/PetCollection";
+import { COLLECTION_REWARD_MILESTONES, PetCollection, SPECIES_COUNT } from "../pet/PetCollection";
 import { javaQuestMarkers } from "../quest/JavaQuestMarkers";
 import {
   COUNTDOWN_START,
@@ -400,6 +425,7 @@ import {
   type RaceWindow,
 } from "./LucHanhDieuRace";
 import type { RegionalRematch } from "../meta/RegionalChallenges";
+import { towerBondStat, type TowerFloor, type TowerPetSpec } from "../meta/BondingTower";
 import {
   applyBattlePassEvent,
   type BattlePassCatalog,
@@ -423,7 +449,7 @@ import {
   type CauVongIncubation,
   type CauVongIncubationResult,
 } from "../campaign/CauVongIncubator";
-import { eggTarget } from "../campaign/EggService";
+import { eggTarget, rollHatchNature } from "../campaign/EggService";
 import {
   activeCharmValue,
   craftCharm,
@@ -451,6 +477,7 @@ import {
   HAI_AU,
   HAI_AU_AIRBORNE_ANCHOR_Y,
   isRainbowRide,
+  migrateLegacyRides,
   rideSelection,
   rideSpeed,
   rideSuppressesEncounters,
@@ -469,13 +496,33 @@ import {
 const CHECKED_MINIGAMES = new WeakSet<CauVongMinigameState>();
 
 /** `PetCollectionProgression.CONVENIENCE_REWARD_MILESTONES`. */
-const CONVENIENCE_REWARD_MILESTONES = [10, 15, 20, 30, 40, 50, 100] as const;
+const CONVENIENCE_REWARD_MILESTONES = COLLECTION_REWARD_MILESTONES;
 /** `BadgeProgression.HOANG_KIM`. */
-const BADGE_HOANG_KIM = 7;
 
 /** `VqsvText.Scene1ThreeMapInteractions.CHEST_EMPTY`. */
+/**
+ * Web-only cloud-room way back (owner 2026-11-15): each room's entrance door actor, whose arrival
+ * the hero returns to — Thiên Giới Đạo Quán from 7:2, Bích Lam Cốc's route from 7:0 and from 7:3.
+ */
+const CLOUD_ROOM_ENTRANCES: ReadonlyMap<string, number> = new Map([
+  ["9:7", 5],
+  ["7:1", 4],
+  ["7:4", 0],
+]);
 const CHEST_EMPTY = "Bảo rương này đã trống";
 /** `XhtC3Runtime.ICE_TERRAIN`. */
+/** `NiemThoC3Runtime`: the upper gym floor's holes and where a fall lands (9:3). */
+const GYM_HOLE_ACTORS = [0, 1, 2, 3] as const,
+  GYM_HOLE_FALL_TICKS = 16,
+  GYM_HOLE_FALL_SPEED = 4,
+  GYM_HOLE_PLAYER_OFFSET_Y = 16,
+  GYM_FALL_TARGET = { x: 112, y: 256 };
+/** Where `leaveClosedLedge` puts a hero stranded on ground the landscape map closed: the west door's arrival. */
+const CLOSED_LEDGE_FLOOR: Readonly<Record<string, { x: number; y: number; direction: number }>> = {
+  "4:10": { x: 8, y: 320, direction: DIRECTION_RIGHT },
+};
+/** `NiemThoC3Runtime.POST_GYM_CITY_EXIT_X/Y`: 4:5's gym door spawn after the leader is beaten. */
+const POST_GYM_CITY_EXIT = { x: 92, y: 328 };
 const ICE_TERRAIN = 3;
 
 export type WorldPhase =
@@ -492,6 +539,8 @@ export type WorldPhase =
 export type WorldBattleStage = InteractiveBattleStage;
 export type WorldAction = "save" | "autosave" | null;
 export type WorldSources = {
+  /** Current displayed sprite ink, including its orientation and render offsets (map taps). */
+  pointerMask?: (actor: StoryActor) => CollisionMask | null;
   /** `WorldEncounterEngine`'s pools (petArea.mid, the unified overlay, the Cầu Vồng V4 pets). */
   worldEncounters?: WorldEncountersDocument;
   battlePass?: BattlePassCatalog;
@@ -612,6 +661,8 @@ export class WorldRuntime {
   roomIndex: number;
   cameraX = 0;
   cameraY = 0;
+  /** A map tap's selected actor for this tick; undefined keeps keyboard activation unchanged. */
+  private pointerActor: number | undefined;
   readonly actors = new Map<number, StoryActor>();
   readonly inventory: Record<string, number>;
   /** The bag's other lists (the original's M, N, O): equipment ids, materials, special ids. */
@@ -642,29 +693,48 @@ export class WorldRuntime {
   readonly pendingSkillLearns: PendingSkillLearn[];
   /** `progression.evolutionNoticeArmed`. */
   evolutionNoticeArmed = false;
-  /** `collection.convenienceRewardsClaimed`, one flag per "Dẫn thưởng" milestone. */
-  convenienceRewardsClaimed: boolean[] = new Array(7).fill(false);
   /**
-   * `claimSourceConvenienceReward`: the next unclaimed milestone pays 1 Huy hiệu (the last, at 100
-   * Liệt Hỏa species, the golden badge). Returns the `msgWarm` line.
+   * `claimSourceConvenienceReward` (ProMax): six milestones pay 1 Huy hiệu each, then Hoàng Kim
+   * Chương — rank 1 at all 281 species (reserve pets 30% EXP), rank 2 at every species in all three
+   * shiny natures, 843 (every bank pet 5★). Colours do not count: a nature is one form however many
+   * colours it comes in. Returns the `msgWarm` line.
    */
   claimConvenienceReward(): string {
-    const tier = this.convenienceRewardsClaimed.indexOf(false);
-    if (tier < 0) return "Tất cả dẫn thưởng đã nhận.";
-    const milestone = CONVENIENCE_REWARD_MILESTONES[tier],
-      collected =
-        tier === CONVENIENCE_REWARD_MILESTONES.length - 1
-          ? this.collection.lietHoaCollectedSpeciesCount()
-          : this.collection.collectedSpeciesCount();
-    if (collected < milestone)
+    const tier = this.collection.nextConvenienceRewardTier();
+    if (tier >= CONVENIENCE_REWARD_MILESTONES.length) return "Tất cả dẫn thưởng đã nhận.";
+    const milestone = this.collection.convenienceRewardMilestone(tier),
+      collected = this.collection.convenienceRewardCollectedCount(tier);
+    if (collected < milestone) {
+      if (tier === 6)
+        return `Hoàng Kim bậc 1: ${collected}/${milestone} loài. Cần đủ Liệt Hỏa, Cầu Vồng và V4.`;
+      if (tier === 7)
+        return `Hoàng Kim bậc 2: ${collected}/${milestone} dạng shiny. Cần đủ Shiny 1, 2, 3 của mọi loài.`;
       return `Hiện đã thu thập ${collected} loài sủng vật. Cần ${milestone} loài để nhận dẫn thưởng tiếp theo.`;
-    this.convenienceRewardsClaimed[tier] = true;
-    if (tier === 6) {
-      this.flags.badges.grant(BADGE_HOANG_KIM);
-      return "Đạt được hoàng kim huy hiệu";
     }
-    this.currency.badges = Math.max(0, this.currency.badges + 1);
+    const reward = claimCollectionReward(this.collection, this.flags.badges, tier);
+    if (!reward.claimed) return "Tất cả dẫn thưởng đã nhận.";
+    this.currency.badges = Math.max(0, this.currency.badges + reward.badgeCurrency);
+    this.synchronizeGoldenBankReward();
+    if (tier === 7) return "Nhận Hoàng Kim Chương bậc 2. Toàn bộ pet ngân hàng lên 5 sao.";
+    if (tier === 6) return "Nhận Hoàng Kim Chương bậc 1. Pet dự bị trong đội nhận 30% EXP.";
     return "Đạt được 1 huy hiệu";
+  }
+  /** Hoàng Kim Chương rank 2: every bank pet at 5★, those deposited later included. */
+  synchronizeGoldenBankReward(): void {
+    synchronizeGoldenBadgeBankReward(this.flags.badges, this.meta.campaign.petBank, (pet) =>
+      towerBondStat(
+        this.sources.petStats.coreStats(pet.speciesId, pet.level, pet.quality, pet.nature ?? 0).hp,
+        pet.towerBond,
+      ),
+    );
+  }
+  /**
+   * An owned pet goes into the Đồ giám: its species, and a shiny its nature (Hoàng Kim's count) and
+   * its colour (the colour pages). A shiny draws its colour first if it has none yet.
+   */
+  collectOwned(pet: SavedPet): void {
+    giveShinyColor(pet);
+    this.collection.markCollected(pet.speciesId, pet.nature ?? 0, pet.shinyColor);
   }
   /** `encounterStepsRemaining`: -1 until the room's first countdown is drawn. */
   encounterStepsRemaining = -1;
@@ -767,6 +837,12 @@ export class WorldRuntime {
   mapLoading: MapLoadingRuntime | null = null;
   /** `session.world.useMap`: false until a room has actually been loaded, so the first one is a change. */
   private mapLoaded = false;
+  /** How the room just loaded should be checked for a wall trap (`RoomArrivalSafety`). */
+  private arrivalSafety: "entry" | "resume" | null = null;
+  /** Thiên Giới Đạo Quán entered off its entrance island: bring its clouds over once the map is in. */
+  private gymCloudsToHero = false;
+  /** A resumed save's spot, checked on the first step so room events see it first. */
+  private resumedPosition: { x: number; y: number } | null = null;
   /**
    * JavaSE's one lazily-seeded source stream (`VqsvSourceRandom.lazySourceSeeded`). The port runs it
    * from the fixed battle seed, one stream per world, so the same room sequence always draws the
@@ -775,6 +851,8 @@ export class WorldRuntime {
   private readonly sourceRandom: BattleRandom;
   presentationTick = 0;
   objectiveComplete = false;
+  /** The chapter-one bunny was just won (or a scene-1 web save left it out): it joins at the next save. */
+  private bunnyJoinPending = false;
   private readonly dispatcher: WorldEventDispatcher;
   private event: WorldEventRuntime | null = null;
   private eventReturnPhase: WorldPhase = "freeworld";
@@ -852,6 +930,9 @@ export class WorldRuntime {
     if (!this.eventState.sourceEventStateComplete(0, 0, 0))
       this.eventState.op14CompleteEvent(0, 0, 0);
     this.objectiveComplete = chapter?.bunnyCaught === true;
+    // Saves from the first web slice (scene 1 only) recorded the catch without the bunny in the
+    // party; the next save puts it there. Later saves, Java ones included, keep their own party.
+    this.bunnyJoinPending = this.objectiveComplete && save?.location.sceneId === 1;
     this.inventory = { ...(save?.inventory.items ?? initial.items) };
     this.bag = {
       equipment: [...(save?.inventory.equipment ?? [])],
@@ -868,10 +949,6 @@ export class WorldRuntime {
       (entry) => entry.petSlot < this.pets.length,
     );
     this.evolutionNoticeArmed = save?.evolutionNoticeArmed === true;
-    this.convenienceRewardsClaimed = Array.from(
-      { length: CONVENIENCE_REWARD_MILESTONES.length },
-      (_, tier) => save?.convenienceRewardsClaimed?.[tier] === true,
-    );
     this.meta = structuredClone(
       save?.meta ?? {
         fashion: {
@@ -894,6 +971,15 @@ export class WorldRuntime {
         campaign: defaultCampaignState(0),
       },
     );
+    // Every fight throws the pack's capture ball, and a seventh catch goes to this save's bank.
+    const battleServices = sources.battle;
+    if (battleServices) {
+      if (data.capture) battleServices.captureAnimation = data.capture;
+      battleServices.petBank = () => ({
+        pets: this.meta.campaign.petBank,
+        capacity: this.petBankCapacity(),
+      });
+    }
     this.sourceRandom = new BattleRandom(this.meta.campaign.worldRandom.seed);
     for (let draw = 0; draw < this.meta.campaign.worldRandom.draws; draw++)
       this.sourceRandom.nextBounded("world.restore", 1);
@@ -909,9 +995,26 @@ export class WorldRuntime {
     this.restoreCauVongIncubation();
     // `SaveSessionSnapshotMapper`: every pet the session owns is collected, whatever the save says.
     this.collection = new PetCollection(save?.collection);
+    this.collection.restoreConvenienceRewards(save?.convenienceRewardsClaimed);
     this.playTimeSaved = Math.max(0, save?.playTimeMillis ?? 0);
-    for (const pet of this.pets) this.collection.markCollected(pet.speciesId);
+    // Web shiny redesign: a pet that has become shiny (nature 7..9) by any road (a catch, a gift,
+    // a hatch, an old save) draws its colour once, before anything draws it; then every pet the
+    // session owns, the bank's too (ProMax), counts in the Đồ giám with its nature and colour.
+    for (const pet of [...this.pets, ...this.meta.campaign.petBank]) this.collectOwned(pet);
     this.flags.restore(save?.world);
+    this.synchronizeGoldenBankReward();
+    // ProMax: an old save's Cầu Vồng ride moves to its separated id, and a beast ride it owned stays owned.
+    migrateLegacyRides(
+      this.meta.campaign.ride,
+      this.sceneId,
+      {
+        specials: this.bag.specials,
+        rainbowEventDone: (room, event) =>
+          this.eventState.sourceEventStateComplete(98, room, event),
+        collected: (species) => this.collection.collected(species),
+      },
+      (event) => this.eventState.op14CompleteEvent(98, 0, event),
+    );
     this.flags.activeTask = save?.progress.activeTask ?? initial.activeTask;
     this.flags.setMainTaskProgress(save?.progress.mainTaskProgress ?? initial.mainTaskProgress);
     // `session.progression.badges`, read by every fight's `toBattleUnit(pet, 0, badges)`.
@@ -957,6 +1060,7 @@ export class WorldRuntime {
       this.savePoint.x,
       this.savePoint.y,
       this.savePoint.direction,
+      save ? "resume" : null,
     );
     if (save) {
       this.repairStrandedSave();
@@ -985,7 +1089,6 @@ export class WorldRuntime {
       !(activationIds && activationIds.length > 0)
     )
       return null;
-    const player = this.player;
     // Scene 98's candidates are its standing NPCs at their displayed feet (`CauVongNpcGeometry`).
     const cauVong = !activationIds ? this.cauVongMechanics() : undefined;
     if (cauVong) {
@@ -1000,7 +1103,7 @@ export class WorldRuntime {
       if (activationIds) {
         if (!activationIds.includes(actor.id) || !actor.visible) continue;
       } else if (!talkEligible(actor)) continue;
-      if (playerInteractsActor(player.x, player.y, player.direction, actor))
+      if (this.playerFaces(actor))
         return { actorId: actor.id, x: actor.x, y: actor.y - TALK_PROMPT.yOffset };
     }
     return null;
@@ -1009,13 +1112,28 @@ export class WorldRuntime {
    * `game.l.E` for an op38 wait: the first actor of the record's own list the hero is facing.
    */
   private facedActor(ids: readonly number[]): number {
-    const player = this.player;
     for (const id of ids) {
       const actor = this.actors.get(id);
-      if (actor?.visible && playerInteractsActor(player.x, player.y, player.direction, actor))
-        return id;
+      if (actor?.visible && this.actorInteractionRequested(actor)) return id;
     }
     return -1;
+  }
+  /**
+   * ProMax: with a map tap, the tapped actor (by its drawn ink) within 48 px of the hero is the one
+   * spoken to; without one, the faced actor as before.
+   */
+  private actorInteractionRequested(actor: StoryActor): boolean {
+    if (this.pointerActor === undefined) return this.playerFaces(actor);
+    return (
+      actor.visible &&
+      this.pointerActor === actor.id &&
+      worldPointerNear(this.player.x, this.player.y, [
+        actor.x + actor.renderOffsetX,
+        actor.y + actor.renderOffsetY,
+        0,
+        0,
+      ])
+    );
   }
   get questState(): { activeTask: string; mainTaskProgress: number } {
     return { activeTask: this.flags.activeTask, mainTaskProgress: this.flags.mainTaskProgress };
@@ -1102,7 +1220,7 @@ export class WorldRuntime {
         state: this.cauVongIncubation,
         roster: this.pets,
         bank: this.meta.campaign.petBank,
-        bankCapacity: petBankCapacity(this.meta.campaign.petBankExpansionPurchases),
+        bankCapacity: this.petBankCapacity(),
         recipe: (item) => eggs.find((row) => row.itemId === item)?.incubator,
         count: (material) => this.cauVongMaterialCount(material.id),
         remove: (material, count) => {
@@ -1110,11 +1228,15 @@ export class WorldRuntime {
           const key = String(material.id);
           this.bag.materials[key] = Math.max(0, (this.bag.materials[key] ?? 0) - count);
         },
-        create: (species, level) => this.createHatchedPet(species, level),
-        markCollected: (species) => this.collection.markCollected(species),
+        create: (species, level) =>
+          this.createHatchedPet(species, level, (lane, bound) =>
+            this.worldRandomBounded(lane, bound),
+          ),
+        markCollected: (pet) => this.collectOwned(pet),
       },
       slot,
     );
+    this.synchronizeGoldenBankReward();
     return result;
   }
   /** `CauVongIncubationProgression.clear`: the discard, without refund. */
@@ -1176,13 +1298,45 @@ export class WorldRuntime {
   selectRide(rideIndex: number): RideSelection {
     const outcome = rideSelection(this.meta.campaign.ride, rideIndex, this.rideUnlocked(rideIndex));
     if (outcome !== "ready") return outcome;
+    if (rideIndex !== this.meta.campaign.ride.activeIndex && !this.canLeaveRide(rideIndex))
+      return "airborne";
     this.meta.campaign.ride.activeIndex = rideIndex;
     this.eventState.op14CompleteEvent(98, 0, RIDE_IDS_SEPARATED_EVENT);
     this.applyPlayerVisual();
     return outcome;
   }
+  /**
+   * Web bug fix: in Cầu Vồng the clouds (4), the water (2) and the thorns (3) carry the hero only on
+   * their own ride (`cauVongMovementTerrain`). Swapping rides or getting off over them left him
+   * standing in the sky with every step a wall, or walking off the map's edge. The change waits until
+   * every corner of his footprint is open to the next ride (-1 on foot).
+   */
+  canLeaveRide(next: number): boolean {
+    if (this.sceneId !== 98) return true;
+    const ride = this.meta.campaign.ride,
+      map = this.currentMap();
+    if (!map) return true;
+    const open = (terrain: number) =>
+      cauVongMovementTerrain(
+        terrain,
+        {
+          active: next,
+          allowed: (index) => roomAllowsRide(ride, index),
+          owned: (index) => this.rideUnlocked(index),
+        },
+        { water: CV_WATER, plant: CV_PLANT, sky: CV_SKY },
+      ) !== TERRAIN_BLOCKED;
+    for (const dx of [-8, 7])
+      for (const dy of [-8, 7]) {
+        const terrain = terrainAtWorld(map, this.player.x + dx, this.player.y + dy);
+        if (terrain >= 2 && terrain <= 4 && !open(terrain)) return false;
+      }
+    return true;
+  }
   /** `VqsvRideRuntime.dismount` (key 9 while mounted). */
   dismountRide(): void {
+    // ProMax: never set the hero down where his feet cannot stand (the clouds, water, thorns).
+    if (!this.canLeaveRide(-1)) return;
     this.meta.campaign.ride.activeIndex = -1;
     this.applyPlayerVisual();
   }
@@ -1356,14 +1510,35 @@ export class WorldRuntime {
       Date.now(),
     );
   }
+  /** Long Vương Hộ Phù (6000), Kim Diễm's victory amulet, is owned and held by a party pet. */
+  kimDiemAmuletEquipped(): boolean {
+    return (
+      this.bag.equipment.includes(KIM_DIEM_AMULET_ID) &&
+      this.pets.some((pet) => pet.heldEquipmentId === KIM_DIEM_AMULET_ID)
+    );
+  }
+  kimDiemRewardClaimed(): boolean {
+    return this.eventState.sourceEventStateComplete(98, KIM_DIEM_ROOM, KIM_DIEM_REWARD_RECEIPT);
+  }
+  /** The pet bank's size: 1.000 once Kim Diễm's reward is in, else the bought expansions'. */
+  petBankCapacity(): number {
+    return this.kimDiemRewardClaimed()
+      ? KIM_DIEM_BANK_CAPACITY
+      : petBankCapacity(this.meta.campaign.petBankExpansionPurchases);
+  }
   /**
    * `sourceHatchedPet`: `PetSourceAdapter.create(0, species, 5, -1, 2, element * 10, -1)` — level 5,
-   * the species' resolved quality, nature 2, and (unified skill profile) its level-5 learnset.
+   * the species' resolved quality and (unified skill profile) its level-5 learnset. ProMax: with a
+   * `draw` an egg rolls its nature, 2% shiny (30% with Long Vương Hộ Phù); without one, nature 2.
    */
-  createHatchedPet(speciesId: number, level = 5): SavedPet | undefined {
+  createHatchedPet(
+    speciesId: number,
+    level = 5,
+    draw?: (lane: string, bound: number) => number,
+  ): SavedPet | undefined {
     const species = this.sources.petStats.speciesRow(speciesId);
     if (!species) return undefined;
-    const nature = 2,
+    const nature = draw ? rollHatchNature(draw, this.kimDiemAmuletEquipped()) : 2,
       quality = this.sources.petStats.resolveQuality(speciesId, -1),
       initial = this.sources.battle?.progression.initialSkills(speciesId, level) ?? [],
       skillIds = initial.length ? initial : [species.element * 10],
@@ -1382,7 +1557,39 @@ export class WorldRuntime {
       );
     pet.skillIds = skillIds;
     pet.skillPp = skillIds.map((id) => this.sources.battleRules.damage.skillRow(id)?.ppMax ?? 0);
+    giveShinyColor(pet);
     return pet;
+  }
+  /**
+   * Admin Tool: a hatched pet with the nature (7..9 shiny) and the talent entropy the server drew.
+   * The talent goes through the same weighted pool and sanitizer as every other roll.
+   */
+  createAdminPet(speciesId: number, nature: number, talentEntropy: bigint): SavedPet | undefined {
+    const pet = this.createHatchedPet(speciesId);
+    if (!pet) return undefined;
+    const stats = this.sources.petStats.coreStats(speciesId, pet.level, pet.quality, nature);
+    pet.nature = nature;
+    pet.maxHp = stats.hp;
+    pet.currentHp = stats.hp;
+    giveShinyColor(pet);
+    const traits = this.sources.battle?.rules.traitRegistry;
+    if (traits) pet.physicalTraitId = traits.sanitizePhysicalTraitId(traits.roll(talentEntropy));
+    return pet;
+  }
+  /**
+   * Admin Tool: `exp` added to the roster pet in `slot` the way a fight's settlement adds it, so
+   * stats, HP, PP and learned skills follow; a skill with no free slot waits in the learn queue.
+   * Returns the levels gained, or -1 when there is no such pet.
+   */
+  addAdminExperience(slot: number, exp: number): number {
+    const pet = this.pets[slot],
+      progression = this.sources.battle?.progression;
+    if (!pet || !progression) return -1;
+    const result = progression.addExperience(pet, exp);
+    for (const skillId of result.pending)
+      if (!this.pendingSkillLearns.some((e) => e.petSlot === slot && e.skillId === skillId))
+        this.pendingSkillLearns.push({ petSlot: slot, skillId });
+    return result.levelsGained;
   }
   get currentText(): string {
     return this.phase === "savePrompt"
@@ -1423,6 +1630,22 @@ export class WorldRuntime {
   }
   get catchChoice(): { label: string; quantity: number } | null {
     return this.battle?.catchChoice(this.inventory) ?? null;
+  }
+  /**
+   * Web only: a moment a save taken now resumes to exactly (the phone hid the tab). The hero walks
+   * freely and nothing is half-done: no event, fight, prompt, service talk, minigame or ride.
+   */
+  get restingForSuspendSave(): boolean {
+    return (
+      (this.phase === "freeworld" || this.phase === "returnWorld") &&
+      !this.battle &&
+      !this.platformRide &&
+      !this.leafSummon &&
+      !this.repelPrompt &&
+      !this.tanNguyetModal &&
+      !this.npcService &&
+      !this.cauVongMinigameOpen
+    );
   }
   /** A dispatched event group freezes movement and owns the text until its records finish. */
   get eventVisible(): boolean {
@@ -1470,6 +1693,14 @@ export class WorldRuntime {
   private roomEntry = { x: 0, y: 0 };
   /** `VortexReset`: the hero spinning in a moving vortex before he is put back, or null. */
   private hazardSpin: { ticks: number } | null = null;
+  /** `NiemThoC3Runtime.GymHoleFall`: the hero dropping through a 9:2 floor hole, or null. */
+  private gymHoleFall: {
+    holeId: number;
+    direction: number;
+    startX: number;
+    startY: number;
+    tick: number;
+  } | null = null;
   /** A lotus leaf or cloud carrying the hero (`sourceLeafRide*`), or null. */
   private platformRide: PlatformRideState | null = null;
   /** A lotus leaf or cloud sailing over to the hero who called it (`trySummonLeaf`), or null. */
@@ -1505,19 +1736,66 @@ export class WorldRuntime {
     this.pendingService = null;
     return service;
   }
+  /**
+   * Web-only (owner 2026-11-15): the cloud rooms' way out for a hero stranded on an island — any
+   * NPC there with no service of its own (a beaten gym trainer, a bystander) offers the trip back.
+   */
+  private cloudReturnService(actorId: number, own?: NpcService): NpcService | undefined {
+    if (!CLOUD_ROOM_ENTRANCES.has(`${this.sceneId}:${this.roomIndex}`)) return own;
+    // An ordinary line (the gym leader's) is said first, then the trip back.
+    if (own)
+      return own.continuation === "NONE" && !own.transport ? { ...own, cloudReturn: true } : own;
+    return {
+      scene: this.sceneId,
+      room: this.roomIndex,
+      actorId,
+      dialogRow: -1,
+      speaker: null,
+      text: "Bị kẹt giữa các đám mây à? Ta đưa ngươi về chỗ lúc mới đến, mây cũng trở lại như ban đầu.",
+      continuation: "NONE",
+      dialogue: true,
+      bankExpansion: false,
+      cloudReturn: true,
+    };
+  }
+  /** The cloud room's entrance door arrival, every cloud back on its row, then on the hero's side. */
+  private returnToCloudRoomEntrance(): void {
+    const entrance = CLOUD_ROOM_ENTRANCES.get(`${this.sceneId}:${this.roomIndex}`),
+      asset = this.sources.room(this.sceneId, this.roomIndex);
+    if (!entrance || !asset) return;
+    const arrival = transitionArrivalForTarget(this.sources.registry, asset, {
+      scene: this.sceneId,
+      room: this.roomIndex,
+      actor: entrance,
+    });
+    if (!arrival) return;
+    this.loadRoom(this.sceneId, this.roomIndex, arrival.x, arrival.y, arrival.direction);
+    const platforms = asset.actors.filter((row) => isPlatform(row)).map((row) => row.id);
+    this.stagePlatforms(platforms);
+    const map = this.sources.collision(asset.mapId);
+    if (map) this.bringPlatformsToHero(map, platforms);
+  }
   /** The faced talkable actor of this room that runs a service, started; false when none. */
   private startNpcService(): boolean {
-    const prompt = this.talkPrompt;
+    const selected =
+      this.pointerActor === undefined ? undefined : this.actors.get(this.pointerActor);
+    const prompt =
+      this.pointerActor === undefined
+        ? this.talkPrompt
+        : selected && talkEligible(selected) && this.actorInteractionRequested(selected)
+          ? { actorId: selected.id }
+          : null;
     if (!prompt) return false;
-    const service = npcServiceAt(
-      this.sources.npcServices,
-      this.sceneId,
-      this.roomIndex,
-      prompt.actorId,
-      roomOwner(this.sceneId, this.roomIndex, (ref) =>
-        this.eventState.sourceEventStateComplete(ref.scene, ref.room, ref.group),
-      )?.runtime,
-    );
+    const own = npcServiceAt(
+        this.sources.npcServices,
+        this.sceneId,
+        this.roomIndex,
+        prompt.actorId,
+        roomOwner(this.sceneId, this.roomIndex, (ref) =>
+          this.eventState.sourceEventStateComplete(ref.scene, ref.room, ref.group),
+        )?.runtime,
+      ),
+      service = this.cloudReturnService(prompt.actorId, own);
     if (!service) return false;
     const flow = new NpcServiceFlow(service),
       actor = this.actors.get(service.actorId);
@@ -1579,6 +1857,10 @@ export class WorldRuntime {
     this.npcService = null;
     // `case NONE: return true`: an ordinary NPC's line closes the conversation — unless she escorts
     // the hero somewhere afterwards (`LeitaTempleEscort`).
+    if (flow.service.cloudReturn) {
+      this.returnToCloudRoomEntrance();
+      return;
+    }
     const transport = flow.service.transport;
     if (transport && transport.length >= 4)
       this.loadRoom(transport[0], transport[1], transport[2], transport[3], transport[4] ?? 2);
@@ -1657,12 +1939,38 @@ export class WorldRuntime {
     const loading = this.mapLoading;
     if (!loading) return false;
     if (loading.tick()) {
-      if (!loading.active && this.currentRoomReady()) this.mapLoading = null;
+      if (!loading.active && this.currentRoomReady()) {
+        this.checkRoomArrival();
+        this.mapLoading = null;
+        this.leaveClosedLedge();
+      }
       return true;
     }
     if (!this.currentRoomReady()) return true;
+    this.checkRoomArrival();
     this.mapLoading = null;
+    this.leaveClosedLedge();
     return false;
+  }
+  /**
+   * Web-only: a save made where the landscape map has since been closed (4:10's ledge round the
+   * pit, see `scripts/landscape/apk-collision.mjs` HAND_BLOCKED) would leave the hero unable to take
+   * a step. Once the room is in, a hero who can move no way at all is put on that room's floor.
+   */
+  private leaveClosedLedge(): void {
+    const spot = CLOSED_LEDGE_FLOOR[`${this.sceneId}:${this.roomIndex}`],
+      asset = this.sources.room(this.sceneId, this.roomIndex),
+      map = asset ? this.sources.collision(asset.mapId) : undefined;
+    if (!spot || !map) return;
+    const stuck = [DIRECTION_DOWN, DIRECTION_RIGHT, DIRECTION_UP, DIRECTION_LEFT].every(
+      (direction) => !stepWithTerrain(map, this.player.x, this.player.y, direction).moved,
+    );
+    if (!stuck) return;
+    this.player.x = spot.x;
+    this.player.y = spot.y;
+    this.player.direction = spot.direction;
+    this.setPlayerFacing(false);
+    this.centerCamera();
   }
   /** Whether the room the hero stands in has its map layers loaded (always, without lazy loading). */
   private currentRoomReady(): boolean {
@@ -1674,7 +1982,7 @@ export class WorldRuntime {
     this.synchronizeDivineSeal();
     if (this.sceneId === 98) this.tickCauVongPresentation();
     // Every owned pet is collected (`markCollected` on a grant, a hatch, an evolution...).
-    for (const pet of this.pets) this.collection.markCollected(pet.speciesId);
+    for (const pet of this.pets) this.collectOwned(pet);
     this.hud.tick(this.talkPrompt?.actorId ?? -1);
     this.presentationTick++;
     // While an event group runs it steps the hero itself: he is the record the group walks around
@@ -1715,6 +2023,10 @@ export class WorldRuntime {
       this.tickHazardSpin();
       return null;
     }
+    if (this.gymHoleFall) {
+      this.tickGymHoleFall();
+      return null;
+    }
     if (this.repelPrompt) {
       this.tickRepelPrompt(commands);
       return null;
@@ -1750,6 +2062,8 @@ export class WorldRuntime {
       this.battle?.handleInput(commands, this.inventory);
       this.battle?.tick();
       if (this.battle?.complete) {
+        if (this.bondingTowerRun)
+          return this.finishBondingTowerBattle(this.battle.outcome?.winner === "player");
         const battle = this.battle,
           // The fight of an event group: its records carry the rewards and the ledger, so the world
           // hands the finished battle back to the scene instead of closing the group itself.
@@ -1787,8 +2101,10 @@ export class WorldRuntime {
             );
         }
         // `markCollected(caught.speciesId)`, before the storage decision: a released catch counts.
-        if (battle.settlement?.caught)
-          this.collection.markCollected(battle.settlement.caught.pet.speciesId);
+        if (battle.settlement?.caught) {
+          this.collectOwned(battle.settlement.caught.pet);
+          if (battle.settlement.caught.storage === "BANK") this.synchronizeGoldenBankReward();
+        }
         const repeatable = this.repeatableBattle;
         this.payVictoryReward(battle);
         // What the story director hears: the group fought here and whether it was won.
@@ -1806,7 +2122,7 @@ export class WorldRuntime {
           this.wildBattle = false;
           if (battle.result === BATTLE_RESULT_LOST) {
             const point = this.savePoint;
-            this.loadRoom(point.scene, point.room, point.x, point.y, point.direction);
+            this.loadRoom(point.scene, point.room, point.x, point.y, point.direction, "resume");
           }
           this.setPhase("freeworld");
           return "autosave";
@@ -1829,7 +2145,8 @@ export class WorldRuntime {
           };
           this.fourGatesFight = null;
           this.setPhase("freeworld");
-          return "autosave";
+          // ProMax: Kim Diễm saves only once his win or retry marker has replaced the battle marker.
+          return this.fourGatesPending.key === KIM_DIEM_BATTLE_KEY ? null : "autosave";
         }
         if (this.lockeBattle) {
           // `handleBattleResult` runs once the world is back; the settlement healed the party.
@@ -1872,7 +2189,7 @@ export class WorldRuntime {
             // open, so the pet waits there for a retry.
             if (battle.core?.captureAllowed()) {
               const point = this.savePoint;
-              this.loadRoom(point.scene, point.room, point.x, point.y, point.direction);
+              this.loadRoom(point.scene, point.room, point.x, point.y, point.direction, "resume");
               this.setPhase("freeworld");
               return "autosave";
             }
@@ -1899,6 +2216,7 @@ export class WorldRuntime {
           return null;
         }
         this.objectiveComplete = true;
+        this.bunnyJoinPending = true;
         const opponent = this.actors.get(this.data.encounter.actorId);
         if (opponent) opponent.visible = false;
         this.completeBattleGroup();
@@ -1913,7 +2231,7 @@ export class WorldRuntime {
         const point = this.savePoint;
         this.battle = null;
         this.lastSettlement = null;
-        this.loadRoom(point.scene, point.room, point.x, point.y, point.direction);
+        this.loadRoom(point.scene, point.room, point.x, point.y, point.direction, "resume");
         this.setPhase("freeworld");
         return "autosave";
       }
@@ -2114,6 +2432,7 @@ export class WorldRuntime {
       this.obstaclePromptIds = this.obstacleCandidates();
       if (commands.includes("confirm") && this.startObstacleCut()) return null;
       if (this.startHazardSpin()) return null;
+      if (this.startGymHoleFall()) return null;
       if (this.inRaceRoom) this.touchRaceObstacle(commands);
       const moved = this.move(commands);
       if (this.inRaceRoom && this.race.active && this.inRaceFinish()) {
@@ -2121,6 +2440,7 @@ export class WorldRuntime {
         return null;
       }
       if (this.startHazardSpin()) return null;
+      if (this.startGymHoleFall()) return null;
       if (this.enterRoomPortal()) return "autosave";
       if (this.startSwitch(true)) return null;
       if (this.afterFreeMovement(moved)) return null;
@@ -2140,7 +2460,8 @@ export class WorldRuntime {
     if (this.repelPrompt) {
       const choice = this.repelPromptChoice;
       if (choice) {
-        const row = choiceRowAt(x, y, choice.options.length);
+        const at = centeredPoint(x, y),
+          row = choiceRowAt(at.x, at.y, choice.options.length);
         if (row < 0) return;
         this.repelPrompt = { phase: "choice", index: row };
       }
@@ -2155,11 +2476,27 @@ export class WorldRuntime {
     // and that press both moves the cursor and is the confirm key. Anywhere else confirms.
     const choice = this.phase === "event" ? (this.event?.choice ?? null) : null;
     if (choice) {
-      const row = choiceRowAt(x, y, choice.options.length);
+      const at = centeredPoint(x, y),
+        row = choiceRowAt(at.x, at.y, choice.options.length);
       if (row < 0) return;
       this.event!.moveChoice(row - choice.index);
     }
-    this.tick(["confirm"]);
+    // ProMax: a tap on the map picks the actor drawn under it rather than the one the hero faces.
+    const mapTap = this.onFreeMap || (this.phase === "event" && !!this.event?.activationIds.length);
+    if (mapTap) {
+      const at = viewport.landscape ? landPoint(x, y) : { x, y };
+      this.pointerActor = worldPointerTarget(
+        this.actors.values(),
+        at.x + this.cameraX,
+        at.y + this.cameraY,
+        (actor) => this.sources.pointerMask?.(actor) ?? null,
+      );
+    }
+    try {
+      if (this.tick(["confirm"]) === "autosave") this.saveRequested = true;
+    } finally {
+      this.pointerActor = undefined;
+    }
   }
   saveSucceeded(): void {
     this.saveStatus = this.data.text.saveSuccess;
@@ -2230,8 +2567,13 @@ export class WorldRuntime {
       y: this.player.y,
       direction: this.player.direction,
     };
-    if (this.objectiveComplete && !this.pets.some((pet) => pet.speciesId === this.data.opponent.id))
-      this.pets.push(this.petFromSource(this.data.opponent, this.pets.length));
+    // Only the capture just won adds the bunny: a loaded save whose player has since let it go
+    // (or a full party carried over from the Java build) is left as it is.
+    if (this.bunnyJoinPending) {
+      this.bunnyJoinPending = false;
+      if (this.pets.length < 6 && !this.pets.some((pet) => pet.speciesId === this.data.opponent.id))
+        this.pets.push(this.petFromSource(this.data.opponent, this.pets.length));
+    }
     const elder = this.data.elderGroup,
       complete = elder
         ? this.eventState.sourceEventStateComplete(elder.scene, elder.room, elder.group)
@@ -2280,7 +2622,7 @@ export class WorldRuntime {
       repelSteps: this.repelSteps,
       pendingSkillLearns: this.pendingSkillLearns.map((entry) => ({ ...entry })),
       evolutionNoticeArmed: this.evolutionNoticeArmed,
-      convenienceRewardsClaimed: [...this.convenienceRewardsClaimed],
+      convenienceRewardsClaimed: this.collection.convenienceRewardsSnapshot(),
       meta: structuredClone(this.meta),
       pets: this.pets.map((pet) => ({
         ...pet,
@@ -2324,7 +2666,18 @@ export class WorldRuntime {
       y: this.player.y,
       direction: this.player.direction,
       activation,
+      actorActivation:
+        this.pointerActor === undefined
+          ? undefined
+          : (id) => {
+              const actor = this.actors.get(id);
+              return !!actor && this.actorInteractionRequested(actor);
+            },
       actorAt: (id: number) => this.actors.get(id),
+      facesActor: (id: number) => {
+        const actor = this.actors.get(id);
+        return !!actor && this.playerFaces(actor);
+      },
       lit: (id: number) =>
         this.flags.hasSourceWorldFlag(switchFlag(this.sceneId, this.roomIndex, id)),
       challengePending: (id: number) => this.challengePending(id),
@@ -2361,7 +2714,21 @@ export class WorldRuntime {
     if (!arrival) return null;
     this.dispatcher.markArrival(door);
     const from = { scene: this.sceneId, room: this.roomIndex };
-    this.loadRoom(door.target.scene, door.target.room, arrival.x, arrival.y, arrival.direction);
+    // `NiemThoC3Runtime.tryGymUpperSideExit`: once the gym leader is beaten, 9:2's side door (8)
+    // puts the hero at the city gym door (92, 328), facing down, inside 4:5:g12's rect, so the
+    // soldier who sends him to the airship base speaks at once.
+    if (from.scene === 9 && from.room === 2 && door.actorId === 8 && this.postGymLeaderDefeated()) {
+      this.loadRoom(4, 5, POST_GYM_CITY_EXIT.x, POST_GYM_CITY_EXIT.y, DIRECTION_DOWN);
+      return null;
+    }
+    this.loadRoom(
+      door.target.scene,
+      door.target.room,
+      arrival.x,
+      arrival.y,
+      arrival.direction,
+      "entry",
+    );
     this.reconcilePlatformArrival(from, door.target.actor);
     if (this.sceneId === 7 && this.roomIndex === 4) this.reconcilePlatformsForSide(false);
     return null;
@@ -2381,7 +2748,7 @@ export class WorldRuntime {
     const row = roomDoorRow(this.sources.registry, scene, room, entry);
     if (!row) return null;
     const arrival = roomDoorArrival(row);
-    this.loadRoom(scene, room, arrival.x, arrival.y, arrival.direction);
+    this.loadRoom(scene, room, arrival.x, arrival.y, arrival.direction, "entry");
     return null;
   }
   /**
@@ -2396,7 +2763,14 @@ export class WorldRuntime {
       this.sources.prepareRoom?.(scene, room);
       return null;
     }
-    this.loadRoom(scene, room, portal.arrival.x, portal.arrival.y, portal.arrival.direction);
+    this.loadRoom(
+      scene,
+      room,
+      portal.arrival.x,
+      portal.arrival.y,
+      portal.arrival.direction,
+      "entry",
+    );
     return null;
   }
   private startEvent(trigger: WorldEventTrigger): WorldAction | null {
@@ -2479,22 +2853,8 @@ export class WorldRuntime {
           return counter === 0 ? [collected, Math.max(0, SPECIES_COUNT - collected)] : ["", ""];
         },
         canPay: (amount) => this.currency.money >= amount,
-        exchangeEggs: () =>
-          (this.sources.campaignSystems?.eggs ?? []).flatMap((egg) =>
-            egg.price === undefined
-              ? []
-              : [{ itemId: egg.itemId, name: egg.name, price: egg.price }],
-          ),
-        buyEgg: (itemId, price) => {
-          if (this.currency.money < price) return false;
-          this.currency.money -= price;
-          this.bag.specials.push(itemId);
-          return true;
-        },
         petStorageFull: () =>
-          this.pets.length >= 6 &&
-          this.meta.campaign.petBank.length >=
-            petBankCapacity(this.meta.campaign.petBankExpansionPurchases),
+          this.pets.length >= 6 && this.meta.campaign.petBank.length >= this.petBankCapacity(),
         worldHook: (hook, elapsed) =>
           hook.startsWith("cauVong.")
             ? this.cauVongHook(hook, elapsed)
@@ -2597,6 +2957,7 @@ export class WorldRuntime {
     battle.handleInput(commands);
     battle.tick();
     if (!battle.finished) return null;
+    if (this.bondingTowerRun) return this.finishBondingTowerBattle(battle.winner === "player");
     const services = this.sources.battle!,
       settlement = settleDoubleBattle(battle.core, this.pets, this.inventory, services.progression),
       won = settlement.winner === "player",
@@ -2699,7 +3060,12 @@ export class WorldRuntime {
   private challengeTanNguyet(commands: readonly InputCommand[]): boolean {
     if (!commands.includes("confirm")) return false;
     const boss = this.actors.get(TAN_NGUYET_ACTOR_ID);
-    if (!boss?.visible || !withinTanNguyetReach(this.player, boss)) return false;
+    if (
+      !boss?.visible ||
+      !withinTanNguyetReach(this.player, boss) ||
+      (this.pointerActor !== undefined && this.pointerActor !== boss.id)
+    )
+      return false;
     const block = this.flags.hasSourceWorldFlag(TAN_NGUYET_BOSS.victoryCompletedFlag)
       ? TAN_NGUYET_WORLD_TEXT.alreadyDefeated
       : tanNguyetChallengeBlock(this.pets);
@@ -2761,7 +3127,8 @@ export class WorldRuntime {
         [],
       );
     bank.push(reward);
-    this.collection.markCollected(reward.speciesId);
+    this.synchronizeGoldenBankReward();
+    this.collectOwned(reward);
     this.flags.mutateSourceWorldFlag(0, TAN_NGUYET_BOSS.victoryCompletedFlag);
     this.resumeAfterBattle();
   }
@@ -2806,7 +3173,7 @@ export class WorldRuntime {
       return null;
     this.tanNguyetModal = null;
     const point = this.savePoint;
-    this.loadRoom(point.scene, point.room, point.x, point.y, point.direction);
+    this.loadRoom(point.scene, point.room, point.x, point.y, point.direction, "resume");
     this.setPhase("freeworld");
     return "autosave";
   }
@@ -2824,6 +3191,72 @@ export class WorldRuntime {
       paramB: item.columns[4] ?? 0,
       paramC: item.columns[6] ?? 0,
     }));
+  }
+
+  private bondingTowerRun: {
+    returnPhase: "freeworld" | "returnWorld";
+    onResult: (won: boolean) => void;
+  } | null = null;
+
+  get bondingTowerBattleActive(): boolean {
+    return this.bondingTowerRun !== null;
+  }
+
+  startBondingTower(
+    floor: TowerFloor,
+    pets: Readonly<Record<string, TowerPetSpec>>,
+    onResult: (won: boolean) => void,
+  ): boolean {
+    const services = this.sources.battle;
+    if (
+      !services ||
+      !this.onFreeMap ||
+      this.mapLoading ||
+      this.npcService ||
+      this.tanNguyetModal ||
+      this.repelPrompt ||
+      this.raceBlocksPanel ||
+      this.cauVongMinigameOpen ||
+      this.switchCycle ||
+      this.obstacleCut ||
+      this.hazardSpin ||
+      this.vortex ||
+      !this.pets.some((pet) => (pet.currentHp ?? 1) > 0) ||
+      (floor.double && this.pets.length < 2)
+    )
+      return false;
+    const battle = createBondingTowerBattle(
+      services,
+      floor,
+      pets,
+      this.pets,
+      this.player.sprite,
+      (sprite) => this.sources.doubleFallTicks?.(sprite) ?? 8,
+      this.battleCharms(false),
+    );
+    this.bondingTowerRun = {
+      returnPhase: this.phase === "returnWorld" ? "returnWorld" : "freeworld",
+      onResult,
+    };
+    this.battle = battle.single ?? null;
+    this.doubleBattle = battle.double ?? null;
+    if (battle.single) this.prepareBattleSprites(battle.single);
+    if (battle.double)
+      for (const sprite of battle.double.core.spriteIds()) this.sources.prepareSprite?.(sprite);
+    this.setPlayerFacing(false, true);
+    this.nextBattleEntryMode = 2;
+    this.setPhase("battleEntry");
+    return true;
+  }
+
+  private finishBondingTowerBattle(won: boolean): WorldAction {
+    const run = this.bondingTowerRun!;
+    this.battle = null;
+    this.doubleBattle = null;
+    this.bondingTowerRun = null;
+    this.setPhase(run.returnPhase);
+    run.onResult(won);
+    return "autosave";
   }
 
   /** A gamemenu rematch: authored roster/AI, but no room-script reward or ledger owner. */
@@ -2881,9 +3314,7 @@ export class WorldRuntime {
         0,
         this.currency.money + wildVictoryMoney(enemy.level, enemy.quality),
       );
-      this.currency.badges += wildVictoryBadges(
-        this.sourceRandom.next("battle.wildVictory.badge", 100),
-      );
+      this.currency.badges = this.wildVictoryBadgeTotal();
       return;
     }
     const npc = npcVictoryMoney(row);
@@ -2898,16 +3329,30 @@ export class WorldRuntime {
       0,
       this.currency.money + wildVictoryMoney(enemy.level, enemy.quality),
     );
-    this.currency.badges += wildVictoryBadges(
-      this.sourceRandom.next("battle.wildVictory.badge", 100),
+    this.currency.badges = this.wildVictoryBadgeTotal();
+  }
+  /** A wild win's badges: the source's roll, plus 1 with Long Vương Hộ Phù held (ProMax). */
+  private wildVictoryBadgeTotal(): number {
+    return Math.min(
+      0x7fffffff,
+      this.currency.badges +
+        wildVictoryBadges(this.sourceRandom.next("battle.wildVictory.badge", 100)) +
+        (this.kimDiemAmuletEquipped() ? 1 : 0),
     );
   }
-  /** `VqsvBattleRuntime` start: every species of the enemy party is seen. */
+  /**
+   * `VqsvBattleRuntime` start: every species of the enemy party is seen; a shiny also its nature and
+   * the colour it is drawn in.
+   */
   private markEnemiesSeen(battle: BattleRuntime): void {
     const core = battle.core;
     if (!core) return;
-    for (let member = 0; member < core.partySize("enemy"); member++)
-      this.collection.markSeen(core.enemySetup(member).speciesId);
+    for (let member = 0; member < core.partySize("enemy"); member++) {
+      const setup = core.enemySetup(member),
+        color =
+          setup.shinyColor ?? defaultShinyColor(setup.spriteId ?? setup.speciesId, setup.nature);
+      this.collection.markSeen(setup.speciesId, setup.nature, color);
+    }
   }
   /**
    * op18 mode 0, `game.j.c(id, n, 2)`: an equipment id (below 12) is owned once; a material adds
@@ -2924,12 +3369,10 @@ export class WorldRuntime {
   /** `op39RefreshPets`: revive the roster and refill every learned skill's PP. */
   private refreshPets(): void {
     for (const pet of this.pets) {
-      pet.currentHp = this.sources.petStats.coreStats(
-        pet.speciesId,
-        pet.level,
-        pet.quality,
-        pet.nature ?? 0,
-      ).hp;
+      pet.currentHp = towerBondStat(
+        this.sources.petStats.coreStats(pet.speciesId, pet.level, pet.quality, pet.nature ?? 0).hp,
+        pet.towerBond,
+      );
       pet.skillPp = (pet.skillIds ?? []).map(
         (skillId) => this.sources.battleRules.damage.skillRow(skillId)?.ppMax ?? 0,
       );
@@ -2998,11 +3441,12 @@ export class WorldRuntime {
       // bank too; it is only reported with sourceResult=1 to the surrounding script.
       owned.slot = this.meta.campaign.petBank.length;
       this.meta.campaign.petBank.push(owned);
+      this.synchronizeGoldenBankReward();
     } else {
       this.pets.splice(slot, 0, owned);
       this.pets.forEach((inserted, index) => (inserted.slot = index));
     }
-    this.collection.markCollected(species.speciesId);
+    this.collectOwned(owned);
     return species.name;
   }
   /**
@@ -3168,7 +3612,10 @@ export class WorldRuntime {
         inventory,
         script: {
           unkillable: "enemy",
-          forcedCatch: (attempt) => (attempt === 1 ? false : undefined),
+          // The lesson's first Phong ấn cầu always misses; a Tất Trung Cầu (thrown first when the
+          // seal balls are gone) keeps its 100%.
+          forcedCatch: (attempt, itemId) =>
+            attempt === 1 && itemId !== this.data.items.guaranteedBall ? false : undefined,
         },
       },
       source.descriptor,
@@ -3190,7 +3637,8 @@ export class WorldRuntime {
         core,
         party: this.pets,
         services,
-        settle: () => settleBattle(core, this.pets, this.inventory, services.progression),
+        settle: () =>
+          settleBattle(core, this.pets, this.inventory, services.progression, services.petBank?.()),
         shopCurrency: this.currency,
       },
     );
@@ -3354,10 +3802,23 @@ export class WorldRuntime {
     }
     // A room whose collision has not arrived yet holds the hero still rather than failing.
     const asset = this.sources.room(this.sceneId, this.roomIndex);
-    if (!asset || !this.sources.collision(asset.mapId)) return false;
+    const map = asset && this.sources.collision(asset.mapId);
+    if (!map) return false;
     // `tryStartSourceLeafRide`: stepping onto a platform that can sail that way boards it.
     if (!this.hasHaiAuFlight() && this.startPlatformRide(intent)) return true;
     if (!this.hasHaiAuFlight() && this.trySummonLeaf(intent)) return false;
+    // A resumed save that left the hero inside a wall is moved out on the first step.
+    const resumed = this.resumedPosition;
+    this.resumedPosition = null;
+    if (
+      resumed?.x === this.player.x &&
+      resumed.y === this.player.y &&
+      this.repairRoomPosition(map, true)
+    ) {
+      this.roomEntry = { x: this.player.x, y: this.player.y };
+      this.saveRequested = true;
+      return false;
+    }
     const ride = this.meta.campaign.ride,
       // `VqsvFreeWorldRuntime`: Liệt Hỏa's Hải âu flies (Cầu Vồng's sky ride keeps its gates).
       haiAuFlight =
@@ -3492,10 +3953,23 @@ export class WorldRuntime {
     const scene = this.sceneId,
       room = this.roomIndex;
     // `applyPersistentMovingActorPositions`: pushed blocks stand where they were left.
+    const asset = this.sources.room(scene, room),
+      map = asset ? this.sources.collision(asset.mapId) : undefined;
     for (const [id, actor] of actors) {
       if (actor.variant !== 8 && actor.variant !== 9 && actor.variant !== 10) continue;
       const at = this.flags.actorPosition(scene, room, id);
-      if (at) Object.assign(actor, at);
+      if (!at) continue;
+      // Web fix: a leaf or cloud remembered off its track (a pre-APK-map save) starts on its row.
+      const row = asset?.actors.find((candidate) => candidate.id === id);
+      if (
+        row &&
+        isPlatform(row) &&
+        !platformSpotOnTrack(map, row, this.sources.collisionMask?.(row.sprite, 0, 0) ?? null, at)
+      ) {
+        this.flags.setActorPosition(scene, room, id, null);
+        continue;
+      }
+      Object.assign(actor, at);
     }
     // `reconcileRoomEntry`: what the finished groups' op56 committed, with `applyMode(0)` — a
     // person stands facing the listed way, anything else returns to state 0.
@@ -3568,6 +4042,7 @@ export class WorldRuntime {
       ...vortex.from,
       target: { ...vortex.from.target, actor: vortex.to.actorId },
     });
+    this.repairRoomPosition(this.currentMap(), true);
     this.vortex = null;
   }
   /** `applySourceSpinFrame`: the hero turns to `floorMod(direction, 4)` (left draws right mirrored). */
@@ -3580,11 +4055,10 @@ export class WorldRuntime {
   /** `VqsvSceneView.moveCameraToward`: at most `speed` px a tick toward centring the hero. */
   private moveCameraToward(speed: number): void {
     const asset = this.sources.room(this.sceneId, this.roomIndex),
-      goalX = Math.max(0, Math.min(Math.max(0, (asset?.width ?? 240) - 240), this.player.x - 120)),
-      goalY = Math.max(0, Math.min(Math.max(0, (asset?.height ?? 320) - 320), this.player.y - 160)),
+      goal = cameraGoal(asset, this.player.x, this.player.y),
       step = (from: number, to: number) => from + Math.max(-speed, Math.min(speed, to - from));
-    this.cameraX = step(this.cameraX, goalX);
-    this.cameraY = step(this.cameraY, goalY);
+    this.cameraX = step(this.cameraX, goal.x);
+    this.cameraY = step(this.cameraY, goal.y);
   }
   /** `tryRelicSwitches`: the faced, still unlit torch of a pending op59 group starts its cycle. */
   private startSwitch(touch = false): boolean {
@@ -3608,7 +4082,7 @@ export class WorldRuntime {
             ? !(playerMask && hit
                 ? sourceMaskOverlap(this.player.x, this.player.y, playerMask, actor.x, actor.y, hit)
                 : intersectsActorBox(this.player.x, this.player.y, actor.x, actor.y))
-            : !playerInteractsActor(this.player.x, this.player.y, this.player.direction, actor)
+            : !this.actorInteractionRequested(actor)
         )
           continue;
         actor.state = 1;
@@ -3794,6 +4268,7 @@ export class WorldRuntime {
       direction: player.direction,
       mask: this.sources.collisionMask?.(player.sprite, player.state, player.animationTick) ?? null,
       speed: this.playerMoveSpeed,
+      pointerTarget: this.pointerActor,
     };
   }
   /**
@@ -3981,8 +4456,8 @@ export class WorldRuntime {
           );
         if (toRoster) this.pets.push(built);
         else bank.push(built);
-        this.collection.markSeen(pet.species);
-        this.collection.markCollected(pet.species);
+        this.synchronizeGoldenBankReward();
+        this.collectOwned(built);
         if (pet.ride >= 0)
           this.eventState.op14CompleteEvent(98, 0, RAINBOW_RIDE_OWNED_EVENT + pet.ride);
         this.eventState.op14CompleteEvent(98, pet.room, pet.receipt);
@@ -4340,7 +4815,7 @@ export class WorldRuntime {
         (prep && this.roomIndex === CITY_ROOM ? cauVongPrepCityExit(this.player) : null) ??
         // `citySideEntrance`: the shop 56, the rooftop 45, the hall 47 and the research room 46.
         (this.roomIndex === CITY_ROOM
-          ? (this.city()?.entrance(this.cityWorld(false)) ?? null)
+          ? (this.city()?.entrance(this.cityWorld(false), this.player.x) ?? null)
           : null) ??
         (academyRoom ? null : cauVongOpeningExit(this.roomIndex, this.player, done))
       );
@@ -4398,11 +4873,7 @@ export class WorldRuntime {
   }
   /** `CauVongDormPetQuest.hasSpace(s, 1)`: the roster or the bank takes one more. */
   private petHasSpace(): boolean {
-    return (
-      this.pets.length < 6 ||
-      this.meta.campaign.petBank.length <
-        petBankCapacity(this.meta.campaign.petBankExpansionPurchases)
-    );
+    return this.pets.length < 6 || this.meta.campaign.petBank.length < this.petBankCapacity();
   }
   /** The party as the boy's trade reads it. */
   private openingPets() {
@@ -4879,7 +5350,7 @@ export class WorldRuntime {
     }
     this.battle = createSourceTrainerBattle(
       services,
-      request,
+      { ...request, sceneId: this.sceneId },
       this.pets,
       this.inventory,
       this.battleItemCatalog(),
@@ -5052,8 +5523,8 @@ export class WorldRuntime {
         );
       if (toRoster) this.pets.push(pet);
       else bank.push(pet);
-      this.collection.markSeen(row.species);
-      this.collection.markCollected(row.species);
+      this.synchronizeGoldenBankReward();
+      this.collectOwned(pet);
       this.eventState.op14CompleteEvent(98, 44, row.receipt);
     }
     // `grantRainbowRide(s, 5)`: Đông Phương is a mount as well.
@@ -5173,7 +5644,7 @@ export class WorldRuntime {
     if (!services || !request || this.pets.length === 0) return false;
     this.battle = createSourceTrainerBattle(
       services,
-      request,
+      { ...request, sceneId: this.sceneId },
       this.pets,
       this.inventory,
       this.battleItemCatalog(),
@@ -5265,11 +5736,7 @@ export class WorldRuntime {
       // `CauVongDormPetQuest.hasSpace`: free party slots plus free bank slots.
       petRoom: (count) =>
         Math.max(0, 6 - this.pets.length) +
-          Math.max(
-            0,
-            petBankCapacity(this.meta.campaign.petBankExpansionPurchases) -
-              this.meta.campaign.petBank.length,
-          ) >=
+          Math.max(0, this.petBankCapacity() - this.meta.campaign.petBank.length) >=
         count,
       releaseSnake: () => {
         // `returnPet`: `confirmRelease` of the lowest Thiết Giáp Xà (122); another living pet stays.
@@ -5421,6 +5888,9 @@ export class WorldRuntime {
       pending = this.fourGatesPending;
     this.fourGatesPending = null;
     if (!owner || !pending) return false;
+    // ProMax: Kim Diễm's fight is saved once its result has replaced the battle marker. A loss
+    // leaves the hero in room 49 to talk to him again (owner: no recovery teleport after a loss).
+    if (pending.kind === "result" && pending.key === KIM_DIEM_BATTLE_KEY) this.saveRequested = true;
     const w = this.fourGatesWorld(false),
       room = this.roomIndex;
     const forest = this.forest(),
@@ -5486,10 +5956,12 @@ export class WorldRuntime {
           return this.runFourGatesAction(forest.answer(w, pending.owner, pending.selected, room));
         return this.runFourGatesAction(owner.answer(w, pending.owner, pending.selected, room));
       case "result":
-        if (summoning?.owns(pending.key))
-          return this.runFourGatesAction(
+        if (summoning?.owns(pending.key)) {
+          const played = this.runFourGatesAction(
             summoning.result(this.summonWorld(false), pending.key, pending.won),
           );
+          return played || pending.key === KIM_DIEM_BATTLE_KEY;
+        }
         if (sea?.owns(pending.key))
           return this.runFourGatesAction(
             sea.result(this.northSeaWorld(false), pending.key, pending.won),
@@ -5749,6 +6221,29 @@ export class WorldRuntime {
   private summonWorld(confirm: boolean): SummonWorld {
     return {
       ...this.branchWorld(confirm),
+      // Kim Diễm's reward (ProMax): two Long pets need two free places, in the party or the
+      // 1.000-slot bank the reward opens.
+      kimDiemRewardFits: () =>
+        this.kimDiemRewardClaimed() ||
+        Math.max(0, 6 - this.pets.length) +
+          Math.max(0, KIM_DIEM_BANK_CAPACITY - this.meta.campaign.petBank.length) >=
+          2,
+      grantKimDiemReward: () => {
+        if (this.kimDiemRewardClaimed()) return;
+        // Kim Diễm Long Vương (280) and Tàn Nguyệt Long Ma (278), level 5, 5★.
+        const pets = [280, 278].map((id) => this.buildSourcePet(id, 5, 5, 0, 0, []));
+        for (const pet of pets) {
+          const storage = this.pets.length < 6 ? this.pets : this.meta.campaign.petBank;
+          pet.slot = storage.length;
+          storage.push(pet);
+          this.synchronizeGoldenBankReward();
+          this.collectOwned(pet);
+        }
+        if (!this.bag.equipment.includes(KIM_DIEM_AMULET_ID))
+          this.bag.equipment.push(KIM_DIEM_AMULET_ID);
+        this.eventState.op14CompleteEvent(98, KIM_DIEM_ROOM, KIM_DIEM_REWARD_RECEIPT);
+        this.saveRequested = true;
+      },
       grant: (cue) => {
         const stage = this.cauVongStageOver(this.actors);
         if (cue.k === "pet") stage.pet(cue);
@@ -5994,7 +6489,13 @@ export class WorldRuntime {
       requested: (id) => {
         const rect = props[String(id)];
         if (!rect) return base.requested(id);
-        return cauVongPropRequested(hero, this.actors.get(id)?.visible ?? false, rect, confirm);
+        return cauVongPropRequested(
+          hero,
+          this.actors.get(id)?.visible ?? false,
+          rect,
+          confirm,
+          this.pointerActor === undefined ? undefined : this.pointerActor === id,
+        );
       },
       terrain: (x, y) => this.terrainAt(x, y),
       hero: () => ({ x: player.x, y: player.y, direction: player.direction }),
@@ -6164,7 +6665,14 @@ export class WorldRuntime {
     if (!services || !request || this.pets.length === 0) return false;
     this.battle = createSourceTrainerBattle(
       services,
-      request,
+      {
+        ...request,
+        sceneId: this.sceneId,
+        // ProMax: Đại Điện's (51) hidden Divine pets fight under the same seal as an owned one.
+        enemyStatPercent: key.startsWith(`${SUMMON_PREFIX}51:`)
+          ? (speciesId) => this.divineSeal?.percent(speciesId, true) ?? 100
+          : undefined,
+      },
       this.pets,
       this.inventory,
       this.battleItemCatalog(),
@@ -6223,7 +6731,10 @@ export class WorldRuntime {
       if (actor.direction === DIRECTION_LEFT) sampleX -= Math.trunc(width / 2);
       if (actor.direction === DIRECTION_UP) sampleY -= height;
       const outside =
-        sampleX < 0 || sampleY < 0 || sampleX >= map.widthPixels || sampleY >= map.heightPixels;
+        sampleX < mapLeft(map) ||
+        sampleY < mapTop(map) ||
+        sampleX >= mapRight(map) ||
+        sampleY >= mapBottom(map);
       if (outside || terrainAtWorld(map, sampleX, sampleY) !== 0) {
         actor.direction = (actor.direction + 2) % 4;
         continue;
@@ -6262,16 +6773,118 @@ export class WorldRuntime {
       return;
     }
     const asset = this.sources.room(this.sceneId, this.roomIndex);
-    this.player.x = Math.max(8, Math.min(this.roomEntry.x, (asset?.width ?? 240) - 8));
-    this.player.y = Math.max(8, Math.min(this.roomEntry.y, (asset?.height ?? 320) - 8));
+    const entry = roomClamp(asset, this.roomEntry.x, this.roomEntry.y, 8);
+    this.player.x = entry.x;
+    this.player.y = entry.y;
     this.setPlayerFacing(false);
     this.centerCamera();
     this.hazardSpin = null;
+  }
+  /**
+   * `NiemThoC3Runtime.tryStartGymHoleFall`: in Niêm Thổ Đạo Quán's upper floor (9:2) the hero's
+   * mask on one of the four floor holes (actors 0–3, behaviour 16) starts the drop to the floor
+   * below, where the gym's next trainers wait.
+   */
+  private startGymHoleFall(): boolean {
+    if (this.sceneId !== 9 || this.roomIndex !== 2) return false;
+    const playerMask = this.platformMask(this.player);
+    for (const id of GYM_HOLE_ACTORS) {
+      const hole = this.actors.get(id);
+      if (!hole?.visible || hole.sourceKind !== 0 || hole.variant !== 16) continue;
+      const mask = this.platformMask(hole),
+        touching =
+          playerMask && mask
+            ? sourceMaskOverlap(this.player.x, this.player.y, playerMask, hole.x, hole.y, mask)
+            : intersectsActorBox(this.player.x, this.player.y, hole.x, hole.y);
+      if (!touching) continue;
+      this.gymHoleFall = {
+        holeId: id,
+        direction: this.player.direction,
+        startX: this.player.x,
+        startY: this.player.y,
+        tick: 0,
+      };
+      this.setPlayerFacing(false);
+      return true;
+    }
+    return false;
+  }
+  /**
+   * `GymHoleFall.tick`: 16 ticks spinning (frames 0 1 2 1, facing round the compass) while the hero
+   * slides 4 px a tick onto the hole (16 px above its anchor), then 9:3 at (112, 256), facing the
+   * way he came in.
+   */
+  private tickGymHoleFall(): void {
+    const fall = this.gymHoleFall!,
+      hole = this.actors.get(fall.holeId),
+      player = this.player;
+    if (fall.tick < GYM_HOLE_FALL_TICKS && hole) {
+      const targetX = hole.x,
+        targetY = hole.y - GYM_HOLE_PLAYER_OFFSET_Y,
+        speed = GYM_HOLE_FALL_SPEED,
+        // `alignVerticalFromSourceStart` / `alignHorizontalFromSourceStart`.
+        align = (now: number, start: number, target: number) =>
+          start > target
+            ? now <= target
+              ? target
+              : now - speed
+            : start < target
+              ? now >= target
+                ? target
+                : now + speed
+              : now;
+      if (fall.direction === DIRECTION_LEFT || fall.direction === DIRECTION_RIGHT) {
+        if (fall.direction === DIRECTION_LEFT && player.x > targetX) player.x -= speed;
+        else if (fall.direction === DIRECTION_RIGHT && player.x < targetX) player.x += speed;
+        player.y = align(player.y, fall.startY, targetY);
+      } else {
+        if (fall.direction === DIRECTION_UP && player.y > targetY) player.y -= speed;
+        else if (fall.direction === DIRECTION_DOWN && player.y < targetY) player.y += speed;
+        player.x = align(player.x, fall.startX, targetX);
+      }
+      const frame = fall.tick % 4;
+      player.direction = frame;
+      player.renderOrientation = -1;
+      player.state = frame === 3 ? 1 : frame;
+      player.animationTick = fall.tick;
+      fall.tick++;
+      this.centerCamera();
+      return;
+    }
+    this.gymHoleFall = null;
+    this.loadRoom(9, 3, GYM_FALL_TARGET.x, GYM_FALL_TARGET.y, fall.direction);
+    this.setPlayerFacing(false);
+  }
+  /** `NiemThoC3Runtime.postGymLeaderDefeated`. */
+  private postGymLeaderDefeated(): boolean {
+    const done = (scene: number, room: number, group: number) =>
+      this.eventState.sourceEventStateComplete(scene, room, group);
+    return (
+      done(9, 2, 1) ||
+      done(4, 0, 1) ||
+      done(4, 5, 14) ||
+      this.flags.badges.achieved(BADGE_HOA_PHONG)
+    );
   }
   /** Whether the hero flies this room on Hải âu (`VqsvFreeWorldRuntime`'s `airborne`). */
   private hasHaiAuFlight(): boolean {
     const ride = this.meta.campaign.ride;
     return this.sceneId !== 98 && ride.activeIndex === HAI_AU && roomAllowsRide(ride, HAI_AU);
+  }
+  /**
+   * `VqsvFreeWorldRuntime.playerInteractsActorSourceMask`: the faced query with the hero's and the
+   * actor's own collision masks (the box only when the sprite has none).
+   */
+  private playerFaces(actor: StoryActor, direction = this.player.direction): boolean {
+    const player = this.player;
+    return playerInteractsActor(
+      player.x,
+      player.y,
+      direction,
+      actor,
+      this.platformMask(player),
+      this.platformMask(actor),
+    );
   }
   private platformMask(actor: StoryActor): CollisionMask | null {
     return this.sources.collisionMask?.(actor.sprite, actor.state, actor.animationTick) ?? null;
@@ -6295,7 +6908,20 @@ export class WorldRuntime {
       const mask = this.platformMask(actor);
       if (!platformCanAdvance(actor, platformTerrainAhead(map, mask, actor.x, actor.y, direction)))
         continue;
-      if (!this.touchesPlatform(projectedX, projectedY, actor, actor.x, actor.y)) continue;
+      // Web fix: on the APK maps a platform resting at its shore can stop a few pixels short of
+      // the bank (9:7's cloud by Thiên Giới's centre island), out of a step's reach; one more
+      // platform step of reach lets the hero board it from the edge.
+      if (
+        !this.touchesPlatform(projectedX, projectedY, actor, actor.x, actor.y) &&
+        !this.touchesPlatform(
+          projectedX + directionDx(direction, PLATFORM_SPEED),
+          projectedY + directionDy(direction, PLATFORM_SPEED),
+          actor,
+          actor.x,
+          actor.y,
+        )
+      )
+        continue;
       this.player.direction = direction;
       this.platformRide = { actorId: id, direction, phase: 0, ticks: PLATFORM_STEP_TICKS };
       actor.direction = direction;
@@ -6501,6 +7127,32 @@ export class WorldRuntime {
     if (!arrival) return;
     Object.assign(this.player, arrival);
   }
+  /**
+   * Web fix (owner 2026-11-15, "kẹt sẵn ở đây không có đám mây nào để về"): each platform with
+   * exactly one shore on the land the hero can walk to rests at that shore.
+   */
+  private bringPlatformsToHero(map: MapCollision, ids: number[]): void {
+    const area = walkableArea(map, this.player.x, this.player.y),
+      tile = map.tileSize,
+      asset = this.sources.room(this.sceneId, this.roomIndex);
+    if (!area.size || !asset) return;
+    for (const id of ids) {
+      const actor = this.actors.get(id),
+        row = asset.actors.find((candidate) => candidate.id === id);
+      if (!actor || !row || !actor.visible || !isPlatform(actor)) continue;
+      const mask = this.platformMask(actor),
+        directions =
+          actor.variant === PLATFORM_HORIZONTAL
+            ? [DIRECTION_LEFT, DIRECTION_RIGHT]
+            : [DIRECTION_UP, DIRECTION_DOWN],
+        near = directions.filter((direction) => {
+          const end = platformShore(map, actor, mask, row, direction),
+            ahead = platformAheadPoint(mask, end.x, end.y, direction);
+          return !!ahead && area.has(`${Math.floor(ahead.x / tile)},${Math.floor(ahead.y / tile)}`);
+        });
+      if (near.length === 1) this.placePlatformAtShore(id, near[0], false);
+    }
+  }
   /** `positionSourcePlatformAtShore` (`always`) or `ensureSourcePlatformAtShore`. */
   private placePlatformAtShore(id: number, direction: number, always: boolean): void {
     const asset = this.sources.room(this.sceneId, this.roomIndex),
@@ -6661,7 +7313,12 @@ export class WorldRuntime {
         top = nextY + mask[1],
         right = left + mask[2] - 1,
         bottom = top + mask[3] - 1;
-      if (left < 0 || top < 0 || right >= map.widthPixels || bottom >= map.heightPixels)
+      if (
+        left < mapLeft(map) ||
+        top < mapTop(map) ||
+        right >= mapRight(map) ||
+        bottom >= mapBottom(map)
+      )
         return null;
       if (
         [
@@ -6743,11 +7400,7 @@ export class WorldRuntime {
       ids = [...(keyed ? [keyed.actor] : []), ...(WORLD_CHESTS[room] ?? [])];
     for (const id of ids) {
       const actor = this.actors.get(id);
-      if (
-        !actor?.visible ||
-        actor.sourceKind !== 3 ||
-        !playerInteractsActor(this.player.x, this.player.y, this.player.direction, actor)
-      )
+      if (!actor?.visible || actor.sourceKind !== 3 || !this.actorInteractionRequested(actor))
         continue;
       const key = this.chestKey(id),
         notice = (text: string): RuntimeStoryEvent => ({
@@ -6804,8 +7457,7 @@ export class WorldRuntime {
         actor.variant === ROCK_BEHAVIOR
           ? this.flags.badges.canBreakRocks()
           : this.flags.badges.canClearTrees();
-      if (ready && playerInteractsActor(this.player.x, this.player.y, this.player.direction, actor))
-        ids.push(id);
+      if (ready && this.actorInteractionRequested(actor)) ids.push(id);
     }
     return ids;
   }
@@ -6864,11 +7516,7 @@ export class WorldRuntime {
     }
     const jill = this.actors.get(RACE_JILL),
       player = this.player;
-    if (
-      !commands.includes("confirm") ||
-      !jill?.visible ||
-      !playerInteractsActor(player.x, player.y, player.direction, jill)
-    )
+    if (!commands.includes("confirm") || !jill?.visible || !this.actorInteractionRequested(jill))
       return false;
     // `prepareNpcEvent`: an ordinary NPC turns to face the hero.
     if (jill.sprite <= 85) {
@@ -6933,7 +7581,7 @@ export class WorldRuntime {
     for (let id = RACE_FIRST_OBSTACLE; id <= RACE_LAST_OBSTACLE; id++) {
       const actor = this.actors.get(id);
       if (!actor || this.clearedObstacles.has(id)) continue;
-      if (!playerInteractsActor(player.x, player.y, direction, actor)) continue;
+      if (!this.playerFaces(actor, direction)) continue;
       this.clearedObstacles.add(id);
       actor.state = 1;
       actor.animationTick = 0;
@@ -7088,7 +7736,12 @@ export class WorldRuntime {
     else if (direction === DIRECTION_UP) y -= speed;
     else x -= speed;
     const anchorY = y - HAI_AU_AIRBORNE_ANCHOR_Y;
-    if (x <= 0 || x >= map.widthPixels || anchorY <= 0 || anchorY >= map.heightPixels)
+    if (
+      x <= mapLeft(map) ||
+      x >= mapRight(map) ||
+      anchorY <= mapTop(map) ||
+      anchorY >= mapBottom(map)
+    )
       return { x: this.player.x, y: this.player.y, direction, moved: false };
     return { x, y, direction, moved: true };
   }
@@ -7124,6 +7777,7 @@ export class WorldRuntime {
         rideSuppressesEncounters: rideSuppressesEncounters(this.meta.campaign.ride.activeIndex),
         mainTaskProgress: this.flags.mainTaskProgress,
         rareEncounterBonusPercent: this.activeCharmValue("RARE_ENCOUNTER"),
+        shinyGearEquipped: this.kimDiemAmuletEquipped(),
       },
       {
         temporaryActorTicks: this.temporaryActorTicks,
@@ -7211,7 +7865,58 @@ export class WorldRuntime {
       throw new Error(`World room ${this.sceneId}:${this.roomIndex} has no source map collision`);
     return map;
   }
-  private loadRoom(scene: number, room: number, x: number, y: number, direction: number): void {
+  /** `RoomArrivalSafety`: once the room's collision is in, move a hero who arrived inside a wall. */
+  private checkRoomArrival(): void {
+    if (this.gymCloudsToHero) {
+      const asset = this.sources.room(this.sceneId, this.roomIndex),
+        map = asset && this.sources.collision(asset.mapId);
+      if (map) {
+        this.gymCloudsToHero = false;
+        this.bringPlatformsToHero(map, [1, 2, 3, 4]);
+      }
+    }
+    const safety = this.arrivalSafety;
+    if (!safety) return;
+    const asset = this.sources.room(this.sceneId, this.roomIndex);
+    const map = asset && this.sources.collision(asset.mapId);
+    if (!map) return;
+    this.arrivalSafety = null;
+    if (safety === "resume" && !wasBlockedArrival(this.sceneId, this.roomIndex, this.player)) {
+      // Let room events inspect their authored coordinates before checking an old save on movement.
+      this.resumedPosition = { x: this.player.x, y: this.player.y };
+      return;
+    }
+    if (this.repairRoomPosition(map, false))
+      this.roomEntry = { x: this.player.x, y: this.player.y };
+  }
+  private repairRoomPosition(map: MapCollision, preserveEscapable: boolean): boolean {
+    if (this.hasHaiAuFlight()) return false;
+    const player = this.player;
+    const arrival = safeRoomArrival(
+      map,
+      player,
+      this.playerMoveSpeed,
+      this.movementTerrain,
+      this.sceneId !== 98 && this.flags.terrainBadgeGatedOpen(),
+      this.sceneId === 98,
+      preserveEscapable,
+      (x, y, direction, speed) => this.actorBlocksMove(x, y, direction, speed),
+    );
+    if (!arrival) return false;
+    Object.assign(player, arrival);
+    if (this.savePoint.scene === this.sceneId && this.savePoint.room === this.roomIndex)
+      Object.assign(this.savePoint, arrival);
+    this.centerCamera();
+    return true;
+  }
+  private loadRoom(
+    scene: number,
+    room: number,
+    x: number,
+    y: number,
+    direction: number,
+    safety: "entry" | "resume" | null = null,
+  ): void {
     // Every way into a room — a door, a story load, a warp, a save — starts its map fetch here;
     // the map-loading screen holds until it has arrived.
     if (this.sources.roomReady && !this.sources.roomReady(scene, room))
@@ -7310,6 +8015,7 @@ export class WorldRuntime {
     this.platformRide = null;
     this.leafSummon = null;
     this.hazardSpin = null;
+    this.gymHoleFall = null;
     this.iceDirection = null;
     this.roomEntry = { x, y };
     // `BlcC3Runtime.initializeTraversalHazards`: vortices start down (12) or right (13).
@@ -7324,6 +8030,9 @@ export class WorldRuntime {
     // `BlcC4Runtime.resetGymCloudsForRoomEntry`: back on the gym's entrance island, every cloud
     // returns to its room row.
     if (scene === 9 && room === 7 && y >= 320) this.stagePlatforms([0, 1, 2, 3, 4]);
+    // Web fix: anywhere else in the gym (a resumed save, a lost save on an island) the clouds that
+    // touch the hero's island come to it once the map is in, so no island is a dead end.
+    else if (scene === 9 && room === 7) this.gymCloudsToHero = true;
     // `BichThuyHubRuntime.resetGymLotusForRoomEntry`: walking into the Bích Thủy gym (or resuming a
     // save there) lays its four leaves on their rows, so the course starts from the door again.
     if (
@@ -7349,6 +8058,9 @@ export class WorldRuntime {
       ])
         this.sources.prepareRoom(target.scene, target.room);
     this.hud.showRoomTitle(this.sources.roomName?.(scene, room) ?? "");
+    this.resumedPosition = null;
+    this.arrivalSafety = safety;
+    this.checkRoomArrival();
     this.centerCamera();
     // `loadCanonicalRoom`'s gate: a different room — or the first room of the session, which is a
     // change because no map was loaded yet — gets the source loading screen.
@@ -7360,15 +8072,10 @@ export class WorldRuntime {
       );
   }
   private centerCamera(): void {
-    const asset = this.sources.room(this.sceneId, this.roomIndex);
-    this.cameraX = Math.max(
-      0,
-      Math.min(Math.max(0, (asset?.width ?? 240) - 240), this.player.x - 120),
-    );
-    this.cameraY = Math.max(
-      0,
-      Math.min(Math.max(0, (asset?.height ?? 320) - 320), this.player.y - 160),
-    );
+    const asset = this.sources.room(this.sceneId, this.roomIndex),
+      goal = cameraGoal(asset, this.player.x, this.player.y);
+    this.cameraX = goal.x;
+    this.cameraY = goal.y;
   }
 
   /** `WorldPetCompanionRuntime`: one roster pet follows a ten-position delayed trail. */
@@ -7405,6 +8112,7 @@ export class WorldRuntime {
       actor.sprite = pet.visualSpriteId ?? this.sources.battle?.partyMember(pet).spriteId ?? 0;
       // `scene.petCompanion.paletteNature = selected.nature`.
       actor.paletteNature = pet.nature;
+      actor.paletteColor = pet.shinyColor;
       actor.x = player.x - directionDx(player.direction, 22);
       actor.y = player.y - directionDy(player.direction, 22);
       actor.direction = player.direction;

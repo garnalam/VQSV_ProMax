@@ -34,6 +34,22 @@ export const directionDx = (direction: number, amount: number): number =>
 export const directionDy = (direction: number, amount: number): number =>
   direction === DIRECTION_DOWN ? amount : direction === DIRECTION_UP ? -amount : 0;
 
+/** The point `platformTerrainAhead` samples: just past the platform's leading edge. */
+export function platformAheadPoint(
+  mask: CollisionMask | null,
+  x: number,
+  y: number,
+  direction: number,
+  speed = PLATFORM_SPEED,
+): { x: number; y: number } | null {
+  const [, , width, height] = mask ?? PUZZLE_FALLBACK_MASK;
+  if (direction === DIRECTION_DOWN) return { x, y: y + speed };
+  if (direction === DIRECTION_RIGHT) return { x: x + speed + Math.trunc(width / 2), y };
+  if (direction === DIRECTION_UP) return { x, y: y - height - speed };
+  if (direction === DIRECTION_LEFT) return { x: x - speed - Math.trunc(width / 2), y };
+  return null;
+}
+
 /** `sourcePlatformTerrainAhead`: the terrain just past the platform's leading edge. */
 export function platformTerrainAhead(
   map: MapCollision,
@@ -43,15 +59,45 @@ export function platformTerrainAhead(
   direction: number,
   speed = PLATFORM_SPEED,
 ): number {
-  const [, , width, height] = mask ?? PUZZLE_FALLBACK_MASK;
-  let sampleX = x,
-    sampleY = y;
-  if (direction === DIRECTION_DOWN) sampleY += speed;
-  else if (direction === DIRECTION_RIGHT) sampleX += speed + Math.trunc(width / 2);
-  else if (direction === DIRECTION_UP) sampleY -= height + speed;
-  else if (direction === DIRECTION_LEFT) sampleX -= speed + Math.trunc(width / 2);
-  else return -1;
-  return terrainAtWorld(map, sampleX, sampleY);
+  const at = platformAheadPoint(mask, x, y, direction, speed);
+  return at ? terrainAtWorld(map, at.x, at.y) : -1;
+}
+
+/**
+ * Web fix: the land a hero standing at (x, y) can walk to, as tile keys (terrain neither blocked
+ * nor gated). Used to bring a gym cloud to the island the hero is on.
+ */
+export function walkableArea(map: MapCollision, x: number, y: number): Set<string> {
+  const tile = map.tileSize,
+    key = (tx: number, ty: number) => `${tx},${ty}`,
+    walkable = (tx: number, ty: number) => {
+      const t = terrainAtWorld(map, tx * tile + tile / 2, ty * tile + tile / 2);
+      return t !== 1 && t !== 2;
+    },
+    left = Math.floor(-(map.originX ?? 0) / tile),
+    top = Math.floor(-(map.originY ?? 0) / tile),
+    right = left + map.widthTiles,
+    bottom = top + map.heightTiles,
+    seen = new Set<string>(),
+    start: [number, number] = [Math.floor(x / tile), Math.floor(y / tile)];
+  if (!walkable(...start)) return seen;
+  const queue = [start];
+  seen.add(key(...start));
+  while (queue.length) {
+    const [tx, ty] = queue.pop()!;
+    for (const [nx, ny] of [
+      [tx + 1, ty],
+      [tx - 1, ty],
+      [tx, ty + 1],
+      [tx, ty - 1],
+    ] as const) {
+      if (nx < left || ny < top || nx >= right || ny >= bottom || seen.has(key(nx, ny))) continue;
+      if (!walkable(nx, ny)) continue;
+      seen.add(key(nx, ny));
+      queue.push([nx, ny]);
+    }
+  }
+  return seen;
 }
 
 /**
@@ -73,6 +119,28 @@ export function platformShore(
     y += directionDy(direction, PLATFORM_SPEED);
   }
   return { x, y };
+}
+
+/**
+ * Web fix: whether a remembered platform spot still lies on the track its row sails today. Saves
+ * written before the APK landscape maps keep JAR-map spots, which on the new map can float off the
+ * track (a cloud beside nothing, or out of view); such a spot is dropped and the row is used.
+ */
+export function platformSpotOnTrack(
+  map: MapCollision | undefined,
+  row: PlatformActor,
+  mask: CollisionMask | null,
+  at: { x: number; y: number },
+): boolean {
+  const horizontal = row.variant === PLATFORM_HORIZONTAL;
+  // Before the room's terrain has loaded (a resumed save), the axis alone already tells.
+  if (!map) return horizontal ? at.y === row.y : at.x === row.x;
+  const low = platformShore(map, row, mask, row, horizontal ? DIRECTION_LEFT : DIRECTION_UP),
+    high = platformShore(map, row, mask, row, horizontal ? DIRECTION_RIGHT : DIRECTION_DOWN),
+    slack = PLATFORM_SPEED;
+  return horizontal
+    ? at.y === row.y && at.x >= low.x - slack && at.x <= high.x + slack
+    : at.x === row.x && at.y >= low.y - slack && at.y <= high.y + slack;
 }
 
 /** `downstreamLeafEndpoint`: a lotus leaf's lower shore — down the water until it is left. */

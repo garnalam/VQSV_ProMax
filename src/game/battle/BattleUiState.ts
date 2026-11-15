@@ -34,6 +34,8 @@ export type BattleUiPet = {
   spriteId: number;
   /** The pet's nature: 7..9 draws it in its shiny palette. */
   nature?: number;
+  /** The pet's own shiny colour (`SavedPet.shinyColor`), when it has one. */
+  shinyColor?: number;
   /** Source element family; it owns the PetState accent exactly as it owns battle skill colour. */
   element: number;
   /** Display name used by the source PetState identity band. */
@@ -84,6 +86,7 @@ export type BattleUiState = {
     /** The pet that levelled (the seat may show another one). */
     spriteId?: number;
     nature?: number;
+    shinyColor?: number;
     /** Skills it learned, and the ones waiting for a free slot. */
     learned?: string[];
     pending?: string[];

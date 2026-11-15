@@ -41,8 +41,8 @@ function context(over: Partial<CauVongHatchContext> = {}) {
       materials[m.id] -= n;
     },
     create: (species) => pet(species),
-    markCollected: (species) => {
-      collected.push(species);
+    markCollected: (hatched) => {
+      collected.push(hatched.speciesId);
     },
     ...over,
   };

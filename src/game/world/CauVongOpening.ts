@@ -99,8 +99,26 @@ export type OpeningQuest = {
    * `fourGateQuestDetail`'s stages, latest first: the first whose `when` has a done flag and whose
    * `unless` has none.
    */
-  variants?: { when: [number, number][]; unless?: [number, number][]; text: string }[];
+  variants?: {
+    when: [number, number][];
+    unless?: [number, number][];
+    /** At least one route marker must hold, in addition to the stage marker. */
+    requiresAny?: [number, number][];
+    text: string;
+  }[];
 };
+/**
+ * The chapter the player is on (owner, 2026-11-15: the main rows are the five Cầu Vồng chapters
+ * — Mở đầu, Học viện, Bốn Cổng, An Kỳ Nhi, Bắc Hải — then Thiên Không): the first row, in story
+ * order, that is shown and not yet done. Each chapter is shown by the flag that finishes the one
+ * before it, so exactly one is open at a time.
+ */
+export function currentOpeningQuest(
+  quests: readonly OpeningQuest[],
+  done: (flag: [number, number]) => boolean,
+): OpeningQuest | undefined {
+  return quests.find((quest) => (!quest.show || done(quest.show)) && !done(quest.done));
+}
 /** `fourGateQuestDetail`: the latest stage whose flag is done (the last always matches), else `detail`. */
 export function openingQuestDetail(
   quest: OpeningQuest,
@@ -110,7 +128,10 @@ export function openingQuestDetail(
   if (!variants?.length) return quest.detail;
   return (
     variants.find(
-      (row) => (row.when.length === 0 || row.when.some(done)) && !row.unless?.some(done),
+      (row) =>
+        (row.when.length === 0 || row.when.some(done)) &&
+        !row.unless?.some(done) &&
+        (!row.requiresAny || row.requiresAny.some(done)),
     ) ?? variants[variants.length - 1]
   ).text;
 }

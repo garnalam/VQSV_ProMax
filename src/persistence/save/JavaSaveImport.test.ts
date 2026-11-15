@@ -74,9 +74,10 @@ describe("importJavaSave (Java online save → web save)", () => {
     expect(save.currency).toEqual({ money: 13410, badges: 117 });
     expect(save.meta?.redeemedGiftCodes).toEqual(["TRUONGCON"]);
     expect(save.meta?.battlePass).toMatchObject({ xp: 12500, claimedFree: [1, 3] });
-    // Real Java saves keep 8 convenience flags; the web game has 7 milestones.
+    // Both games now keep all eight collection reward flags (ProMax).
     expect(save.convenienceRewardsClaimed).toEqual([
       true,
+      false,
       false,
       false,
       false,
@@ -113,7 +114,6 @@ describe("importJavaSave (Java online save → web save)", () => {
     const { save, dropped } = result;
     expect(save.inventory.items["7777"]).toBeUndefined();
     expect(save.inventory.items["9003"]).toBe(1);
-    expect(save.inventory.equipment).not.toContain(6000);
     expect(save.inventory.specials).not.toContain(8066);
     expect(save.meta?.fashion.owned).toEqual(["FASH-BASE-NEIL"]);
     expect(save.meta?.fashion.selected).toBe("FASH-BASE-NEIL");
@@ -122,14 +122,14 @@ describe("importJavaSave (Java online save → web save)", () => {
     expect(dropped).toEqual(
       expect.arrayContaining([
         "vật phẩm 7777 x16",
-        "trang bị 6000",
         "vật phẩm đặc biệt 8066",
         "trang phục FASH-NOT-IN-WEB-A00",
       ]),
     );
     // What the web game has is kept.
     expect(save.inventory.items["0"]).toBe(1);
-    expect(save.inventory.equipment).toEqual([5, 6, 10, 0, 1, 11]);
+    // Long Vương Hộ Phù (6000) is a web item now (ProMax).
+    expect(save.inventory.equipment).toEqual([5, 6, 10, 0, 1, 11, 6000]);
   });
 
   it("treats a save still inside the opening as nothing to continue", () => {

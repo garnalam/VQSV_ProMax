@@ -46,6 +46,11 @@ export type NpcService = {
   runtime?: string;
   /** `LeitaTempleEscort`: after the line, the hero is taken to `[scene, room, x, y, direction]`. */
   transport?: number[];
+  /**
+   * Web-only (owner 2026-11-15): in a cloud room an NPC with nothing else to say takes the hero back
+   * to the room's entrance and lays the clouds out as they started.
+   */
+  cloudReturn?: boolean;
 };
 
 /**

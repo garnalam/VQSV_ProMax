@@ -181,6 +181,10 @@ export const ENTRY_COMPLETES: Readonly<Record<string, readonly EntryCompletion[]
   // `BlcC4Runtime.reconcileReturnPrerequisite`: the U Linh badge (9:7:g4) lifts 7:1's barrier
   // (7:1:g1) and closes its op15 link (7:1:g0).
   "7:1": [{ when: ref(9, 7, 4), complete: [ref(7, 1, 1), ref(7, 1, 0)] }],
+  // Web-only save repair: before the gym's side exit was ported, a hero could leave Niêm Thổ Đạo
+  // Quán with the leader beaten (9:2:g1) and never cross the soldier's rect (4:5:g12), so the
+  // airship base (4:8:g0, op15 [4,5,12]) stayed silent on task 23. Arriving there closes it.
+  "4:8": [{ when: ref(9, 2, 1), complete: [ref(4, 5, 12)] }],
 };
 
 /** Doors a runtime keeps shut until a group is complete (`complete(...) && tryTransition(...)`). */

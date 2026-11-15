@@ -43,6 +43,7 @@ const {
   GAME_MENU_SCROLLBAR,
   MENU_LABELS,
   MENU_ROW_BAG,
+  MENU_ROW_BONDING_TOWER,
   MENU_ROW_PET,
   MENU_ROW_RECORD,
   MENU_ROW_SAVE,
@@ -113,6 +114,73 @@ const freeWorld = (): SessionStart => ({
 });
 
 describe("campaign service wiring", () => {
+  it("opens the next tower floor after a real win and saves the original roster", async () => {
+    const { host, saves, repository } = session(freeWorld()),
+      world = host.world!;
+    const pet = world.pets[0];
+    Object.assign(pet, {
+      level: 100,
+      quality: 5,
+      currentHp: 1,
+      skillIds: [40],
+      skillPp: [1],
+    });
+    const before = host.snapshot(world);
+    host.panel.open();
+    host.panel.selected = MENU_ROW_BONDING_TOWER;
+    host.step(["confirm"]);
+    expect(host.panel.mode).toBe("bondingTower");
+    host.step(["confirm"]);
+    expect(world.bondingTowerBattleActive).toBe(true);
+    for (let tick = 0; tick < 6000 && world.bondingTowerBattleActive; tick++)
+      host.step(["confirm"]);
+    expect(world.bondingTowerBattleActive).toBe(false);
+    expect(host.panel.towerSource.view()?.floors[1].status).toBe("first");
+    await saves.flush();
+    const saved = (await repository.load())!;
+    expect(saved.meta?.tower).toMatchObject({ highest: 1, fragments: 2, hearts: 0 });
+    expect(saved.pets).toEqual(before.pets);
+    expect(saved.currency).toEqual(before.currency);
+  });
+
+  it("persists tower currency, daily claims and an individual pet's bond together", async () => {
+    const { host, saves, repository } = session(freeWorld()),
+      world = host.world!,
+      tower = host.panel.towerSource;
+    expect(tower.view()).toMatchObject({ highest: 0, hearts: 0 });
+    expect(tower.view()?.floors).toHaveLength(200);
+    expect(tower.challenge(2)).toBe("Tầng chưa mở.");
+    world.meta.tower = {
+      highest: 10,
+      fragments: 20,
+      hearts: 0,
+      day: 0,
+      claims: [],
+      repeats: 0,
+      sweeps: 0,
+    };
+    world.currency.badges = 20;
+    expect(tower.sweep()).toBeNull();
+    expect(tower.sweep()).toBeNull();
+    expect(tower.craft(1)).toBeNull();
+    expect(tower.nurture(0, 3)).toBeNull();
+    await saves.flush();
+
+    const saved = (await repository.load())!;
+    expect(saved.currency?.badges).toBe(0);
+    expect(saved.pets[0].towerBond).toBe(3);
+    expect(saved.meta?.tower).toMatchObject({
+      highest: 10,
+      hearts: 0,
+      fragments: 16,
+      repeats: 10,
+      sweeps: 2,
+    });
+    const resumed = session({ kind: "resume", save: saved }).host;
+    expect(resumed.panel.towerSource.view()?.pets[0].bond).toBe(3);
+    expect(resumed.panel.towerSource.view()?.sweep.canSweep).toBe(false);
+  });
+
   it("binds shop, daily badge, pet bank and incubator to the live world instead of stubs", () => {
     const { host } = session(freeWorld()),
       world = host.world!;
@@ -492,9 +560,12 @@ describe("free-world HUD (WorldUi, talk prompt)", () => {
     const world = host.world!,
       npc = world.actors.get(49)!;
     expect(world.talkPrompt).toBeNull();
+    // Both 16x16 masks, the hero's 4 px ahead: he reaches her from right below (20 px), not from 24.
     world.player.x = npc.x;
-    world.player.y = npc.y + 22;
+    world.player.y = npc.y + 24;
     world.player.direction = 2;
+    expect(world.talkPrompt).toBeNull();
+    world.player.y = npc.y + 20;
     expect(world.talkPrompt).toEqual({ actorId: 49, x: npc.x, y: npc.y - 40 });
     world.player.direction = 0;
     expect(world.talkPrompt).toBeNull();
@@ -972,6 +1043,27 @@ describe("free-world HUD (WorldUi, talk prompt)", () => {
     expect(world.pets[0].heldEquipmentId).toBe(-1);
   });
 
+  it("Vật phẩm trang sức leaves the team charms out, except one a pet still wears", () => {
+    const { host } = session(freeWorld());
+    host.step([]);
+    const world = host.world!;
+    // Pet 1 comes from an old save that put Nọc độc công kích (a Bùa hộ trận) on it.
+    world.pets.push({ ...world.pets[0], slot: 1, speciesId: 210, level: 5, heldEquipmentId: 5040 });
+    world.bag.equipment.push(0, 5042);
+    host.step(["back"]);
+    for (let i = 0; i < MENU_ROW_PET; i++) host.step(["down"]);
+    host.step(["confirm"]);
+    host.step(["confirm"]);
+    host.step(["down"]);
+    host.step(["down"]);
+    host.step(["confirm"]);
+    expect(host.panel.petChoiceView!.rows.map((row) => row.id)).toEqual([0]);
+    expect(host.panel.petSource.equipChoiceRows(1).map((row) => [row.id, row.value])).toEqual([
+      [0, ""],
+      [5040, "Đã mang theo"],
+    ]);
+  });
+
   it("Đồ giám: record.ui asks for the pet book, then petmap.ui and badge.ui navigate as JavaSE", () => {
     const { host } = session(freeWorld());
     host.step([]);
@@ -1236,5 +1328,59 @@ describe("GameplayHost story director", () => {
     // The challenge is fought now, so the ladder does not end here.
     expect(host.director?.atFrontier).toBe(false);
     expect(host.director?.log.main).toBe(1);
+  });
+});
+
+describe("the task card after the Liệt Hỏa ending (Cầu Vồng quest rows)", () => {
+  const finished = (node: string | undefined, events: Record<string, number>) => {
+    const base = scene1Save({
+      location: { sceneId: 1, roomIndex: 1, x: 200, y: 190, direction: 3 },
+      owner: SCENE1_RESUME.bunnyReturnRoom0,
+      bunnyCaught: true,
+      eventStates: { "1:1:0": 3, ...events },
+      pets: [{ speciesId: 68, level: 70, quality: 2 }],
+    });
+    return {
+      kind: "resume" as const,
+      save: {
+        ...base,
+        progress: { mainTaskProgress: 48 },
+        story: node ? { ...base.story, quest: { node } } : base.story,
+      },
+    } as SessionStart;
+  };
+  const cauVong = { "98:6:100": 3, "98:2:101": 3, "98:44:100": 3, "98:67:1": 3 };
+  const titles = (host: InstanceType<typeof GameplayHost>, tab: 0 | 1) =>
+    host.panel.taskSource.rows(tab).map((row) => row.title);
+
+  it("a save resumed mid-finale catches up to task 48 and lists the Cầu Vồng rows", () => {
+    const { host } = session(finished("co-dai-than-dien", { ...cauVong, "1:2:4": 3 }));
+    host.step([]);
+    expect([host.director?.node.id, host.director?.mainTask]).toEqual([
+      "huan-luyen-su-xuat-sac",
+      48,
+    ]);
+    expect(host.world?.sceneId).toBe(1);
+    const main = titles(host, 0);
+    // Task 49's row is Hoàng Kim Chương's progress card (ProMax).
+    expect(main[48]).toBe("Hoàng Kim Chương");
+    expect(main.slice(49)).toEqual([
+      // Chapter 1 done (6:100); chapter 2 open, the rest wait for their opening flag.
+      "Cầu Vồng 1 — Mở đầu",
+      "Cầu Vồng 2 — Học viện",
+    ]);
+    expect(host.panel.taskSource.rows(0)[47].completed).toBe(true);
+    expect(titles(host, 1)).toEqual([
+      "Nho nhỏ — cho Tiểu Tiểu xem pet",
+      "Khu phụ — Nhất Hôi và Thuấn",
+      "Trang viên — trứng Kim Loại",
+    ]);
+  });
+
+  it("once op45 announced task 48 (the Cầu Vồng portal's gate) the card follows it", () => {
+    const { host } = session(finished(undefined, cauVong));
+    host.step([]);
+    expect(titles(host, 0)).toContain("Cầu Vồng 1 — Mở đầu");
+    expect(titles(host, 1)).toContain("Khu phụ — Nhất Hôi và Thuấn");
   });
 });

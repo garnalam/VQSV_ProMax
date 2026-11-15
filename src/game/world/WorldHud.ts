@@ -1,3 +1,4 @@
+import type { Corner } from "../../core/Viewport";
 import type { SourceUiLayout } from "../../rendering/SourceUiLayout";
 
 /**
@@ -104,11 +105,27 @@ export class WorldHud {
   }
 
   /** `buttonAt`, in Java's order: toggle, speed box, the open shortcuts, then the two plates. */
-  buttonAt(layout: SourceUiLayout, x: number, y: number): HudButton {
+  /**
+   * `(x, y)` is a canvas point; `shift` is where each corner's controls were drawn (`cornerShift`:
+   * none in portrait), so every button is tested in its own 240x320 layout coordinates.
+   */
+  buttonAt(
+    layout: SourceUiLayout,
+    px: number,
+    py: number,
+    shift: (corner: Corner) => { x: number; y: number } = () => ({ x: 0, y: 0 }),
+  ): HudButton {
+    const at = (corner: Corner) => {
+      const d = shift(corner);
+      return { x: px - d.x, y: py - d.y };
+    };
+    let { x, y } = at("bl");
     const t = SHORTCUT_TOGGLE;
     if (x >= t.x && x <= t.x + t.w && y >= t.y && y <= t.y + t.h) return "toggle";
+    ({ x, y } = at("tr"));
     const s = SPEED_CHECKBOX.hit;
     if (x >= s.x0 && x <= s.x1 && y >= s.y0 && y <= s.y1) return "speed";
+    ({ x, y } = at("bl"));
     if (this.shortcutsOpen)
       for (const shortcut of SHORTCUTS)
         if (
@@ -116,6 +133,7 @@ export class WorldHud {
         )
           return shortcut.button;
     if (widgetHit(layout, 7, x, y, 1, 303, 18, 17)) return "system";
+    ({ x, y } = at("br"));
     if (widgetHit(layout, 5, x, y, 222, 303, 16, 17) || (x >= 188 && y >= 288)) return "menu";
     return "none";
   }

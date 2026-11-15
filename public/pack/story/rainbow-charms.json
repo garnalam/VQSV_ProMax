@@ -1,1 +1,899 @@
-{"profileVersion":"rainbow-charms-v1","charms":[{"runtimeId":5037,"stableKey":"CV-ITEM-0-37","name":"Cao cấp trị liệu","slot":"SURVIVAL","mechanic":"EMERGENCY_HEAL","species":-1,"badgeUnlock":0,"tierValues":[10,20,30,40,50],"craft":{"money":5000,"badgesRequired":0,"materials":[[12,5],[15,1]]},"upgrades":[{"money":2000,"badgesRequired":2,"materials":[[12,3]]},{"money":5000,"badgesRequired":4,"materials":[[12,5],[13,1]]},{"money":12000,"badgesRequired":6,"materials":[[13,2],[15,1]]},{"money":30000,"badgesRequired":8,"materials":[[14,1],[16,1]]}]},{"runtimeId":5039,"stableKey":"CV-ITEM-0-39","name":"Kỹ năng Phong Bế","slot":"TACTICAL","mechanic":"SKILL_SEAL","species":-1,"badgeUnlock":4,"tierValues":[40,55,70,85,100],"craft":{"money":7500,"badgesRequired":4,"materials":[[12,5],[13,1]]},"upgrades":[{"money":2000,"badgesRequired":2,"materials":[[12,3]]},{"money":5000,"badgesRequired":4,"materials":[[12,5],[13,1]]},{"money":12000,"badgesRequired":6,"materials":[[13,2],[15,1]]},{"money":30000,"badgesRequired":8,"materials":[[14,1],[16,1]]}]},{"runtimeId":5040,"stableKey":"CV-ITEM-0-40","name":"Nọc độc công kích","slot":"TACTICAL","mechanic":"CORROSION_POWER","species":0,"badgeUnlock":0,"tierValues":[10,20,30,40,50],"craft":{"money":5000,"badgesRequired":0,"materials":[[3000,4],[3001,1],[12,2]]},"upgrades":[{"money":2000,"badgesRequired":2,"materials":[[3000,3],[12,2]]},{"money":5000,"badgesRequired":4,"materials":[[3000,5],[3001,1],[12,3]]},{"money":12000,"badgesRequired":6,"materials":[[3001,3],[13,1]]},{"money":30000,"badgesRequired":8,"materials":[[3001,5],[3002,1],[14,1]]}]},{"runtimeId":5041,"stableKey":"CV-ITEM-0-41","name":"Răng nanh răng nhọn","slot":"TACTICAL","mechanic":"PARALYSIS_DURATION","species":3,"badgeUnlock":0,"tierValues":[40,55,70,85,100],"craft":{"money":5000,"badgesRequired":0,"materials":[[3009,4],[3010,1],[12,2]]},"upgrades":[{"money":2000,"badgesRequired":2,"materials":[[3009,3],[12,2]]},{"money":5000,"badgesRequired":4,"materials":[[3009,5],[3010,1],[12,3]]},{"money":12000,"badgesRequired":6,"materials":[[3010,3],[13,1]]},{"money":30000,"badgesRequired":8,"materials":[[3010,5],[3011,1],[14,1]]}]},{"runtimeId":5042,"stableKey":"CV-ITEM-0-42","name":"Thép thiết cốt","slot":"SURVIVAL","mechanic":"METAL_DEFENSE","species":1,"badgeUnlock":0,"tierValues":[6,12,18,24,30],"craft":{"money":5000,"badgesRequired":0,"materials":[[3003,4],[3004,1],[12,2]]},"upgrades":[{"money":2000,"badgesRequired":2,"materials":[[3003,3],[12,2]]},{"money":5000,"badgesRequired":4,"materials":[[3003,5],[3004,1],[12,3]]},{"money":12000,"badgesRequired":6,"materials":[[3004,3],[13,1]]},{"money":30000,"badgesRequired":8,"materials":[[3004,5],[3005,1],[14,1]]}]},{"runtimeId":5043,"stableKey":"CV-ITEM-0-43","name":"Tinh thần công kích","slot":"TACTICAL","mechanic":"ENEMY_PP_DRAIN","species":2,"badgeUnlock":0,"tierValues":[10,20,30,40,50],"craft":{"money":5000,"badgesRequired":0,"materials":[[3006,4],[3007,1],[12,2]]},"upgrades":[{"money":2000,"badgesRequired":2,"materials":[[3006,3],[12,2]]},{"money":5000,"badgesRequired":4,"materials":[[3006,5],[3007,1],[12,3]]},{"money":12000,"badgesRequired":6,"materials":[[3007,3],[13,1]]},{"money":30000,"badgesRequired":8,"materials":[[3007,5],[3008,1],[14,1]]}]},{"runtimeId":5044,"stableKey":"CV-ITEM-0-44","name":"Triều tịch năng lượng","slot":"TACTICAL","mechanic":"SELF_PP_REFUND","species":4,"badgeUnlock":0,"tierValues":[10,20,30,40,50],"craft":{"money":5000,"badgesRequired":0,"materials":[[3012,4],[3013,1],[12,2]]},"upgrades":[{"money":2000,"badgesRequired":2,"materials":[[3012,3],[12,2]]},{"money":5000,"badgesRequired":4,"materials":[[3012,5],[3013,1],[12,3]]},{"money":12000,"badgesRequired":6,"materials":[[3013,3],[13,1]]},{"money":30000,"badgesRequired":8,"materials":[[3013,5],[3014,1],[14,1]]}]},{"runtimeId":5047,"stableKey":"CV-ITEM-0-47","name":"Trọng sinh làm tâm","slot":"SURVIVAL","mechanic":"BATTLE_REVIVE","species":-1,"badgeUnlock":8,"tierValues":[20,40,60,80,100],"craft":{"money":20000,"badgesRequired":8,"materials":[[15,2],[16,1],[14,1]]},"upgrades":[{"money":2000,"badgesRequired":2,"materials":[[12,3]]},{"money":5000,"badgesRequired":4,"materials":[[12,5],[13,1]]},{"money":12000,"badgesRequired":6,"materials":[[13,2],[15,1]]},{"money":30000,"badgesRequired":8,"materials":[[14,1],[16,1]]}]},{"runtimeId":5048,"stableKey":"CV-ITEM-0-48","name":"May mắn ngôi sao","slot":"EXPLORATION","mechanic":"RARE_ENCOUNTER","species":-1,"badgeUnlock":0,"tierValues":[8,16,24,32,40],"craft":{"money":5000,"badgesRequired":0,"materials":[[12,5],[13,1]]},"upgrades":[{"money":2000,"badgesRequired":2,"materials":[[12,3]]},{"money":5000,"badgesRequired":4,"materials":[[12,5],[13,1]]},{"money":12000,"badgesRequired":6,"materials":[[13,2],[15,1]]},{"money":30000,"badgesRequired":8,"materials":[[14,1],[16,1]]}]},{"runtimeId":5050,"stableKey":"CV-ITEM-0-50","name":"Thân hòa thiên sứ","slot":"EXPLORATION","mechanic":"PREVENT_CAPTURE_FLEE","species":-1,"badgeUnlock":0,"tierValues":[10,20,30,40,50],"craft":{"money":5000,"badgesRequired":0,"materials":[[12,4],[15,1]]},"upgrades":[{"money":2000,"badgesRequired":2,"materials":[[12,3]]},{"money":5000,"badgesRequired":4,"materials":[[12,5],[13,1]]},{"money":12000,"badgesRequired":6,"materials":[[13,2],[15,1]]},{"money":30000,"badgesRequired":8,"materials":[[14,1],[16,1]]}]},{"runtimeId":5051,"stableKey":"CV-ITEM-0-51","name":"Chạy trối chết chuyên gia","slot":"EXPLORATION","mechanic":"ESCAPE_RETRY","species":-1,"badgeUnlock":0,"tierValues":[20,40,60,80,100],"craft":{"money":5000,"badgesRequired":0,"materials":[[12,4],[13,1]]},"upgrades":[{"money":2000,"badgesRequired":2,"materials":[[12,3]]},{"money":5000,"badgesRequired":4,"materials":[[12,5],[13,1]]},{"money":12000,"badgesRequired":6,"materials":[[13,2],[15,1]]},{"money":30000,"badgesRequired":8,"materials":[[14,1],[16,1]]}]},{"runtimeId":5057,"stableKey":"CV-ITEM-0-57","name":"Thế thân tượng gỗ","slot":"SURVIVAL","mechanic":"EVASION","species":-1,"badgeUnlock":6,"tierValues":[8,16,24,32,40],"craft":{"money":7500,"badgesRequired":6,"materials":[[12,5],[15,1]]},"upgrades":[{"money":2000,"badgesRequired":2,"materials":[[12,3]]},{"money":5000,"badgesRequired":4,"materials":[[12,5],[13,1]]},{"money":12000,"badgesRequired":6,"materials":[[13,2],[15,1]]},{"money":30000,"badgesRequired":8,"materials":[[14,1],[16,1]]}]}],"materialNames":{"12":"Tinh Nguyên Thạch","13":"Thiên Giới Tinh Thạch","14":"Thiên Địa Thần Thạch","15":"Hồn Tinh Thạch","16":"Quỷ Thần Tinh Thạch","3000":"Thụ chướng thạch","3001":"Chu quả","3002":"Cổ thụ chi hạch","3003":"Kim Tinh Thạch","3004":"Bạch kim","3005":"Tinh khiết thủy tinh","3006":"Cách không thạch","3007":"Thiên vũ","3008":"Bay lượn thiên thạch","3009":"Cứng cỏi thạch","3010":"Thú hồn","3011":"Vương chi chứng minh","3012":"Bong bóng","3013":"Biển sâu san hô","3014":"Cổ kình chi tâm"},"petSpecies":{"0":2,"1":1,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3,"8":3,"9":3,"10":3,"11":3,"12":3,"13":3,"14":3,"15":2,"16":4,"17":4,"18":4,"19":0,"20":0,"21":0,"22":0,"23":0,"24":0,"25":0,"26":3,"27":3,"28":1,"29":0,"30":0,"31":3,"32":1,"33":3,"34":3,"35":3,"36":3,"37":1,"38":1,"39":1,"40":1,"41":1,"42":1,"43":3,"44":3,"45":3,"46":3,"47":3,"48":3,"49":3,"50":3,"51":4,"52":4,"53":4,"54":2,"55":4,"56":4,"57":4,"58":4,"59":4,"60":1,"61":1,"62":4,"63":1,"64":3,"65":3,"66":3,"67":3,"68":3,"69":3,"70":2,"71":2,"72":3,"73":3,"74":2,"75":3,"76":0,"77":0,"78":0,"79":3,"80":3,"81":3,"82":2,"83":2,"84":1,"85":1,"86":1,"87":3,"88":4,"89":2,"90":2,"91":2,"92":2,"93":2,"94":3,"95":2,"96":2,"97":1,"98":1,"99":2,"100":0,"101":0,"102":0,"103":0,"104":0,"105":0,"106":0,"107":0,"108":0,"109":0,"110":0,"111":0,"112":0,"113":0,"114":0,"115":0,"116":0,"117":1,"118":1,"119":1,"120":1,"121":1,"122":1,"123":1,"124":1,"125":1,"126":1,"127":1,"128":1,"129":1,"130":1,"131":1,"132":1,"133":1,"134":1,"135":1,"136":2,"137":2,"138":2,"139":2,"140":2,"141":2,"142":2,"143":2,"144":2,"145":2,"146":2,"147":2,"148":2,"149":2,"150":2,"151":2,"152":3,"153":3,"154":3,"155":3,"156":3,"157":3,"158":3,"159":3,"160":3,"161":3,"162":3,"163":3,"164":3,"165":3,"166":3,"167":3,"168":4,"169":4,"170":4,"171":4,"172":4,"173":4,"174":4,"175":4,"176":4,"177":4,"178":4,"179":4,"180":4,"181":4,"182":4,"183":4,"184":3,"185":2,"186":2,"187":0,"188":0,"189":0,"190":1,"191":1,"192":1,"193":2,"194":2,"195":2,"196":3,"197":3,"198":3,"199":4,"200":4,"201":4,"274":0,"275":3,"276":3,"277":3,"279":1}}
+{
+  "profileVersion": "rainbow-charms-v1",
+  "charms": [
+    {
+      "runtimeId": 5037,
+      "stableKey": "CV-ITEM-0-37",
+      "name": "Cao cấp trị liệu",
+      "slot": "SURVIVAL",
+      "mechanic": "EMERGENCY_HEAL",
+      "species": -1,
+      "badgeUnlock": 0,
+      "tierValues": [10, 20, 30, 40, 50],
+      "craft": {
+        "money": 5000,
+        "badgesRequired": 0,
+        "materials": [
+          [12, 5],
+          [15, 1]
+        ]
+      },
+      "upgrades": [
+        { "money": 2000, "badgesRequired": 2, "materials": [[12, 3]] },
+        {
+          "money": 5000,
+          "badgesRequired": 4,
+          "materials": [
+            [12, 5],
+            [13, 1]
+          ]
+        },
+        {
+          "money": 12000,
+          "badgesRequired": 6,
+          "materials": [
+            [13, 2],
+            [15, 1]
+          ]
+        },
+        {
+          "money": 30000,
+          "badgesRequired": 8,
+          "materials": [
+            [14, 1],
+            [16, 1]
+          ]
+        }
+      ]
+    },
+    {
+      "runtimeId": 5039,
+      "stableKey": "CV-ITEM-0-39",
+      "name": "Kỹ năng Phong Bế",
+      "slot": "TACTICAL",
+      "mechanic": "SKILL_SEAL",
+      "species": -1,
+      "badgeUnlock": 4,
+      "tierValues": [40, 55, 70, 85, 100],
+      "craft": {
+        "money": 7500,
+        "badgesRequired": 4,
+        "materials": [
+          [12, 5],
+          [13, 1]
+        ]
+      },
+      "upgrades": [
+        { "money": 2000, "badgesRequired": 2, "materials": [[12, 3]] },
+        {
+          "money": 5000,
+          "badgesRequired": 4,
+          "materials": [
+            [12, 5],
+            [13, 1]
+          ]
+        },
+        {
+          "money": 12000,
+          "badgesRequired": 6,
+          "materials": [
+            [13, 2],
+            [15, 1]
+          ]
+        },
+        {
+          "money": 30000,
+          "badgesRequired": 8,
+          "materials": [
+            [14, 1],
+            [16, 1]
+          ]
+        }
+      ]
+    },
+    {
+      "runtimeId": 5040,
+      "stableKey": "CV-ITEM-0-40",
+      "name": "Nọc độc công kích",
+      "slot": "TACTICAL",
+      "mechanic": "CORROSION_POWER",
+      "species": 0,
+      "badgeUnlock": 0,
+      "tierValues": [10, 20, 30, 40, 50],
+      "craft": {
+        "money": 5000,
+        "badgesRequired": 0,
+        "materials": [
+          [3000, 4],
+          [3001, 1],
+          [12, 2]
+        ]
+      },
+      "upgrades": [
+        {
+          "money": 2000,
+          "badgesRequired": 2,
+          "materials": [
+            [3000, 3],
+            [12, 2]
+          ]
+        },
+        {
+          "money": 5000,
+          "badgesRequired": 4,
+          "materials": [
+            [3000, 5],
+            [3001, 1],
+            [12, 3]
+          ]
+        },
+        {
+          "money": 12000,
+          "badgesRequired": 6,
+          "materials": [
+            [3001, 3],
+            [13, 1]
+          ]
+        },
+        {
+          "money": 30000,
+          "badgesRequired": 8,
+          "materials": [
+            [3001, 5],
+            [3002, 1],
+            [14, 1]
+          ]
+        }
+      ]
+    },
+    {
+      "runtimeId": 5041,
+      "stableKey": "CV-ITEM-0-41",
+      "name": "Răng nanh răng nhọn",
+      "slot": "TACTICAL",
+      "mechanic": "PARALYSIS_DURATION",
+      "species": 3,
+      "badgeUnlock": 0,
+      "tierValues": [40, 55, 70, 85, 100],
+      "craft": {
+        "money": 5000,
+        "badgesRequired": 0,
+        "materials": [
+          [3009, 4],
+          [3010, 1],
+          [12, 2]
+        ]
+      },
+      "upgrades": [
+        {
+          "money": 2000,
+          "badgesRequired": 2,
+          "materials": [
+            [3009, 3],
+            [12, 2]
+          ]
+        },
+        {
+          "money": 5000,
+          "badgesRequired": 4,
+          "materials": [
+            [3009, 5],
+            [3010, 1],
+            [12, 3]
+          ]
+        },
+        {
+          "money": 12000,
+          "badgesRequired": 6,
+          "materials": [
+            [3010, 3],
+            [13, 1]
+          ]
+        },
+        {
+          "money": 30000,
+          "badgesRequired": 8,
+          "materials": [
+            [3010, 5],
+            [3011, 1],
+            [14, 1]
+          ]
+        }
+      ]
+    },
+    {
+      "runtimeId": 5042,
+      "stableKey": "CV-ITEM-0-42",
+      "name": "Thép thiết cốt",
+      "slot": "SURVIVAL",
+      "mechanic": "METAL_DEFENSE",
+      "species": 1,
+      "badgeUnlock": 0,
+      "tierValues": [6, 12, 18, 24, 30],
+      "craft": {
+        "money": 5000,
+        "badgesRequired": 0,
+        "materials": [
+          [3003, 4],
+          [3004, 1],
+          [12, 2]
+        ]
+      },
+      "upgrades": [
+        {
+          "money": 2000,
+          "badgesRequired": 2,
+          "materials": [
+            [3003, 3],
+            [12, 2]
+          ]
+        },
+        {
+          "money": 5000,
+          "badgesRequired": 4,
+          "materials": [
+            [3003, 5],
+            [3004, 1],
+            [12, 3]
+          ]
+        },
+        {
+          "money": 12000,
+          "badgesRequired": 6,
+          "materials": [
+            [3004, 3],
+            [13, 1]
+          ]
+        },
+        {
+          "money": 30000,
+          "badgesRequired": 8,
+          "materials": [
+            [3004, 5],
+            [3005, 1],
+            [14, 1]
+          ]
+        }
+      ]
+    },
+    {
+      "runtimeId": 5043,
+      "stableKey": "CV-ITEM-0-43",
+      "name": "Tinh thần công kích",
+      "slot": "TACTICAL",
+      "mechanic": "ENEMY_PP_DRAIN",
+      "species": 2,
+      "badgeUnlock": 0,
+      "tierValues": [10, 20, 30, 40, 50],
+      "craft": {
+        "money": 5000,
+        "badgesRequired": 0,
+        "materials": [
+          [3006, 4],
+          [3007, 1],
+          [12, 2]
+        ]
+      },
+      "upgrades": [
+        {
+          "money": 2000,
+          "badgesRequired": 2,
+          "materials": [
+            [3006, 3],
+            [12, 2]
+          ]
+        },
+        {
+          "money": 5000,
+          "badgesRequired": 4,
+          "materials": [
+            [3006, 5],
+            [3007, 1],
+            [12, 3]
+          ]
+        },
+        {
+          "money": 12000,
+          "badgesRequired": 6,
+          "materials": [
+            [3007, 3],
+            [13, 1]
+          ]
+        },
+        {
+          "money": 30000,
+          "badgesRequired": 8,
+          "materials": [
+            [3007, 5],
+            [3008, 1],
+            [14, 1]
+          ]
+        }
+      ]
+    },
+    {
+      "runtimeId": 5044,
+      "stableKey": "CV-ITEM-0-44",
+      "name": "Triều tịch năng lượng",
+      "slot": "TACTICAL",
+      "mechanic": "SELF_PP_REFUND",
+      "species": 4,
+      "badgeUnlock": 0,
+      "tierValues": [10, 20, 30, 40, 50],
+      "craft": {
+        "money": 5000,
+        "badgesRequired": 0,
+        "materials": [
+          [3012, 4],
+          [3013, 1],
+          [12, 2]
+        ]
+      },
+      "upgrades": [
+        {
+          "money": 2000,
+          "badgesRequired": 2,
+          "materials": [
+            [3012, 3],
+            [12, 2]
+          ]
+        },
+        {
+          "money": 5000,
+          "badgesRequired": 4,
+          "materials": [
+            [3012, 5],
+            [3013, 1],
+            [12, 3]
+          ]
+        },
+        {
+          "money": 12000,
+          "badgesRequired": 6,
+          "materials": [
+            [3013, 3],
+            [13, 1]
+          ]
+        },
+        {
+          "money": 30000,
+          "badgesRequired": 8,
+          "materials": [
+            [3013, 5],
+            [3014, 1],
+            [14, 1]
+          ]
+        }
+      ]
+    },
+    {
+      "runtimeId": 5047,
+      "stableKey": "CV-ITEM-0-47",
+      "name": "Trọng sinh làm tâm",
+      "slot": "SURVIVAL",
+      "mechanic": "BATTLE_REVIVE",
+      "species": -1,
+      "badgeUnlock": 8,
+      "tierValues": [20, 40, 60, 80, 100],
+      "craft": {
+        "money": 20000,
+        "badgesRequired": 8,
+        "materials": [
+          [15, 2],
+          [16, 1],
+          [14, 1]
+        ]
+      },
+      "upgrades": [
+        { "money": 2000, "badgesRequired": 2, "materials": [[12, 3]] },
+        {
+          "money": 5000,
+          "badgesRequired": 4,
+          "materials": [
+            [12, 5],
+            [13, 1]
+          ]
+        },
+        {
+          "money": 12000,
+          "badgesRequired": 6,
+          "materials": [
+            [13, 2],
+            [15, 1]
+          ]
+        },
+        {
+          "money": 30000,
+          "badgesRequired": 8,
+          "materials": [
+            [14, 1],
+            [16, 1]
+          ]
+        }
+      ]
+    },
+    {
+      "runtimeId": 5048,
+      "stableKey": "CV-ITEM-0-48",
+      "name": "May mắn ngôi sao",
+      "slot": "EXPLORATION",
+      "mechanic": "RARE_ENCOUNTER",
+      "species": -1,
+      "badgeUnlock": 0,
+      "tierValues": [8, 16, 24, 32, 40],
+      "craft": {
+        "money": 5000,
+        "badgesRequired": 0,
+        "materials": [
+          [12, 5],
+          [13, 1]
+        ]
+      },
+      "upgrades": [
+        { "money": 2000, "badgesRequired": 2, "materials": [[12, 3]] },
+        {
+          "money": 5000,
+          "badgesRequired": 4,
+          "materials": [
+            [12, 5],
+            [13, 1]
+          ]
+        },
+        {
+          "money": 12000,
+          "badgesRequired": 6,
+          "materials": [
+            [13, 2],
+            [15, 1]
+          ]
+        },
+        {
+          "money": 30000,
+          "badgesRequired": 8,
+          "materials": [
+            [14, 1],
+            [16, 1]
+          ]
+        }
+      ]
+    },
+    {
+      "runtimeId": 5050,
+      "stableKey": "CV-ITEM-0-50",
+      "name": "Thân hòa thiên sứ",
+      "slot": "EXPLORATION",
+      "mechanic": "PREVENT_CAPTURE_FLEE",
+      "species": -1,
+      "badgeUnlock": 0,
+      "tierValues": [10, 20, 30, 40, 50],
+      "craft": {
+        "money": 5000,
+        "badgesRequired": 0,
+        "materials": [
+          [12, 4],
+          [15, 1]
+        ]
+      },
+      "upgrades": [
+        { "money": 2000, "badgesRequired": 2, "materials": [[12, 3]] },
+        {
+          "money": 5000,
+          "badgesRequired": 4,
+          "materials": [
+            [12, 5],
+            [13, 1]
+          ]
+        },
+        {
+          "money": 12000,
+          "badgesRequired": 6,
+          "materials": [
+            [13, 2],
+            [15, 1]
+          ]
+        },
+        {
+          "money": 30000,
+          "badgesRequired": 8,
+          "materials": [
+            [14, 1],
+            [16, 1]
+          ]
+        }
+      ]
+    },
+    {
+      "runtimeId": 5051,
+      "stableKey": "CV-ITEM-0-51",
+      "name": "Chạy trối chết chuyên gia",
+      "slot": "EXPLORATION",
+      "mechanic": "ESCAPE_RETRY",
+      "species": -1,
+      "badgeUnlock": 0,
+      "tierValues": [20, 40, 60, 80, 100],
+      "craft": {
+        "money": 5000,
+        "badgesRequired": 0,
+        "materials": [
+          [12, 4],
+          [13, 1]
+        ]
+      },
+      "upgrades": [
+        { "money": 2000, "badgesRequired": 2, "materials": [[12, 3]] },
+        {
+          "money": 5000,
+          "badgesRequired": 4,
+          "materials": [
+            [12, 5],
+            [13, 1]
+          ]
+        },
+        {
+          "money": 12000,
+          "badgesRequired": 6,
+          "materials": [
+            [13, 2],
+            [15, 1]
+          ]
+        },
+        {
+          "money": 30000,
+          "badgesRequired": 8,
+          "materials": [
+            [14, 1],
+            [16, 1]
+          ]
+        }
+      ]
+    },
+    {
+      "runtimeId": 5057,
+      "stableKey": "CV-ITEM-0-57",
+      "name": "Thế thân tượng gỗ",
+      "slot": "SURVIVAL",
+      "mechanic": "EVASION",
+      "species": -1,
+      "badgeUnlock": 6,
+      "tierValues": [8, 16, 24, 32, 40],
+      "craft": {
+        "money": 7500,
+        "badgesRequired": 6,
+        "materials": [
+          [12, 5],
+          [15, 1]
+        ]
+      },
+      "upgrades": [
+        { "money": 2000, "badgesRequired": 2, "materials": [[12, 3]] },
+        {
+          "money": 5000,
+          "badgesRequired": 4,
+          "materials": [
+            [12, 5],
+            [13, 1]
+          ]
+        },
+        {
+          "money": 12000,
+          "badgesRequired": 6,
+          "materials": [
+            [13, 2],
+            [15, 1]
+          ]
+        },
+        {
+          "money": 30000,
+          "badgesRequired": 8,
+          "materials": [
+            [14, 1],
+            [16, 1]
+          ]
+        }
+      ]
+    }
+  ],
+  "materialNames": {
+    "12": "Tinh Nguyên Thạch",
+    "13": "Thiên Giới Tinh Thạch",
+    "14": "Thiên Địa Thần Thạch",
+    "15": "Hồn Tinh Thạch",
+    "16": "Quỷ Thần Tinh Thạch",
+    "3000": "Thụ chướng thạch",
+    "3001": "Chu quả",
+    "3002": "Cổ thụ chi hạch",
+    "3003": "Kim Tinh Thạch",
+    "3004": "Bạch kim",
+    "3005": "Tinh khiết thủy tinh",
+    "3006": "Cách không thạch",
+    "3007": "Thiên vũ",
+    "3008": "Bay lượn thiên thạch",
+    "3009": "Cứng cỏi thạch",
+    "3010": "Thú hồn",
+    "3011": "Vương chi chứng minh",
+    "3012": "Bong bóng",
+    "3013": "Biển sâu san hô",
+    "3014": "Cổ kình chi tâm"
+  },
+  "petSpecies": {
+    "0": 2,
+    "1": 1,
+    "2": 3,
+    "3": 3,
+    "4": 3,
+    "5": 3,
+    "6": 3,
+    "7": 3,
+    "8": 3,
+    "9": 3,
+    "10": 3,
+    "11": 3,
+    "12": 3,
+    "13": 3,
+    "14": 3,
+    "15": 2,
+    "16": 4,
+    "17": 4,
+    "18": 4,
+    "19": 0,
+    "20": 0,
+    "21": 0,
+    "22": 0,
+    "23": 0,
+    "24": 0,
+    "25": 0,
+    "26": 3,
+    "27": 3,
+    "28": 1,
+    "29": 0,
+    "30": 0,
+    "31": 3,
+    "32": 1,
+    "33": 3,
+    "34": 3,
+    "35": 3,
+    "36": 3,
+    "37": 1,
+    "38": 1,
+    "39": 1,
+    "40": 1,
+    "41": 1,
+    "42": 1,
+    "43": 3,
+    "44": 3,
+    "45": 3,
+    "46": 3,
+    "47": 3,
+    "48": 3,
+    "49": 3,
+    "50": 3,
+    "51": 4,
+    "52": 4,
+    "53": 4,
+    "54": 2,
+    "55": 4,
+    "56": 4,
+    "57": 4,
+    "58": 4,
+    "59": 4,
+    "60": 1,
+    "61": 1,
+    "62": 4,
+    "63": 1,
+    "64": 3,
+    "65": 3,
+    "66": 3,
+    "67": 3,
+    "68": 3,
+    "69": 3,
+    "70": 2,
+    "71": 2,
+    "72": 3,
+    "73": 3,
+    "74": 2,
+    "75": 3,
+    "76": 0,
+    "77": 0,
+    "78": 0,
+    "79": 3,
+    "80": 3,
+    "81": 3,
+    "82": 2,
+    "83": 2,
+    "84": 1,
+    "85": 1,
+    "86": 1,
+    "87": 3,
+    "88": 4,
+    "89": 2,
+    "90": 2,
+    "91": 2,
+    "92": 2,
+    "93": 2,
+    "94": 3,
+    "95": 2,
+    "96": 2,
+    "97": 1,
+    "98": 1,
+    "99": 2,
+    "100": 0,
+    "101": 0,
+    "102": 0,
+    "103": 0,
+    "104": 0,
+    "105": 0,
+    "106": 0,
+    "107": 0,
+    "108": 0,
+    "109": 0,
+    "110": 0,
+    "111": 0,
+    "112": 0,
+    "113": 0,
+    "114": 0,
+    "115": 0,
+    "116": 0,
+    "117": 1,
+    "118": 1,
+    "119": 1,
+    "120": 1,
+    "121": 1,
+    "122": 1,
+    "123": 1,
+    "124": 1,
+    "125": 1,
+    "126": 1,
+    "127": 1,
+    "128": 1,
+    "129": 1,
+    "130": 1,
+    "131": 1,
+    "132": 1,
+    "133": 1,
+    "134": 1,
+    "135": 1,
+    "136": 2,
+    "137": 2,
+    "138": 2,
+    "139": 2,
+    "140": 2,
+    "141": 2,
+    "142": 2,
+    "143": 2,
+    "144": 2,
+    "145": 2,
+    "146": 2,
+    "147": 2,
+    "148": 2,
+    "149": 2,
+    "150": 2,
+    "151": 2,
+    "152": 3,
+    "153": 3,
+    "154": 3,
+    "155": 3,
+    "156": 3,
+    "157": 3,
+    "158": 3,
+    "159": 3,
+    "160": 3,
+    "161": 3,
+    "162": 3,
+    "163": 3,
+    "164": 3,
+    "165": 3,
+    "166": 3,
+    "167": 3,
+    "168": 4,
+    "169": 4,
+    "170": 4,
+    "171": 4,
+    "172": 4,
+    "173": 4,
+    "174": 4,
+    "175": 4,
+    "176": 4,
+    "177": 4,
+    "178": 4,
+    "179": 4,
+    "180": 4,
+    "181": 4,
+    "182": 4,
+    "183": 4,
+    "184": 3,
+    "185": 2,
+    "186": 2,
+    "187": 0,
+    "188": 0,
+    "189": 0,
+    "190": 1,
+    "191": 1,
+    "192": 1,
+    "193": 2,
+    "194": 2,
+    "195": 2,
+    "196": 3,
+    "197": 3,
+    "198": 3,
+    "199": 4,
+    "200": 4,
+    "201": 4,
+    "202": 0,
+    "203": 0,
+    "204": 0,
+    "205": 3,
+    "206": 3,
+    "207": 3,
+    "208": 1,
+    "209": 1,
+    "210": 1,
+    "211": 1,
+    "212": 0,
+    "213": 0,
+    "214": 1,
+    "215": 1,
+    "216": 1,
+    "217": 4,
+    "218": 4,
+    "219": 4,
+    "220": 1,
+    "221": 1,
+    "222": 2,
+    "223": 2,
+    "224": 2,
+    "225": 2,
+    "226": 2,
+    "227": 2,
+    "228": 2,
+    "229": 2,
+    "230": 2,
+    "231": 2,
+    "232": 2,
+    "233": 2,
+    "234": 2,
+    "235": 2,
+    "236": 2,
+    "237": 2,
+    "238": 3,
+    "239": 3,
+    "240": 3,
+    "241": 3,
+    "242": 3,
+    "243": 3,
+    "244": 3,
+    "245": 4,
+    "246": 4,
+    "247": 4,
+    "248": 3,
+    "249": 3,
+    "250": 3,
+    "251": 3,
+    "252": 3,
+    "253": 2,
+    "254": 2,
+    "255": 2,
+    "256": 2,
+    "257": 4,
+    "258": 4,
+    "259": 4,
+    "260": 2,
+    "261": 2,
+    "262": 2,
+    "263": 1,
+    "264": 1,
+    "265": 1,
+    "266": 3,
+    "267": 3,
+    "268": 3,
+    "269": 2,
+    "270": 1,
+    "271": 0,
+    "272": 2,
+    "273": 3,
+    "274": 0,
+    "275": 3,
+    "276": 3,
+    "277": 3,
+    "279": 1
+  }
+}

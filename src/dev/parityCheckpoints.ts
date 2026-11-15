@@ -456,8 +456,12 @@ export function battleUiCheckpoint(
  * world starts the group from the decoded catalog and renders the group's own text.
  */
 export function worldEventCheckpoint(screen: NewGameScreen, target: number): void {
+  // Stand 12px into the notice's op13 rect: (190, 300) on the JAR data, lower on the APK's.
+  const rect = screen.host.story.sourceData
+    ?.group(1, 0, 1)
+    ?.records.find((record) => record.opcode === 13)?.short_args;
   const save = scene1Save({
-    location: { sceneId: 1, roomIndex: 0, x: 190, y: 300, direction: 1 },
+    location: { sceneId: 1, roomIndex: 0, x: 190, y: (rect?.[1] ?? 288) + 12, direction: 1 },
     owner: SCENE1_RESUME.bunnyCapture,
     bunnyCaught: false,
     pets: [{ speciesId: 68, level: 7, quality: 2 }],
@@ -2898,5 +2902,7 @@ export function applyUrlParityCheckpoint(screen: NewGameScreen, params: URLSearc
   else if (textCheckpoint !== null) narrationCheckpoint(screen, Number(textCheckpoint));
   else openingCheckpoint(screen);
   if (resume) resumeCheckpoint(screen);
+  // `&interactive=1`: play on from the checkpoint (walk the room, open menus) instead of a still.
+  if (params.get("interactive") === "1") screen.frozen = false;
   return true;
 }

@@ -1035,3 +1035,47 @@ describe("walking the Cầu Vồng chapter's doorways", () => {
     expect(prepared).toContain("98:9");
   });
 });
+
+describe("world pointer actor selection", () => {
+  const rig = () => {
+    const base = new WorldRuntime(data, sources).snapshot();
+    const runtime = new WorldRuntime(
+      data,
+      {
+        ...sources,
+        pointerMask: () => [-12, -32, 24, 32] as const,
+      },
+      {
+        ...base,
+        location: { sceneId: 1, roomIndex: 0, x: 200, y: 190, direction: DIRECTION_UP },
+        eventStates: {
+          ...base.eventStates,
+          "1:1:0": EVENT_STATE_COMPLETE,
+          "1:0:1": EVENT_STATE_COMPLETE,
+        },
+      },
+    );
+    settleLoading(runtime);
+    return runtime;
+  };
+
+  it("does not turn an empty-map tap into confirm on the faced Elder", () => {
+    const runtime = rig();
+    runtime.pointer(0, 0);
+    expect(runtime.eventScene).toBeNull();
+    runtime.tick(["confirm"]);
+    expect(runtime.eventScene?.program.id).toBe("world:1:0:2");
+  });
+
+  it("selects a nearby actor under the screen tap even when the hero faces away", () => {
+    const runtime = rig(),
+      elder = runtime.actors.get(data.elderActor)!;
+    runtime.player.x = elder.x + 40;
+    runtime.player.y = elder.y;
+    runtime.player.direction = DIRECTION_LEFT;
+    runtime.cameraX = 80;
+    runtime.cameraY = 70;
+    runtime.pointer(elder.x - runtime.cameraX, elder.y - 8 - runtime.cameraY);
+    expect(runtime.eventScene?.program.id).toBe("world:1:0:2");
+  });
+});

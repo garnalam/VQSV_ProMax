@@ -1,4 +1,6 @@
 import { winResultIndexWithCapture } from "./BattleOutcomeEngine";
+import { battleSeatTables } from "./BattleSeats";
+import { landPetStateButtons } from "./BattleLandscape";
 import type { SkillFxDraw } from "./SkillFx";
 import type { SourceActorPlacement, SourceSpecialPlacement } from "./SourceSkillAnimation";
 import { StateOneLEffectTracker, type StateOneLEntry } from "./StateOneLEffect";
@@ -9,6 +11,7 @@ import type { BattleContext } from "../story/SourceOpcodeInterpreter";
 import {
   BattleDefinitionRegistry,
   battleWindowContains,
+  DEFAULT_CAPTURE_ANIMATION,
   type BattleDefinition,
   type BattlePhaseDefinition,
   type BattleSide,
@@ -55,6 +58,11 @@ import {
   type BattleEvent,
   type BattleOutcome,
   CATCH_NOT_ALLOWED_TEXT,
+  ITEMS_NOT_ALLOWED_TEXT,
+  CATCH_FAILED_TEXT,
+  CATCH_RELEASED_FULL_TEXT,
+  CATCH_SENT_BANK_TEXT,
+  CATCH_SUCCESS_TEXT,
   type Seat,
 } from "./engine/BattleTypes";
 
@@ -376,6 +384,7 @@ export class BattleRuntime {
       maxHp: unit.maxHp(),
       // `drawBattleSpriteAtSource(..., unit.nature)`: 7..9 draws the shiny palette.
       nature: setup.nature,
+      shinyColor: setup.shinyColor,
     };
   }
   /**
@@ -735,13 +744,10 @@ export class BattleRuntime {
     phase: "throw" | "capture" | "ground";
     effect?: { scale10: number; dx: number; dy: number };
   } | null {
-    const tutorial = this.definition.tutorial;
-    if (
-      !tutorial ||
-      (this.interactiveStage !== "captureFail" && this.interactiveStage !== "captureSuccess")
-    )
+    if (this.interactiveStage !== "captureFail" && this.interactiveStage !== "captureSuccess")
       return null;
-    const [d0, , d2] = tutorial.captureDurations,
+    const tutorial = this.captureSpec,
+      [d0, , d2] = tutorial.captureDurations,
       [shrinkDuration, restoreDuration] = tutorial.captureEffectDurations,
       t = this.captureTick;
     if (t < d0)
@@ -836,10 +842,13 @@ export class BattleRuntime {
         this.ui.selectedIndex = (this.ui.selectedIndex + 1) % 6;
       if (commands.includes("confirm")) {
         if (this.ui.selectedIndex === 0) this.interactiveStage = "skillList";
-        else if (this.ui.selectedIndex === 1)
-          this.interactiveStage =
-            this.hp("enemy") <= this.definition.tutorial!.weakHp ? "sealList" : "weak";
-        else if (
+        else if (this.ui.selectedIndex === 1) {
+          if (this.hp("enemy") > this.definition.tutorial!.weakHp) this.interactiveStage = "weak";
+          else
+            this.openTutorialCatch(inventory, (id, count) => {
+              inventory[String(id)] = (inventory[String(id)] ?? 0) + count;
+            });
+        } else if (
           (this.ui.selectedIndex === 2 || this.ui.selectedIndex === 3) &&
           this.sides &&
           this.rules?.web?.switchAndItemsLocked(this.sides.player)
@@ -870,7 +879,9 @@ export class BattleRuntime {
     } else if (this.interactiveStage === "warning" && commands.includes("confirm"))
       this.interactiveStage = "fight";
     else if (this.interactiveStage === "weak" && commands.includes("confirm"))
-      this.interactiveStage = "sealList";
+      this.openTutorialCatch(inventory, (id, count) => {
+        inventory[String(id)] = (inventory[String(id)] ?? 0) + count;
+      });
     else if (this.interactiveStage === "sealList" && commands.includes("confirm")) {
       this.consume(inventory, this.definition.tutorial!.sealBallId);
       this.captureTick = 0;
@@ -878,7 +889,9 @@ export class BattleRuntime {
     } else if (this.interactiveStage === "sealFail" && commands.includes("confirm"))
       this.interactiveStage = "retry";
     else if (this.interactiveStage === "retry" && commands.includes("confirm"))
-      this.interactiveStage = "guaranteedList";
+      this.openTutorialGuaranteed(inventory, (id, count) => {
+        inventory[String(id)] = (inventory[String(id)] ?? 0) + count;
+      });
     else if (this.interactiveStage === "guaranteedList" && commands.includes("confirm")) {
       this.consume(inventory, this.definition.tutorial!.guaranteedBallId);
       this.captureTick = 0;
@@ -902,12 +915,13 @@ export class BattleRuntime {
       return;
     }
     if (stage === "petList") {
+      const buttons = landPetStateButtons() ?? PET_STATE;
       const tab = PET_STATE.tabs.findIndex((rect) => contains(x, y, rect));
       if (tab >= 0) this.ui.tab = tab;
       else if (contains(x, y, PET_STATE.previous)) this.selectListRow(this.ui.selectedIndex - 1);
       else if (contains(x, y, PET_STATE.next)) this.selectListRow(this.ui.selectedIndex + 1);
-      else if (contains(x, y, PET_STATE.action)) run("confirm");
-      else if (contains(x, y, PET_STATE.back)) run("back");
+      else if (contains(x, y, buttons.action)) run("confirm");
+      else if (contains(x, y, buttons.back)) run("back");
       else {
         const index = petIndexAt(x, y, this.ui.rows.length, this.ui.scroll);
         if (index >= 0) this.selectListRow(index);
@@ -1286,6 +1300,34 @@ export class BattleRuntime {
       },
     };
   }
+  /**
+   * The bunny tutorial's first ball (`game.d.l()` V=3): the Phong ấn cầu the script throws first,
+   * or straight to the Tất Trung Cầu when there is none left — a player out of seal balls (spent on
+   * an earlier, lost attempt) would otherwise be sent back to an empty list forever.
+   */
+  private openTutorialCatch(
+    bag: Record<string, number>,
+    give: (id: number, count: number) => void,
+  ): void {
+    const tutorial = this.definition.tutorial!;
+    if ((bag[String(tutorial.sealBallId)] ?? 0) > 0) this.interactiveStage = "sealList";
+    else this.openTutorialGuaranteed(bag, give);
+  }
+  /**
+   * The retry's Tất Trung Cầu (`game.d.l()` V=6). With none in the bag the bunny fight hands one
+   * over, as JavaSE's catch list does when it would be empty (`sourceSeedItem(0, 1)`): the fight
+   * cannot be fled and the bunny cannot be knocked out, so without a ball it never ends. It is only
+   * given at zero and thrown at once, so it cannot be stockpiled.
+   */
+  private openTutorialGuaranteed(
+    bag: Record<string, number>,
+    give: (id: number, count: number) => void,
+  ): void {
+    const id = this.definition.tutorial!.guaranteedBallId;
+    if ((bag[String(id)] ?? 0) <= 0) give(id, 1);
+    this.interactiveStage = "guaranteedList";
+  }
+
   // ------------------------------------------------------------------ the battle core
 
   /** The core's bag as the string-keyed counts the menus read. */
@@ -1401,6 +1443,14 @@ export class BattleRuntime {
           break;
         case "noLegalSkill":
           message(NO_LEGAL_SKILL_MESSAGE);
+          break;
+        case "ppExhausted":
+          // Web rule: both teams ran dry; the one that ran dry first loses.
+          message(
+            event.side === "player"
+              ? "Toàn đội đã hết PP trước, bạn thua trận."
+              : "Đối thủ đã hết PP trước, bạn thắng trận.",
+          );
           break;
         case "catch":
           beats.push({ kind: "catch", caught: event.caught });
@@ -1573,6 +1623,7 @@ export class BattleRuntime {
           }));
           this.settlement = this.settle?.() ?? null;
           this.beats = [
+            ...this.catchNotices(beat.outcome),
             ...(this.settlement?.members ?? []).flatMap((entry, member): Beat[] => {
               if (entry.experience <= 0 || !this.party?.[member]) return [];
               const beats: Beat[] = [],
@@ -1657,6 +1708,7 @@ export class BattleRuntime {
               level: beat.level,
               spriteId: this.core!.setupOf("player", beat.member).spriteId,
               nature: this.core!.setupOf("player", beat.member).nature,
+              shinyColor: this.core!.setupOf("player", beat.member).shinyColor,
               oldStats: beat.result.statsBefore ?? [0, 0, 0, 0],
               newStats: beat.result.statsAfter ?? [0, 0, 0, 0],
               learned: beat.result.learned.map(skillName),
@@ -1671,6 +1723,41 @@ export class BattleRuntime {
           return;
       }
     }
+  }
+
+  /**
+   * The capture ball for this fight: the tutorial's own, else the pack's
+   * (`VqsvBattleRuntime.advanceCatchPhase` runs it for every catch, not only the bunny's).
+   */
+  private get captureSpec(): Pick<
+    NonNullable<BattleDefinition["tutorial"]>,
+    | "captureSpriteId"
+    | "captureDurations"
+    | "captureEffectDurations"
+    | "captureShrinkSteps"
+    | "captureRestoreSteps"
+  > {
+    const tutorial = this.definition.tutorial;
+    if (tutorial) return tutorial;
+    const spec = this.services?.captureAnimation ?? DEFAULT_CAPTURE_ANIMATION;
+    return {
+      captureSpriteId: spec.spriteId,
+      captureDurations: spec.durations,
+      captureEffectDurations: spec.effectDurations,
+      captureShrinkSteps: spec.shrinkSteps,
+      captureRestoreSteps: spec.restoreSteps,
+    };
+  }
+
+  /** `openCatchResultBox`: "Bắt thành công" and the pet's name, then the bank or release notice. */
+  private catchNotices(outcome: BattleOutcome): Beat[] {
+    const caught = this.settlement?.caught;
+    if (outcome.reason !== "catch" || !caught || this.definition.tutorial) return [];
+    if (caught.storage === "RELEASE") return [{ kind: "message", text: CATCH_RELEASED_FULL_TEXT }];
+    const name = outcome.caught !== undefined ? this.nameOf("enemy", outcome.caught) : "";
+    const notices: Beat[] = [{ kind: "message", text: CATCH_SUCCESS_TEXT + name }];
+    if (caught.storage === "BANK") notices.push({ kind: "message", text: CATCH_SENT_BANK_TEXT });
+    return notices;
   }
 
   private showMessageBeat(text: string): void {
@@ -1707,7 +1794,7 @@ export class BattleRuntime {
     const [a = 0, b = 0] = this.context.mode,
       group = a === 0 ? (b === 1 ? 2 : 0) : 1,
       row = side === "enemy" ? 0 : group === 1 ? 2 : 1;
-    return CPOS_GROUPS[group][row];
+    return (battleSeatTables.cpos ?? CPOS_GROUPS)[group][row];
   }
   private switchFrames(side: BattleSide): number {
     return this.switchRow(side).length / 4;
@@ -1767,7 +1854,6 @@ export class BattleRuntime {
   }
 
   private tickCore(): void {
-    const tutorial = this.definition.tutorial;
     if (this.entryDeploying) {
       const dispatch =
         this.definition.phases.find((phase) => phase.key === "P1_DISPATCH")?.start ?? 0;
@@ -1787,16 +1873,19 @@ export class BattleRuntime {
     else if (this.interactiveStage === "skillAction") this.tickSkillAction();
     else if (this.interactiveStage === "captureFail") {
       this.captureTick++;
-      const [a, , c] = tutorial?.captureDurations ?? [0, 0, 0],
-        [shrink, restore] = tutorial?.captureEffectDurations ?? [0, 0];
+      const [a, , c] = this.captureSpec.captureDurations,
+        [shrink, restore] = this.captureSpec.captureEffectDurations;
       if (this.captureTick >= a + shrink + c + restore) {
         this.cues.push("escape");
+        // `advanceCatchPhase(4)` then P1 with CATCH_FAILED: the miss is said before the enemy acts.
+        if (!this.definition.tutorial)
+          this.beats.unshift({ kind: "message", text: CATCH_FAILED_TEXT });
         this.nextBeat();
       }
     } else if (this.interactiveStage === "captureSuccess") {
       this.captureTick++;
-      const [a, , c, d] = tutorial?.captureDurations ?? [0, 0, 0, 0],
-        [shrink] = tutorial?.captureEffectDurations ?? [0];
+      const [a, , c, d] = this.captureSpec.captureDurations,
+        [shrink] = this.captureSpec.captureEffectDurations;
       if (this.captureTick >= a + shrink + c + d) {
         this.cues.push("catch");
         this.nextBeat();
@@ -1871,7 +1960,7 @@ export class BattleRuntime {
         return;
       case "weak":
         if (confirm) {
-          this.interactiveStage = "sealList";
+          this.openTutorialCatch(this.coreBag(), (id, count) => this.core!.addItem(id, count));
           this.syncTutorialUi();
         }
         return;
@@ -1890,7 +1979,7 @@ export class BattleRuntime {
         return;
       case "retry":
         if (confirm) {
-          this.interactiveStage = "guaranteedList";
+          this.openTutorialGuaranteed(this.coreBag(), (id, count) => this.core!.addItem(id, count));
           this.syncTutorialUi();
         }
         return;
@@ -1927,7 +2016,7 @@ export class BattleRuntime {
     } else if (index === 1) {
       if (tutorial) {
         // The lesson's hint already played when the bunny was worn down: the ball list opens.
-        this.interactiveStage = "sealList";
+        this.openTutorialCatch(this.coreBag(), (id, count) => this.core!.addItem(id, count));
         this.syncTutorialUi();
       } else if (!this.core!.captureAllowed())
         // `decideCommand` answers the softkey itself: a fight whose enemy belongs to somebody else
@@ -1938,16 +2027,19 @@ export class BattleRuntime {
         this.interactiveStage = "itemList";
         this.openItems(this.coreBag(), "capture");
       }
-    } else if ((index === 2 || index === 3) && locked)
+    } else if (index === 2 && !this.core!.itemsAllowed()) {
+      this.showWarning(ITEMS_NOT_ALLOWED_TEXT);
+    } else if ((index === 2 || index === 3) && locked) {
       this.showWarning("Đang bị Giam Cầm: không thể đổi Sủng vật hay dùng Đạo cụ.");
-    else if (index === 2) {
+    } else if (index === 2) {
       this.interactiveStage = "itemList";
       this.openItems(this.coreBag(), "recovery");
     } else if (index === 3) {
       this.interactiveStage = "petList";
       this.openPets();
     } else if (index === 4) {
-      this.openBattleShop();
+      if (this.core!.itemsAllowed()) this.openBattleShop();
+      else this.showWarning("Tháp không mở thương nhân trong trận.");
     } else if (tutorial) this.showWarning("Không thể chạy khỏi trận hướng dẫn.");
     else this.submitToCore({ kind: "run" });
   }
@@ -2111,6 +2203,7 @@ export class BattleRuntime {
     return {
       spriteId: setup.spriteId ?? this.definition.combatants.player.spriteId,
       nature: setup.nature,
+      shinyColor: setup.shinyColor,
       element: setup.element ?? -1,
       elementName: ["Hỏa", "Mộc", "Thổ", "Thủy", "Điện", "Quỷ", "Phong"][setup.element ?? -1],
       level,
@@ -2234,6 +2327,7 @@ export class BattleRuntime {
         target: combatant,
         skillId: skill.id,
         randomPercent: (label) => this.random.percent(`battle.selfHit.${label}`),
+        unifiedPower: rules.web?.selfHitPower(skill.id),
       });
     self.damage(outcome.damage);
     this.actionHit = true;

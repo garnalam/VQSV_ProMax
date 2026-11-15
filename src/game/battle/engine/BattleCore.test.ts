@@ -72,6 +72,52 @@ const skillOrder = (events: readonly BattleEvent[]) =>
   events.flatMap((e) => (e.type === "skill" ? [e.seat.side] : []));
 
 describe("BattleCore: a whole fight", () => {
+  it("resolves a unified signature turned back on its caster by Quỷ Mị", () => {
+    const core = fight(
+      {
+        player: [pet(13, { skillIds: [1021] })],
+        enemy: [pet(34)],
+      },
+      new Fixed(0),
+    );
+    const player = core.activeUnit("player"),
+      enemy = core.activeUnit("enemy");
+    rules.status.pendingDebuffFromProducer(enemy, player, 54, 8)!.commit();
+    const result = core.submit({ kind: "skill", slot: 0 });
+    expect(result).toContainEqual(
+      expect.objectContaining({
+        type: "skill",
+        skillId: 1021,
+        seat: { side: "player", member: 0 },
+        target: { side: "player", member: 0 },
+        damage: expect.any(Number),
+      }),
+    );
+    expect(player.hp()).toBeLessThan(player.maxHp());
+    expect(enemy.hp()).toBe(enemy.maxHp());
+  });
+
+  it("pays living reserves 30 percent with Hoàng Kim, full EXP with item six, and none when fainted", () => {
+    const core = fight({
+      goldenPartyExperiencePercent: 30,
+      player: [
+        pet(68, { stats: { hp: 400, attack: 400, defense: 100, speed: 120 } }),
+        pet(47),
+        pet(47, { heldItemId: 6 }),
+        pet(47, { hp: 0 }),
+      ],
+      enemy: [pet(34, { hp: 1 })],
+    });
+    slug(core);
+    expect(core.request.kind).toBe("ended");
+    if (core.request.kind !== "ended") return;
+    const exp = core.request.outcome.experience;
+    expect(exp[0]).toBeGreaterThan(0);
+    expect(exp[1]).toBe(Math.trunc((exp[0] * 30) / 100));
+    expect(exp[2]).toBe(exp[0]);
+    expect(exp[3]).toBe(0);
+  });
+
   it("seats both sides, then runs rounds until a side is out, and pays the EXP", () => {
     const core = fight({
       player: [pet(68, { stats: { hp: 400, attack: 200, defense: 60, speed: 120 } })],
@@ -87,6 +133,47 @@ describe("BattleCore: a whole fight", () => {
     expect(events.some((e) => e.type === "faint" && e.seat.side === "enemy")).toBe(true);
     expect(events.at(-1)?.type).toBe("end");
     expect(() => core.submit({ kind: "skill", slot: 0 })).toThrow(BattleCommandError);
+  });
+
+  it("suppresses the whole party's pet traits against Kim Diễm and keeps their skills", () => {
+    const player = [pet(68, { physicalTraitId: 2 }), pet(47, { physicalTraitId: 2 })];
+    const normal = fight({ kind: "trainer", player });
+    expect(rules.traits.enabled(normal.unit("player", 0))).toBe(true);
+    expect(normal.unit("player", 1).physicalTraitId).toBe(2);
+    const boss = fight({ kind: "trainer", player, enemy: [pet(280)] });
+    for (const [member, setup] of player.entries()) {
+      const unit = boss.unit("player", member);
+      expect(rules.traits.enabled(unit)).toBe(false);
+      expect(unit.physicalTraitId).toBe(-1);
+      expect(unit.skillIds[0]).toBe(setup.skillIds[0]);
+      expect(boss.setupOf("player", member).physicalTraitId).toBe(2);
+    }
+    expect(boss.submit({ kind: "skill", slot: 0 })).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "skill",
+          seat: expect.objectContaining({ side: "player" }),
+        }),
+      ]),
+    );
+  });
+
+  it("reflects skill debuffs from Kim Diễm back to the living attacker", () => {
+    const core = fight(
+      {
+        kind: "trainer",
+        player: [
+          pet(68, { skillIds: [12], stats: { hp: 10_000, attack: 120, defense: 100, speed: 10 } }),
+        ],
+        enemy: [
+          pet(280, { skillIds: [4], stats: { hp: 10_000, attack: 100, defense: 100, speed: 100 } }),
+        ],
+      },
+      new Fixed(0),
+    );
+    core.submit({ kind: "skill", slot: 0 });
+    expect(core.unit("enemy", 0).statuses.has(1, 2)).toBe(false);
+    expect(core.unit("player", 0).statuses.get(1, 2)).toMatchObject({ sourceSide: 1 });
   });
 
   it("the faster pet strikes first; an equal pair is settled by the fight's roll", () => {

@@ -562,3 +562,30 @@ describe("Cầu Vồng walk-in connections read straight from the /4 table", () 
     ).toBeNull();
   });
 });
+
+describe("rect triggers that share one rect share one latch (JavaSE legendaryTriggerLatched)", () => {
+  // Linh Quang Lộc (10:11 g0 → g1) and Tương Quân Giải (10:0 g1 → g3): the knockout ends the first
+  // group with the hero still on the rect; its follow-up waits until he steps off and back on.
+  for (const [room, first, second, x, y] of [
+    [11, 0, 1, 112, 244],
+    [0, 1, 3, 120, 100],
+  ] as const)
+    it(`10:${room} g${second} waits for the hero to leave the rect g${first} fired on`, () => {
+      const ledger = new EventStateLedger(),
+        dispatcher = new WorldEventDispatcher(registry, ledger);
+      dispatcher.enterRoom(10, room);
+      const on = view({ scene: 10, room, x, y }),
+        off = view({ scene: 10, room, x, y: y + 80 });
+      expect(dispatcher.probe(on)).toMatchObject({
+        kind: "event",
+        trigger: { group: { scene: 10, room, group: first } },
+      });
+      ledger.op14CompleteEvent(10, room, first);
+      expect(dispatcher.probe(on)).toBeNull();
+      expect(dispatcher.probe(off)).toBeNull();
+      expect(dispatcher.probe(on)).toMatchObject({
+        kind: "event",
+        trigger: { group: { scene: 10, room, group: second } },
+      });
+    });
+});

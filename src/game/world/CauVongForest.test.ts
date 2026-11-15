@@ -264,9 +264,9 @@ describe("Rừng U Ám, 60, cửa Bắc and the rocks (CV4b)", () => {
     expect(starts(seen, says("CITY_RETURN"))).toBe(true);
     expect([world.roomIndex, world.player.x, world.player.y]).toEqual([1, 490, 139]);
     // The north notice is next at the hub.
-    const quest = assets.cauVongOpening!.quests.find((q) => q.variants)!;
+    const quest = assets.cauVongOpening!.quests.find((q) => q.title.startsWith("Cầu Vồng 3 "))!;
     const detail = openingQuestDetail(quest, ([r, e]) => done(world, r, e));
-    expect(detail).toBe(quest.variants![11].text);
+    expect(detail).toContain("Xem hết cảnh trở về thành sau lần đầu vào Rừng U Ám");
   });
 
   it("a lost forest fight: the line, the party revived, and a retry waits for 5", () => {
@@ -355,8 +355,26 @@ describe("Rừng U Ám, 60, cửa Bắc and the rocks (CV4b)", () => {
     expect(done(world, 59, 131)).toBe(true);
     expect(done(world, 26, 100)).toBe(true);
     expect([world.roomIndex, world.player.x, world.player.y]).toEqual([4, 250, 170]);
-    const quest = assets.cauVongOpening!.quests.find((q) => q.variants)!;
-    expect(openingQuestDetail(quest, ([r, e]) => done(world, r, e))).toBe(quest.variants![9].text);
+    const quest = assets.cauVongOpening!.quests.find((q) => q.title.startsWith("Cầu Vồng 3 "))!;
+    expect(openingQuestDetail(quest, ([r, e]) => done(world, r, e))).toContain(
+      "Đến đấu trường trung cấp",
+    );
+  });
+
+  it("requires Mao Cau Dieu to cross the cloud edge in room 24", () => {
+    const { world } = enter(24, 470, 270, [RAID, [40, 6400], [9, 104]]);
+    while (world.mapLoading) world.tickMapLoading();
+    play(world);
+    expect(world.warp({ scene: 98, room: 24, x: 470, y: 270, direction: 0 })).toBe(true);
+    while (world.mapLoading) world.tickMapLoading();
+    expect(world.activeRideIndex).toBe(-1);
+    for (let tick = 0; tick < 5; tick++) world.tick(["holdDown"]);
+    expect([world.roomIndex, world.player.y]).toEqual([24, 270]);
+    expect(world.selectRide(7)).toBe("ready");
+    for (let tick = 0; tick < 3; tick++) world.tick(["holdDown"]);
+    expect([world.roomIndex, world.player.y]).toEqual([24, 294]);
+    world.dismountRide();
+    expect(world.activeRideIndex).toBe(7);
   });
 
   it("a lost rescue: the masked man's line, then 5 in the strip tries again", () => {
@@ -389,14 +407,14 @@ describe("Rừng U Ám, 60, cửa Bắc and the rocks (CV4b)", () => {
 
   it("the quest row follows the forest, the recovery and the rescue", () => {
     const { world } = enter(9, 200, 300, [RAID]);
-    const quest = assets.cauVongOpening!.quests.find((q) => q.variants)!;
+    const quest = assets.cauVongOpening!.quests.find((q) => q.title.startsWith("Cầu Vồng 3 "))!;
     const row = () => openingQuestDetail(quest, ([r, e]) => done(world, r, e));
-    expect(row()).toBe(quest.variants![12].text);
+    expect(row()).toContain("Đi Rừng U Ám lần đầu");
     world.eventState.op14CompleteEvent(98, 9, 104);
-    expect(row()).toBe(quest.variants![11].text);
+    expect(row()).toContain("Xem hết cảnh trở về thành sau lần đầu vào Rừng U Ám");
     world.eventState.op14CompleteEvent(98, 59, 130);
-    expect(row()).toBe(quest.variants![10].text);
+    expect(row()).toContain("Xem hết cuộc nói chuyện sáng hôm sau");
     world.eventState.op14CompleteEvent(98, 59, 131);
-    expect(row()).toBe(quest.variants![9].text);
+    expect(row()).toContain("Đến đấu trường trung cấp");
   });
 });

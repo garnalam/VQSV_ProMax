@@ -1,6 +1,7 @@
 import type { BattleContext } from "../story/SourceOpcodeInterpreter";
 import type { SavedPet } from "../../persistence/SaveRepository";
 import type { PetCoreStats } from "./PetStatCalculator";
+import { BATTLE_SEATS } from "./BattleSeats";
 
 export type BattleSide = "player" | "enemy";
 export type BattleCombatantDefinition = {
@@ -29,6 +30,34 @@ export type BattleDamageWindow = BattleWindow & { value: number; label: string }
 export type BattleAnimationTrack = {
   stateWindows: Array<BattleWindow & { state: number }>;
   cursor: (tick: number, state: number) => number;
+};
+/** The capture ball's sprite, phase lengths and the enemy's shrink/restore steps. */
+export type CaptureAnimation = {
+  spriteId: number;
+  /** Throw, (unused), shake, success hold — in ticks. */
+  durations: [number, number, number, number];
+  /** Shrink into the ball, spring back out on a miss — in ticks. */
+  effectDurations: [number, number];
+  /** `[scale10, dx, dy]` per step. */
+  shrinkSteps: Array<[number, number, number]>;
+  restoreSteps: Array<[number, number, number]>;
+};
+/** `VqsvBattleRuntime.initCatchResult/advanceCatchPhase` (the pack's world contract carries the same). */
+export const DEFAULT_CAPTURE_ANIMATION: CaptureAnimation = {
+  spriteId: 269,
+  durations: [8, 1, 25, 15],
+  effectDurations: [9, 8],
+  shrinkSteps: [
+    [10, 0, 0],
+    [7, 0, -10],
+    [4, 0, -20],
+  ],
+  restoreSteps: [
+    [4, 0, -20],
+    [6, 0, -12],
+    [8, 0, -4],
+    [10, 0, 0],
+  ],
 };
 export type BattleTutorialDefinition = {
   kind: "capture-tutorial";
@@ -87,7 +116,7 @@ export const sourceIntroBattle: BattleDefinition = {
       spriteId: 154,
       element: 4,
       maxHp: 179,
-      origin: { x: 70, y: 223 },
+      origin: { ...BATTLE_SEATS.player },
     },
     enemy: {
       side: "enemy",
@@ -97,7 +126,7 @@ export const sourceIntroBattle: BattleDefinition = {
       spriteId: 91,
       element: 0,
       maxHp: 601,
-      origin: { x: 177, y: 103 },
+      origin: { ...BATTLE_SEATS.enemy },
     },
   },
   phases: [
@@ -238,7 +267,7 @@ export const createCaptureTutorialBattleDefinition = (
       attack: stats.player.attack,
       defense: stats.player.defense,
       speed: stats.player.speed,
-      origin: { x: 70, y: 223 },
+      origin: { ...BATTLE_SEATS.player },
     },
     enemy: {
       side: "enemy",
@@ -251,7 +280,7 @@ export const createCaptureTutorialBattleDefinition = (
       attack: stats.opponent.attack,
       defense: stats.opponent.defense,
       speed: stats.opponent.speed,
-      origin: { x: 177, y: 103 },
+      origin: { ...BATTLE_SEATS.enemy },
     },
   },
   phases: [

@@ -228,7 +228,7 @@ describe("Power families (flat Power from the balance workbook)", () => {
 
   it("electric_charge: hitting or being hit stores X Power a round; a main-element hit spends all", () => {
     const pattern =
-        /^Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích (\d+) Power, cộng dồn không giới hạn số tầng, (\d+) lượt\. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng\/lượt\.$/,
+        /^Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích (\d+) Power, cộng dồn tối đa 3 tầng, (\d+) lượt\. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng\/lượt\.$/,
       wrong: string[] = [];
     expect(family("electric_charge").length).toBe(13);
     for (const trait of family("electric_charge")) {
@@ -520,13 +520,24 @@ describe("the other 36 families, pet by pet", () => {
     const taken = (receiver: DesignTraitUnit, round = 1, attacker = pet(1, TARGET)) =>
       strike(attacker, receiver, mainSkill(TARGET), round);
     family("first_hit_guard", 9, (t, wrong) => {
-      const user = pet(0, t.speciesId),
-        first = taken(user, 1),
-        second = taken(user, 1),
-        next = taken(user, 2);
+      // Kim Chỉ Ốc (owner 2026-11-15) waits `warmupRounds` on the field; the rest guard at once.
+      const wait = t.warmupRounds ?? 0,
+        user = pet(0, t.speciesId);
+      rules.traits.enter(user, 1);
+      const first = taken(user, 1 + wait),
+        second = taken(user, 1 + wait),
+        next = taken(user, 2 + wait);
       if (first !== second - Math.trunc((second * t.value) / 100))
         wrong.push(`${t.key}: ${first} of ${second} is not −${t.value}%`);
       if (next !== first) wrong.push(`${t.key}: not again the next turn`);
+      if (wait > 0) {
+        // Back on the field at round 10: unguarded for `wait` rounds, then guarded again.
+        rules.traits.enter(user, 10);
+        for (let round = 10; round < 10 + wait; round++)
+          if (taken(user, round) !== second)
+            wrong.push(`${t.key}: guarded on round ${round - 9} after entry`);
+        if (taken(user, 10 + wait) !== first) wrong.push(`${t.key}: no guard after ${wait} rounds`);
+      }
     });
     family("entry_hit_guard", 6, (t, wrong) => {
       const user = pet(0, t.speciesId),

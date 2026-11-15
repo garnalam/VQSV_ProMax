@@ -1,9 +1,10 @@
 import type { EventStateSnapshot } from "../../game/world/EventStateLedger";
 import type { WorldFlagsSnapshot } from "../../game/world/WorldFlags";
 import type { CampaignState } from "../../game/campaign/CampaignSystems";
+import type { TowerState } from "../../game/meta/BondingTower";
 
 /** Bump together with a new entry in `migrations.ts`. */
-export const CURRENT_SAVE_VERSION = 33;
+export const CURRENT_SAVE_VERSION = 34;
 export const SAVE_FORMAT = "vqsv-web-save";
 
 export type SavedPet = {
@@ -16,6 +17,8 @@ export type SavedPet = {
   maxHp?: number;
   experience?: number;
   visualSpriteId?: number;
+  /** Tháp Gắn Kết cultivation follows the individual pet through transfers and evolution. */
+  towerBond?: number;
   skillIds?: number[];
   skillPp?: number[];
   /**
@@ -28,6 +31,13 @@ export type SavedPet = {
    * because Java's default is -1; `WorldRuntime.normalizePet` applies it on load.
    */
   heldEquipmentId?: number;
+  /**
+   * Web only: the shiny colour this pet wears (an index into `ShinyDesigns.SHINY_THEMES`), drawn
+   * at random the first time it has a shiny nature (7..9) and kept for good after that. -1
+   * (`LEGACY_SHINY_COLOR`) is a shiny that was already owned before the redesign: it keeps Java's
+   * palette.
+   */
+  shinyColor?: number;
 };
 
 /** A level-up skill decision that must be completed before the finished battle resumes the world. */
@@ -69,8 +79,9 @@ export type GameSave = {
   /** JavaSE inventory currency, used by skill relearn and shops. */
   currency?: { money: number; badges: number };
   /**
-   * JavaSE `progression.collection.snapshot()`: the Đồ giám state of species 0..275, 0 unseen,
-   * 1 seen, 2 collected.
+   * JavaSE `progression.collection.snapshot()`: the Đồ giám state, 0 unseen, 1 seen, 2 collected —
+   * species 0..280, then a 512-entry block per shiny nature 7..9 (ProMax) and per shiny colour
+   * 0..12 (web). An older, shorter array reads its missing entries as unseen.
    */
   collection?: number[];
   /** JavaSE `progression.playTime`: accumulated play time in milliseconds. */
@@ -81,8 +92,8 @@ export type GameSave = {
   pendingSkillLearns: PendingSkillLearn[];
   /**
    * JavaSE `progression.evolutionNoticeArmed` (the evolution tutorial has run, which opens the
-   * convenience shop's evolve rows) and `collection.convenienceRewardsSnapshot()` (the seven
-   * "Dẫn thưởng" milestones claimed). Absent in older saves: false and none claimed.
+   * convenience shop's evolve rows) and `collection.convenienceRewardsSnapshot()` (the eight
+   * "Dẫn thưởng" milestones claimed: six badges, then Hoàng Kim Chương's two ranks). Absent in older saves: false and none claimed.
    */
   evolutionNoticeArmed?: boolean;
   convenienceRewardsClaimed?: boolean[];
@@ -113,6 +124,7 @@ export type GameSave = {
       appliedEvents: string[];
     };
     campaign: CampaignState;
+    tower?: TowerState;
   };
   pets: SavedPet[];
 };
@@ -139,12 +151,14 @@ function isSavedPet(pet: unknown): pet is SavedPet {
     optional(pet.maxHp, finite) &&
     optional(pet.experience, finite) &&
     optional(pet.visualSpriteId, integer) &&
+    optional(pet.towerBond, (v) => integer(v) && v >= 0 && v <= 255) &&
     optional(pet.skillIds, numberArray) &&
     optional(pet.skillPp, numberArray) &&
     optional(pet.physicalTraitId, (v) => integer(v) && v >= -1) &&
     // A present id is a catalog index or Java's own -1; anything else would hand a unit an item
     // that never existed.
-    optional(pet.heldEquipmentId, (v) => integer(v) && v >= -1)
+    optional(pet.heldEquipmentId, (v) => integer(v) && v >= -1) &&
+    optional(pet.shinyColor, (v) => integer(v) && v >= -1)
   );
 }
 
@@ -189,6 +203,33 @@ function isStory(value: unknown): value is Record<string, StoryRecord> {
   );
 }
 
+function isTower(value: unknown): boolean {
+  const within = (v: unknown, min: number, max: number) => integer(v) && v >= min && v <= max;
+  return (
+    record(value) &&
+    within(value.highest, 0, 200) &&
+    within(value.hearts, 0, Number.MAX_SAFE_INTEGER) &&
+    within(value.fragments, 0, Number.MAX_SAFE_INTEGER) &&
+    within(value.day, 0, 10_000_000) &&
+    within(value.repeats, 0, 30) &&
+    within(value.sweeps, 0, 6) &&
+    Array.isArray(value.claims) &&
+    value.claims.length <= 200 &&
+    new Set(value.claims).size === value.claims.length &&
+    value.claims.every((floor) => within(floor, 1, Number(value.highest))) &&
+    optional(
+      value.last,
+      (last) =>
+        record(last) &&
+        within(last.floor, 1, 200) &&
+        typeof last.won === "boolean" &&
+        within(last.hearts, 0, 5) &&
+        within(last.fragments, 0, 10) &&
+        optional(last.sweep, (sweep) => typeof sweep === "boolean"),
+    )
+  );
+}
+
 function isMeta(value: unknown): boolean {
   if (
     !record(value) ||
@@ -203,6 +244,7 @@ function isMeta(value: unknown): boolean {
     charms = record(campaign.charms) ? campaign.charms : {},
     charmActive = record(charms.active) ? charms.active : {};
   return (
+    optional(value.tower, isTower) &&
     typeof fashion.selected === "string" &&
     Array.isArray(fashion.owned) &&
     fashion.owned.every((key) => typeof key === "string") &&
@@ -338,7 +380,7 @@ export function isGameSave(value: unknown): value is GameSave {
     optional(
       value.convenienceRewardsClaimed,
       (v) =>
-        Array.isArray(v) && v.length <= 7 && v.every((claimed) => typeof claimed === "boolean"),
+        Array.isArray(v) && v.length <= 8 && v.every((claimed) => typeof claimed === "boolean"),
     ) &&
     optional(
       value.collection,

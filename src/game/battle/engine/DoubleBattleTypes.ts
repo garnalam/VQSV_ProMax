@@ -23,6 +23,12 @@ export type DoubleSkillRules = {
 };
 
 export type DoubleBattleSetup = {
+  /** Source scene and ownership gate for Cầu Vồng's mirrored item recovery. */
+  sceneId?: number;
+  capturePolicy?: string;
+  runAllowed?: boolean;
+  itemsAllowed?: boolean;
+  experienceAllowed?: boolean;
   /** `playerControlsBoth`: a gym fight, the player commands slots 2 and 3. */
   controlsBoth: boolean;
   /** The player's battle owners: the first six roster pets, in roster order. */
@@ -42,6 +48,8 @@ export type DoubleBattleSetup = {
   charms?: BattleCharms;
   /** The player's badge passives, for its own units only — a lent companion carries none. */
   badgeProfile?: BattleBadgeProfile;
+  /** Hoàng Kim Chương rank one or two: the reserve's EXP share in percent (30); absent none. */
+  goldenPartyExperiencePercent?: number;
   /**
    * The units arrive with their talent's permanent stats already in `stats` (a replay of a Java
    * fight records them after `applyProductionPermanentTraitStats`), so the projection must not add
@@ -62,7 +70,8 @@ export type DoubleCommand =
   /** `member` is the player battle owner the item is for. */
   | { kind: "item"; itemId: number; member: number }
   /** A manual switch: done at once, and the slot gives no other command this round. */
-  | { kind: "switch"; member: number };
+  | { kind: "switch"; member: number }
+  | { kind: "run" };
 
 export type DoubleRequest =
   | { kind: "command"; slot: PlayerSlot; round: number }
@@ -71,11 +80,13 @@ export type DoubleRequest =
   | { kind: "ended"; outcome: DoubleOutcome };
 
 export type DoubleOutcome = {
-  winner: "player" | "enemy";
+  winner: "player" | "enemy" | "none";
   /** Direct EXP by player battle owner (living participants share the defeated roster). */
   experience: number[];
   /** Benched EXP by player battle owner (held item 6). */
   reserveExperience: number[];
+  /** Web rule: both teams ran out of PP and the loser ran dry first. */
+  ppExhausted?: boolean;
 };
 
 /** Who stands in a slot: a player owner, a companion, or an NPC roster member. */
@@ -111,6 +122,8 @@ export type DoubleEvent =
       hpGained: number;
       ppGained: number;
       revived: boolean;
+      /** Free enemy recovery after a player item; the species also names a benched target. */
+      cauVongRecovery?: { speciesId: number };
       /** Set when the queued item could not be used any more (`itemWarning`). */
       refused?: string;
     }
@@ -139,4 +152,6 @@ export type DoubleEvent =
   /** A player item Ma Mộc Cộng Sinh seals, refused when its turn came. */
   | { type: "sealedItem"; slot: DoubleSlot; itemId: number }
   | { type: "experience"; member: number; amount: number; reserve: boolean }
+  /** Web rule: both teams are out of PP; `side` ran dry first and loses. */
+  | { type: "ppExhausted"; side: "player" | "enemy" }
   | { type: "end"; outcome: DoubleOutcome };

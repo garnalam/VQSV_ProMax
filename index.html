@@ -2,9 +2,17 @@
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#000000" />
-    <link rel="icon" href="data:," />
+    <!-- Installed from "Add to Home Screen" the game opens full screen and in landscape: the
+         manifest for Android / desktop, the apple-* tags for iPhone (no full screen API there). -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="VQSV" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
     <title>VQSV</title>
     <style>
       /* The frame the game code has not run yet: the stage hugs the canvas so the sheet above
@@ -45,6 +53,7 @@
   </head>
   <body>
     <main id="app">
+      <div id="pad-left" class="pad-zone" aria-hidden="true"></div>
       <div id="stage">
         <canvas id="game" width="240" height="320" aria-label="VQSV"></canvas>
         <div id="boot">
@@ -52,6 +61,7 @@
           <div id="boot-track"><div id="boot-fill"></div></div>
         </div>
       </div>
+      <div id="pad-right" class="pad-zone" aria-hidden="true"></div>
     </main>
     <script>
       // Classic script on purpose: the game modules are still being downloaded at this point, so

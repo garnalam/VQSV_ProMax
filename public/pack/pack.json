@@ -3,7 +3,7 @@
   "baseUrl": "/pack",
   "description": "Canonical game resource pack for web-native. Every image, audio, JSON and sprite file the runtime loads is declared here and is reachable only through src/pack/Pack.ts. Producers write into the domain roots below, so re-running a producer refreshes the pack in place.",
   "preload": {
-    "introSprites": [
+    "introSprites": [
       0,
       84,
       85,
@@ -24,6 +24,27 @@
     ]
   },
   "domains": [
+    {
+      "id": "wiki",
+      "kind": "image",
+      "resolution": "root",
+      "root": "wiki",
+      "producer": {
+        "kind": "mixed",
+        "what": "VQSV wiki illustrations and UI toolkit generated for this project, plus selected map captures from the game",
+        "note": "Generated originals are retained under Claude outputs/vqsv-wiki-banners; map images are copied from VQSV source resources."
+      },
+      "shapes": [
+        {
+          "name": "illustration",
+          "path": "{name}.png"
+        },
+        {
+          "name": "map-preview",
+          "path": "maps/{name}.png"
+        }
+      ]
+    },
     {
       "id": "fashion-ui",
       "kind": "image",
@@ -89,6 +110,12 @@
           "name": "title-background",
           "file": "brand/title-background.png",
           "from": "modules/tex/decoded/data__tex__menu.mid.png",
+          "provenance": "decoded_source"
+        },
+        {
+          "name": "title-background-land",
+          "file": "brand/title-background-land.png",
+          "from": "VQSV-AowVN.org-m.apk assets/data/tex/menu.mid (the landscape APK's 320x240 title)",
           "provenance": "decoded_source"
         },
         {
@@ -373,6 +400,18 @@
       ]
     },
     {
+      "id": "ui-layout-land",
+      "kind": "json",
+      "resolution": "template",
+      "template": "ui/layout-land/{name}.json",
+      "producer": {
+        "kind": "java-tool",
+        "what": "vqsv ExportWebUiLayoutContract over the landscape APK (scripts/landscape/README.md)",
+        "command": "java -Dvqsv.modules=<apk-modules> -cp <classes> vqsv ExportWebUiLayoutContract VQSV-WebNative/web-native/public/pack/ui/layout-land <name>"
+      },
+      "names": ["battle", "npcEnemy"]
+    },
+    {
       "id": "ui-cell",
       "kind": "image",
       "resolution": "cells",
@@ -643,6 +682,14 @@
           "file": "world/rooms.json"
         },
         {
+          "name": "apk-actors",
+          "file": "world/apk-actors.json"
+        },
+        {
+          "name": "apk-events",
+          "file": "world/apk-events.json"
+        },
+        {
           "name": "sprites",
           "file": "world/sprites.json"
         }
@@ -691,6 +738,16 @@
             "kind": "java-tool",
             "what": "rebuild_game/tools/ExportWebMetaSystems.java",
             "command": "java -cp <tool>;build/classes ExportWebMetaSystems VQSV-WebNative/web-native/public/pack/story/meta-systems.json"
+          }
+        },
+        {
+          "name": "bonding-tower",
+          "file": "story/bonding-tower.json",
+          "kind": "json",
+          "from": "huypham691/server@d5382be:public/secure/tower-content.js",
+          "producer": {
+            "kind": "copy",
+            "what": "Tháp Gắn Kết roster revision 2 (original JavaScript payload as JSON)"
           }
         },
         {
@@ -1314,6 +1371,22 @@
           "name": "tan-nguyet-defeat",
           "file": "custom-boss/tan-nguyet-defeat.png",
           "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/custom-cutscenes/tan-nguyet-defeat/skill-issue.png"
+        }
+      ]
+    },
+    {
+      "id": "bonding-tower-art",
+      "kind": "image",
+      "resolution": "root",
+      "root": "bonding-tower-art",
+      "producer": {
+        "kind": "copy",
+        "what": "The Tháp Gắn Kết d5382be release: native battle portraits from public/secure/tower-portraits and the pixel icon from public/secure/pixel-icons-v3/tower.png."
+      },
+      "shapes": [
+        {
+          "name": "image",
+          "path": "{name}.png"
         }
       ]
     },

@@ -15,7 +15,7 @@ type SaveRow = { id: string; gameVersion: string; revision: number; updatedAt?: 
 /** How the server's answers reach the code: a fetch bound to the API's base path. */
 export type ApiFetch = (path: string, init?: RequestInit) => Promise<Response>;
 
-const defaultFetch: ApiFetch = (path, init) =>
+export const defaultFetch: ApiFetch = (path, init) =>
   fetch(`/api${path}`, { credentials: "same-origin", cache: "no-store", ...init });
 
 /** A refusal from the server, carrying its own Vietnamese message. */
@@ -88,8 +88,10 @@ export class RemoteAccountService implements AccountService {
       throw new AccountError("unknown", "Không kết nối được máy chủ. Hãy kiểm tra mạng.");
     }
     if (!response.ok) throw await refusal(response);
-    const { user } = (await response.json()) as { user: { id: string; email: string } };
-    return { id: user.id, username: user.email };
+    const { user } = (await response.json()) as {
+      user: { id: string; email: string; role?: string };
+    };
+    return { id: user.id, username: user.email, admin: user.role === "admin" };
   }
 }
 

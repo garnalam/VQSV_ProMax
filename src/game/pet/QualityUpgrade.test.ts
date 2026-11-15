@@ -126,7 +126,7 @@ describe("Nâng phẩm screen (tickQualityUpgrade)", () => {
       );
     expect(session.status).toBe("Pet đã đạt phẩm tối đa");
     session.tick(["confirm"]);
-    expect(session.status).toBe("Không có Pet phôi phù hợp");
+    expect(session.status).toBe("Không có Pet phôi phù hợp: Pet đã đạt phẩm tối đa");
     session.tick(["back"]);
     session.tick(["back"]);
     expect(session.closed).toBe(true);

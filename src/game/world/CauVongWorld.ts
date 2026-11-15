@@ -73,6 +73,8 @@ export type CauVongHero = {
   mask: CollisionMask | null;
   /** `ride.playerMoveSpeed`. */
   speed: number;
+  /** Present only during a map tap; -1 means the tap hit no actor. */
+  pointerTarget?: number;
 };
 
 /** The standing NPCs of a room, with their anchors (`CauVongNpcGeometry.x` / `y`). */
@@ -138,7 +140,9 @@ export function cauVongNpcRequested(
   const all = npcs(actors, mechanics),
     npc = all.find((candidate) => candidate.id === id);
   if (!npc || Math.abs(hero.x - npc.x) > 48 || Math.abs(hero.y - npc.y) > 48) return false;
-  return keyboardFocus(hero, all, npc);
+  return hero.pointerTarget !== undefined
+    ? hero.pointerTarget === id
+    : keyboardFocus(hero, all, npc);
 }
 
 /**
@@ -151,6 +155,7 @@ export function cauVongPropRequested(
   visible: boolean,
   rect: readonly [number, number, number, number],
   confirm: boolean,
+  pointerSelected?: boolean,
 ): boolean {
   if (!visible || !confirm) return false;
   const [left, top, width, height] = rect;
@@ -160,6 +165,7 @@ export function cauVongPropRequested(
   const dx = Math.max(0, left - hero.x, hero.x - right),
     dy = Math.max(0, top - hero.y, hero.y - bottom);
   if (dx > 48 || dy > 48) return false;
+  if (pointerSelected !== undefined) return pointerSelected;
   const reach = Math.max(20, Math.min(28, hero.speed + 12));
   let px = hero.x,
     py = hero.y;

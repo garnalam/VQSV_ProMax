@@ -35,6 +35,7 @@ export type QualityUpgradeArt = {
     h: number,
     tick: number,
     nature?: number,
+    shinyColor?: number,
   ) => void;
 };
 
@@ -293,7 +294,7 @@ export function drawQualityUpgrade(
       g.beginPath();
       g.rect(x + 12, y + 23, w - 24, 60);
       g.clip();
-      art.sprite(info.spriteId, x + 12, y + 18, w - 24, 70, tick, s.main.nature);
+      art.sprite(info.spriteId, x + 12, y + 18, w - 24, 70, tick, s.main.nature, s.main.shinyColor);
       g.restore();
     }
     centered(info.name, x + 5, y + 86, w - 10, 16054778);
@@ -327,7 +328,7 @@ export function drawQualityUpgrade(
         g.beginPath();
         g.rect(x + 6, y + 18, w - 12, 45);
         g.clip();
-        art.sprite(info.spriteId, x + 5, y + 14, w - 10, 54, tick, pet.nature);
+        art.sprite(info.spriteId, x + 5, y + 14, w - 10, 54, tick, pet.nature, pet.shinyColor);
         g.restore();
       }
       centered(info.name, x + 2, y + 65, w - 4, 15398648);
@@ -351,7 +352,7 @@ export function drawQualityUpgrade(
         g.beginPath();
         g.rect(16, y + 2, 34, 27);
         g.clip();
-        art.sprite(info.spriteId, 17, y, 32, 30, tick, pet.nature);
+        art.sprite(info.spriteId, 17, y, 32, 30, tick, pet.nature, pet.shinyColor);
         g.restore();
       }
       const distance = s.candidateDistance(pet);

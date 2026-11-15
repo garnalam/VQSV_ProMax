@@ -192,6 +192,18 @@ describe("settleBattle", () => {
     expect(inventory["0"]).toBe(1);
   });
 
+  it("does not exceed the bank capacity when catching with a full roster", () => {
+    const party = Array.from({ length: 6 }, () => saved(68, 10));
+    const stored = saved(19, 5);
+    const bank = { pets: [stored], capacity: 1 };
+    const core = fight(party, saved(34, 5));
+    core.submit({ kind: "catch", itemId: 0 });
+    const report = settleBattle(core, party, {}, progression, bank);
+    expect(report.caught?.storage).toBe("RELEASE");
+    expect(party).toHaveLength(6);
+    expect(bank.pets).toEqual([stored]);
+  });
+
   it("a loss restores the whole party to full", () => {
     const party = [saved(68, 2)],
       core = fight(party, saved(34, 40));

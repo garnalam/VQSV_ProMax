@@ -55,7 +55,7 @@ function fakeServer(rows: Row[] = []) {
     if (path === "/auth/login") {
       const { email, password } = JSON.parse(String(init.body));
       return password === "dung-mat-khau"
-        ? json({ user: { id: "u1", email } })
+        ? json({ user: { id: "u1", email, role: email === "admin@b.vn" ? "admin" : "user" } })
         : json({ error: "Email hoặc mật khẩu không đúng." }, 401);
     }
     if (path === "/auth/register") return json({ error: "Email này đã có tài khoản." }, 409);
@@ -108,7 +108,9 @@ describe("RemoteAccountService", () => {
     expect(await accounts.login(" a@b.vn ", "dung-mat-khau")).toEqual({
       id: "u1",
       username: "a@b.vn",
+      admin: false,
     });
+    expect((await accounts.login("admin@b.vn", "dung-mat-khau")).admin).toBe(true);
     const wrong = await accounts.login("a@b.vn", "sai").catch((error) => error);
     expect(wrong).toBeInstanceOf(AccountError);
     expect(accountMessage(wrong)).toBe("Email hoặc mật khẩu không đúng.");

@@ -8,6 +8,9 @@
   "heightTiles": 30,
   "widthPixels": 672,
   "heightPixels": 480,
+  "originX": 0,
+  "originY": 0,
+  "source": "apk",
   "layerCount": 5,
   "terrainLayerType": 0,
   "classes": {

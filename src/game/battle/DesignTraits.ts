@@ -104,6 +104,11 @@ export type DesignTraitSpec = {
   cooldownTurns?: number;
   /** TL-01 (`hard_control_immunity`): the control statuses that never take hold. */
   immuneStatuses?: readonly string[];
+  /**
+   * Web balance (owner 2026-11-15, Kim Chỉ Ốc): rounds on the field before the guard works; every
+   * entry, a switch back in included, starts the count again.
+   */
+  warmupRounds?: number;
 };
 
 /**
@@ -164,6 +169,8 @@ export class DesignTraitState {
   lastProc = -100;
   procs = 0;
   lastGuard = -100;
+  /** The round this unit last came onto the field (`enter`). */
+  enteredRound = 1;
   /** HV-01: armed for this action's hit, and the first round the window opens again. */
   outrankArmed = false;
   outrankCooldownUntil = -1000;
@@ -622,6 +629,7 @@ export class DesignTraitMechanics {
   enter(unit: DesignTraitUnit, round: number): void {
     if (!this.enabled(unit)) return;
     unit.designTraitState.round = round;
+    unit.designTraitState.enteredRound = round;
     unit.designTraitState.clearTemporary();
   }
 
@@ -805,7 +813,11 @@ export class DesignTraitMechanics {
     if (!spec || damage <= 0 || !source || source.signatureState.secondaryHit) return damage;
     const state = target.designTraitState;
     let reduction = 0;
-    if (spec.type === "first_hit_guard" && state.lastGuard !== state.round) {
+    if (
+      spec.type === "first_hit_guard" &&
+      state.lastGuard !== state.round &&
+      state.round - state.enteredRound >= (spec.warmupRounds ?? 0)
+    ) {
       reduction = spec.value;
       state.lastGuard = state.round;
     }
@@ -824,12 +836,12 @@ export class DesignTraitMechanics {
   }
 
   /**
-   * `PetDesignTraitMechanics.stack`: a single consumable mark still refreshes, and a stackable
-   * characteristic has no gameplay cap.
+   * `PetDesignTraitMechanics.stack`: refresh the mark while respecting the runtime's three-stack
+   * ceiling, including callers requesting a smaller cap.
    */
   stack(unit: DesignTraitUnit, id: number, duration: number, cap: number, value: number): void {
     const old = unit.statuses.get(BUFF_BANK, id);
-    const stacks = !old || cap === 1 ? 1 : old.stackCount + 1;
+    const stacks = !old ? 1 : Math.min(Math.max(1, Math.min(cap, 3)), old.stackCount + 1);
     this.put(unit, this.requireSignature(id), duration, value, stacks, unit);
   }
 
@@ -1189,7 +1201,7 @@ export class DesignTraitMechanics {
     const spec = this.spec(unit);
     if (!spec || spec.type !== "electric_charge" || !unit.alive()) return;
     if (unit.designTraitState.lastCharge === unit.designTraitState.round) return;
-    this.stack(unit, FAMILY_CHARGE_ID, 3, 2, spec.value);
+    this.stack(unit, FAMILY_CHARGE_ID, 3, 3, spec.value);
     unit.designTraitState.lastCharge = unit.designTraitState.round;
   }
 

@@ -59,6 +59,7 @@ export function worldPetCard(pet: SavedPet, index: number, services: BattleServi
     pet: {
       spriteId: setup.spriteId ?? 0,
       nature: pet.nature,
+      shinyColor: pet.shinyColor,
       element: setup.element ?? -1,
       elementName: ELEMENT_NAMES[setup.element ?? -1],
       level,

@@ -82,15 +82,47 @@ export class StoryDirector {
    */
   catchUp(complete: (scene: number, room: number, group: number) => boolean): StoryAction[] {
     const actions: StoryAction[] = [];
-    for (let step = 0; step < this.graph.nodes.length; step++) {
-      const exit = (this.current.exits ?? []).find(
+    // A step's cutscene or warp stands only while it is the last step replayed: once the ledger
+    // proves a later step done too, the hero has long left that moment (only its saves remain).
+    let last: StoryAction[] = [];
+    const settle = () => {
+      actions.push(...last.filter((action) => action.kind === "save"));
+      last = [];
+    };
+    const ledgerExit = (node: StoryNode) =>
+      (node.exits ?? []).find(
         ({ on }) =>
           (on.kind === "eventComplete" || on.kind === "battleWon") &&
           complete(on.scene, on.room, on.group),
       );
-      if (!exit) break;
-      actions.push(...this.signal(exit.on));
+    for (let step = 0; step < this.graph.nodes.length; step++) {
+      const exit = ledgerExit(this.current);
+      if (exit) {
+        settle();
+        last = this.signal(exit.on);
+        continue;
+      }
+      // An exit the ledger cannot record (a cutscene's end, entering a room, the world opening) is
+      // proven crossed when the node behind it already has its own ledger exit complete: a save
+      // resumed mid-cutscene or imported from JavaSE would otherwise stop there for good, the task
+      // card stuck below the task the scripts (op45) already announced. Only the quest effects of
+      // such a passage are replayed; its cutscene and warp belong to a moment long past.
+      const passage = (this.current.exits ?? []).find(
+        ({ on, to }) =>
+          on.kind !== "eventComplete" &&
+          on.kind !== "battleWon" &&
+          ledgerExit(this.graph.require(to)) !== undefined,
+      );
+      if (!passage) break;
+      settle();
+      this.history.push(`${this.current.id} --catch-up ${describe(passage.on)}--> ${passage.to}`);
+      actions.push(
+        ...[...this.apply(passage.do), ...this.enter(this.graph.require(passage.to))].filter(
+          (action) => action.kind === "save",
+        ),
+      );
     }
+    actions.push(...last);
     return actions;
   }
 

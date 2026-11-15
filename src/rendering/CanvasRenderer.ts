@@ -1,4 +1,5 @@
 import { LOGICAL_HEIGHT, LOGICAL_WIDTH } from "../core/constants";
+import { viewport } from "../core/Viewport";
 
 /**
  * The 240x320 back buffer. Text is never drawn through the platform font engine here; screens use
@@ -13,6 +14,9 @@ import { LOGICAL_HEIGHT, LOGICAL_WIDTH } from "../core/constants";
 export class CanvasRenderer {
   readonly context: CanvasRenderingContext2D;
   private scale = 1;
+  /** Device pixels per logical pixel (`viewport` landscape keeps 4, see Viewport). */
+  private backing = 1;
+  private size = { width: LOGICAL_WIDTH, height: LOGICAL_HEIGHT };
   /** The HD cut of a logical frame image, when it has one (`GameAssets.hdTwin`). */
   hdTwin: ((image: HTMLImageElement) => HTMLImageElement | undefined) | null = null;
   /** How much larger than its logical frame an HD twin is (`hd.json` scale). */
@@ -29,19 +33,52 @@ export class CanvasRenderer {
     return this.scale;
   }
   setScale(scale: number): void {
-    const next = Math.max(1, Math.trunc(scale));
-    if (next === this.scale) return;
+    const next = Math.max(1, Math.trunc(scale)),
+      // Landscape: at least 4 device pixels a logical one, so the 3/4 UI box stays on whole pixels.
+      backing = viewport.landscape ? Math.max(4, Math.ceil(next / 4) * 4) : next;
+    if (
+      next === this.scale &&
+      backing === this.backing &&
+      this.size.width === viewport.width &&
+      this.size.height === viewport.height
+    )
+      return;
     this.scale = next;
+    this.backing = backing;
+    this.size = { width: viewport.width, height: viewport.height };
     const canvas = this.context.canvas;
-    canvas.width = LOGICAL_WIDTH * next;
-    canvas.height = LOGICAL_HEIGHT * next;
+    canvas.width = viewport.width * backing;
+    canvas.height = viewport.height * backing;
     // A resize resets the context: the transform and the sampling go with it.
-    this.context.setTransform(next, 0, 0, next, 0, 0);
+    this.uiSpace();
     this.context.imageSmoothingEnabled = false;
   }
+  /** Device pixels per logical pixel of the canvas. */
+  get backingScale(): number {
+    return this.backing;
+  }
+  /** Draw in canvas pixels: the world, which fills the whole (landscape) canvas. */
+  worldSpace(): void {
+    const k = this.backing;
+    this.context.setTransform(k, 0, 0, k, 0, 0);
+  }
+  /**
+   * Draw in the 240x320 UI box: the whole canvas in portrait, the box scaled to the canvas height
+   * and centred in landscape (`viewport.ui`).
+   */
+  uiSpace(): void {
+    const k = this.backing,
+      { scale, x, y } = viewport.ui;
+    this.context.setTransform(k * scale, 0, 0, k * scale, k * x, k * y);
+  }
+  /** Black over the whole canvas, whatever the current transform. */
   clear(): void {
-    this.context.fillStyle = "#000";
-    this.context.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+    const g = this.context;
+    g.save();
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.fillStyle = "#000";
+    g.fillRect(0, 0, g.canvas.width, g.canvas.height);
+    g.restore();
   }
   image(image: CanvasImageSource, x: number, y: number): void {
     this.context.drawImage(image, Math.floor(x), Math.floor(y));
@@ -70,4 +107,20 @@ export class CanvasRenderer {
       return draw(twin, sx * k, sy * k, sw * k, sh * k, ...destination);
     }) as CanvasRenderingContext2D["drawImage"];
   }
+}
+
+/** The current fill style over the whole canvas, whatever the transform (fades, flashes, black). */
+export function fillCanvas(g: CanvasRenderingContext2D): void {
+  g.save();
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.fillRect(0, 0, g.canvas.width, g.canvas.height);
+  g.restore();
+}
+
+/** A capture of the whole canvas (`battleBackground`) put back over the whole canvas. */
+export function drawCanvasCopy(g: CanvasRenderingContext2D, image: CanvasImageSource): void {
+  g.save();
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.drawImage(image, 0, 0, g.canvas.width, g.canvas.height);
+  g.restore();
 }

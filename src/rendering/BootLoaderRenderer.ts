@@ -1,4 +1,6 @@
 import { LOGICAL_HEIGHT, LOGICAL_WIDTH } from "../core/constants";
+import { LAND_BOTTOM, landSpace } from "../core/LandCenter";
+import { viewport } from "../core/Viewport";
 import type { BootProgress } from "../pack/BootProgress";
 
 /** Source bar geometry, copied from `VqsvMapLoadingRuntime.render`. */
@@ -54,6 +56,22 @@ export class BootLoaderRenderer {
 
   draw(): void {
     const g = this.context;
+    if (viewport.landscape) {
+      // Landscape: black over the whole canvas, the bar against the 320x240 screen's bottom edge.
+      g.save();
+      const k = g.getTransform().a / viewport.ui.scale;
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.fillStyle = "#000000";
+      g.fillRect(0, 0, g.canvas.width, g.canvas.height);
+      landSpace(g, k, LAND_BOTTOM);
+      this.drawBar(g);
+      g.restore();
+      return;
+    }
+    this.drawBar(g);
+  }
+
+  private drawBar(g: CanvasRenderingContext2D): void {
     g.fillStyle = "#000000";
     g.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
     g.fillRect(BAR_FRAME_X, BAR_FRAME_Y, 150, 5);

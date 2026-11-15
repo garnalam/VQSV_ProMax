@@ -1,4 +1,9 @@
-import { calculateCatchChance, expAward } from "../BattleOutcomeEngine";
+import {
+  calculateCatchChance,
+  decideReserveShare,
+  expAward,
+  reserveExpAward,
+} from "../BattleOutcomeEngine";
 import type { BattleRandom } from "../BattleRandom";
 import type { BattleRules } from "../BattleRules";
 import type { DesignTraitProjection } from "../DesignTraitProjection";
@@ -13,6 +18,7 @@ import {
   SKILL_NOT_READY_WARNING,
   TIER_LOCK_WARNING,
   CATCH_NOT_ALLOWED_TEXT,
+  ITEMS_NOT_ALLOWED_TEXT,
   OTHER_SIDE,
   RUN_NOT_ALLOWED_TEXT,
   type BattleCommand,
@@ -25,7 +31,13 @@ import {
   type SideId,
 } from "./BattleTypes";
 import type { EnemyController, EnemyView } from "./EnemyController";
-import { KIM_DIEM_LONG_VUONG_SPECIES, KimDiemLongAn } from "./KimDiemLongAn";
+import { applyCauVongItemRecovery } from "./CauVongItemRecovery";
+import {
+  KIM_DIEM_LONG_VUONG_SPECIES,
+  KimDiemDebuffReflection,
+  KimDiemLongAn,
+} from "./KimDiemLongAn";
+import { PpExhaustion, teamOutOfPp } from "./PpExhaustion";
 import type { CharmLoadoutEntry, RainbowCharmBattleState } from "../../charm/RainbowCharmBattle";
 
 /** The projection's seats in a 1v1 (`VqsvBattleRuntime.TRAIT_ENEMY_SLOT` / `TRAIT_PLAYER_SLOT`). */
@@ -234,6 +246,7 @@ export class BattleCore {
       const action = this.queue.shift()!;
       this.act(action);
       if (this.finished()) return;
+      if (this.endOnPpExhaustion(action.side)) return;
       if (this.openRequest) return; // a pivot is waiting for the player
       this.charmHeals();
     }
@@ -348,6 +361,9 @@ export class BattleCore {
         sideId === "player" &&
         targetSide === "enemy" &&
         target.speciesId === KIM_DIEM_LONG_VUONG_SPECIES,
+      // Long Ấn sends new or changed debuffs on the boss back to the attacker (1v1 only).
+      debuffReflection =
+        longAn && this.setup.enemy.length === 1 ? new KimDiemDebuffReflection(target) : undefined,
       targetHpBefore = target.hp(),
       trace = resolveP7Strike({
         attacker: actor,
@@ -360,7 +376,16 @@ export class BattleCore {
           this.sides[targetSide].setup[this.activeMember(targetSide)].spriteId ?? -2,
         // Only the player's hit on a catchable pet keeps it alive for the ball (held item 10's floor).
         allowsHpFloor: this.captureAllowed() && sideId === "player" && targetSide === "enemy",
-        postSkill: resolveP7PostSkill,
+        postSkill: debuffReflection
+          ? (step) => {
+              // Commit-pending effects return before the separate post-skill effect phase.
+              debuffReflection.returnTo(actor);
+              const postDebuffs = new KimDiemDebuffReflection(target);
+              const outcome = resolveP7PostSkill(step);
+              postDebuffs.returnTo(actor);
+              return outcome;
+            }
+          : resolveP7PostSkill,
         charmEvasion: (receiver, sureHit) => {
           const charms = this.charms[targetSide];
           if (!charms) return false;
@@ -444,6 +469,7 @@ export class BattleCore {
         target: combatant,
         skillId,
         randomPercent: (label) => this.random.percent(`battle.selfHit.${label}`),
+        unifiedPower: this.rules.web?.selfHitPower(skillId),
       });
     self.damage(outcome.damage);
     this.protect();
@@ -521,6 +547,27 @@ export class BattleCore {
       this.rules.status,
     );
     this.emit({ type: "item", seat: { side: sideId, member }, itemId: command.itemId, ...result });
+    // `vg_CauVongItemRecovery_apply`: a Cầu Vồng trainer answers the player's item with one recovery.
+    if (sideId === "player") {
+      const recovery = applyCauVongItemRecovery(
+        this.setup,
+        item,
+        [this.activeUnit("enemy")],
+        this.sides.enemy.party,
+        (id) => this.ppMax(id),
+      );
+      if (recovery) {
+        const { target, ...gained } = recovery;
+        if (target === this.activeUnit("enemy") && gained.hpGained > 0)
+          this.projection.afterHealing(target, SEAT_SLOT.enemy, this.round);
+        this.emit({
+          type: "item",
+          seat: { side: "enemy", member: this.sides.enemy.party.indexOf(target) },
+          itemId: command.itemId,
+          ...gained,
+        });
+      }
+    }
   }
 
   private attemptCatch(itemId: number): void {
@@ -629,7 +676,8 @@ export class BattleCore {
       if (this.charmRevive(sideId, member, unit)) continue;
       this.fainted.add(unit);
       this.emit({ type: "faint", seat: { side: sideId, member } });
-      if (sideId === "enemy") this.awardExperience(member);
+      if (sideId === "enemy" && this.setup.experienceAllowed !== false)
+        this.awardExperience(member);
     }
     if (this.reserves("player").length === 0 && !this.activeUnit("player").alive())
       this.end({ winner: "enemy", reason: "knockout" });
@@ -637,6 +685,16 @@ export class BattleCore {
       this.end({ winner: "player", reason: "knockout" });
   }
   private readonly fainted = new Set<DesignTraitUnit>();
+  private readonly ppExhaustion = new PpExhaustion();
+
+  /** Web rule: both teams out of PP; the one that ran dry first loses (see `PpExhaustion`). */
+  private endOnPpExhaustion(actor: SideId): boolean {
+    const loser = this.ppExhaustion.observe(this.sides.player.party, this.sides.enemy.party, actor);
+    if (!loser) return false;
+    this.emit({ type: "ppExhausted", side: loser });
+    this.end({ winner: OTHER_SIDE[loser], reason: "ppExhausted" });
+    return true;
+  }
   private catchAttempts = 0;
 
   /**
@@ -668,6 +726,43 @@ export class BattleCore {
         from: { side: "enemy", member: enemyMember },
       });
     }
+    // Bug fix: the 1v1 never paid the bench. Java's `awardExp` gives a living pet that did not face
+    // the foe but holds Ký Cư Giải Xác (held item 6) its share at the last participant's level,
+    // exactly as the 2v2 core already does.
+    const lastLevel =
+      earners.length === 0 ? 1 : this.sides.player.setup[earners[earners.length - 1]].level;
+    this.sides.player.party.forEach((unit, member) => {
+      if (this.facing.has(member) || !unit.alive()) return;
+      // Hoàng Kim Chương (ProMax): 30% for a reserve without Ký Cư Giải Xác, which keeps its whole share.
+      const share = decideReserveShare({
+        globalShare: false,
+        goldenSharePercent: this.setup.goldenPartyExperiencePercent,
+        heldItem6: unit.hasHeldItem(6),
+      });
+      if (share.outcome === "SKIP") return;
+      const trait = this.projection.projectExperience(unit, SEAT_SLOT.player, this.round, 0),
+        amount = reserveExpAward(
+          {
+            enemyLevel: enemy.level,
+            enemyNature: enemy.nature,
+            levelFactorLevel: lastLevel,
+            participantCount: earners.length,
+            divisor: share.divisor,
+            heldItem5: false,
+            heldItem5Multiplier: 0,
+            experienceMultiplierPercent: trait.multiplierPercent,
+            experienceMultiplierStackable: trait.stackable,
+          },
+          share,
+        );
+      this.experience[member] += amount;
+      this.emit({
+        type: "experience",
+        member,
+        amount,
+        from: { side: "enemy", member: enemyMember },
+      });
+    });
     if (earners.length > 0 && !this.setup.script) this.postExpBadgeHeal();
   }
 
@@ -722,8 +817,10 @@ export class BattleCore {
       if (tier(a) === 0) return a.side === "player" ? -1 : 1;
       const ua = this.activeUnit(a.side),
         ub = this.activeUnit(b.side),
-        pa = this.rules.traits.outranked(ua, ub) ? 1 : 0,
-        pb = this.rules.traits.outranked(ub, ua) ? 1 : 0;
+        // Bug fix: Linh Trùng Thi Hài (held item 7) is the same priority 1 as the characteristic in
+        // Java's `unifiedPlayerSkillActsFirst`; the 1v1 only read the characteristic.
+        pa = this.rules.traits.outranked(ua, ub) || ua.hasHeldItem(7) ? 1 : 0,
+        pb = this.rules.traits.outranked(ub, ua) || ub.hasHeldItem(7) ? 1 : 0;
       if (pa !== pb) return pb - pa;
       const sa = ua.currentStats.speed,
         sb = ub.currentStats.speed;
@@ -758,6 +855,7 @@ export class BattleCore {
         this.requireReserve(sideId, command.member);
         return;
       case "item": {
+        if (!this.itemsAllowed()) refuse(ITEMS_NOT_ALLOWED_TEXT);
         if (this.web.switchAndItemsLocked(active))
           refuse("Đang bị Giam Cầm: không thể dùng vật phẩm.");
         if (sideId === "player" && (this.inventory[command.itemId] ?? 0) <= 0)
@@ -788,6 +886,15 @@ export class BattleCore {
   }
 
   private enemyCommand(): BattleCommand {
+    // Web rule (with `PpExhaustion`): a dry pet hands over to a reserve that still has PP, or the
+    // fight could stall on a team that is not out of PP but never fields the pet that has it.
+    const active = this.activeUnit("enemy");
+    if (teamOutOfPp([active]) && !this.web.switchAndItemsLocked(active)) {
+      const fresh = this.reserves("enemy").find(
+        (member) => !teamOutOfPp([this.unit("enemy", member)]),
+      );
+      if (fresh !== undefined) return { kind: "switch", member: fresh };
+    }
     const command = this.controller.command(this.enemyView());
     try {
       this.validate("enemy", command);
@@ -908,17 +1015,29 @@ export class BattleCore {
     return this.setup.runAllowed ?? this.setup.kind === "wild";
   }
 
+  itemsAllowed(): boolean {
+    return this.setup.itemsAllowed !== false;
+  }
+
   private buildSide(id: SideId, setups: readonly CombatantSetup[]): Side {
+    // Long Uy: against Kim Diễm Long Vương alone, the player's pets fight without their traits.
+    const longUy =
+      id === "player" &&
+      this.setup.enemy.length === 1 &&
+      this.setup.enemy[0].speciesId === KIM_DIEM_LONG_VUONG_SPECIES;
     const party = setups.map((setup) => {
       const unit = this.rules.traits.unit({
         speciesId: setup.speciesId,
         ownerSide: id === "player" ? 0 : 1,
         formationSlot: SEAT_SLOT[id],
         base: setup.stats,
-        physicalTraitId: setup.physicalTraitId,
+        wideStats: setup.wideStats,
+        physicalTraitId: longUy ? undefined : setup.physicalTraitId,
         heldItemId: setup.heldItemId,
       });
+      if (longUy) unit.designTraitState.enabled = false;
       unit.restoreStatsForCheck();
+      if (setup.statFactors) this.projection.applyEncounterStatFactors(unit, setup.statFactors);
       if (setup.hp !== undefined) unit.setHp(Math.max(0, Math.min(unit.maxHp(), setup.hp)));
       // `PetBattleAdapter.toBattleUnit(pet, 0, badges)`: the badge lands on a player pet as it is built.
       if (id === "player" && this.setup.badgeProfile)

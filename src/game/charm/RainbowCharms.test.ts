@@ -127,6 +127,23 @@ describe("RainbowCharmBattleState matches JavaSE (ProbeWebRainbowCharms golden)"
   });
 });
 
+describe("charm species of the pets after 201", () => {
+  it("gives every pet a species, so the species charms serve Liệt Hỏa's newer pets too", () => {
+    // Java's taxonomy stops at 201 (plus its mutations). The newer pets keep their old species trait
+    // in their design traits (TV/KL/PH/MT/HD), which agrees with every species Java does name.
+    expect([202, 205, 210, 217, 222, 273].map((id) => catalog.petSpecies(id))).toEqual([
+      0, 3, 1, 4, 2, 3,
+    ]);
+    const unnamed = species.flatMap((_, id) => (catalog.petSpecies(id) < 0 ? [id] : []));
+    // 278 is the final boss, 280 has no design trait.
+    expect(unnamed).toEqual([278, 280]);
+    // A Kim Loại newcomer stands on Thép thiết cốt's defense like a Kim Loại pet of 0..201.
+    const metal = unit(210, 0, 300, 40);
+    state(5042, 5, 0).applyUnitModifiers(metal, noRandom);
+    expect(metal.rainbowCharmDefenseBonus).toBe(30);
+  });
+});
+
 describe("RainbowCharmService", () => {
   const purse = (money: number, badges: number, materials: Record<string, number> = {}) => ({
     currency: { money },

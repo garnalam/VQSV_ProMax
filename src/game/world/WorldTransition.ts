@@ -42,7 +42,8 @@ export type SourceDoor = {
   behavior?: number;
 };
 export type TransitionMarker = { x: number; y: number; sprite: number; direction: number };
-export type MapBounds = { width: number; height: number };
+/** The room extent; an APK map starts at `-origin` (GameAssets.prepareMap). */
+export type MapBounds = { width: number; height: number; originX?: number; originY?: number };
 
 /** Kind-1 actor rows are the door markers: id is the row index, columns 7..10 are D, scene, room, actor. */
 export function sourceDoors(
@@ -98,8 +99,8 @@ export function transitionArrival(
     x = marker.x - floorMod(marker.x, SOURCE_PLAYER_GRID) + directionDx(marker.direction, inward),
     y = marker.y - floorMod(marker.y, SOURCE_PLAYER_GRID) + directionDy(marker.direction, inward);
   return {
-    x: clampToWorldAxis(x, bounds?.width),
-    y: clampToWorldAxis(y, bounds?.height),
+    x: clampToWorldAxis(x, bounds?.width, bounds?.originX),
+    y: clampToWorldAxis(y, bounds?.height, bounds?.originY),
     direction: marker.direction,
   };
 }
@@ -125,8 +126,16 @@ export function transitionArrivalForTarget(
       targetRoom,
     );
   return {
-    x: clampToWorldAxis(marker.x - floorMod(marker.x, APPROX_SNAP_GRID), targetRoom.width),
-    y: clampToWorldAxis(marker.y - floorMod(marker.y, APPROX_SNAP_GRID), targetRoom.height),
+    x: clampToWorldAxis(
+      marker.x - floorMod(marker.x, APPROX_SNAP_GRID),
+      targetRoom.width,
+      targetRoom.originX,
+    ),
+    y: clampToWorldAxis(
+      marker.y - floorMod(marker.y, APPROX_SNAP_GRID),
+      targetRoom.height,
+      targetRoom.originY,
+    ),
     direction: marker.direction,
   };
 }
@@ -381,8 +390,8 @@ export function roomDoorUnlocked(
   return true;
 }
 
-function clampToWorldAxis(value: number, extent: number | undefined): number {
+function clampToWorldAxis(value: number, extent: number | undefined, origin = 0): number {
   if (extent === undefined) return value;
   const margin = Math.max(0, Math.min(PLAYER_HALF_SIZE, Math.floor(extent / 2)));
-  return Math.max(margin, Math.min(value, extent - margin));
+  return Math.max(margin - origin, Math.min(value, extent - origin - margin));
 }

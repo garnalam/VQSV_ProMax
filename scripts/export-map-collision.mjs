@@ -64,7 +64,10 @@ function decodeMap(bytes, mapId) {
 // every other code, including the -1 default and 0, is walkable. Terrain 3 keeps its own class:
 // it is walkable, but XhtC3Runtime.tickIceWorld slides the hero across it (Tương Quân Giải's ice,
 // 10:0) and the raw-terrain checks that test for 0 see it as the source does.
-const terrainClass = (value) => (value === 1 ? "1" : value === 2 ? "2" : value === 3 ? "3" : "0");
+// Bug fix: Cầu Vồng's clouds (4) need the sky ride (CauVongTerrainMechanisms.movementTerrain); folding
+// them into 0 let any mount walk the sky of 24, 25, 26 and 49.
+const terrainClass = (value) =>
+  value === 1 ? "1" : value === 2 ? "2" : value === 3 ? "3" : value === 4 ? "4" : "0";
 
 function collisionDocument(mapId, map) {
   const { modId, widthTiles, heightTiles, tileSize, terrain, source, layerCount } = map,
@@ -93,6 +96,7 @@ function collisionDocument(mapId, map) {
       1: "blocked",
       2: "badge-gated until badge 3",
       ...(histogram[3] ? { 3: "passable; ice in XhtC3Runtime's room (10:0)" } : {}),
+      ...(histogram[4] ? { 4: "Cầu Vồng clouds: the sky ride only" } : {}),
     },
     rows,
     histogram,
@@ -101,7 +105,10 @@ function collisionDocument(mapId, map) {
 }
 
 const rooms = JSON.parse(await readFile(roomsFile, "utf8")).rooms,
-  mapIds = [...new Set(Object.values(rooms).map((room) => room.mapId))].sort((a, b) => a - b);
+  only = process.argv.slice(2).map(Number),
+  mapIds = [...new Set(Object.values(rooms).map((room) => room.mapId))]
+    .filter((id) => only.length === 0 || only.includes(id))
+    .sort((a, b) => a - b);
 for (const mapId of mapIds) {
   const bytes = await readFile(resolve(mapsRoot, `map_${mapId}.mid`)),
     map = decodeMap(bytes, mapId),

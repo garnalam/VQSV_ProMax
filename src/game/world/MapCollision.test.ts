@@ -119,14 +119,15 @@ describe("exported map collision data", () => {
   });
 
   it("carries the source wall band of the Scene0 exterior map", () => {
+    // The APK's landscape map: one tile row added on top, the JAR room at origin (0, 16).
     const map = exportedMap(2);
-    expect(map.rows[0]).toBe("00000100011111110000000000");
+    expect([map.originX, map.originY]).toEqual([0, 16]);
+    expect(map.rows[1]).toBe("00000100011111110000000000");
     expect(terrainAtWorld(map, 4 * 16 + 8, 8)).toBe(0);
     expect(terrainAtWorld(map, 5 * 16 + 8, 8)).toBe(TERRAIN_BLOCKED);
-    const cells = map.rows.join("").split("");
-    const blocked = cells.filter((cell) => cell === "1").length;
-    expect(blocked).toBe(114);
-    expect(blocked + cells.filter((cell) => cell === "0").length).toBe(26 * 20);
+    const cells = map.rows.slice(1, 21).join("").split("");
+    expect(cells.filter((cell) => cell === "1").length).toBe(125);
+    expect(cells.length).toBe(26 * 20);
   });
 
   it("blocks and slides free-world steps on the real exterior map", () => {
@@ -168,10 +169,12 @@ describe("exported map collision data", () => {
   });
 
   it("keeps the interior hall walls and floor from the source map", () => {
+    // The APK's landscape hall: two tile columns added each side, the JAR room at origin (32, 0).
     const map = exportedMap(20);
-    expect(map.widthPixels).toBe(576);
+    expect(map.widthPixels).toBe(640);
     expect(map.heightPixels).toBe(384);
-    expect(map.rows[0]).toBe("1".repeat(36));
+    expect([map.originX, map.originY]).toEqual([32, 0]);
+    expect(map.rows[0]).toBe("1".repeat(40));
     // Tile (18,2) is an enclosed wall block; the hall floor at (18,6) walks freely.
     expect(terrainAtWorld(map, 296, 40)).toBe(TERRAIN_BLOCKED);
     expect(terrainAtWorld(map, 296, 104)).toBe(0);

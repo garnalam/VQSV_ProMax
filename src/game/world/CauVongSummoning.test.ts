@@ -312,7 +312,7 @@ describe("CV0' Thiên Không: the summoning rooms", () => {
     expect(r.seen.map(flatten)).toEqual([flatten(DOC.text.prerequisite)]);
   });
 
-  it("Long Vương stops the hero on 49's floor; the win gives his pet once", () => {
+  it("Long Vương stops the hero on 49's floor; his victory reward is granted once", () => {
     const { world } = enter(49, 150, 300, HUB);
     settle(world);
     const dragon = world.actors.get(DOC.longVuong.actor)!;
@@ -326,11 +326,71 @@ describe("CV0' Thiên Không: the summoning rooms", () => {
     expect(r.fights[0]).toEqual([280]);
     expect(starts(r.seen, says("WIN_49_2"))).toBe(true);
     expect(done(world, 49, DOC.flags.complete + 2)).toBe(true);
-    expect(world.pets.length).toBe(before + 1);
-    expect(world.pets.at(-1)!.speciesId).toBe(136);
+    expect(world.pets.length).toBe(before + 2);
+    expect(
+      world.pets.slice(-2).map((pet) => [pet.speciesId, pet.level, pet.quality, pet.nature]),
+    ).toEqual([
+      [280, 5, 5, 0],
+      [278, 5, 5, 0],
+    ]);
+    expect(world.pets.at(-2)).toMatchObject({ maxHp: 628, skillIds: [0, 3, 5, 7, 9] });
+    expect(world.pets.at(-1)).toMatchObject({ maxHp: 599 });
+    expect(world.bag.equipment.filter((id) => id === 6000)).toHaveLength(1);
+    expect(world.petBankCapacity()).toBe(1000);
+    settle(world);
+    expect(world.pets.length).toBe(before + 2);
+    expect(world.collection.collected(278)).toBe(true);
+    expect(world.collection.collected(280)).toBe(true);
   });
 
-  it("a lost Long Vương fight says so; his floor waits, and talking to him fights again", () => {
+  it("backfills the reward for a previous win, storing overflow in the expanded bank", () => {
+    const { world } = enter(50, 310, 550, [...HUB, [49, DOC.flags.complete + 2], [49, 653002]]);
+    const starter = world.pets[0];
+    world.pets.splice(
+      1,
+      world.pets.length - 1,
+      ...Array.from({ length: 5 }, () => ({ ...starter })),
+    );
+    world.campaign.petBank.push(...Array.from({ length: 998 }, () => ({ ...starter })));
+    expect(world.petBankCapacity()).toBe(100);
+    expect(world.kimDiemAmuletEquipped()).toBe(false);
+    settle(world);
+    expect(world.campaign.petBank.slice(-2).map((pet) => pet.speciesId)).toEqual([280, 278]);
+    expect(world.campaign.petBank).toHaveLength(1000);
+    expect(world.petBankCapacity()).toBe(1000);
+    expect(world.kimDiemAmuletEquipped()).toBe(false);
+    world.pets[0].heldEquipmentId = 6000;
+    expect(world.kimDiemAmuletEquipped()).toBe(true);
+    settle(world);
+    expect(world.campaign.petBank).toHaveLength(1000);
+    expect(world.bag.equipment.filter((id) => id === 6000)).toHaveLength(1);
+  });
+
+  it("lets players who saved beside Long Vương after an old win claim directly", () => {
+    const { world } = enter(49, 150, 300, [...HUB, [49, DOC.flags.complete + 2], [49, 653002]]);
+    const dragon = world.actors.get(DOC.longVuong.actor)!;
+    world.player.x = dragon.x;
+    world.player.y = dragon.y + 16;
+    world.player.direction = 2;
+    world.tick(["confirm"]);
+    settle(world);
+    expect(world.kimDiemRewardClaimed()).toBe(true);
+  });
+
+  it("uses the shipped Kim Diễm stats and skills for the level 150 opponent", () => {
+    const { world } = enter(49, 150, 300, [...HUB, [49, DOC.flags.battle + 2]]);
+    world.tick([]);
+    const enemy = world.battle?.core?.enemySetup(0);
+    expect(enemy).toMatchObject({
+      speciesId: 280,
+      level: 150,
+      stats: { hp: 30000, attack: 1450, defense: 500, speed: 100 },
+      skillIds: [5, 8, 9, 29, 59],
+    });
+  });
+
+  // Owner (2026-11-15): no recovery teleport after a loss. The hero stays in 49 and talks to him again.
+  it("stays in 49 after losing and allows a rematch with Long Vương", () => {
     const { world } = enter(49, 150, 300, HUB);
     settle(world);
     world.player.x = 150;
@@ -340,7 +400,9 @@ describe("CV0' Thiên Không: the summoning rooms", () => {
     expect(lost.fights[0]).toEqual([280]);
     expect(lost.seen.map(flatten)).toContain(flatten(DOC.text.lost));
     expect(done(world, 49, DOC.flags.complete + 2)).toBe(false);
-    for (const pet of world.pets) pet.currentHp = undefined;
+    expect(world.snapshot().location).toMatchObject({ sceneId: 98, roomIndex: 49 });
+    expect(world.pets.every((pet) => (pet.currentHp ?? 1) > 0)).toBe(true);
+    world.warp({ scene: 98, room: 49, x: 150, y: 300, direction: 0 });
     // The floor does not stop the hero again (`RETRY`).
     world.player.x = 150;
     world.player.y = 100;
@@ -394,6 +456,41 @@ describe("CV0' Thiên Không: the summoning rooms", () => {
     expect(world.cauVongMinigame.room).toBe(-1);
     expect(world.cauVongMinigame.streak).toBe(2);
     expect(world.cauVongMinigameOpen).toBe(false);
+  });
+
+  it("uses released Divine stats for the Hall's Divine opponents", () => {
+    const divine = JSON.parse(
+      readFileSync(
+        resolve(import.meta.dirname, "../../../public/pack/cau-vong-world/north-sea.json"),
+        "utf8",
+      ),
+    ).divine.species as number[];
+    for (const b of DOC.bosses.filter((entry) => entry.room === 51)) {
+      const { world } = enter(51, 120, 300, [
+        ...HUB,
+        [63, DOC.flags.complete + 8],
+        [51, DOC.flags.complete + 6],
+        [51, DOC.flags.battle + b.event],
+      ]);
+      world.tick([]);
+      const core = world.battle?.core;
+      expect(core, b.battle.label).toBeDefined();
+      for (const [index, [species, level, nature]] of b.battle.members.entries()) {
+        const stats = assets.battleServices.encounterPet(
+          species,
+          assets.battleServices.enemyLevel.clampEnemy(level),
+          b.battle.quality ?? -1,
+          nature,
+        ).stats;
+        const percent = divine.includes(species) ? 120 : 100;
+        expect(core!.enemySetup(index).stats).toEqual({
+          hp: Math.floor((stats.hp * percent) / 100),
+          attack: Math.floor((stats.attack * percent) / 100),
+          defense: Math.floor((stats.defense * percent) / 100),
+          speed: Math.floor((stats.speed * percent) / 100),
+        });
+      }
+    }
   });
 
   it("51's first scene, then the alliance clerk's menu and its explanation", () => {

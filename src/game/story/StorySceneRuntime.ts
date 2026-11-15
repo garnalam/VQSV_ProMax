@@ -1,4 +1,5 @@
 import { BattleRuntime } from "../battle/BattleRuntime";
+import { cameraGoal } from "../world/Camera";
 import type { RoomAsset } from "./GameAssets";
 import type { StoryActor } from "./StoryActor";
 import { StoryEventInterpreter, type StoryEventStepResult } from "./StoryEventInterpreter";
@@ -98,10 +99,6 @@ export type StorySceneServices = {
   sourceCounts?: (counter: number) => readonly [number | string, number | string];
   /** `sourceCanPay(s, 0, amount)`: the hero holds this much money. */
   canPay?: (amount: number) => boolean;
-  /** The V4 eggs Jones sells (`V4EggCatalog`), in menu order. */
-  exchangeEggs?: () => readonly { itemId: number; name: string; price: number }[];
-  /** `V4EggShopService.purchase`: pay the price and add the egg; false when the money is short. */
-  buyEgg?: (itemId: number, price: number) => boolean;
   /** `roster.size() >= 6 && PetBankExpansionService.full(...)`: no room for another pet. */
   petStorageFull?: () => boolean;
   /** A room runtime's script step: still running, done, or the branch to take. */
@@ -1088,10 +1085,8 @@ export class StorySceneRuntime {
     this.cameraY = camera.y;
   }
   private cameraOffset(x: number, y: number): { x: number; y: number } {
-    const room = this.services.room(this.renderScene, this.renderRoom),
-      maxX = Math.max(0, (room?.width ?? 640) - 240),
-      maxY = Math.max(0, (room?.height ?? 480) - 320);
-    return { x: Math.max(0, Math.min(maxX, x - 120)), y: Math.max(0, Math.min(maxY, y - 160)) };
+    const room = this.services.room(this.renderScene, this.renderRoom);
+    return cameraGoal(room, x, y, { width: 640, height: 480 });
   }
   private tickActors(): void {
     for (const actor of this.actors.values()) if (actor.visible) actor.animationTick++;
@@ -1125,16 +1120,9 @@ export class StorySceneRuntime {
     e: Extract<StoryEvent, { type: "eggExchange" }>,
     elapsed: number,
   ): StoryEventStepResult {
-    const eggs = this.services.exchangeEggs?.() ?? [];
+    // ProMax: Jones no longer sells the two V4 eggs; only the source egg and leaving remain.
     if (elapsed === 1)
-      this.choice = {
-        options: [
-          `Trứng sủng vật - ${e.cost}`,
-          ...eggs.map((egg) => `${egg.name} - ${egg.price}`),
-          "Rời đi",
-        ],
-        index: 0,
-      };
+      this.choice = { options: [`Trứng sủng vật - ${e.cost}`, "Rời đi"], index: 0 };
     if (!this.activeState.confirmed) return "continue";
     const pending = this.activeState.exchangeNext;
     if (pending !== undefined) {
@@ -1150,12 +1138,6 @@ export class StorySceneRuntime {
     if (picked === 0) {
       if (this.services.canPay?.(e.cost) ?? true) next = e.pay;
       else notice = `Không đủ ${e.cost} tiền để đổi trứng sủng vật.`;
-    } else if (picked <= eggs.length) {
-      const egg = eggs[picked - 1];
-      if (this.services.buyEgg?.(egg.itemId, egg.price)) {
-        notice = `Đã mua ${egg.name} x1.`;
-        next = e.done;
-      } else notice = `Không đủ kim tiền để mua ${egg.name}.`;
     }
     if (notice === null) {
       this.interpreter.jumpTo(next);

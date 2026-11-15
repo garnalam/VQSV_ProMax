@@ -355,8 +355,10 @@ describe("CV6: the North Sea's three finals", () => {
   });
 
   it("the finals' quest row is done at 30:124", () => {
-    const finals = assets.cauVongOpening!.quests.find((q) => q.show?.[0] === 48)!;
-    expect(finals).toMatchObject({ show: [48, 120], done: [30, 124] });
+    // The finals are chapter 5's last stage (Bắc Hải), from 48:120 until 30:124.
+    const sea = assets.cauVongOpening!.quests.find((q) => q.title.startsWith("Cầu Vồng 5 "))!;
+    expect(sea).toMatchObject({ show: [9, 114], done: [30, 124] });
+    expect(sea.variants![0].when).toEqual([[48, 120]]);
   });
 
   it.each([

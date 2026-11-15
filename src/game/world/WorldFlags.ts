@@ -49,6 +49,20 @@ export class BadgeProgression {
     return this.valid(badgeId) && this.enhancedStates[badgeId] === SOURCE_ENHANCED;
   }
 
+  goldenTier(): 0 | 1 | 2 {
+    return !this.achieved(BADGE_HOANG_KIM) ? 0 : this.enhanced(BADGE_HOANG_KIM) ? 2 : 1;
+  }
+
+  goldenPartyExperiencePercent(): number {
+    return this.goldenTier() > 0 ? 30 : 0;
+  }
+
+  upgradeGolden(): boolean {
+    if (this.goldenTier() !== 1) return false;
+    this.enhancedStates[BADGE_HOANG_KIM] = SOURCE_ENHANCED;
+    return true;
+  }
+
   enhanceable(badgeId: number): boolean {
     return this.valid(badgeId) && badgeId < BADGE_DIEN_MIEU && badgeId !== BADGE_HOANG_KIM;
   }
@@ -66,7 +80,10 @@ export class BadgeProgression {
     this.enhancedStates.fill(0);
     for (let badgeId = 0; badgeId < BADGE_COUNT; badgeId++) {
       if (value(achievedValues, badgeId) > 0) this.achievedStates[badgeId] = SOURCE_ACHIEVED;
-      if (this.enhanceable(badgeId) && value(enhancedValues, badgeId) > 0)
+      if (
+        (this.enhanceable(badgeId) || (badgeId === BADGE_HOANG_KIM && this.achieved(badgeId))) &&
+        value(enhancedValues, badgeId) > 0
+      )
         this.enhancedStates[badgeId] = SOURCE_ENHANCED;
     }
   }

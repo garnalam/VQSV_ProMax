@@ -1,6 +1,6 @@
 // JavaSE parity: vqsv/world/WorldInteractionEngine.evaluate and
 // vqsv/game/VqsvFreeWorldRuntime.playerIntersectsSourceRect.
-// Source masks are not exported yet, so every query takes Java's box fallback path.
+// With both collision masks the query is Java's mask overlap; without them, its box fallback.
 import {
   DIRECTION_DOWN,
   DIRECTION_LEFT,
@@ -8,6 +8,9 @@ import {
   DIRECTION_UP,
   PLAYER_HALF_SIZE,
 } from "./MapCollision";
+
+import { sourceMaskOverlap } from "./ActorCollision";
+import type { CollisionMask } from "../story/GameAssets";
 
 export const INTERACTION_OFFSET = 4;
 export const ACTOR_HALF_WIDTH = 12;
@@ -46,14 +49,23 @@ export function intersectsActorBox(
   );
 }
 
+/**
+ * `WorldInteractionEngine.evaluate` (INTERACTION): the player 4 px ahead of his facing, against the
+ * actor. With both collision masks it is `sourceMaskOverlap` — a merchant's mask reaches over the
+ * counter he stands behind, so the hero speaks to him from the counter's edge — else the box.
+ */
 export function playerInteractsActor(
   x: number,
   y: number,
   direction: number,
   actor: { x: number; y: number; visible: boolean },
+  playerMask?: CollisionMask | null,
+  actorMask?: CollisionMask | null,
 ): boolean {
   if (!actor.visible) return false;
   const origin = interactionOrigin(x, y, direction);
+  if (playerMask && actorMask)
+    return sourceMaskOverlap(origin.x, origin.y, playerMask, actor.x, actor.y, actorMask);
   return intersectsActorBox(origin.x, origin.y, actor.x, actor.y);
 }
 

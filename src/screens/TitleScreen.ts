@@ -2,6 +2,8 @@ import type { BootAssets } from "../pack/boot";
 import type { InputSnapshot } from "../core/input/InputSnapshot";
 import { KEY } from "../core/input/KeyCode";
 import { LOGICAL_HEIGHT, LOGICAL_WIDTH } from "../core/constants";
+import { centeredPoint, LAND_CENTER, landPoint, landSpace } from "../core/LandCenter";
+import { viewport } from "../core/Viewport";
 import type { Screen } from "../core/ScreenManager";
 import type { CanvasRenderer } from "../rendering/CanvasRenderer";
 import { HELP_EFFECT_LABELS } from "../game/system/HelpContent";
@@ -23,10 +25,50 @@ const NEXT_KEYS = [KEY.DOWN, KEY.NUMPAD2, KEY.D2, KEY.RIGHT, KEY.NUMPAD6, KEY.D6
 /** The bottom 42px band the title menu's three pointer zones live in. */
 const MENU_BAND_TOP = LOGICAL_HEIGHT - 42;
 
+/**
+ * Where the title's press landed, on the 240x320 layout: in landscape the panels are drawn at full
+ * size in the middle of the APK's 320x240 screen (`LAND_CENTER`).
+ */
+function press(input: InputSnapshot): { x: number; y: number } | null {
+  const p = input.pointer;
+  return p.pressed ? centeredPoint(p.pressX, p.pressY) : null;
+}
+/**
+ * The landscape APK title picture's menu band (`tex/menu.mid`): the dark strip at rows 196..219
+ * between the ◀ arrow (x 150..165) and the ▶ arrow (x 282..300), on the 320x240 screen. The label
+ * is centred between the arrows; a press left of the label steps back, right of it forward.
+ */
+const LAND_MENU_BAND = { top: 186, bottom: 230, left: 175, right: 272, labelX: 223, baseline: 212 };
+/** The title menu's bottom band: 42 rows, the 320x240 screen's bottom ones in landscape. */
+const bandTop = () => (viewport.landscape ? 240 - 42 - LAND_CENTER.y : MENU_BAND_TOP),
+  bandBottom = () => (viewport.landscape ? 240 - LAND_CENTER.y : LOGICAL_HEIGHT);
+function pressedIn(input: InputSnapshot, x0: number, y0: number, x1: number, y1: number) {
+  const at = press(input);
+  return !!at && at.x >= x0 && at.x <= x1 && at.y >= y0 && at.y <= y1;
+}
 /** `clickedSelectedMenu`: 80 < x < 160 inside the bottom band. */
 function clickedSelectedMenu(input: InputSnapshot): boolean {
-  return input.pointerPressedIn(81, MENU_BAND_TOP, 159, LOGICAL_HEIGHT);
+  return pressedIn(input, 81, bandTop(), 159, bandBottom());
 }
+/** A press on the bottom softkeys (the 320x240 screen's corners in landscape): which side, or null. */
+function softkeyPressed(input: InputSnapshot): "left" | "right" | null {
+  const p = input.pointer;
+  if (!p.pressed) return null;
+  if (!viewport.landscape) return p.pressY >= 286 ? (p.pressX < 120 ? "left" : "right") : null;
+  const at = landPoint(p.pressX, p.pressY);
+  return at.y >= 212 ? (at.x < 160 ? "left" : "right") : null;
+}
+/** The two softkey plates (1,296) and (197,296); landscape's sit in the 320x240 screen's corners. */
+const softkeys = (): [{ x: number; y: number }, { x: number; y: number }] =>
+  viewport.landscape
+    ? [
+        { x: 2 - LAND_CENTER.x, y: 215 - LAND_CENTER.y },
+        { x: 275 - LAND_CENTER.x, y: 215 - LAND_CENTER.y },
+      ]
+    : [
+        { x: 1, y: 296 },
+        { x: 197, y: 296 },
+      ];
 
 type Particle = { x: number; y: number; frame: number; dx: number; dy: number; done: boolean };
 
@@ -40,6 +82,8 @@ export class TitleScreen implements Screen {
     readonly model: TitleFlowModel,
     private readonly start: (request: StartRequest) => void,
     private readonly deleteSave: () => Promise<void>,
+    /** Backing out of the skip-prologue question when it was asked straight after signing in. */
+    private readonly leave?: () => void,
   ) {}
   tick(input: InputSnapshot): void {
     this.colorTick = (this.colorTick + 1) % OUTLINE.length;
@@ -51,6 +95,7 @@ export class TitleScreen implements Screen {
       command === "toggleSpeed" ? (this.model.toggleSpeed(), null) : this.apply(command);
     if (before === "overwrite" && this.model.mode === "skipIntro") void this.deleteSave();
     if (request) this.start(request);
+    else if (before === "skipIntro" && this.model.mode === "menu" && this.leave) this.leave();
   }
 
   private apply(command: TitleCommand | SettingsLevel): StartRequest | null {
@@ -71,10 +116,20 @@ export class TitleScreen implements Screen {
         // updateTitleMenu
         if (input.anyPressed(...PREVIOUS_KEYS)) return "previous";
         if (input.anyPressed(...NEXT_KEYS)) return "next";
+        if (input.confirmPressed()) return "confirm";
+        if (viewport.landscape) {
+          // The APK picture's band: its ◀ arrow, the label between, its ▶ arrow.
+          const p = input.pointer;
+          if (!p.pressed) return null;
+          const at = landPoint(p.pressX, p.pressY),
+            band = LAND_MENU_BAND;
+          if (at.y < band.top || at.y > band.bottom) return null;
+          return at.x < band.left ? "previous" : at.x > band.right ? "next" : "confirm";
+        }
         if (input.pointerPressedIn(0, MENU_BAND_TOP, 80, LOGICAL_HEIGHT)) return "previous";
         if (input.pointerPressedIn(160, MENU_BAND_TOP, LOGICAL_WIDTH - 1, LOGICAL_HEIGHT))
           return "next";
-        if (input.confirmPressed() || clickedSelectedMenu(input)) return "confirm";
+        if (clickedSelectedMenu(input)) return "confirm";
         return null;
       case "overwrite":
         // updateNewGameOverwritePrompt
@@ -112,10 +167,11 @@ export class TitleScreen implements Screen {
     input: InputSnapshot,
   ): TitleCommand | SettingsLevel | "toggleSpeed" | null {
     if (input.pointer.pressed) {
-      const { pressX: x, pressY: y } = input.pointer;
+      const { x, y } = press(input)!,
+        key = softkeyPressed(input);
+      if (key) return key === "left" ? "toggleSpeed" : "back";
       if (x >= 84 && x <= 158 && y >= 179 && y <= 199) return "toggleSpeed";
       if (x >= 112 && x <= 166 && y >= 136 && y <= 174) return x < 133 ? 1 : x < 147 ? 2 : 3;
-      if (y >= 286) return x < 120 ? "toggleSpeed" : "back";
       return null;
     }
     if (input.anyPressed(...PREVIOUS_KEYS)) return "previous";
@@ -129,9 +185,9 @@ export class TitleScreen implements Screen {
   /** Title help panel. Pointer zones match the page arrows and the back softkey. */
   private helpCommand(input: InputSnapshot): TitleCommand | null {
     if (input.pointer.pressed) {
-      const { pressX: x, pressY: y } = input.pointer;
+      const { x, y } = press(input)!;
+      if (softkeyPressed(input)) return "back";
       if (y >= 232 && y <= 270) return x < 120 ? "previous" : "next";
-      if (y >= 286) return "back";
       return null;
     }
     if (input.anyPressed(...PREVIOUS_KEYS)) return "previous";
@@ -146,6 +202,12 @@ export class TitleScreen implements Screen {
       return;
     }
     this.background(r);
+    // Landscape: everything laid out for 240x320 sits at full size in the 320x240 screen's middle.
+    if (viewport.landscape) landSpace(r.context, r.backingScale, LAND_CENTER);
+    this.content(r);
+    if (viewport.landscape) r.uiSpace();
+  }
+  private content(r: CanvasRenderer): void {
     switch (this.model.mode) {
       case "menu":
         this.menu(r);
@@ -171,8 +233,12 @@ export class TitleScreen implements Screen {
     const g = r.context,
       font = this.assets.sourceFont,
       text = this.model.labels()[this.model.selected],
-      x = Math.floor((LOGICAL_WIDTH - font.width(text)) / 2),
-      y = LOGICAL_HEIGHT - 20,
+      land = viewport.landscape,
+      // Landscape: in the APK picture's band, between its two arrows (centred layout coordinates).
+      x = land
+        ? Math.floor(LAND_MENU_BAND.labelX - font.width(text) / 2) - LAND_CENTER.x
+        : Math.floor((LOGICAL_WIDTH - font.width(text)) / 2),
+      y = land ? LAND_MENU_BAND.baseline - LAND_CENTER.y : LOGICAL_HEIGHT - 20,
       outline = `#${OUTLINE[this.colorTick].toString(16).padStart(6, "0")}`;
     for (const [dx, dy] of [
       [0, -1],
@@ -194,12 +260,13 @@ export class TitleScreen implements Screen {
     g.fillStyle = "#6cb7bb";
     g.fillRect(46, 245, 150, 8);
     if (frame) r.image(frame, 43, 55);
+    const [left, right] = softkeys();
     if (softkey) {
-      r.image(softkey, 1, 296);
-      r.image(softkey, 197, 296);
+      r.image(softkey, left.x, left.y);
+      r.image(softkey, right.x, right.y);
     }
     this.assets.panelFont.draw(g, title, 70, 59, "#ffffff");
-    this.assets.panelFont.draw(g, "Quay lại", 197, 296, "#ffffff");
+    this.assets.panelFont.draw(g, "Quay lại", right.x, right.y, "#ffffff");
   }
   private settings(r: CanvasRenderer): void {
     this.panel(r, "Tùy chọn");
@@ -226,7 +293,8 @@ export class TitleScreen implements Screen {
       g.stroke();
     }
     font.draw(g, "Speed x2", 104, 185, this.model.speedX2 ? "#d0010e" : "#1c6c91");
-    font.centered(g, `x2: ${this.model.speedX2 ? "Bật" : "Tắt"}`, 1, 43, 296, "#ffffff");
+    const [left] = softkeys();
+    font.centered(g, `x2: ${this.model.speedX2 ? "Bật" : "Tắt"}`, left.x, 43, left.y, "#ffffff");
   }
   private help(r: CanvasRenderer): void {
     this.panel(r, "Trợ giúp");
@@ -277,25 +345,40 @@ export class TitleScreen implements Screen {
     font.drawAtBaseline(g, "VQSV Liệt Hỏa Rebuild", 40, 140, "#ffffff");
     font.drawAtBaseline(g, "Bản rebuild đang được hoàn thiện", 40, 160, "#ffffff");
     font.drawAtBaseline(g, "theo từng chức năng gameplay.", 40, 180, "#ffffff");
-    font.rightAtBaseline(g, "Quay lại", LOGICAL_WIDTH - 2, LOGICAL_HEIGHT - 2, "#ffffff");
+    this.corner(r, "right", "Quay lại", "#ffffff");
   }
   private prompt(r: CanvasRenderer): void {
     r.clear();
     const g = r.context,
       font = this.assets.sourceFont,
-      mid = LOGICAL_HEIGHT / 2,
-      bottom = LOGICAL_HEIGHT - 2;
+      mid = LOGICAL_HEIGHT / 2;
+    if (viewport.landscape) landSpace(g, r.backingScale, LAND_CENTER);
     if (this.model.mode === "overwrite") {
       font.centeredAtBaseline(g, "Chơi mới sẽ xóa dữ liệu cũ.", mid - 20, "#ffffff");
       font.centeredAtBaseline(g, "Bạn có chắc muốn tiếp tục?", mid, "#ffdd66");
-      font.drawAtBaseline(g, "Xóa", 2, bottom, "#ffffff");
-      font.rightAtBaseline(g, "Hủy", LOGICAL_WIDTH - 2, bottom, "#ffffff");
+      this.corner(r, "left", "Xóa", "#ffffff");
+      this.corner(r, "right", "Hủy", "#ffffff");
     } else {
       font.centeredAtBaseline(g, "Bỏ qua đoạn giới thiệu?", mid - 12, "#ffffff");
       font.centeredAtBaseline(g, "Nhảy tới mười năm sau", mid + 12, "#ffdd66");
-      font.drawAtBaseline(g, "Có", 2, bottom, "#ffffff");
-      font.rightAtBaseline(g, "Không", LOGICAL_WIDTH - 2, bottom, "#ffffff");
+      this.corner(r, "left", "Có", "#ffffff");
+      this.corner(r, "right", "Không", "#ffffff");
     }
+    if (viewport.landscape) r.uiSpace();
+  }
+  /**
+   * A softkey label in a bottom corner of the screen: the 320x240 one in landscape, where it is
+   * drawn under the centred layout's transform (`LAND_CENTER`).
+   */
+  private corner(r: CanvasRenderer, side: "left" | "right", text: string, color: string): void {
+    const g = r.context,
+      font = this.assets.sourceFont,
+      land = viewport.landscape,
+      left = land ? -LAND_CENTER.x : 0,
+      right = land ? 320 - LAND_CENTER.x : LOGICAL_WIDTH,
+      bottom = (land ? 240 - LAND_CENTER.y : LOGICAL_HEIGHT) - 2;
+    if (side === "left") font.drawAtBaseline(g, text, left + 2, bottom, color);
+    else font.rightAtBaseline(g, text, right - 2, bottom, color);
   }
   private boundary(r: CanvasRenderer): void {
     const g = r.context;
@@ -304,7 +387,7 @@ export class TitleScreen implements Screen {
     const font = this.assets.sourceFont;
     font.centeredAtBaseline(g, "World Runtime chưa triển khai", 140, "#ffffff");
     font.centeredAtBaseline(g, "Trạng thái menu đã hoàn tất", 164, "#ffdd66");
-    font.rightAtBaseline(g, "Quay lại", LOGICAL_WIDTH - 2, LOGICAL_HEIGHT - 2, "#ffffff");
+    this.corner(r, "right", "Quay lại", "#ffffff");
   }
   private exit(r: CanvasRenderer): void {
     const g = r.context;
@@ -313,9 +396,13 @@ export class TitleScreen implements Screen {
     const font = this.assets.sourceFont;
     font.centeredAtBaseline(g, "Trình duyệt không cho trang tự đóng", 140, "#ffffff");
     font.centeredAtBaseline(g, "Bạn có thể đóng tab này.", 162, "#ffdd66");
-    font.rightAtBaseline(g, "Quay lại", LOGICAL_WIDTH - 2, LOGICAL_HEIGHT - 2, "#ffffff");
+    this.corner(r, "right", "Quay lại", "#ffffff");
   }
   private background(r: CanvasRenderer): void {
+    if (viewport.landscape) {
+      this.landBackground(r);
+      return;
+    }
     r.image(this.assets.menuBackground, 0, 0);
     if (this.paused) return;
     for (const p of this.particles) {
@@ -333,6 +420,33 @@ export class TitleScreen implements Screen {
         h,
       );
     }
+  }
+  /**
+   * Landscape: the APK's own 320x240 title picture, black either side of it, and the particles
+   * rising across it (their 240x320 paths stretched to its shape).
+   */
+  private landBackground(r: CanvasRenderer): void {
+    const g = r.context;
+    r.clear();
+    landSpace(g, r.backingScale);
+    g.drawImage(this.assets.menuBackgroundLand, 0, 0);
+    if (!this.paused)
+      for (const p of this.particles) {
+        if (p.done) continue;
+        const [sx, sy, w, h] = RECTS[p.frame];
+        g.drawImage(
+          this.assets.menuParticles,
+          sx,
+          sy,
+          w,
+          h,
+          Math.floor((p.x * 320) / 240),
+          Math.floor((p.y * 240) / 320),
+          w,
+          h,
+        );
+      }
+    r.uiSpace();
   }
   private tickParticles(): void {
     if (this.paused) {

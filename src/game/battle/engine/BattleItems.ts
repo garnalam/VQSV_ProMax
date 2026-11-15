@@ -4,8 +4,8 @@ import type { StatusEffects } from "../StatusState";
 
 /**
  * The bag items a fight can use, read from `battle/items.json`: the four capture balls and the nine
- * recovery items. Each recovery item names its effect by `mechanicKey` and its numbers in
- * `effectParametersJson`, so a rebalanced item changes here without touching the code.
+ * recovery items. `values` preserves the native paramA/B/C; normalized percentage/target hints
+ * in the same rows describe a different balance and must not override those native values.
  */
 export type BattleItem =
   | { kind: "capture"; id: number; name: string; multiplier: number; guaranteed: boolean }
@@ -17,11 +17,14 @@ export type BattleItem =
       hpPercent: number;
       hpFlat: number;
       ppPercent: number;
+      /** Native flat PP restored to every equipped skill; absent for legacy custom items. */
+      ppFlat?: number;
       /** "one_skill", "pet_and_one_skill", "pet_and_all_skills", "fainted_pet" or "pet". */
       target: string;
     };
 
 type ItemParameters = {
+  values?: number[];
   capture_multiplier?: number;
   guaranteed?: boolean;
   hp_percent?: number;
@@ -63,10 +66,19 @@ export class BattleItems {
           id: row.runtimeId,
           name: row.name,
           mechanic: row.mechanicKey as (typeof RECOVERY)[number],
-          hpPercent: p.hp_percent ?? 0,
-          hpFlat: p.hp_flat ?? 0,
+          hpPercent: row.mechanicKey === "restore_pp" ? 0 : (p.values?.[0] ?? p.hp_percent ?? 0),
+          hpFlat: row.mechanicKey === "restore_pp" ? 0 : (p.values?.[1] ?? p.hp_flat ?? 0),
           ppPercent: p.pp_percent ?? 0,
-          target: p.target ?? "pet",
+          ppFlat: p.values
+            ? row.mechanicKey === "restore_pp"
+              ? (p.values[0] ?? 0)
+              : (p.values[2] ?? 0)
+            : undefined,
+          target: p.values
+            ? row.mechanicKey === "revive"
+              ? "fainted_pet"
+              : "pet_and_all_skills"
+            : (p.target ?? "pet"),
         });
       }
     }
@@ -91,7 +103,9 @@ export class BattleItems {
     const alive = unit.alive();
     if (item.mechanic === "revive") return alive ? "Pet này chưa gục." : undefined;
     if (!alive) return "Pet đã gục.";
-    const needsSlot = item.target === "one_skill" || item.target === "pet_and_one_skill";
+    const needsSlot =
+      item.ppFlat === undefined &&
+      (item.target === "one_skill" || item.target === "pet_and_one_skill");
     if (needsSlot) {
       const id = skillSlot === undefined ? undefined : unit.skillIds[skillSlot];
       if (id === undefined || id < 0) return "Chọn một Skill.";
@@ -103,10 +117,11 @@ export class BattleItems {
       case "restore_hp":
         return hpFull ? "HP đã đầy." : undefined;
       case "restore_pp":
-        return ppFull(skillSlot!) ? "PP đã đầy." : undefined;
+        return (item.ppFlat === undefined ? ppFull(skillSlot!) : allPpFull)
+          ? "PP đã đầy."
+          : undefined;
       case "restore_hp_pp":
-        if (item.target === "pet_and_one_skill")
-          return hpFull && ppFull(skillSlot!) ? "HP và PP đã đầy." : undefined;
+        if (needsSlot) return hpFull && ppFull(skillSlot!) ? "HP và PP đã đầy." : undefined;
         return hpFull && allPpFull ? "HP và PP đã đầy." : undefined;
       case "cleanse_status":
         return unit.activeDebuffCount() > 0 || unit.statuses.activeIds(2).length > 0
@@ -135,13 +150,13 @@ export class BattleItems {
       const max = ppMax(id);
       unit.skillPp[slot] = Math.min(
         max,
-        unit.skillPp[slot] + Math.trunc((max * item.ppPercent) / 100),
+        unit.skillPp[slot] + Math.max(0, item.ppFlat ?? Math.trunc((max * item.ppPercent) / 100)),
       );
     };
     let revived = false;
     switch (item.mechanic) {
       case "revive":
-        unit.setHp(Math.max(1, Math.trunc((unit.maxHp() * item.hpPercent) / 100)));
+        unit.setHp(Math.max(1, Math.trunc((unit.maxHp() * item.hpPercent) / 100) + item.hpFlat));
         revived = true;
         unit.skillIds.forEach((_, slot) => restorePp(slot));
         break;
@@ -151,7 +166,7 @@ export class BattleItems {
       default: {
         const hp = Math.trunc((unit.maxHp() * item.hpPercent) / 100) + item.hpFlat;
         if (hp > 0) unit.heal(heal(hp));
-        if (item.target === "pet_and_all_skills")
+        if (item.ppFlat !== undefined || item.target === "pet_and_all_skills")
           unit.skillIds.forEach((_, slot) => restorePp(slot));
         else if (skillSlot !== undefined && item.ppPercent > 0) restorePp(skillSlot);
       }

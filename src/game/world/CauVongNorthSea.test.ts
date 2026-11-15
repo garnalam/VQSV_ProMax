@@ -45,7 +45,9 @@ type NorthSeaDocument = import("./CauVongNorthSea").CauVongNorthSeaDocument;
 
 const pack = await Pack.load();
 const [boot, assets] = await Promise.all([loadBootAssets(pack), GameAssets.fromPack(pack)]);
-for (const room of [0, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 45, 48, 49, 50, 53, 56, 61, 66])
+for (const room of [
+  0, 2, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 45, 48, 49, 50, 53, 56, 61, 66,
+])
   await assets.prepareRoom(98, room);
 
 const DOC = JSON.parse(
@@ -247,6 +249,25 @@ describe("Bắc Hải (CV5)", () => {
     world.eventState.op14CompleteEvent(98, 9, 114);
     stand(world, 15 * 20 + 10, 9 * 20 + 15);
     expect(world.roomIndex).toBe(28);
+  });
+
+  it("A: the yard's east doors walk into 27 and back (Java never checked them)", () => {
+    const { world } = enter(2, 500, 350);
+    play(world);
+    for (const [y, landing, back] of [
+      [350, 619, 379],
+      [370, 599, 359],
+    ]) {
+      world.warp({ scene: 98, room: 2, x: 500, y, direction: 0 });
+      play(world);
+      for (let i = 0; i < 60 && world.roomIndex === 2; i++) world.tick(["holdRight"]);
+      expect([world.roomIndex, world.player.x, world.player.y]).toEqual([27, 30, landing]);
+      // The arrival stays put, and the west door leads back to the yard.
+      for (let i = 0; i < 40; i++) world.tick([]);
+      expect(world.roomIndex).toBe(27);
+      for (let i = 0; i < 60 && world.roomIndex === 27; i++) world.tick(["holdLeft"]);
+      expect([world.roomIndex, world.player.x, world.player.y]).toEqual([2, 530, back]);
+    }
   });
 
   it("A: 28's arrival, then the dock keeper's ticket and a boat ride", () => {
@@ -594,24 +615,28 @@ describe("Bắc Hải (CV5)", () => {
   });
 
   it("the quest row: 9:114 shows it, each stage's detail in turn, 61:105 completes it", () => {
+    // Chapter 5 (Bắc Hải) runs from 9:114 through the finals (30:124).
     const quest = assets.cauVongOpening!.quests.find(
       (q) => q.show?.[0] === 9 && q.show[1] === 114,
     )!;
-    expect(quest.done).toEqual([61, 105]);
+    expect(quest.title).toBe("Cầu Vồng 5 — Bắc Hải");
+    expect(quest.done).toEqual([30, 124]);
     const stages: [number, number][] = [
       [30, 104],
       [35, 102],
       [61, 102],
       [61, 105],
+      [48, 120],
     ];
     const seen: string[] = [];
     for (let n = 0; n <= stages.length; n++) {
       const set = stages.slice(0, n);
       seen.push(openingQuestDetail(quest, ([r, e]) => set.some(([a, b]) => a === r && b === e)));
     }
-    expect(new Set(seen).size).toBe(5);
+    expect(new Set(seen).size).toBe(6);
     expect(seen[0]).toContain("văn phòng (27)");
     expect(seen[4]).toContain("Chân tướng đã rõ");
+    expect(seen[5]).toContain("Gặp trọng tài tại đấu trường (30)");
   });
 
   it("branches: the dock merchant's menu and a passive line", () => {

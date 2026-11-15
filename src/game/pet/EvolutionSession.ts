@@ -3,6 +3,7 @@ import type { SavedPet } from "../../persistence/save/GameSave";
 import type { BattleServices } from "../battle/engine/BattleServices";
 import {
   applyEvolution,
+  evolvedForm,
   consumeEvolutionMaterials,
   evolutionMaterialCount,
   type EvolutionRule,
@@ -28,13 +29,14 @@ export class EvolutionSession {
     readonly rule: EvolutionRule,
     readonly materials: Record<string, number>,
     private readonly services: BattleServices,
+    /** `collection.markCollected(target)`: the new form counts as owned. */
+    private readonly onEvolved: (speciesId: number) => void = () => {},
   ) {
     this.previousSpecies = pet.speciesId;
+    // The right column is the pet the evolution makes (`targetVisibleStats`): the target species
+    // at its evolved stars, drawn with its own sprite.
     const old = services.partyMember(pet),
-      // `visualSpriteId` belongs to the current form. Carrying it across the preview makes
-      // `partyMember` correctly prefer the old override, but consequently draws the same pet in
-      // both columns. The target preview must resolve its sprite from the target species row.
-      next = services.partyMember({ ...pet, speciesId: rule.toSpecies, visualSpriteId: undefined });
+      next = evolvedForm(pet, rule.toSpecies, services);
     this.oldStats = [old.stats.hp, old.stats.attack, old.stats.defense, old.stats.speed];
     this.newStats = [next.stats.hp, next.stats.attack, next.stats.defense, next.stats.speed];
     this.oldSprite = old.spriteId ?? -1;
@@ -71,6 +73,7 @@ export class EvolutionSession {
       this.ticks++;
       if (this.ticks >= 24) {
         applyEvolution(this.pet, this.rule, this.services);
+        this.onEvolved(this.rule.toSpecies);
         this.phase = 2;
         this.succeeded = true;
         this.message = `${this.rule.kind === "mutation" ? "Dị hoá" : "Tiến hóa"} thành ${this.newName}`;

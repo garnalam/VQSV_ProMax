@@ -29,6 +29,7 @@ import { loadBattleRules, type BattleRules } from "../battle/BattleRules";
 import { DEFAULT_BATTLE_DEFINITIONS } from "../battle/BattleDefinition";
 import type { MapCollision } from "../world/MapCollision";
 import type { Pack } from "../../pack/Pack";
+import type { TowerContent } from "../meta/BondingTower";
 import { StoryGraph, type StoryGraphDocument } from "./StoryGraph";
 import { QuestCatalog, type BranchTask } from "../quest/QuestCatalog";
 import type { GiftCodeDocument } from "../meta/GiftCodes";
@@ -84,7 +85,18 @@ export type RoomActor = {
    */
   sourceOrder?: number;
 };
-export type RoomAsset = { mapId: number; width: number; height: number; actors: RoomActor[] };
+export type RoomAsset = {
+  mapId: number;
+  width: number;
+  height: number;
+  actors: RoomActor[];
+  /** An APK landscape map: where the JAR map's (0, 0) lies in it (`MapCollision.originX`). */
+  originX?: number;
+  originY?: number;
+  /** The JAR room's own size, kept for the portrait (240x320) camera once an APK map widens it. */
+  jarWidth?: number;
+  jarHeight?: number;
+};
 export type SpriteFrame = {
   file: string;
   ox: number;
@@ -379,6 +391,7 @@ export class GameAssets {
     readonly metaSystems?: MetaSystemsDocument,
     readonly giftCodes?: GiftCodeDocument,
     readonly campaignSystems?: CampaignSystemsDocument,
+    readonly bondingTower?: TowerContent,
   ) {}
   roomName(scene: number, room: number): string {
     return this.roomNames[`${scene}:${room}`] ?? "";
@@ -408,6 +421,7 @@ export class GameAssets {
       unifiedBadges,
       worldEncounters,
       metaSystems,
+      bondingTower,
       giftCodes,
       campaignSystems,
       rideSprites,
@@ -470,6 +484,7 @@ export class GameAssets {
       data.badges(),
       pack.json<WorldEncountersDocument>("story.world-encounters"),
       pack.json<MetaSystemsDocument>("story.meta-systems"),
+      pack.json<TowerContent>("story.bonding-tower"),
       pack.json<GiftCodeDocument>("story.gift-codes"),
       pack.json<CampaignSystemsDocument>("story.campaign-systems"),
       pack.json<SpritesManifest>("ride-sprites.sprites"),
@@ -614,6 +629,7 @@ export class GameAssets {
       metaSystems,
       giftCodes,
       campaignSystems,
+      bondingTower,
     );
     // The whole world (Liệt Hỏa and Cầu Vồng) is in the bake now; only the opening and Scene 1
     // are fetched before the first frame, every other room when the world first needs it.
@@ -668,6 +684,10 @@ export class GameAssets {
     result.cauVongBanks = cauVongBanks;
     result.cauVongHd = cauVongHd;
     result.shiny = new ShinyRecolorCache(shinyPalette);
+    // Pet State's "Đeo": the equipment table's name, as the equip menu shows it.
+    const bag = result.bagItems;
+    if (bag && battleServices.petFacts)
+      battleServices.petFacts.heldName = (id) => bag.equipment(id)?.name;
     const scroll = cauVongBranches.aux.scroll;
     result.bagItems?.addQuestItem(scroll.id, scroll.name, scroll.description ?? "");
     const sea = cauVongNorthSea.items;
@@ -882,6 +902,18 @@ export class GameAssets {
       ]);
       this.maps.set(id, layers);
       this.collisions.set(id, collision);
+      // An APK landscape map is larger than the JAR room it replaces and starts at its origin: every
+      // room on it takes the map's size and origin (the game keeps the JAR's coordinates).
+      if (collision.originX !== undefined || collision.originY !== undefined)
+        for (const room of Object.values(this.rooms))
+          if (room.mapId === id) {
+            room.jarWidth ??= room.width;
+            room.jarHeight ??= room.height;
+            room.width = collision.widthPixels;
+            room.height = collision.heightPixels;
+            room.originX = collision.originX ?? 0;
+            room.originY = collision.originY ?? 0;
+          }
     })();
     this.mapLoads.set(id, loading);
     return loading;
@@ -968,10 +1000,11 @@ export class GameAssets {
     visual: number,
     nature: number | undefined,
     mirror = false,
+    shinyColor?: number,
   ): HTMLImageElement | HTMLCanvasElement | undefined {
     const image = this.imageFor(frame, mirror);
     if (!image.complete || image.naturalWidth === 0) return undefined;
-    return this.shinyImage(image, nature, visual);
+    return this.shinyImage(image, nature, visual, shinyColor);
   }
   /** `l-effect/<visual>.png`: the picture a state-1 L copies (`renderSpriteAnimationFrameImage`). */
   lEffectPicture(visual: number): HTMLImageElement {
@@ -982,23 +1015,27 @@ export class GameAssets {
   /** `PetShinyPalette`: natures 7..9 recolour a pet's frames (`shiny/palette.json`). */
   shiny?: ShinyRecolorCache;
   /**
-   * The sprite a pet of `visual` with `nature` is drawn from: its own, or for a visual whose shiny
-   * frames are baked whole (Hầu Vương), that bake.
+   * The sprite a pet of `visual` is drawn from: always its own, which `shinyImage` recolours. Java's
+   * whole-frame bake of Hầu Vương (`shiny/n<nature>`) is never drawn (owner, 2026-11-15): Hầu Vương
+   * takes the new colours like every pet, an old shiny one included.
    */
-  shinySprite(visual: number, nature: number | undefined): number {
-    if (!shinyApplies(nature) || !this.shiny?.document.framesBaked.includes(visual)) return visual;
-    const baked = shinyBakedSpriteId(visual, nature!);
-    return this.sprites[String(baked)] ? baked : visual;
+  shinySprite(visual: number, _nature?: number, _shinyColor?: number): number {
+    return visual;
+  }
+  /** The frame a visual's colour regions are read from: state 0, its first drawn frame. */
+  private shinyReference(visual: number): HTMLImageElement | undefined {
+    const frame = this.sprites[String(visual)]?.states["0"]?.find((stored) => isInk(stored));
+    return frame ? this.imageFor(frame) : undefined;
   }
   /** A pet frame image in its shiny palette when `nature` is 7..9 (not for a whole-frame bake). */
   shinyImage(
     image: HTMLImageElement,
     nature: number | undefined,
     visual: number,
+    shinyColor?: number,
   ): HTMLImageElement | HTMLCanvasElement {
     if (!shinyApplies(nature) || !this.shiny || visual >= SHINY_BAKED_BASE) return image;
-    if (this.shiny.document.framesBaked.includes(visual)) return image;
-    return this.shiny.image(image, nature!, visual);
+    return this.shiny.image(image, nature!, visual, shinyColor, this.shinyReference(visual));
   }
   private hdBySource?: Map<string, string>;
   /**
@@ -1092,6 +1129,9 @@ export class GameAssets {
     }
     addState(294, 0);
     addState(294, 1);
+    // The capture ball: each of its ~40 frames is its own picture, and a frame still loading on the
+    // first throw would blink the ball out.
+    addSprite(this.worldContract.capture?.spriteId ?? 269);
     for (const [sprite, state] of this.battleRules.signatureFx.spriteStates())
       addState(sprite, state);
     for (const [sprite, state] of this.battleRules.sourceFx.actorSpriteStates())

@@ -35,6 +35,13 @@ const { GameAssets } = await import("../story/GameAssets");
 const { gameplaySources } = await import("../session/GameplayHost");
 const { WorldRuntime } = await import("../world/WorldRuntime");
 const { WorldPanel } = await import("../world/WorldPanel");
+const { NewGameScreen } = await import("../../screens/NewGameScreen");
+const { SaveRepository } = await import("../../persistence/SaveRepository");
+const { MemorySaveStore } = await import("../../persistence/save/SaveStore");
+const { GameplayClock } = await import("../../core/GameplayClock");
+const { InputSnapshot } = await import("../../core/input/InputSnapshot");
+const { KEY } = await import("../../core/input/KeyCode");
+const { MotionInterpolator } = await import("../../rendering/MotionInterpolator");
 const { scene1Save } = await import("../../dev/parityCheckpoints");
 const { SCENE1_RESUME } = await import("../../persistence/save/migrations");
 const { terrainAtWorld, stepWithTerrain, DIRECTION_LEFT, DIRECTION_RIGHT } =
@@ -111,6 +118,11 @@ describe("RideProgression / VqsvRideRuntime rules", () => {
     expect(ride.roomRestrictions(assets.rideRooms, 99, 0)).toEqual(new Array(9).fill(1));
     // Cầu Vồng's thorn forest needs the plant mount (`applyRoomPolicy` FOREST_ROOM_INDEX).
     expect(ride.roomRestrictions(assets.rideRooms, 98, 11)[ride.CV_PLANT]).toBe(0);
+    // Bug fix: Java's `ground` rooms are 0, 1, 9 and the encounter areas, so the academy's open yard
+    // (2, the square's neighbour) refused every mount; it now rides like the square.
+    expect(ride.roomRestrictions(assets.rideRooms, 98, 2)).toEqual(
+      ride.roomRestrictions(assets.rideRooms, 98, 1),
+    );
   });
 
   it("unlocks Liệt Hỏa rides by special reward and Cầu Vồng rides by event or collection", () => {
@@ -141,6 +153,69 @@ describe("RideProgression / VqsvRideRuntime rules", () => {
 });
 
 describe("rides on the free map", () => {
+  it.each([24, 25, 26])("only allows Mao Cầu Điểu in Northern Sky room %i", async (room) => {
+    await assets.prepareRoom(98, room);
+    const before = roadWorld();
+    before.bag.specials.push(1, 2, 3, 4);
+    expect(before.selectRide(0)).toBe("ready");
+    for (let index = ride.CV_PLANT; index < ride.RIDE_COUNT; index++)
+      before.eventState.op14CompleteEvent(98, 0, ride.RAINBOW_RIDE_OWNED_EVENT + index);
+    const save = before.snapshot();
+    save.location = { sceneId: 98, roomIndex: room, x: 50, y: 59, direction: 1 };
+    const world = new WorldRuntime(contract, sources, save);
+    expect(world.activeRideIndex).toBe(-1);
+    expect(
+      Array.from({ length: ride.RIDE_COUNT }, (_, index) => world.rideUnlocked(index)),
+    ).toEqual(Array(ride.RIDE_COUNT).fill(true));
+    expect(Array.from({ length: ride.RIDE_COUNT }, (_, index) => world.rideUsable(index))).toEqual([
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+    ]);
+    expect(world.selectRide(0)).toBe("blocked");
+    expect(world.selectRide(ride.CV_SKY)).toBe("ready");
+    expect(world.activeRideIndex).toBe(ride.CV_SKY);
+    expect(before.warp({ scene: 98, room, x: 50, y: 59, direction: 1 })).toBe(true);
+    expect(before.activeRideIndex).toBe(-1);
+  });
+
+  it("interpolates both x2 mount steps from the start of the frame", () => {
+    const screen = new NewGameScreen(
+      false,
+      assets,
+      boot,
+      new SaveRepository(new MemorySaveStore()),
+      () => {},
+      scene1Save(roadSave),
+    );
+    const world = screen.host.world!;
+    while (world.mapLoading) world.tickMapLoading();
+    world.bag.specials.push(1);
+    expect(world.selectRide(0)).toBe("ready");
+    const clock = new GameplayClock();
+    clock.setSpeedX2(true);
+    const capture = vi.spyOn(MotionInterpolator.prototype, "capture");
+    try {
+      const startX = world.player.x;
+      clock.tick(
+        (input, continuation) => screen.tick(input, continuation),
+        InputSnapshot.keys(KEY.RIGHT),
+      );
+      expect(world.player.x).toBe(startX + 16);
+      const motion = capture.mock.instances[0] as InstanceType<typeof MotionInterpolator>;
+      motion.alpha = 0;
+      expect(motion.actor(world.actors, -1, world.actors.get(-1)!).x).toBe(startX);
+    } finally {
+      capture.mockRestore();
+    }
+  });
+
   it("mounts an owned ride, swaps the hero sprite and moves at the ride speed", () => {
     const world = roadWorld();
     expect(world.selectRide(0)).toBe("locked");

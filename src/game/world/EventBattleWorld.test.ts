@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /** Pack images are 1x1 stand-ins under Node; this rig never reads pixels. */
 vi.stubGlobal(
@@ -40,6 +40,7 @@ const { worldGroupBattleActor } = await import("./WorldEventCatalog");
 const { unsupportedEventBattle, doubleEventBattleSymbol, createEventBattle } =
   await import("../battle/EventBattle");
 const { doubleBattleSetup } = await import("../battle/DoubleEventBattle");
+const { createBondingTowerBattle } = await import("../battle/BondingTowerBattle");
 const { BattleCommandError } = await import("../battle/engine/BattleTypes");
 const { BATTLE_RESULT_LOST } = await import("../battle/BattleRuntime");
 import type { SavedPet } from "../../persistence/save/GameSave";
@@ -51,6 +52,10 @@ const pack = await Pack.load();
 const [boot, assets] = await Promise.all([loadBootAssets(pack), GameAssets.fromPack(pack)]);
 const sources = gameplaySources(assets, boot).world;
 const services = sources.battle!;
+// The fights draw from the battle core's seed, the clock by default: about 1 seed in 200 lets the
+// elder fell the level-5/7 party before it lands a blow, and the "win" tests then fail only
+// sometimes. One fixed stream, as the other battle tests use.
+services.seedSource = () => 0;
 const contract = assets.worldContract;
 const EVENT_STATE_COMPLETE = 3;
 /**
@@ -118,6 +123,200 @@ function finishEvent(runtime: World): void {
   for (let i = 0; i < 6000 && runtime.eventVisible; i++)
     runtime.tick(runtime.eventScene?.textReady ? ["confirm"] : []);
 }
+
+describe("Tháp Gắn Kết battle integration", () => {
+  beforeEach(() => vi.spyOn(services, "seedSource").mockReturnValue(314));
+  afterEach(() => vi.restoreAllMocks());
+
+  function arenaWorld(pets: SavedPet[]): World {
+    const runtime = new WorldRuntime(
+      contract,
+      sources,
+      scene1Save({
+        location: { sceneId: 1, roomIndex: 0, x: 200, y: 200, direction: 2 },
+        owner: SCENE1_RESUME.bunnyReturnRoom0,
+        bunnyCaught: true,
+        pets,
+      }),
+    );
+    for (let i = 0; i < 64 && runtime.mapLoading; i++) runtime.tickMapLoading();
+    return runtime;
+  }
+
+  function floor(double: boolean) {
+    return {
+      floor: double ? 10 : 1,
+      team: [68, 68],
+      level: 5,
+      quality: 1,
+      double,
+      factors: [1, 1, 1, 1] as [number, number, number, number],
+      boss: double,
+      theme: "test",
+    };
+  }
+
+  const pets = {
+    "68": {
+      id: 68,
+      name: "Thỏ Ngọc",
+      role: "tank" as const,
+      grants: [{ id: 40, level: 1, signature: false }],
+    },
+  };
+
+  it("requires a living pet and two roster pets for doubles", () => {
+    const fainted = arenaWorld([{ speciesId: 68, level: 7, quality: 2, currentHp: 0 }]);
+    expect(fainted.startBondingTower(floor(false), pets, vi.fn())).toBe(false);
+    const solo = arenaWorld([{ speciesId: 68, level: 7, quality: 2 }]);
+    expect(solo.startBondingTower(floor(true), pets, vi.fn())).toBe(false);
+  });
+
+  it.each([false, true])("isolates the challenge and handles retreat (double: %s)", (double) => {
+    const runtime = arenaWorld([
+      { speciesId: 68, level: 7, quality: 2, currentHp: 2, skillIds: [40, 41], skillPp: [0, 1] },
+      { speciesId: 34, level: 5, quality: 1, currentHp: 0 },
+    ]);
+    const before = runtime.snapshot();
+    const onResult = vi.fn();
+    expect(runtime.startBondingTower(floor(double), pets, onResult)).toBe(true);
+    expect(runtime.startBondingTower(floor(double), pets, onResult)).toBe(false);
+    const unit = double
+      ? runtime.doubleBattle!.core.playerUnit(0)
+      : runtime.battle!.core!.unit("player", 0);
+    const second = double
+      ? runtime.doubleBattle!.core.playerUnit(1)
+      : runtime.battle!.core!.unit("player", 1);
+    expect(unit.hp()).toBe(unit.maxHp());
+    expect(second.hp()).toBe(second.maxHp());
+    expect(unit.skillPp.slice(0, 2)).toEqual(services.progression.fullPp([40, 41]));
+    expect(runtime.snapshot().pets).toEqual(before.pets);
+    for (let i = 0; i < 240; i++) runtime.tick([]);
+    const battle = (runtime.battle ?? runtime.doubleBattle)!;
+    expect(battle.ui.mode).toBe("COMMAND");
+    const click = (x: number) => battle.pointer(x, 305, runtime.inventory);
+    for (const x of [56, 98, 176]) {
+      click(x);
+      expect(battle.ui.mode).toBe("WARNING");
+      runtime.tick(["back"]);
+    }
+    click(218);
+    let action;
+    for (let i = 0; i < 300 && !onResult.mock.calls.length; i++) action = runtime.tick([]);
+    expect(onResult.mock.calls).toEqual([[false]]);
+    expect(action).toBe("autosave");
+    const after = runtime.snapshot();
+    expect(after.pets).toEqual(before.pets);
+    expect(after.inventory).toEqual(before.inventory);
+    expect(after.location).toEqual(before.location);
+    expect(after.meta?.battlePass).toEqual(before.meta?.battlePass);
+    expect(after.collection).toEqual(before.collection);
+  });
+
+  it.each([
+    { double: false, won: true },
+    { double: true, won: true },
+    { double: false, won: false },
+    { double: true, won: false },
+  ])("reports knockouts once and skips story settlement (%o)", ({ double, won }) => {
+    const members = Array.from({ length: double ? 2 : 1 }, () => ({
+      speciesId: 68,
+      level: won ? 70 : 5,
+      quality: 2,
+      currentHp: 2,
+      skillIds: [40, 41],
+      skillPp: [0, 1],
+    }));
+    const runtime = arenaWorld(members);
+    // The web scene-1 resume seats the caught rabbit at its first snapshot; with it in reserve a
+    // fallen tower pet is replaced instead of losing the floor, so this fight keeps only its party.
+    runtime.snapshot();
+    runtime.pets.splice(members.length);
+    const before = runtime.snapshot();
+    const onResult = vi.fn();
+    const arena = { ...floor(double), level: won ? 5 : 70 };
+    expect(runtime.startBondingTower(arena, pets, onResult)).toBe(true);
+    const core = runtime.battle?.core ?? runtime.doubleBattle!.core;
+    let action;
+    for (let i = 0; i < 6000 && !onResult.mock.calls.length; i++) {
+      if (double) {
+        const battle = runtime.doubleBattle!;
+        for (const slot of won ? ([0, 1] as const) : ([2, 3] as const))
+          if (battle.core.unit(slot).alive()) battle.core.unit(slot).setHp(1);
+      } else {
+        const battle = runtime.battle!;
+        const unit = battle.core!.activeUnit(won ? "enemy" : "player");
+        if (unit.alive()) unit.setHp(1);
+      }
+      action = runtime.tick(["confirm"]);
+    }
+    expect(onResult.mock.calls).toEqual([[won]]);
+    expect(action).toBe("autosave");
+    expect(core.events.some((event) => event.type === "experience")).toBe(false);
+    expect(runtime.lastSettlement).toBeNull();
+    const after = runtime.snapshot();
+    expect(after.pets).toEqual(before.pets);
+    expect(after.inventory).toEqual(before.inventory);
+    expect(after.location).toEqual(before.location);
+    expect(after.meta?.battlePass).toEqual(before.meta?.battlePass);
+  });
+
+  it("constructs all 200 shipped floors with playable rosters", () => {
+    const tower = assets.bondingTower!;
+    expect(tower.floors).toHaveLength(200);
+    for (const floor of tower.floors) {
+      const battle = createBondingTowerBattle(
+        services,
+        floor,
+        tower.pets,
+        party(),
+        0,
+        () => 8,
+        undefined,
+      );
+      if (floor.double) {
+        expect(battle.double?.core.spriteIds().length).toBeGreaterThanOrEqual(2);
+        expect(battle.double?.core.setupOf(0).speciesId).toBe(floor.team[0]);
+        expect(battle.double?.core.setupOf(1).speciesId).toBe(floor.team[1]);
+        expect(battle.double?.core.unit(0).hp()).toBe(battle.double?.core.unit(0).maxHp());
+      } else {
+        const core = battle.single!.core!;
+        expect(core.partySize("enemy")).toBe(floor.team.length);
+        expect(core.enemySetup(0).speciesId).toBe(floor.team[0]);
+        expect(core.unit("enemy", 0).hp()).toBe(core.unit("enemy", 0).maxHp());
+      }
+    }
+  });
+
+  it.each([false, true])(
+    "keeps boosted HP and stats above the short range (double: %s)",
+    (double) => {
+      const arena = { ...floor(double), floor: 200 };
+      const scaled = { ...arena, factors: [1000, 1000, 1, 1] as typeof arena.factors };
+      const getEnemy = (input: typeof arena) => {
+        const battle = createBondingTowerBattle(
+          services,
+          input,
+          pets,
+          party(),
+          0,
+          () => 8,
+          undefined,
+        );
+        return battle.double?.core.unit(0) ?? battle.single!.core!.unit("enemy", 0);
+      };
+      const normal = getEnemy(arena);
+      const boosted = getEnemy(scaled);
+      expect(boosted.maxHp()).toBe(normal.maxHp() * 1000);
+      expect(boosted.currentStats.attack).toBe(normal.baseStats.attack * 1000);
+      expect(boosted.hp()).toBeGreaterThan(32767);
+      boosted.damage(10);
+      expect(boosted.hp()).toBe(boosted.maxHp() - 10);
+      boosted.heal(10);
+      expect(boosted.hp()).toBe(boosted.maxHp());
+    },
+  );
+});
 
 describe("the battle an event group opens with op32", () => {
   it("stores Lanni's Tuyết Cầu Bảo Bảo reward in Pet State and through save/reload", () => {
@@ -190,7 +389,7 @@ describe("the battle an event group opens with op32", () => {
         const dragon = runtime.actors.get(55)!;
         runtime.player.x = dragon.x;
         runtime.player.y = dragon.y + 20;
-        runtime.player.direction = 0;
+        runtime.player.direction = 2;
         runtime.tick(["confirm"]);
       } else runtime.tick(scene?.choice || scene?.textReady ? ["confirm"] : []);
     }

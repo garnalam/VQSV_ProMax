@@ -50,7 +50,7 @@ describe("save migrations", () => {
     const save = upgradeSave(V23);
     expect(save).toEqual({
       format: "vqsv-web-save",
-      version: 33,
+      version: 34,
       savedAt: V23.savedAt,
       location: { sceneId: 1, roomIndex: 1, x: 55, y: 279, direction: 2 },
       resume: { owner: "scene1.bunny-capture" },
@@ -99,6 +99,27 @@ describe("save migrations", () => {
       pets: V23.pets,
     });
     expect(isGameSave(save)).toBe(true);
+  });
+  it("v34 keeps every shiny already owned on Java's palette and leaves the rest alone", () => {
+    const v33 = structuredClone({ ...current(), version: 33 }) as unknown as Record<
+      string,
+      unknown
+    > & {
+      pets: Record<string, unknown>[];
+      meta: { campaign: { petBank: Record<string, unknown>[] } };
+    };
+    v33.pets = [
+      { ...v33.pets[0], nature: 8 },
+      { ...v33.pets[0], slot: 1, nature: 2 },
+      { ...v33.pets[0], slot: 2, nature: 9, shinyColor: 4 },
+    ];
+    v33.meta.campaign.petBank = [{ ...v33.pets[0], slot: 0, nature: 7 }];
+    const save = upgradeSave(v33)!;
+    expect(save.version).toBe(34);
+    expect(save.pets.map((pet) => pet.shinyColor)).toEqual([-1, undefined, -1]);
+    expect(save.meta!.campaign.petBank.map((pet) => pet.shinyColor)).toEqual([-1]);
+    expect(isGameSave(save)).toBe(true);
+    expect(isGameSave({ ...save, pets: [{ ...save.pets[0], shinyColor: -2 }] })).toBe(false);
   });
   it("keeps a negative op31 balance and refuses a collection state outside 0..2", () => {
     expect(isGameSave({ ...current(), currency: { money: -5, badges: 0 } })).toBe(true);

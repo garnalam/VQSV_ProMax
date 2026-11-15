@@ -87,6 +87,17 @@ const ALLIANCE_MENU = 400;
 /** `651450 + e`: a lost fight waits for the summoner again (no floor retrigger in 49). */
 const RETRY = 651450;
 const REWARD = 653000;
+export const KIM_DIEM_ROOM = 49;
+export const KIM_DIEM_EVENT = 2;
+export const KIM_DIEM_BATTLE_KEY = `${SUMMON_PREFIX}${KIM_DIEM_ROOM}:${KIM_DIEM_EVENT}`;
+export const KIM_DIEM_REWARD_RECEIPT = 653102;
+export const KIM_DIEM_AMULET_ID = 6000;
+export const KIM_DIEM_BANK_CAPACITY = 1000;
+const KIM_DIEM_REWARD_TEXT =
+  "Kho Pet đã mở rộng lên 1.000 ô. Nhận Long Vương Hộ Phù, Kim Diễm Long Vương cấp 5 và Tàn Nguyệt Long Ma cấp 5.";
+const KIM_DIEM_NEEDS_SPACE = "Hãy chừa hai chỗ trống trong đội hoặc kho Pet để nhận thưởng.";
+const kimDiemBoss = (boss: SummonBoss) =>
+  boss.room === KIM_DIEM_ROOM && boss.event === KIM_DIEM_EVENT;
 const SERVICE = 651900;
 const ALLIANCE_OPEN = 651890;
 const STREAK_ROOM = 64;
@@ -99,6 +110,8 @@ export interface SummonWorld extends BranchWorld {
   openMinigame(kind: number, difficulty: number): void;
   /** `progression.cauVongMinigame.streak`. */
   streak(): number;
+  kimDiemRewardFits(): boolean;
+  grantKimDiemReward(): void;
 }
 
 const say = (text: string): FourGatesAction => ({
@@ -169,14 +182,28 @@ export class SummoningOwner {
     if (!summoningRoom(room)) return null;
     const f = this.doc.flags,
       done = (r: number, e: number) => w.done(r, e);
+    if (
+      this.completed(w, KIM_DIEM_ROOM, KIM_DIEM_EVENT) &&
+      !done(KIM_DIEM_ROOM, KIM_DIEM_REWARD_RECEIPT)
+    ) {
+      if (w.kimDiemRewardFits()) {
+        w.grantKimDiemReward();
+        return this.message(KIM_DIEM_REWARD_TEXT);
+      }
+      if (this.capacityWarned !== 4902) {
+        this.capacityWarned = 4902;
+        return this.message(KIM_DIEM_NEEDS_SPACE);
+      }
+    }
     for (const b of this.doc.bosses) {
       if (b.room !== room) continue;
       if (done(room, f.battle + b.event)) return this.startBattle(w, b);
       if (done(room, f.won + b.event) && !this.completed(w, room, b.event)) {
         if (!this.fits(w, b)) {
-          if (this.capacityWarned === room * 100 + b.event) break;
-          this.capacityWarned = room * 100 + b.event;
-          return this.message(this.doc.text.capacity);
+          const warning = room * 100 + b.event;
+          if (this.capacityWarned === warning) break;
+          this.capacityWarned = warning;
+          return this.message(kimDiemBoss(b) ? KIM_DIEM_NEEDS_SPACE : this.doc.text.capacity);
         }
         this.capacityWarned = -1;
         this.award(w, b);
@@ -231,13 +258,21 @@ export class SummoningOwner {
         !done(49, RETRY + b.event) &&
         w.at(100, 80, 100, 40);
       if (!w.requested(b.actor) && !floor) continue;
-      if (this.completed(w, room, b.event)) return this.message2(this.replay(b.won));
+      if (this.completed(w, room, b.event)) {
+        if (!kimDiemBoss(b)) return this.message2(this.replay(b.won));
+        if (done(room, KIM_DIEM_REWARD_RECEIPT))
+          return this.message("Ngươi đã nhận phần thưởng chiến thắng.");
+        if (!w.kimDiemRewardFits()) return this.message(KIM_DIEM_NEEDS_SPACE);
+        w.grantKimDiemReward();
+        return this.message(KIM_DIEM_REWARD_TEXT);
+      }
       const [pr, pe] = b.prerequisite ?? [-1, -1];
       if (pr >= 0 && !this.completed(w, pr, pe)) return this.message(this.doc.text.prerequisite);
       if (b.required)
         for (let k = 0; k < 4; k++)
           if (!done(66 - b.required[k], 650200 + k)) return this.message(this.doc.text.games);
-      if (!this.fits(w, b)) return this.message(this.doc.text.capacity);
+      if (!this.fits(w, b))
+        return this.message(kimDiemBoss(b) ? KIM_DIEM_NEEDS_SPACE : this.doc.text.capacity);
       return this.start(w, room, b.event, 3);
     }
     if (
@@ -380,6 +415,7 @@ export class SummoningOwner {
   }
   /** `fits(b)`: the reward received, or room for its pets and gifts. */
   private fits(w: SummonWorld, b: SummonBoss): boolean {
+    if (kimDiemBoss(b)) return w.kimDiemRewardFits();
     if (w.done(b.room, REWARD + b.event)) return true;
     for (const reward of b.rewards) {
       if (reward.k === "pet" && !w.petSpace()) return false;
@@ -389,6 +425,11 @@ export class SummoningOwner {
   }
   /** `award(b)`: once (653000+e), the pets, gifts and money. */
   private award(w: SummonWorld, b: SummonBoss): void {
+    if (kimDiemBoss(b)) {
+      w.grantKimDiemReward();
+      w.mark(b.room, REWARD + b.event);
+      return;
+    }
     if (w.done(b.room, REWARD + b.event)) return;
     for (const reward of b.rewards) {
       if (reward.k === "money") w.earn(reward.amount);

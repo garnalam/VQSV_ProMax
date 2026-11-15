@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { GameData } from "../../data/GameData";
 import type { GoldenPetStats } from "../../data/GameData";
 import { Pack } from "../../pack/Pack";
-import { PetStatCalculator, type PetCoreStats } from "./PetStatCalculator";
+import { PetStatCalculator, natureStatTrend, type PetCoreStats } from "./PetStatCalculator";
 
 const root = resolve(import.meta.dirname, "..", "..", "..");
 
@@ -45,13 +45,21 @@ async function goldenCells(): Promise<StatCell[]> {
             stat,
             level: grid[index],
             quality: +quality,
-            expected,
+            expected: testHuyDragonStat(+id, grid[index], expected),
           }),
         );
       }
     }
   }
   return cells;
+}
+
+/** The archived ProMax oracle predates the Test Huy stat caps for these two dragons. */
+function testHuyDragonStat(speciesId: number, level: number, oldStat: number): number {
+  const cap = speciesId === 278 ? 50 : speciesId === 280 ? 150 : undefined;
+  return cap === undefined
+    ? oldStat
+    : Math.max(1, Math.floor((oldStat * Math.max(1, Math.min(level, cap))) / cap));
 }
 
 function countMismatches(cells: StatCell[], actual: (cell: StatCell) => number): number {
@@ -119,10 +127,10 @@ describe("Pet stat calculator", () => {
             continue;
           }
           expect(at(), `species ${id} at level ${level}`).toEqual({
-            hp: expected[0],
-            attack: expected[1],
-            defense: expected[2],
-            speed: expected[3],
+            hp: testHuyDragonStat(+id, +level, expected[0]),
+            attack: testHuyDragonStat(+id, +level, expected[1]),
+            defense: testHuyDragonStat(+id, +level, expected[2]),
+            speed: testHuyDragonStat(+id, +level, expected[3]),
           });
           clamped++;
         }
@@ -297,6 +305,20 @@ describe("Pet stat calculator", () => {
     expect(rows).toBe(200);
   });
 
+  it("colours on the pet screen follow the real nature curve (green up, red down)", async () => {
+    const calc = await calculator(),
+      qualityScale = await (await newData()).petQuality(),
+      keys = ["hp", "attack", "defense", "speed"] as const;
+    for (const nature of [7, 8, 9]) {
+      const bent = calc.coreStats(11, 40, qualityScale.NEUTRAL, nature),
+        plain = calc.coreStats(11, 40, qualityScale.NEUTRAL, 1),
+        seen = keys.map((key) => Math.sign(bent[key] - plain[key]));
+      expect(seen, `nature ${nature}`).toEqual([...natureStatTrend(nature)]);
+    }
+    expect(natureStatTrend(3)).toEqual([0, 0, 0, 0]);
+    expect(natureStatTrend(undefined)).toEqual([0, 0, 0, 0]);
+  });
+
   it("refuses a level outside the range a growth family validates", async () => {
     const calc = await calculator();
     expect(() => calc.stat(68, "hp", 0, 3)).toThrow(RangeError);
@@ -310,25 +332,18 @@ describe("Pet stat calculator", () => {
     expect(calc.coreStats(100, 1, 3)).not.toEqual(calc.coreStats(0, 1, 3));
   });
 
-  it("keeps the two custom bosses flat over level and quality", async () => {
-    const [stats, calc] = await Promise.all([(await newData()).goldenPetStats(), calculator()]);
-    for (const speciesId of [278, 280]) {
-      const flat = calc.coreStats(speciesId, 1, 1);
-      for (const level of [1, 37, 150])
-        for (const quality of [1, 3, 5])
-          expect(
-            calc.coreStats(speciesId, level, quality),
-            `${speciesId} ${level}/${quality}`,
-          ).toEqual(flat);
-      // The referee saw the same thing: every sampled level of every quality returned those four
-      // numbers, so nothing here is an assumption about what a boss "should" grow into.
-      for (const [quality, slice] of Object.entries(stats.species[String(speciesId)].qualities))
-        for (const stat of ["hp", "attack", "defense", "speed"] as const)
-          expect(slice[stat], `species ${speciesId} ${stat} at quality ${quality}`).toEqual(
-            Array(slice.hp.length).fill(flat[stat]),
-          );
-    }
-  });
+  it.each([
+    [278, 50, { hp: 599, attack: 60, defense: 30, speed: 4 }],
+    [280, 150, { hp: 628, attack: 40, defense: 13, speed: 2 }],
+  ])(
+    "grows dragon %i up to level %i regardless of its quality",
+    async (species, cap, levelFive) => {
+      const calc = await calculator();
+      for (const quality of [1, 3, 5])
+        expect(calc.coreStats(species, 5, quality)).toEqual(levelFive);
+      expect(calc.coreStats(species, cap, 5)).toEqual(calc.coreStats(species, cap + 20, 5));
+    },
+  );
 
   it("resolves quality the way the engine's scale does", async () => {
     const [calc, quality] = await Promise.all([calculator(), (await newData()).petQuality()]);

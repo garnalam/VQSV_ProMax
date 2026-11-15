@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import type { PackSpeciesRow } from "../../data/GameData";
 import { BadgeProgression } from "../world/WorldFlags";
-import { COLLECTION_SNAPSHOT_LENGTH, PetCollection } from "../pet/PetCollection";
+import { PetCollection } from "../pet/PetCollection";
 import {
   badgeEntries,
   badgeStatusText,
@@ -33,7 +33,7 @@ describe("PetCollectionProgression", () => {
     expect(collection.markCollected(68)).toBe(true);
     expect(collection.markSeen(68)).toBe(false);
     expect(collection.status(68)).toBe(2);
-    expect(collection.markCollected(276)).toBe(false);
+    expect(collection.markCollected(281)).toBe(false);
     expect(collection.markCollected(-1)).toBe(false);
     // V4 and mutation species are kept but not counted, as JavaSE's `states` array.
     collection.markCollected(210);
@@ -41,9 +41,25 @@ describe("PetCollectionProgression", () => {
     expect(collection.collectedSpeciesCount()).toBe(1);
     expect(collection.v4CollectedSpeciesCount()).toBe(1);
     const snapshot = collection.snapshot();
-    expect(snapshot).toHaveLength(COLLECTION_SNAPSHOT_LENGTH);
+    expect(snapshot).toHaveLength(8704);
     expect(new PetCollection(snapshot).snapshot()).toEqual(snapshot);
     expect(new PetCollection([3, 2, -1]).snapshot().slice(0, 3)).toEqual([0, 2, 0]);
+  });
+
+  it("keeps each Shiny form separately across ProMax and Test Huy saves", () => {
+    const collection = new PetCollection([0, 2]);
+    expect(collection.markSeen(280, 7)).toBe(true);
+    expect(collection.markCollected(280, 8)).toBe(true);
+    expect(collection.markCollected(280, 8)).toBe(false);
+    expect(collection.status(280)).toBe(2);
+    const restored = new PetCollection(collection.snapshot());
+    expect([7, 8, 9].map((nature) => restored.status(280, nature))).toEqual([1, 2, 0]);
+    expect(restored.collected(1)).toBe(true);
+    const testHuySave = Array<number>(2048).fill(0);
+    testHuySave[1536 + 278] = 2;
+    const imported = new PetCollection(testHuySave);
+    expect(imported.status(278, 9)).toBe(2);
+    expect(imported.collected(278)).toBe(true);
   });
 });
 
@@ -99,7 +115,7 @@ describe("Đồ giám data (record.ui / petmap.ui / badge.ui)", () => {
     expect(entries).toHaveLength(9);
     expect(entries[8]).toMatchObject({ id: 8, icon: "UD-BADGE-DIEN-MIEU" });
     expect(badgeStatusText(badges, 0)).toBe("Đã đạt - Chưa cường hóa");
-    expect(badgeStatusText(badges, 7)).toBe("Đã đạt - Không thể cường hóa");
+    expect(badgeStatusText(badges, 7)).toBe("Bậc 1");
     badges.enhance(0);
     expect(badgeStatusText(badges, 0)).toBe("Đã đạt - Đã cường hóa");
     // An enhanced badge describes its enhanced effect.

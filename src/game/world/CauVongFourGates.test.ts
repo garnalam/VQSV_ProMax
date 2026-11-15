@@ -38,13 +38,14 @@ const { SaveRepository } = await import("../../persistence/SaveRepository");
 const { NewGameScreen } = await import("../../screens/NewGameScreen");
 const { applyUrlParityCheckpoint } = await import("../../dev/parityCheckpoints");
 const { CAU_VONG_PORTAL_ROWS } = await import("./WorldTransition");
+const { CV_SKY } = await import("../ride/RideSystem");
 const { TIER_LOCK_WARNING, SKILL_NOT_READY_WARNING } = await import("../battle/engine/BattleTypes");
 const { openingQuestDetail } = await import("./CauVongOpening");
 type FourGatesDocument = import("./CauVongFourGates").CauVongFourGatesDocument;
 
 const pack = await Pack.load();
 const [boot, assets] = await Promise.all([loadBootAssets(pack), GameAssets.fromPack(pack)]);
-for (const room of [0, 5, 9, 10, 11, 12, 13, 15, 16, 17, 18, 20, 21, 22, 23, 52])
+for (const room of [0, 1, 5, 9, 10, 11, 12, 13, 15, 16, 17, 18, 20, 21, 22, 23, 24, 25, 44, 52])
   await assets.prepareRoom(98, room);
 
 const DOC = JSON.parse(
@@ -279,6 +280,65 @@ describe("Bốn Cổng (CauVongFourGateSourceRuntime), CV4a", () => {
     expect(done(world, 52, 101)).toBe(true);
   });
 
+  it("bug fix: the city's café door lands on 44's floor, under the door walked through", () => {
+    for (const [cityX, landX] of [
+      [330, 60],
+      [410, 460],
+    ]) {
+      const { world } = enter(1, cityX, 500, [[23, 100]]);
+      play(world);
+      for (let i = 0; i < 80 && world.roomIndex === 1; i++) world.tick(["holdUp"]);
+      expect([world.roomIndex, world.player.x, world.player.y]).toEqual([44, landX, 465]);
+      const terrain = (x: number, y: number) =>
+        (world as unknown as { terrainAt(x: number, y: number): number }).terrainAt(x, y);
+      // Every corner of the footprint is floor, and the first step down is the door corridor.
+      for (const dx of [-8, 7])
+        for (const dy of [-8, 7]) expect(terrain(landX + dx, 465 + dy)).toBe(0);
+      for (let i = 0; i < 40 && world.roomIndex === 44; i++) world.tick(["holdDown"]);
+      expect(world.roomIndex).toBe(1);
+    }
+  });
+
+  it("bug fix: no ride change or getting off while the clouds carry the hero (Bầu trời phương bắc)", () => {
+    const { world, host } = enter(24, 300, 300, [[9, 104]]);
+    const terrain = (x: number, y: number) =>
+      (world as unknown as { terrainAt(x: number, y: number): number }).terrainAt(x, y);
+    let cloud: [number, number] | null = null,
+      ground: [number, number] | null = null;
+    const footprint = (x: number, y: number) =>
+      [-8, 7].flatMap((dx) => [-8, 7].map((dy) => terrain(x + dx, y + dy)));
+    for (let y = 20; y < 600 && !(cloud && ground); y += 10)
+      for (let x = 20; x < 600; x += 10) {
+        const f = footprint(x, y);
+        if (!cloud && f.every((t) => t === 4)) cloud = [x, y];
+        if (!ground && f.every((t) => t === 0)) ground = [x, y];
+      }
+    expect(cloud && ground).toBeTruthy();
+    expect(world.selectRide(CV_SKY)).toBe("ready");
+    [world.player.x, world.player.y] = cloud!;
+    expect(world.selectRide(0)).not.toBe("ready");
+    expect(world.canLeaveRide(-1)).toBe(false);
+    host.pressRide(world);
+    expect(world.activeRideIndex).toBe(CV_SKY);
+    [world.player.x, world.player.y] = ground!;
+    expect(world.canLeaveRide(-1)).toBe(true);
+    host.pressRide(world);
+    expect(world.activeRideIndex).toBe(-1);
+  });
+
+  it("bug fix: a merchant's farewell once the shop closes never freezes the game (Java's MAX_VALUE key)", () => {
+    for (const room of [12, 22, 25]) {
+      const { world } = enter(room, 300, 300);
+      const shop = DOC.shops[String(room)],
+        farewell = DOC.replies[`${room}:${shop.event}:${shop.farewell}:2147483647`];
+      expect(farewell).toBeDefined();
+      const id = actor(room, room === 12 ? 12 : room === 22 ? 14 : 4);
+      // The headless world has no shop panel: the farewell plays as soon as the shop "closes".
+      expect(starts(talk(world, id).seen, farewell)).toBe(true);
+      expect([world.phase, world.eventVisible]).toEqual(["freeworld", false]);
+    }
+  });
+
   it("the east rival waits for Lạc Khắc's first duel, then fights and rewards once", () => {
     const { world } = enter(12, 300, 300, [[2, DOC.flags.lockeAfter]]);
     const before = world.inventory["5"] ?? 0;
@@ -295,15 +355,19 @@ describe("Bốn Cổng (CauVongFourGateSourceRuntime), CV4a", () => {
 
   it("the quest row follows fourGateQuestDetail's stages", () => {
     const { world } = enter(9, 200, 300);
-    const quest = assets.cauVongOpening!.quests.find((q) => q.variants)!;
-    expect(quest.title).toBe("Cầu Vồng — Bốn Cổng và cứu pet");
+    const quest = assets.cauVongOpening!.quests.find((q) => q.title.startsWith("Cầu Vồng 3 "))!;
+    expect(quest).toMatchObject({
+      title: "Cầu Vồng 3 — Bốn Cổng",
+      show: [3, 102],
+      done: [4, 1500],
+    });
     const row = () => ({
       detail: openingQuestDetail(quest, ([r, e]) => done(world, r, e)),
     });
-    expect(row().detail).toBe(quest.variants!.at(-1)!.text);
+    expect(row().detail).toContain("hỏi giáo viên cửa Đông");
     world.eventState.op14CompleteEvent(98, 9, 101);
-    expect(row().detail).toBe(quest.variants![15].text);
+    expect(row().detail).toContain("Qua cửa Nam");
     world.eventState.op14CompleteEvent(98, 20, 100);
-    expect(row().detail).toBe(quest.variants![13].text);
+    expect(row().detail).toContain("Đã thắng giáo viên cửa Tây");
   });
 });

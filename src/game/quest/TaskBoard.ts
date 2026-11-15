@@ -23,6 +23,7 @@ export type TaskBoardSource = {
   openingRows?: readonly Omit<TaskRow, "number">[];
   /** `openingQuestRows` tab 1, the Cầu Vồng branch rows the flags show, gated on task 48. */
   openingBranchRows?: readonly Omit<TaskRow, "number">[];
+  goldenCollection?: { species: number; shiny: number; rank: number };
 };
 
 /** `openingQuestRows` only joins from `mainTaskProgress` 48 on. */
@@ -67,6 +68,16 @@ export function taskRows(tab: TaskTab, source: TaskBoardSource): TaskRow[] {
     rows: TaskRow[] = [];
   for (let i = 0; i < count; i++) {
     const task = source.mainTasks[i];
+    const golden = source.goldenCollection;
+    if (golden && task.description.includes("Hoàng Kim Chương")) {
+      rows.push({
+        number: i + 1,
+        title: "Hoàng Kim Chương",
+        detail: `Bậc 1: đủ 281 loài Liệt Hỏa, Cầu Vồng, V4 (${golden.species}/281). Pet dự bị trong đội nhận 30% EXP. Bậc 2: đủ cả ba dạng shiny (${golden.shiny}/843). Bậc 2 tự nâng mọi pet trong ngân hàng lên 5 sao, kể cả pet gửi vào sau, và giữ chia sẻ 30% EXP. Gặp sứ giả liên minh để nhận/nâng bậc. Không cộng dồn EXP với Ký Cư Giải Xác.`,
+        completed: golden.rank === 2,
+      });
+      continue;
+    }
     rows.push({
       number: i + 1,
       title: task.name,

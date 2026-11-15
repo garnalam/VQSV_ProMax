@@ -43,7 +43,7 @@ type OpeningDocument = import("./CauVongOpening").CauVongOpeningDocument;
 
 const pack = await Pack.load();
 const [boot, assets] = await Promise.all([loadBootAssets(pack), GameAssets.fromPack(pack)]);
-for (const room of [0, 1, 2, 3, 4, 7, 8, 59]) await assets.prepareRoom(98, room);
+for (const room of [0, 1, 2, 3, 4, 7, 8, 27, 59]) await assets.prepareRoom(98, room);
 
 const read = (file: string) =>
   JSON.parse(readFileSync(resolve(import.meta.dirname, "../../../public/pack", file), "utf8"));
@@ -188,11 +188,25 @@ describe("Cầu Vồng CV3 (nhập học và đời sống Học viện)", () =>
     expect(ACADEMY.battles.roster47.members).toHaveLength(3);
     expect(ACADEMY.doors["2"].map(([, , room]) => room)).toEqual([3, 3, 8, 8, 7, 7]);
     expect(ACADEMY.award.id).toBe(9003);
-    expect(OPENING.quests.at(-4)).toMatchObject({ show: [2, 101], done: [3, 102] });
-    // CV4's row follows from Tứ Môn (`fourGateQuestDetail`), CV5's from 9:114, CV5b's finals from 48:120.
-    expect(OPENING.quests.at(-3)).toMatchObject({ show: [3, 102], done: [9, 114] });
-    expect(OPENING.quests.at(-2)).toMatchObject({ show: [9, 114], done: [61, 105] });
-    expect(OPENING.quests.at(-1)).toMatchObject({ show: [48, 120], done: [30, 124] });
+    // Chapter 2 (Học viện) ends at Tứ Môn's lesson, which opens chapter 3 (Bốn Cổng).
+    expect(OPENING.quests[1]).toMatchObject({ title: "Cầu Vồng 2 — Học viện", done: [3, 102] });
+    expect(OPENING.quests[2]).toMatchObject({ title: "Cầu Vồng 3 — Bốn Cổng", show: [3, 102] });
+  });
+
+  it.each([
+    [359, 619],
+    [379, 599],
+  ])("takes the academy's right exit at y=%i to the North Sea office", (y, arrivalY) => {
+    const world = enter(2, 530, y);
+    play(world);
+    expect(world.roomIndex).toBe(2);
+    for (let tick = 0; tick < 10 && world.roomIndex === 2; tick++) world.tick(["right"]);
+    expect([world.roomIndex, world.player.x, world.player.y, world.player.direction]).toEqual([
+      27,
+      30,
+      arrivalY,
+      1,
+    ]);
   });
 
   it("2 → 8: the doors open once registered; the preliminaries, a loss and the retry", () => {

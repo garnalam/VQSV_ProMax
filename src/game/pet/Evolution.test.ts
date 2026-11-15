@@ -24,7 +24,9 @@ describe("evolution material icons", () => {
 describe("evolution preview", () => {
   it("resolves the target species sprite instead of retaining the current form override", () => {
     const services = {
-        partyMember: (pet: { speciesId: number; visualSpriteId?: number }) => ({
+        petStats: { defaultQuality: () => 1 },
+        partyMember: (pet: { speciesId: number; quality: number; visualSpriteId?: number }) => ({
+          quality: pet.quality,
           spriteId: pet.visualSpriteId ?? pet.speciesId + 1000,
           name: `Pet ${pet.speciesId}`,
           stats: { hp: 10, attack: 10, defense: 10, speed: 10 },

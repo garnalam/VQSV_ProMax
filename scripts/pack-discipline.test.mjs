@@ -6,6 +6,8 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const srcRoot = resolve(import.meta.dirname, "..", "src");
+// The account server client talks to /api (sign-in and saves), not to game resources.
+const apiClients = [resolve(srcRoot, "account", "RemoteAccountService.ts")];
 
 const forbidden = [
   { name: "fetch", pattern: /\bfetch\s*\(/ },
@@ -29,7 +31,7 @@ describe("pack exclusivity", () => {
   it("keeps every resource load inside src/pack", () => {
     const offenders = [];
     for (const file of sourceFiles(srcRoot)) {
-      if (file.startsWith(resolve(srcRoot, "pack"))) continue;
+      if (file.startsWith(resolve(srcRoot, "pack")) || apiClients.includes(file)) continue;
       const text = readFileSync(file, "utf8"),
         hits = forbidden.filter(({ pattern }) => pattern.test(text)).map(({ name }) => name);
       if (hits.length > 0) offenders.push(`${file.slice(srcRoot.length + 1)}: ${hits.join(", ")}`);

@@ -37,6 +37,7 @@ export type SourceChoiceArt = {
 };
 
 export const CHOICE_VISIBLE_ROWS = 5;
+export const CHOICE_THUMB_TRAVEL_HEIGHT = 8;
 const SOURCE_UI_TEXT = 1862801;
 const hex = (value: number) => `#${((value & 0xffffff) | 0x1000000).toString(16).slice(1)}`;
 const usable = (value: number | undefined) => value !== undefined && value !== 0 && value !== -1;
@@ -53,7 +54,7 @@ export function choiceThumbY(
 ): number {
   const maxScroll = Math.max(0, view.rows.length - CHOICE_VISIBLE_ROWS);
   if (maxScroll === 0) return trackY;
-  const thumb = Math.max(1, Math.min(trackHeight, 8));
+  const thumb = Math.max(1, Math.min(trackHeight, CHOICE_THUMB_TRAVEL_HEIGHT));
   return trackY + Math.trunc(((trackHeight - thumb) * choiceVisibleStart(view)) / maxScroll);
 }
 /** `wrapChoiceDescription`: at most `lines` lines; the last one takes the rest. */

@@ -105,6 +105,23 @@ Mỗi tick 66 ms. Khi bị trễ dưới 1 bước, game chạy bù tối đa m�
 - Khi tải: tự migrate từ schema cũ (v23 lên v24); nếu save chính hỏng thì dùng backup.
 - Đổi schema: thêm `MIGRATIONS[n]` trong `save/migrations.ts`, tăng `CURRENT_SAVE_VERSION`, thêm fixture test.
 
+## Deploy lên Cloudflare Pages
+
+Bản web-native là một project Pages riêng, `vqsv-web-native` (`wrangler.jsonc` trong thư mục này), tách khỏi trang Java WASM (`wrangler.jsonc` ở gốc repo). Hai trang dùng chung database D1 `vqsv-test-huy-db`, nên chung tài khoản và save.
+
+- `/api/*` là `functions/api/[[path]].js` ở thư mục này. File đó chỉ export lại Pages Function ở gốc repo (`../../functions/api/[[path]].js`), nên đăng nhập, save và Admin Tool chạy cùng một code trên cả hai trang. Luật duyệt của Admin Tool nằm ở `../../shared/admin-api.mjs`, dùng chung với dev server.
+- Cloudflare Pages gói miễn phí cho tối đa 20.000 file mỗi lần deploy. `dist/` của bản này gần 20.000 file (gần hết là `pack/`), nên không gộp được vào cùng project với trang Java.
+
+Project nằm trong tài khoản Cloudflare **Huy.dencosluxury@gmail.com's Account** (cùng tài khoản với database `vqsv-test-huy-db` và trang `vqsv-test-huy`; Pages chỉ gắn được D1 cùng tài khoản), nhánh production là `ban-test-moi-nhat`, địa chỉ https://vqsv-web-native-39g.pages.dev (tên `vqsv-web-native.pages.dev` đã thuộc về một project trùng tên ở tài khoản khác). `scripts/deploy-pages.mjs` ghim tài khoản và nhánh này. Mỗi lần deploy, chạy trong thư mục này (cần đăng nhập Cloudflare một lần bằng `npx wrangler login`, cấp quyền cho tài khoản đó):
+
+```bash
+npm run deploy:pages
+```
+
+Lệnh này build (`tsc` + `vite build`) rồi đẩy `dist/` và `functions/` lên. Nó luôn deploy vào nhánh `ban-test-moi-nhat` (bản production), dù đang ở nhánh git nào; bỏ `--branch` thì lần deploy từ nhánh khác chỉ thành bản xem thử. Binding `DB` được lấy từ `wrangler.jsonc`, không cần gắn tay trên dashboard. Không cần chạy migration mới: bảng `users` đã có cột `role`.
+
+Admin Tool: chỉ tài khoản có `users.role = 'admin'` mới thấy mục "Admin Tool" trong menu softkey phải. Server kiểm role ở mọi lệnh `/api/admin/*`. Khi chạy `npm run dev`, dev server tự trả lời `/api/admin/*` (hỏi role thật từ Cloudflare qua `/api/auth/me`), nên tool dùng được trên localhost trước khi deploy.
+
 ## Font
 
 - Chữ trước đây vẽ bằng font hệ thống (Arial) nay dùng font gốc của game, `public/pack/font/font.bin`. Font được giải mã ngay lúc chạy bằng `rendering/font/SourceFont.ts`.

@@ -372,6 +372,28 @@ describe(
         gym = await standAt(drifted, 9, 7, 104, 340, 2);
       expect(gym.world.actors.get(4)).toMatchObject({ x: 206, y: 270 });
       expect(gym.host.snapshot(gym.world).world?.actorPositions ?? []).toEqual([]);
+
+      // Web fix: a cloud remembered off the track its row sails today (a save from before the APK
+      // maps) starts on its row; one remembered on the track stays where it was left.
+      const stale = {
+          ...save,
+          world: {
+            ...save.world!,
+            actorPositions: [[7, 1, 3, 168, 132] as [number, number, number, number, number]],
+          },
+        },
+        route2 = await standAt(stale, 7, 1, 128, 316, 0);
+      expect(route2.world.actors.get(3)).toMatchObject({ x: 128, y: 132, visible: true });
+      expect(route2.host.snapshot(route2.world).world?.actorPositions ?? []).toEqual([]);
+      const kept = {
+          ...save,
+          world: {
+            ...save.world!,
+            actorPositions: [[7, 1, 3, 128, 160] as [number, number, number, number, number]],
+          },
+        },
+        route3 = await standAt(kept, 7, 1, 128, 316, 0);
+      expect(route3.world.actors.get(3)).toMatchObject({ x: 128, y: 160 });
     });
 
     it("the gym's five trainers fight strictly in order; the leader awards U Linh and task 41", async () => {
@@ -387,6 +409,31 @@ describe(
       ]);
       expect(played.get("9:7:4")!.awards).toEqual([5]);
       expect(save.progress.mainTaskProgress).toBe(41);
+    });
+
+    it("web-only: a stranded hero talks to the gym leader and is taken back with the clouds reset", async () => {
+      // The leader on the centre island, his fight won, cloud 4 left at the far shore.
+      const stranded = {
+          ...save,
+          world: {
+            ...save.world!,
+            actorPositions: [[9, 7, 4, 206, 270] as [number, number, number, number, number]],
+          },
+        },
+        { host, world } = await standAt(stranded, 9, 7, 125, 178, 2);
+      expect(world.talkPrompt?.actorId).toBe(6);
+      host.step(["confirm"]);
+      for (let i = 0; i < 400 && world.player.y < 320; i++)
+        host.step(i % 20 === 19 ? ["confirm"] : []);
+      expect([world.sceneId, world.roomIndex]).toEqual([9, 7]);
+      expect(world.player.y).toBeGreaterThanOrEqual(320);
+      expect([1, 2, 3, 4].map((id) => [world.actors.get(id)!.x, world.actors.get(id)!.y])).toEqual([
+        // Cloud 1 rests at the entrance island's shore, where the hero now stands.
+        [21, 319],
+        [81, 52],
+        [248, 116],
+        [206, 270],
+      ]);
     });
 
     it("the badge lifts 7:1's barrier, and Tomas's return ritual (7:0:g0) brings task 42", async () => {

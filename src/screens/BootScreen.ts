@@ -3,6 +3,8 @@ import type { InputSnapshot } from "../core/input/InputSnapshot";
 import type { Screen } from "../core/ScreenManager";
 import type { CanvasRenderer } from "../rendering/CanvasRenderer";
 import { LOGICAL_HEIGHT, LOGICAL_WIDTH } from "../core/constants";
+import { LAND_CENTER, landSpace } from "../core/LandCenter";
+import { viewport } from "../core/Viewport";
 
 type Phase = "logo0" | "cwaLogo" | "musicPrompt";
 /** `BootFlowState.LOGO_TICKS`. */
@@ -28,17 +30,31 @@ export class BootScreen implements Screen {
   }
   render(renderer: CanvasRenderer): void {
     renderer.clear();
+    const g = renderer.context,
+      land = viewport.landscape,
+      k = renderer.backingScale;
     if (this.phase !== "musicPrompt") {
-      renderer.centeredImage(this.assets.logo);
+      if (!land) renderer.centeredImage(this.assets.logo);
+      else {
+        // Landscape: the logo at full size in the middle of the APK's 320x240 screen.
+        const logo = this.assets.logo;
+        landSpace(g, k);
+        g.drawImage(logo, Math.floor((320 - logo.width) / 2), Math.floor((240 - logo.height) / 2));
+        renderer.uiSpace();
+      }
       return;
     }
-    const g = renderer.context,
-      font = this.assets.sourceFont,
+    const font = this.assets.sourceFont,
       mid = LOGICAL_HEIGHT / 2;
+    if (land) landSpace(g, k, LAND_CENTER);
     font.centeredAtBaseline(g, "Bạn có muốn bật nhạc không?", mid - 12, "#ffffff");
     font.centeredAtBaseline(g, "Tắt nhạc có thể tăng tốc độ chơi", mid + 12, "#ff6600");
-    font.drawAtBaseline(g, "Có", 2, LOGICAL_HEIGHT - 2, "#ffffff");
-    font.rightAtBaseline(g, "Không", LOGICAL_WIDTH - 2, LOGICAL_HEIGHT - 2, "#ffffff");
+    // The softkey labels in the bottom corners of the screen (the 320x240 one in landscape).
+    const [right, bottom] = land ? [320, 240] : [LOGICAL_WIDTH, LOGICAL_HEIGHT];
+    if (land) landSpace(g, k);
+    font.drawAtBaseline(g, "Có", 2, bottom - 2, "#ffffff");
+    font.rightAtBaseline(g, "Không", right - 2, bottom - 2, "#ffffff");
+    if (land) renderer.uiSpace();
   }
   private switch(phase: Phase): void {
     this.phase = phase;

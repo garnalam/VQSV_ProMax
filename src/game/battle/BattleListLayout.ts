@@ -1,4 +1,5 @@
 import type { ScrollbarGeometry } from "../../ui/UiScrollbarMath";
+import { battleFrameX, fromUi, viewport } from "../../core/Viewport";
 
 /**
  * Where the battle's pointer targets are: Java's `VqsvBattleSkillUiLayout`, `VqsvBattleItemUiLayout`,
@@ -69,7 +70,19 @@ export const PET_STATE = {
 
 /** `commandIndexAt`: the six command buttons along the bottom band. */
 export const COMMAND_CENTERS = [20, 56, 98, 137, 176, 218];
+/**
+ * The landscape APK's command bar (`battle.ui` labels 3..8, drawn 34 wide): their centres on its
+ * 320x240 battle screen, which runs from y 206 to the bottom.
+ */
+const LAND_COMMAND_CENTERS = [31, 82, 136, 189, 243, 297];
 export function commandIndexAt(x: number, y: number): number {
+  if (viewport.landscape) {
+    // The press arrives in the 240x320 UI box: back to the canvas, then onto the battle screen.
+    const point = fromUi(x + 0.5, y + 0.5),
+      fx = point.x - battleFrameX();
+    if (point.y < 206) return -1;
+    return LAND_COMMAND_CENTERS.findIndex((center) => fx >= center - 25 && fx < center + 26);
+  }
   if (x < 0 || y < 286 || y > 319) return -1;
   return COMMAND_CENTERS.findIndex((center) => x >= center - 18 && x <= center + 18);
 }

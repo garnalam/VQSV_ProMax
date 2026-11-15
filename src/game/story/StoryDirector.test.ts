@@ -309,7 +309,44 @@ describe("StoryDirector.catchUp", () => {
     const done = new Set(["1:1:0", "1:0:2"]);
     expect(director.catchUp((s, r, g) => done.has(`${s}:${r}:${g}`))).toEqual([]);
     expect(director.node.id).toBe("elder-challenge");
-    expect(director.catchUp(() => true)).toEqual(Array(9).fill({ kind: "save" }));
-    expect(director.node.id).toBe("road-to-nguyen-moc");
+    const replayed = director.catchUp(() => true);
+    expect(replayed.length).toBeGreaterThan(9);
+    expect(replayed.every((action) => action.kind === "save")).toBe(true);
+    expect(director.node.id).toBe("huan-luyen-su-xuat-sac");
+    expect(director.mainTask).toBe(48);
+  });
+
+  it("crosses a cutscene or room exit the ledger proves passed, without replaying it", () => {
+    const director = new StoryDirector(graph, doors);
+    // A save resumed while the ancient temple's finale played: the cutscene never ends again.
+    director.restore({
+      node: "co-dai-than-dien",
+      main: 47,
+      mainDone: false,
+      branch: "",
+      tokens: "",
+    });
+    expect(director.catchUp(() => false)).toEqual([]);
+    expect(director.node.id).toBe("co-dai-than-dien");
+    // Back in Scene 1 the elder's last event (1:2:4) is done: the finale was crossed long ago.
+    const actions = director.catchUp((s, r, g) => `${s}:${r}:${g}` === "1:2:4");
+    expect(actions.some((action) => action.kind === "warp" || action.kind === "cutscene")).toBe(
+      false,
+    );
+    expect(director.node.id).toBe("huan-luyen-su-xuat-sac");
+    expect(director.mainTask).toBe(48);
+  });
+
+  it("leaves a cutscene exit alone while the node behind it is still waiting", () => {
+    const director = new StoryDirector(graph, doors);
+    director.restore({
+      node: "co-dai-than-dien",
+      main: 47,
+      mainDone: false,
+      branch: "",
+      tokens: "",
+    });
+    expect(director.catchUp((s, r, g) => `${s}:${r}:${g}` === "8:6:0")).toEqual([]);
+    expect(director.node.id).toBe("co-dai-than-dien");
   });
 });

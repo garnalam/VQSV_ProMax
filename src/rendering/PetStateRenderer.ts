@@ -1,6 +1,8 @@
 import type { BattleUiPet, BattleUiState } from "../game/battle/BattleUiState";
 import type { PanelFontRenderer } from "./PanelFontRenderer";
 import type { SpriteFrame } from "../game/story/GameAssets";
+import type { Rect } from "../game/battle/BattleListLayout";
+import { natureStatTrend } from "../game/battle/PetStatCalculator";
 
 /**
  * JavaSE `VqsvBattleRenderer.renderPetStateOverlay` and its `drawPetState*` family, shared by the
@@ -24,6 +26,7 @@ export type PetStateArt = {
     spriteId: number,
     tick: number,
     nature?: number,
+    shinyColor?: number,
   ) =>
     | {
         frame: SpriteFrame;
@@ -35,6 +38,9 @@ export type PetStateArt = {
 };
 
 const WHITE = 0xffffff;
+/** A stat a shiny nature raises (green) or lowers (red) on the Chỉ số cards. */
+const STAT_RAISED = 0x1f9d3a;
+const STAT_LOWERED = 0xd8283a;
 const SOURCE_UI_TEXT = 1862801;
 const hex = (value: number) => `#${((value & 0xffffff) | 0x1000000).toString(16).slice(1)}`;
 
@@ -214,13 +220,23 @@ export class PetStateRenderer {
     g.restore();
   }
 
-  render(g: CanvasRenderingContext2D, ui: BattleUiState, tick: number, inBattle: boolean): void {
+  /**
+   * `compact`: the landscape battle screen's dashboard (`LAND_PET_STATE`), shorter, its softkeys in
+   * the screen's corners.
+   */
+  render(
+    g: CanvasRenderingContext2D,
+    ui: BattleUiState,
+    tick: number,
+    inBattle: boolean,
+    compact?: { height: number; action: Rect; back: Rect },
+  ): void {
     const start = Math.max(0, ui.scroll),
       size = ui.rows.length,
       selectedSlot = Math.max(0, Math.min(5, ui.selectedIndex - start)),
       selected = ui.rows[start + selectedSlot]?.pet,
       tab = ui.tab ?? 0;
-    this.staticWidgets(g, ui, selected, tick, tab === 1);
+    this.staticWidgets(g, ui, selected, tick, tab === 1, compact?.height ?? 249);
     this.pageTabs(g, tab);
     if (ui.selectedIndex > 0) this.arrow(g, 203, 225, true);
     if (ui.selectedIndex < size - 1) this.arrow(g, 203, 244, false);
@@ -234,8 +250,12 @@ export class PetStateRenderer {
       else this.overview(g, name, selected, tick);
     }
     const action = ui.prompt || (inBattle ? "Xuất chiến" : "Xác định");
-    this.softkey(g, 42, 263, 64, 22, action, true, tick);
-    this.softkey(g, 144, 263, 56, 22, "Quay lại", false, tick);
+    const at = compact ?? {
+      action: { x: 42, y: 263, w: 64, h: 22 },
+      back: { x: 144, y: 263, w: 56, h: 22 },
+    };
+    this.softkey(g, at.action.x, at.action.y, at.action.w, at.action.h, action, true, tick);
+    this.softkey(g, at.back.x, at.back.y, at.back.w, at.back.h, "Quay lại", false, tick);
   }
 
   /** `drawPetStateStaticWidgets`. */
@@ -245,16 +265,17 @@ export class PetStateRenderer {
     pet: BattleUiPet | undefined,
     tick: number,
     showingStats: boolean,
+    height = 249,
   ) {
     const accent = petStateAccent(pet?.element ?? -1);
-    roundFill(g, 18, 44, 208, 249, 13, hex(399396));
-    roundFill(g, 15, 40, 208, 249, 12, hex(15333108));
+    roundFill(g, 18, 44, 208, height, 13, hex(399396));
+    roundFill(g, 15, 40, 208, height, 12, hex(15333108));
     roundFill(g, 15, 40, 208, 33, 10, hex(darkerColor(accent)));
     fill(g, 15, 60, 208, 13, darkerColor(accent));
     fill(g, 15, 70, 208, 3, accent);
     roundFill(g, sheenX(tick), 43, 24, 14, 8, "rgba(255,255,255,0.165)");
-    roundStroke(g, 15, 40, 207, 248, 12, lighterColor(accent));
-    roundStroke(g, 17, 42, 203, 244, 9, WHITE);
+    roundStroke(g, 15, 40, 207, height - 1, 12, lighterColor(accent));
+    roundStroke(g, 17, 42, 203, height - 5, 9, WHITE);
     fill(g, 25, 81, 188, 132, 14676206);
     for (let x = 33; x < 213; x += 16) fill(g, x, 81, 1, 132, 12113876);
     this.choiceFrame(g, 25, 81, 188, 132);
@@ -451,7 +472,7 @@ export class PetStateRenderer {
       Math.PI * 2,
     );
     g.fill();
-    const sprite = this.art.sprite(pet.spriteId, tick, pet.nature);
+    const sprite = this.art.sprite(pet.spriteId, tick, pet.nature, pet.shinyColor);
     if (sprite) {
       // `drawAligned(32, 112 + bob, 72, 73, 7)`: bottom centre of the animation's bounds.
       const bob = (Math.trunc(tick / 7) & 1) === 0 ? 0 : -1,
@@ -515,14 +536,18 @@ export class PetStateRenderer {
       ["PHÒNG NGỰ", pet.stats[2], 30, 157, 85, 4886465],
       ["LINH XẢO", pet.stats[3], 121, 157, 86, 12814902],
     ] as const;
-    for (const [label, value, x, y, w, color] of cards) {
+    // Web: a shiny nature (7..9) bends hp, attack and speed; the raised numbers read green and the
+    // lowered ones red instead of the usual dark ink.
+    const trend = natureStatTrend(pet.nature);
+    for (const [index, [label, value, x, y, w, color]] of cards.entries()) {
       // `drawPetStateStatDashboardCard`.
       fill(g, x + 2, y + 2, w, 38, 9087141);
       fill(g, x, y, w, 38, 16186361);
       fill(g, x, y, w, 5, color);
       rect(g, x, y, w - 1, 37, lighterColor(color));
       this.centered(g, label, x + 5, y + 9, w - 10, 4614768);
-      this.centered(g, String(value), x + 5, y + 23, w - 10, 1523542);
+      const ink = trend[index] > 0 ? STAT_RAISED : trend[index] < 0 ? STAT_LOWERED : 1523542;
+      this.centered(g, String(value), x + 5, y + 23, w - 10, ink);
     }
     fill(g, 30, 200, 177, 10, 1523542);
     this.tiny(g, `HP ${pet.hp}/${pet.maxHp}`, 34, 201, 76, 14283762);

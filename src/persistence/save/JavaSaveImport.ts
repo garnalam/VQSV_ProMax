@@ -32,7 +32,7 @@ export type JavaSaveImport = {
 const NEWEST_JAVA_VERSION = 22;
 const MAX_PET_LEVEL = 100;
 const PARTY_SIZE = 6;
-const CONVENIENCE_TIERS = 7;
+const CONVENIENCE_TIERS = 8;
 const BASE_OUTFIT = "FASH-BASE-NEIL";
 
 /** `java.util.Properties.load` for the files Java writes: `key=value` lines with `\` escapes. */
@@ -153,6 +153,9 @@ export function importJavaSave(text: string, catalog: ImportCatalog): JavaSaveIm
       };
     if (currentHp >= 0) result.currentHp = currentHp;
     if (maxHp > 0) result.maxHp = maxHp;
+    // A shiny brought over from a Java save keeps Java's palette (`LEGACY_SHINY_COLOR`).
+    if (result.nature !== undefined && result.nature >= 7 && result.nature <= 9)
+      result.shinyColor = -1;
     return result;
   };
   const pets = (prefix: string): SavedPet[] => {
