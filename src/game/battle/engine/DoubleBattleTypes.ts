@@ -28,6 +28,9 @@ export type DoubleBattleSetup = {
   /** Source scene and encounter ownership for Cầu Vồng's mirrored item recovery. */
   sceneId?: number;
   capturePolicy?: string;
+  runAllowed?: boolean;
+  itemsAllowed?: boolean;
+  experienceAllowed?: boolean;
   /** `playerControlsBoth`: a gym fight, the player commands slots 2 and 3. */
   controlsBoth: boolean;
   /** The player's battle owners: the first six roster pets, in roster order. */
@@ -67,7 +70,8 @@ export type DoubleCommand =
   /** `member` is the player battle owner the item is for. */
   | { kind: "item"; itemId: number; member: number }
   /** A manual switch: done at once, and the slot gives no other command this round. */
-  | { kind: "switch"; member: number };
+  | { kind: "switch"; member: number }
+  | { kind: "run" };
 
 export type DoubleRequest =
   | { kind: "command"; slot: PlayerSlot; round: number }
@@ -76,7 +80,7 @@ export type DoubleRequest =
   | { kind: "ended"; outcome: DoubleOutcome };
 
 export type DoubleOutcome = {
-  winner: "player" | "enemy";
+  winner: "player" | "enemy" | "none";
   /** Direct EXP by player battle owner (living participants share the defeated roster). */
   experience: number[];
   /** Benched EXP by player battle owner (held item 6). */

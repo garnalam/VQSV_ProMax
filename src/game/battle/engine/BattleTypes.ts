@@ -32,6 +32,7 @@ export const ENCOUNTER_NATURE_FALLBACK = 3;
 /** `VqsvText.Battle.CATCH_NOT_ALLOWED` and `RUN_NOT_ALLOWED`, the two refusals a fight can hit. */
 export const CATCH_NOT_ALLOWED_TEXT = "Trận chiến này không cho bắt sủng vật";
 export const RUN_NOT_ALLOWED_TEXT = "Trận chiến này không thể trốn chạy";
+export const ITEMS_NOT_ALLOWED_TEXT = "Tháp không dùng vật phẩm trong trận.";
 
 /** One pet as a fight starts it: what the save (or the encounter) knows about it. */
 export type CombatantSetup = {
@@ -49,6 +50,10 @@ export type CombatantSetup = {
   nature: number;
   /** Level-and-quality stats from `PetStatCalculator`; `hp` is the maximum. */
   stats: { hp: number; attack: number; defense: number; speed: number };
+  /** Multipliers for an authored opponent, applied after permanent talent stats. */
+  statFactors?: readonly [hp: number, attack: number, defense: number, speed: number];
+  /** Preserve boosted stats above the legacy short range. */
+  wideStats?: boolean;
   /** Current HP; omitted is full. */
   hp?: number;
   /** Up to five skill ids; PP per slot (omitted: each skill's maximum). */
@@ -83,6 +88,8 @@ export type BattleSetup = {
    * still refuse to let the player leave. Omitted: a wild fight allows it.
    */
   runAllowed?: boolean;
+  itemsAllowed?: boolean;
+  experienceAllowed?: boolean;
   player: readonly CombatantSetup[];
   enemy: readonly CombatantSetup[];
   /** Bag items the player may use, by item id; spent as they are used. */

@@ -29,6 +29,7 @@ import { loadBattleRules, type BattleRules } from "../battle/BattleRules";
 import { DEFAULT_BATTLE_DEFINITIONS } from "../battle/BattleDefinition";
 import type { MapCollision } from "../world/MapCollision";
 import type { Pack } from "../../pack/Pack";
+import type { TowerContent } from "../meta/BondingTower";
 import { StoryGraph, type StoryGraphDocument } from "./StoryGraph";
 import { QuestCatalog, type BranchTask } from "../quest/QuestCatalog";
 import type { GiftCodeDocument } from "../meta/GiftCodes";
@@ -379,6 +380,7 @@ export class GameAssets {
     readonly metaSystems?: MetaSystemsDocument,
     readonly giftCodes?: GiftCodeDocument,
     readonly campaignSystems?: CampaignSystemsDocument,
+    readonly bondingTower?: TowerContent,
   ) {}
   roomName(scene: number, room: number): string {
     return this.roomNames[`${scene}:${room}`] ?? "";
@@ -408,6 +410,7 @@ export class GameAssets {
       unifiedBadges,
       worldEncounters,
       metaSystems,
+      bondingTower,
       giftCodes,
       campaignSystems,
       rideSprites,
@@ -470,6 +473,7 @@ export class GameAssets {
       data.badges(),
       pack.json<WorldEncountersDocument>("story.world-encounters"),
       pack.json<MetaSystemsDocument>("story.meta-systems"),
+      pack.json<TowerContent>("story.bonding-tower"),
       pack.json<GiftCodeDocument>("story.gift-codes"),
       pack.json<CampaignSystemsDocument>("story.campaign-systems"),
       pack.json<SpritesManifest>("ride-sprites.sprites"),
@@ -614,6 +618,7 @@ export class GameAssets {
       metaSystems,
       giftCodes,
       campaignSystems,
+      bondingTower,
     );
     // The whole world (Liệt Hỏa and Cầu Vồng) is in the bake now; only the opening and Scene 1
     // are fetched before the first frame, every other room when the world first needs it.

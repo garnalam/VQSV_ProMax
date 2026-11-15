@@ -55,6 +55,7 @@ import {
   type BattleEvent,
   type BattleOutcome,
   CATCH_NOT_ALLOWED_TEXT,
+  ITEMS_NOT_ALLOWED_TEXT,
   type Seat,
 } from "./engine/BattleTypes";
 
@@ -1944,16 +1945,19 @@ export class BattleRuntime {
         this.interactiveStage = "itemList";
         this.openItems(this.coreBag(), "capture");
       }
-    } else if ((index === 2 || index === 3) && locked)
+    } else if (index === 2 && !this.core!.itemsAllowed()) {
+      this.showWarning(ITEMS_NOT_ALLOWED_TEXT);
+    } else if ((index === 2 || index === 3) && locked) {
       this.showWarning("Đang bị Giam Cầm: không thể đổi Sủng vật hay dùng Đạo cụ.");
-    else if (index === 2) {
+    } else if (index === 2) {
       this.interactiveStage = "itemList";
       this.openItems(this.coreBag(), "recovery");
     } else if (index === 3) {
       this.interactiveStage = "petList";
       this.openPets();
     } else if (index === 4) {
-      this.openBattleShop();
+      if (this.core!.itemsAllowed()) this.openBattleShop();
+      else this.showWarning("Tháp không mở thương nhân trong trận.");
     } else if (tutorial) this.showWarning("Không thể chạy khỏi trận hướng dẫn.");
     else this.submitToCore({ kind: "run" });
   }

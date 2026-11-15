@@ -112,6 +112,18 @@ import {
 } from "../meta/RegionalChallenges";
 import { claimBattlePassReward, purchaseBattlePassVip } from "../meta/BattlePass";
 import {
+  craftTowerHearts,
+  createTowerState,
+  finishTowerBattle,
+  nurtureTowerPet,
+  sweepTower,
+  towerCanChallenge,
+  towerFloorStatus,
+  towerSweepOffer,
+  type TowerContent,
+  type TowerState,
+} from "../meta/BondingTower";
+import {
   claimDailyBadges,
   dailyBadgeStatus,
   depositPet,
@@ -166,6 +178,7 @@ export type GameplaySources = {
   badgeCatalog?: BadgeCatalogDocument;
   unifiedBadges?: readonly UnifiedBadgeRecord[];
   metaSystems?: MetaSystemsDocument;
+  bondingTower?: TowerContent;
   giftCodes?: GiftCodeDocument;
 };
 
@@ -244,6 +257,7 @@ export function gameplaySources(assets: GameAssets, boot: BootAssets): GameplayS
     badgeCatalog: assets.badgeCatalog,
     unifiedBadges: assets.unifiedBadges,
     metaSystems: assets.metaSystems,
+    bondingTower: assets.bondingTower,
     giftCodes: assets.giftCodes,
     sceneRoom: (scene, room) => assets.getRoom(scene, room),
     worldContract: assets.worldContract,
@@ -689,6 +703,101 @@ export class GameplayHost {
         return true;
       },
     };
+    this.panel.towerSource = {
+      view: () => {
+        const world = this.world,
+          content = this.sources.bondingTower;
+        if (!world || !content) return undefined;
+        const state = world.meta.tower ?? createTowerState(),
+          now = Date.now(),
+          offer = towerSweepOffer(state, now),
+          last = state.last,
+          prizes = last?.hearts || last?.fragments;
+        return {
+          highest: state.highest,
+          hearts: state.hearts,
+          fragments: state.fragments,
+          floors: content.floors.map((floor) => ({
+            ...floor,
+            team: floor.team.map((id) => ({ id, name: content.pets[id]?.name ?? `Pet ${id}` })),
+            status: towerFloorStatus(state, floor.floor, now),
+          })),
+          pets: world.pets.map((pet, index) => ({
+            index,
+            name:
+              content.pets[pet.speciesId]?.name ??
+              this.sources.world.petStats.speciesRow(pet.speciesId)?.name ??
+              `Pet ${pet.speciesId}`,
+            level: pet.level,
+            quality: pet.quality,
+            bond: pet.towerBond ?? 0,
+            visualId: pet.visualSpriteId,
+          })),
+          sweep: {
+            used: offer.used,
+            limit: offer.limit,
+            nextCost: offer.cost,
+            group: offer.floors.length
+              ? { start: offer.end - 4, end: offer.end, count: offer.floors.length }
+              : undefined,
+            canSweep:
+              offer.cost !== null && offer.floors.length > 0 && world.currency.badges >= offer.cost,
+            detail:
+              offer.cost === null
+                ? "Đã hết lượt quét hôm nay."
+                : state.highest < 5
+                  ? "Vượt 5 tầng để mở quét tầng."
+                  : !offer.floors.length
+                    ? "Hôm nay đã nhận hết thưởng."
+                    : world.currency.badges < offer.cost
+                      ? "Không đủ huy hiệu."
+                      : offer.cost === 0
+                        ? "Lượt này miễn phí."
+                        : `Lượt này tốn ${offer.cost} huy hiệu.`,
+          },
+          last: last
+            ? last.sweep
+              ? `Quét đến tầng ${last.floor}: +${last.fragments} mảnh, +${last.hearts} tim.`
+              : last.won
+                ? prizes
+                  ? `Thắng tầng ${last.floor}: +${last.fragments} mảnh, +${last.hearts} tim.`
+                  : `Đã thắng luyện tập tầng ${last.floor}.`
+                : `Chưa vượt tầng ${last.floor}.`
+            : undefined,
+        };
+      },
+      challenge: (number) => {
+        const world = this.world,
+          content = this.sources.bondingTower,
+          floor = content?.floors[number - 1];
+        if (!world || !content || !floor) return "Không tìm thấy tầng.";
+        if (!this.canOpenPanel(world) || this.mapLoadingActive) return "Tháp chưa sẵn sàng.";
+        const state = world.meta.tower ?? createTowerState();
+        if (!towerCanChallenge(state, number)) return "Tầng chưa mở.";
+        if (!world.pets.some((pet) => (pet.currentHp ?? pet.maxHp ?? 1) > 0))
+          return "Cần có pet còn sức trong đội.";
+        if (floor.double && world.pets.length < 2) return "Tầng đánh đôi cần ít nhất 2 pet.";
+        if (
+          !world.startBondingTower(floor, content.pets, (won) =>
+            finishTowerBattle(state, number, won, Date.now()),
+          )
+        )
+          return "Chưa thể khiêu chiến.";
+        world.meta.tower = state;
+        return null;
+      },
+      craft: (count) => this.mutateTower((_, state) => craftTowerHearts(state, count)),
+      nurture: (index, count) =>
+        this.mutateTower((world, state) => {
+          const pet = world.pets[index],
+            services = world.battleServices;
+          if (!pet || !services) return "Hãy chọn một pet trong đội.";
+          const baseHp = services.partyMember({ ...pet, towerBond: 0 }).stats.hp;
+          return nurtureTowerPet(state, pet, count, baseHp);
+        }),
+      sweep: () =>
+        this.mutateTower((world, state) => sweepTower(state, world.currency, Date.now())),
+    };
     this.panel.giftCodeSource = {
       redeem: (code) => {
         const world = this.world;
@@ -1065,6 +1174,10 @@ export class GameplayHost {
       const battle = this.activeBattle;
       if (battle) {
         battle.pointer(x, y, world.inventory);
+        return [];
+      }
+      if (world.battleVisible && world.bondingTowerBattleActive && world.doubleBattle) {
+        world.doubleBattle.pointer(x, y);
         return [];
       }
       if (this.panel.visible) {
@@ -1814,6 +1927,18 @@ export class GameplayHost {
       !world.raceBlocksPanel &&
       (world.phase === "freeworld" || world.phase === "returnWorld")
     );
+  }
+
+  private mutateTower(action: (world: WorldRuntime, state: TowerState) => string | null): string | null {
+    const world = this.world;
+    if (!world || !this.sources.bondingTower || !this.canOpenPanel(world) || this.mapLoadingActive)
+      return "Tháp chưa sẵn sàng.";
+    const state = world.meta.tower ?? createTowerState();
+    const error = action(world, state);
+    if (error) return error;
+    world.meta.tower = state;
+    this.saves.save(this.snapshot(world));
+    return null;
   }
 
   /** Java: `if (!panel.visible && keyBack && canOpenSourcePanel()) open; else if (visible) tick`. */

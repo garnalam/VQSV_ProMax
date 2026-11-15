@@ -72,6 +72,22 @@ const skillOrder = (events: readonly BattleEvent[]) =>
   events.flatMap((e) => (e.type === "skill" ? [e.seat.side] : []));
 
 describe("BattleCore: a whole fight", () => {
+  it("resolves a unified signature turned back on its caster by Quỷ Mị", () => {
+    const core = fight({
+      player: [pet(13, { skillIds: [1021] })],
+      enemy: [pet(34)],
+    }, new Fixed(0));
+    const player = core.activeUnit("player"), enemy = core.activeUnit("enemy");
+    rules.status.pendingDebuffFromProducer(enemy, player, 54, 8)!.commit();
+    const result = core.submit({ kind: "skill", slot: 0 });
+    expect(result).toContainEqual(expect.objectContaining({
+      type: "skill", skillId: 1021, seat: { side: "player", member: 0 },
+      target: { side: "player", member: 0 }, damage: expect.any(Number),
+    }));
+    expect(player.hp()).toBeLessThan(player.maxHp());
+    expect(enemy.hp()).toBe(enemy.maxHp());
+  });
+
   it("pays living reserves 30 percent with Hoàng Kim, full EXP with item six, and none when fainted", () => {
     const core = fight({
       goldenPartyExperiencePercent: 30,

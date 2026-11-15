@@ -43,6 +43,7 @@ const {
   GAME_MENU_SCROLLBAR,
   MENU_LABELS,
   MENU_ROW_BAG,
+  MENU_ROW_BONDING_TOWER,
   MENU_ROW_PET,
   MENU_ROW_RECORD,
   MENU_ROW_SAVE,
@@ -113,6 +114,61 @@ const freeWorld = (): SessionStart => ({
 });
 
 describe("campaign service wiring", () => {
+  it("opens the next tower floor after a real win and saves the original roster", async () => {
+    const { host, saves, repository } = session(freeWorld()),
+      world = host.world!;
+    const pet = world.pets[0];
+    Object.assign(pet, {
+      level: 100,
+      quality: 5,
+      currentHp: 1,
+      skillIds: [40],
+      skillPp: [1],
+    });
+    const before = host.snapshot(world);
+    host.panel.open();
+    host.panel.select(MENU_ROW_BONDING_TOWER);
+    host.step(["confirm"]);
+    expect(host.panel.mode).toBe("bondingTower");
+    host.step(["confirm"]);
+    expect(world.bondingTowerBattleActive).toBe(true);
+    for (let tick = 0; tick < 6000 && world.bondingTowerBattleActive; tick++)
+      host.step(["confirm"]);
+    expect(world.bondingTowerBattleActive).toBe(false);
+    expect(host.panel.towerSource.view()?.floors[1].status).toBe("first");
+    await saves.flush();
+    const saved = (await repository.load())!;
+    expect(saved.meta?.tower).toMatchObject({ highest: 1, fragments: 2, hearts: 0 });
+    expect(saved.pets).toEqual(before.pets);
+    expect(saved.currency).toEqual(before.currency);
+  });
+
+  it("persists tower currency, daily claims and an individual pet's bond together", async () => {
+    const { host, saves, repository } = session(freeWorld()),
+      world = host.world!,
+      tower = host.panel.towerSource;
+    expect(tower.view()).toMatchObject({ highest: 0, hearts: 0 });
+    expect(tower.view()?.floors).toHaveLength(200);
+    expect(tower.challenge(2)).toBe("Tầng chưa mở.");
+    world.meta.tower = {
+      highest: 10, fragments: 20, hearts: 0, day: 0, claims: [], repeats: 0, sweeps: 0,
+    };
+    world.currency.badges = 20;
+    expect(tower.sweep()).toBeNull();
+    expect(tower.sweep()).toBeNull();
+    expect(tower.craft(1)).toBeNull();
+    expect(tower.nurture(0, 3)).toBeNull();
+    await saves.flush();
+
+    const saved = (await repository.load())!;
+    expect(saved.currency?.badges).toBe(0);
+    expect(saved.pets[0].towerBond).toBe(3);
+    expect(saved.meta?.tower).toMatchObject({ highest: 10, hearts: 0, fragments: 16, repeats: 10, sweeps: 2 });
+    const resumed = session({ kind: "resume", save: saved }).host;
+    expect(resumed.panel.towerSource.view()?.pets[0].bond).toBe(3);
+    expect(resumed.panel.towerSource.view()?.sweep.canSweep).toBe(false);
+  });
+
   it("binds shop, daily badge, pet bank and incubator to the live world instead of stubs", () => {
     const { host } = session(freeWorld()),
       world = host.world!;

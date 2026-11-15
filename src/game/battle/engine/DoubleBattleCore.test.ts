@@ -201,6 +201,26 @@ const FLOOR: Record<string, { strikes: number; draws: number; joint: number; bos
 };
 
 describe("DoubleBattleCore replays the Java 2v2 golden", () => {
+  it("resolves a unified signature turned back on its caster by Quỷ Mị in 2v2", () => {
+    const base = combatant(golden.scenarios[0].units.player[0]);
+    const caster = { ...base, speciesId: 13, level: 90, skillIds: [1021], skillPp: [10] };
+    const ordinary = { ...base, speciesId: 68, skillIds: [40], skillPp: [10] };
+    const random = new BattleRandom(7n);
+    const percent = random.percent.bind(random);
+    random.percent = (label) => label.includes("status.selfHit.8") ? 0 : percent(label);
+    const core = new DoubleBattleCore(rules, { items, skillRules, rulebook, catalog }, {
+      controlsBoth: true, player: [caster, ordinary], companion: [], enemy: [ordinary, ordinary],
+      enemyProfile: trainerProfile, companionProfile,
+    }, random);
+    core.start();
+    rules.status.pendingDebuffFromProducer(core.unit(0), core.unit(2), 54, 8)!.commit();
+    core.submit({ kind: "skill", skillIndex: 0, target: 0 });
+    core.submit({ kind: "skill", skillIndex: 0, target: 0 });
+    expect(core.events).toContainEqual(expect.objectContaining({
+      type: "strike", skillId: 1021, slot: 2, target: 2, receiver: 2,
+    }));
+  });
+
   it("pays Hoàng Kim reserve EXP at thirty percent while item six keeps the whole share", () => {
     const base = combatant(golden.scenarios[0].units.player[0]);
     const pet = (extra = {}) => ({ ...base, speciesId: 68, level: 10, quality: 2, nature: 2, hp: 10000, physicalTraitId: -1, heldItemId: -1, skillIds: [0], skillPp: [99], stats: { hp: 10000, attack: 10000, defense: 100, speed: 1000 }, ...extra });

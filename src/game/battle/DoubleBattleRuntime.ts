@@ -1,15 +1,25 @@
 import type { InputCommand } from "../../core/input/GameCommand";
 import type { BattleRules } from "./BattleRules";
 import { battleUiState, type BattleUiPet, type BattleUiState } from "./BattleUiState";
+import {
+  commandIndexAt,
+  contains,
+  ITEM_LIST,
+  listIndexAt,
+  PET_STATE,
+  petIndexAt,
+  SKILL_LIST,
+} from "./BattleListLayout";
 import { CPOS_GROUPS } from "./BattleRuntime";
 import type { StatusPresentationSlot } from "./StatusPresentation";
 import {
   BattleCommandError,
+  ITEMS_NOT_ALLOWED_TEXT,
   SKILL_NOT_READY_WARNING,
   TIER_LOCK_WARNING,
 } from "./engine/BattleTypes";
 import type { DoubleBattleCore } from "./engine/DoubleBattleCore";
-import type { DoubleEvent, DoubleSlot, PlayerSlot } from "./engine/DoubleBattleTypes";
+import type { DoubleEvent, DoubleOutcome, DoubleSlot, PlayerSlot } from "./engine/DoubleBattleTypes";
 import { MAX_PET_LEVEL, requiredExp } from "./engine/PetProgression";
 import type { BattleItems } from "./engine/BattleItems";
 import { DoubleActionFx, type DoubleFxRole } from "./DoubleSkillFx";
@@ -183,8 +193,7 @@ export class DoubleBattleRuntime {
   get finished(): boolean {
     return this.stage === "done";
   }
-  /** "player" or "enemy" once the fight is over. */
-  get winner(): "player" | "enemy" | null {
+  get winner(): DoubleOutcome["winner"] | null {
     const request = this.core.request;
     return request.kind === "ended" ? request.outcome.winner : null;
   }
@@ -381,6 +390,58 @@ export class DoubleBattleRuntime {
     }
   }
 
+  pointer(x: number, y: number): void {
+    if (this.ui.mode === "WARNING") {
+      this.closeWarning();
+      return;
+    }
+    if (this.stage === "command") {
+      const index = commandIndexAt(x, y);
+      if (index < 0) return;
+      this.commandIndex = index;
+      this.ui.selectedIndex = index;
+      this.openCommand(index);
+      return;
+    }
+    if (this.stage === "skill" || this.stage === "item") {
+      const layout = this.stage === "skill" ? SKILL_LIST : ITEM_LIST;
+      const index = listIndexAt(layout, x, y, this.ui.rows.length, this.ui.scroll);
+      if (index >= 0) {
+        this.selectRow(index);
+        this.handleInput(["confirm"]);
+      } else if (contains(x, y, layout.action)) this.handleInput(["confirm"]);
+      else if (contains(x, y, layout.back)) this.handleInput(["back"]);
+      return;
+    }
+    if (this.stage === "target") {
+      if (contains(x, y, { x: 72, y: 268, w: 96, h: 18 })) {
+        this.handleInput(["confirm"]);
+        return;
+      }
+      const target = this.targets.find((slot) => {
+        const { actorX, actorY } = this.slot(slot);
+        return contains(x, y, { x: actorX - 22, y: actorY - 42, w: 44, h: 50 });
+      });
+      if (target !== undefined) {
+        this.showTarget(target);
+        this.handleInput(["confirm"]);
+      }
+      return;
+    }
+    if (this.stage === "pet") {
+      const tab = PET_STATE.tabs.findIndex((rect) => contains(x, y, rect));
+      if (tab >= 0) this.ui.tab = tab;
+      else if (contains(x, y, PET_STATE.previous)) this.handleInput(["up"]);
+      else if (contains(x, y, PET_STATE.next)) this.handleInput(["down"]);
+      else if (contains(x, y, PET_STATE.action)) this.handleInput(["confirm"]);
+      else if (contains(x, y, PET_STATE.back)) this.handleInput(["back"]);
+      else {
+        const index = petIndexAt(x, y, this.ui.rows.length, this.ui.scroll);
+        if (index >= 0) this.ui.selectedIndex = index;
+      }
+    }
+  }
+
   // ------------------------------------------------------------------ tick
 
   tick(): void {
@@ -512,7 +573,12 @@ export class DoubleBattleRuntime {
         this.beat = null;
         return;
       case "end":
-        this.log = event.outcome.winner === "player" ? "Chiến thắng!" : "Thất bại!";
+        this.log =
+          event.outcome.winner === "player"
+            ? "Chiến thắng!"
+            : event.outcome.winner === "enemy"
+              ? "Thất bại!"
+              : "Đã rời trận tháp.";
         this.activeActorSlot = -1;
         this.activeTargetSlot = -1;
         this.hold = RESULT_HOLD;
@@ -721,16 +787,19 @@ export class DoubleBattleRuntime {
     this.ui = { ...battleUiState("COMMAND"), title: "Chiến đấu", selectedIndex: 0 };
   }
 
-  /** `tickCommand`: 0 fight, 2 items, 3 pets; catching and the rest are refused in a 2v2. */
+  /** `tickCommand`: fight, items, pets, and retreat when the encounter permits it. */
   private openCommand(index: number): void {
     const actor = this.core.unit(this.commandSlot),
       locked = !!this.rules.web?.switchAndItemsLocked(actor);
     if (index === 0) this.openSkills();
     else if (index === 1) this.warn("Trận chiến này không cho bắt sủng vật");
-    else if (index === 2)
-      locked ? this.warn("Trạng thái bị quấn, không thể sử dụng đạo cụ") : this.openItems();
-    else if (index === 3)
+    else if (index === 2) {
+      if (!this.core.itemsAllowed()) this.warn(ITEMS_NOT_ALLOWED_TEXT);
+      else if (locked) this.warn("Trạng thái bị quấn, không thể sử dụng đạo cụ");
+      else this.openItems();
+    } else if (index === 3)
       locked ? this.warn("Trạng thái bị quấn, không thể đổi sủng vật") : this.openPets("switch");
+    else if (index === 5 && this.core.runAllowed()) this.submit({ kind: "run" });
     else this.warn("Trận phối hợp 2v2 chỉ nhận lệnh chiến đấu.");
   }
 

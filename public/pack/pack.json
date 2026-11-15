@@ -694,6 +694,16 @@
           }
         },
         {
+          "name": "bonding-tower",
+          "file": "story/bonding-tower.json",
+          "kind": "json",
+          "from": "huypham691/server@d5382be:public/secure/tower-content.js",
+          "producer": {
+            "kind": "copy",
+            "what": "Tháp Gắn Kết roster revision 2 (original JavaScript payload as JSON)"
+          }
+        },
+        {
           "name": "gift-codes",
           "file": "story/gift-codes.json",
           "kind": "json",
@@ -1314,6 +1324,22 @@
           "name": "tan-nguyet-defeat",
           "file": "custom-boss/tan-nguyet-defeat.png",
           "from": "VQSV-WebNative/rebuild_game/src/main/resources/vqsv/data/unified/custom-cutscenes/tan-nguyet-defeat/skill-issue.png"
+        }
+      ]
+    },
+    {
+      "id": "bonding-tower-art",
+      "kind": "image",
+      "resolution": "root",
+      "root": "bonding-tower-art",
+      "producer": {
+        "kind": "copy",
+        "what": "The Tháp Gắn Kết d5382be release: native battle portraits from public/secure/tower-portraits and the pixel icon from public/secure/pixel-icons-v3/tower.png."
+      },
+      "shapes": [
+        {
+          "name": "image",
+          "path": "{name}.png"
         }
       ]
     },

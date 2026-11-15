@@ -4,7 +4,7 @@ import type { BattleRules } from "../BattleRules";
 import type { DesignTraitProjection } from "../DesignTraitProjection";
 import type { DesignTraitUnit } from "../DesignTraits";
 import { resolveP7PostSkill } from "../P7PostSkill";
-import { resolveP7Strike } from "../P7Strike";
+import { resolveP7Strike, resolveSelfHitDamage } from "../P7Strike";
 import type { StatusInstance } from "../StatusState";
 import type { StatusWebRules } from "../StatusWebRules";
 import type { BattleItem, BattleItems } from "./BattleItems";
@@ -14,6 +14,7 @@ import {
   SKILL_NOT_READY_WARNING,
   TIER_LOCK_WARNING,
   CATCH_NOT_ALLOWED_TEXT,
+  ITEMS_NOT_ALLOWED_TEXT,
   OTHER_SIDE,
   RUN_NOT_ALLOWED_TEXT,
   type BattleCommand,
@@ -445,19 +446,14 @@ export class BattleCore {
   /** Quỷ Mị / Hỗn Loạn turned the skill on its user: its own damage, none of its effects. */
   private selfHit(sideId: SideId, skillId: number): void {
     const self = this.activeUnit(sideId),
-      combatant = {
-        speciesId: self.speciesId,
-        attack: self.currentStats.attack,
-        defense: self.currentStats.defense,
-        visualSpriteId: this.sides[sideId].setup[this.activeMember(sideId)].spriteId ?? -2,
-        unit: self,
-      },
-      outcome = this.rules.damage.damage({
-        attacker: combatant,
-        target: combatant,
+      outcome = resolveSelfHitDamage(
+        this.rules,
+        self,
         skillId,
-        randomPercent: (label) => this.random.percent(`battle.selfHit.${label}`),
-      });
+        this.sides[sideId].setup[this.activeMember(sideId)].spriteId ?? -2,
+        !this.acted.has(OTHER_SIDE[sideId]),
+        (label) => this.random.percent(`battle.selfHit.${label}`),
+      );
     self.damage(outcome.damage);
     this.protect();
     const seat = this.seat(sideId);
@@ -651,7 +647,7 @@ export class BattleCore {
       if (this.charmRevive(sideId, member, unit)) continue;
       this.fainted.add(unit);
       this.emit({ type: "faint", seat: { side: sideId, member } });
-      if (sideId === "enemy") this.awardExperience(member);
+      if (sideId === "enemy" && this.setup.experienceAllowed !== false) this.awardExperience(member);
     }
     if (this.reserves("player").length === 0 && !this.activeUnit("player").alive())
       this.end({ winner: "enemy", reason: "knockout" });
@@ -802,6 +798,7 @@ export class BattleCore {
         this.requireReserve(sideId, command.member);
         return;
       case "item": {
+        if (!this.itemsAllowed()) refuse(ITEMS_NOT_ALLOWED_TEXT);
         if (this.web.switchAndItemsLocked(active))
           refuse("Đang bị Giam Cầm: không thể dùng vật phẩm.");
         if (sideId === "player" && (this.inventory[command.itemId] ?? 0) <= 0)
@@ -952,6 +949,10 @@ export class BattleCore {
     return this.setup.runAllowed ?? this.setup.kind === "wild";
   }
 
+  itemsAllowed(): boolean {
+    return this.setup.itemsAllowed !== false;
+  }
+
   private buildSide(id: SideId, setups: readonly CombatantSetup[]): Side {
     const longUy =
       id === "player" &&
@@ -963,11 +964,13 @@ export class BattleCore {
         ownerSide: id === "player" ? 0 : 1,
         formationSlot: SEAT_SLOT[id],
         base: setup.stats,
+        wideStats: setup.wideStats,
         physicalTraitId: longUy ? undefined : setup.physicalTraitId,
         heldItemId: setup.heldItemId,
       });
       if (longUy) unit.designTraitState.enabled = false;
       unit.restoreStatsForCheck();
+      if (setup.statFactors) this.projection.applyEncounterStatFactors(unit, setup.statFactors);
       if (setup.hp !== undefined) unit.setHp(Math.max(0, Math.min(unit.maxHp(), setup.hp)));
       // `PetBattleAdapter.toBattleUnit(pet, 0, badges)`: the badge lands on a player pet as it is built.
       if (id === "player" && this.setup.badgeProfile)

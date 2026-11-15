@@ -6,7 +6,7 @@ import type { BattleRules } from "../BattleRules";
 import type { DesignTraitProjection } from "../DesignTraitProjection";
 import type { DesignTraitUnit } from "../DesignTraits";
 import { resolveP7PostSkill } from "../P7PostSkill";
-import { resolveP7Strike } from "../P7Strike";
+import { resolveP7Strike, resolveSelfHitDamage } from "../P7Strike";
 import type { StatusInstance, StatusUnit as StatusUnitLike } from "../StatusState";
 import type { StatusWebRules } from "../StatusWebRules";
 import { BattleAiActorKey } from "../ai/BattleAiActorKey";
@@ -25,6 +25,8 @@ import type { BattleItems } from "./BattleItems";
 import { applyCauVongItemRecovery } from "./CauVongItemRecovery";
 import {
   BattleCommandError,
+  ITEMS_NOT_ALLOWED_TEXT,
+  RUN_NOT_ALLOWED_TEXT,
   type CombatantSetup,
   SKILL_NOT_READY_WARNING,
   TIER_LOCK_WARNING,
@@ -255,6 +257,14 @@ export class DoubleBattleCore {
     );
   }
 
+  itemsAllowed(): boolean {
+    return this.setup.itemsAllowed !== false;
+  }
+
+  runAllowed(): boolean {
+    return this.setup.runAllowed === true;
+  }
+
   /** `legalTargets`: the living slots of the side the skill aims at. */
   legalTargets(actorSlot: DoubleSlot, skillId: number): DoubleSlot[] {
     const row = this.rules.damage.skillRow(skillId),
@@ -347,6 +357,7 @@ export class DoubleBattleCore {
         return;
       }
       case "item": {
+        if (!this.itemsAllowed()) throw new BattleCommandError(ITEMS_NOT_ALLOWED_TEXT);
         if (this.isMaMocBlockedItem(command.itemId))
           throw new BattleCommandError(MA_MOC_TEXT.sealedItem);
         if (this.web.switchAndItemsLocked(actor))
@@ -382,6 +393,10 @@ export class DoubleBattleCore {
         this.nextPlayerCommand(slot + 1);
         return;
       }
+      case "run":
+        if (!this.runAllowed()) throw new BattleCommandError(RUN_NOT_ALLOWED_TEXT);
+        this.end("none");
+        return;
     }
   }
 
@@ -621,7 +636,7 @@ export class DoubleBattleCore {
     actor.skillPp[skillIndex] = Math.max(0, actor.skillPp[skillIndex] - this.web.ppCost(actor));
     actor.selectedSkillId = skillId;
     const receiver = control.selfHit ? slot : target;
-    if (control.selfHit) this.selfHit(slot, skillId);
+    if (control.selfHit) this.selfHit(slot, skillId, !this.acted[target]);
     else this.strike(action, target, skillId, undefined);
     const receiverUnit = this.unit(receiver);
     this.observeAction(slot, receiver, skillId);
@@ -762,21 +777,16 @@ export class DoubleBattleCore {
   }
 
   /** Quỷ Mị / Hỗn Loạn turned the skill on its user: its own damage, none of its effects. */
-  private selfHit(slot: DoubleSlot, skillId: number): void {
+  private selfHit(slot: DoubleSlot, skillId: number, actedFirst: boolean): void {
     const self = this.unit(slot),
-      combatant = {
-        speciesId: self.speciesId,
-        attack: self.currentStats.attack,
-        defense: self.currentStats.defense,
-        visualSpriteId: this.setupOf(slot).spriteId ?? -2,
-        unit: self,
-      },
-      outcome = this.rules.damage.damage({
-        attacker: combatant,
-        target: combatant,
+      outcome = resolveSelfHitDamage(
+        this.rules,
+        self,
         skillId,
-        randomPercent: (label) => this.random.percent(`battle.2v2.selfHit.${label}`),
-      }),
+        this.setupOf(slot).spriteId ?? -2,
+        actedFirst,
+        (label) => this.random.percent(`battle.2v2.selfHit.${label}`),
+      ),
       landed = this.maMoc
         ? this.projectMaMocDamage(self, skillId, self, outcome.damage)
         : outcome.damage;
@@ -1091,7 +1101,7 @@ export class DoubleBattleCore {
     if (this.npcCharms) for (const slot of [0, 1] as const) this.charmRevive(slot);
     if (this.reviveFallenMaMocBoss()) return false;
     if (!this.unit(0).alive() && !this.unit(1).alive() && this.firstLivingEnemyReserve() < 0) {
-      this.awardExperience();
+      if (this.setup.experienceAllowed !== false) this.awardExperience();
       this.end("player");
       return true;
     }
@@ -1165,7 +1175,7 @@ export class DoubleBattleCore {
     });
   }
 
-  private end(winner: "player" | "enemy"): void {
+  private end(winner: DoubleOutcome["winner"]): void {
     for (const unit of [...this.playerUnits, ...this.companionUnits, ...this.enemyUnits])
       unit.clearBuffsAtBattleEnd();
     const outcome: DoubleOutcome = {
@@ -1647,11 +1657,13 @@ export class DoubleBattleCore {
       ownerSide,
       formationSlot: -1,
       base: pet.stats,
+      wideStats: pet.wideStats,
       physicalTraitId: pet.physicalTraitId,
       heldItemId: pet.heldItemId,
     });
     if (this.setup.permanentStatsApplied) unit.traitBattleState.markPermanentStatsApplied();
     unit.restoreStatsForCheck();
+    if (pet.statFactors) this.projection.applyEncounterStatFactors(unit, pet.statFactors);
     if (pet.hp !== undefined) unit.setHp(Math.max(0, Math.min(unit.maxHp(), pet.hp)));
     for (let slot = 0; slot < unit.skillIds.length; slot++) {
       const skillId = pet.skillIds[slot] ?? EMPTY_SKILL;

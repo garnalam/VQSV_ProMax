@@ -1,6 +1,7 @@
 import type { EventStateSnapshot } from "../../game/world/EventStateLedger";
 import type { WorldFlagsSnapshot } from "../../game/world/WorldFlags";
 import type { CampaignState } from "../../game/campaign/CampaignSystems";
+import type { TowerState } from "../../game/meta/BondingTower";
 import { isRecoveryCheckpoint, type RecoveryCheckpoint } from "../../game/world/RecoveryCheckpoint";
 
 /** Bump together with a new entry in `migrations.ts`. */
@@ -17,6 +18,8 @@ export type SavedPet = {
   maxHp?: number;
   experience?: number;
   visualSpriteId?: number;
+  /** Tháp Gắn Kết cultivation follows the individual pet through transfers and evolution. */
+  towerBond?: number;
   skillIds?: number[];
   skillPp?: number[];
   /**
@@ -116,6 +119,7 @@ export type GameSave = {
       appliedEvents: string[];
     };
     campaign: CampaignState;
+    tower?: TowerState;
   };
   pets: SavedPet[];
 };
@@ -142,6 +146,7 @@ function isSavedPet(pet: unknown): pet is SavedPet {
     optional(pet.maxHp, finite) &&
     optional(pet.experience, finite) &&
     optional(pet.visualSpriteId, integer) &&
+    optional(pet.towerBond, (v) => integer(v) && v >= 0 && v <= 255) &&
     optional(pet.skillIds, numberArray) &&
     optional(pet.skillPp, numberArray) &&
     optional(pet.physicalTraitId, (v) => integer(v) && v >= -1) &&
@@ -192,6 +197,33 @@ function isStory(value: unknown): value is Record<string, StoryRecord> {
   );
 }
 
+function isTower(value: unknown): boolean {
+  const within = (v: unknown, min: number, max: number) => integer(v) && v >= min && v <= max;
+  return (
+    record(value) &&
+    within(value.highest, 0, 200) &&
+    within(value.hearts, 0, Number.MAX_SAFE_INTEGER) &&
+    within(value.fragments, 0, Number.MAX_SAFE_INTEGER) &&
+    within(value.day, 0, 10_000_000) &&
+    within(value.repeats, 0, 30) &&
+    within(value.sweeps, 0, 6) &&
+    Array.isArray(value.claims) &&
+    value.claims.length <= 200 &&
+    new Set(value.claims).size === value.claims.length &&
+    value.claims.every((floor) => within(floor, 1, Number(value.highest))) &&
+    optional(
+      value.last,
+      (last) =>
+        record(last) &&
+        within(last.floor, 1, 200) &&
+        typeof last.won === "boolean" &&
+        within(last.hearts, 0, 5) &&
+        within(last.fragments, 0, 10) &&
+        optional(last.sweep, (sweep) => typeof sweep === "boolean"),
+    )
+  );
+}
+
 function isMeta(value: unknown): boolean {
   if (
     !record(value) ||
@@ -206,6 +238,7 @@ function isMeta(value: unknown): boolean {
     charms = record(campaign.charms) ? campaign.charms : {},
     charmActive = record(charms.active) ? charms.active : {};
   return (
+    optional(value.tower, isTower) &&
     typeof fashion.selected === "string" &&
     Array.isArray(fashion.owned) &&
     fashion.owned.every((key) => typeof key === "string") &&

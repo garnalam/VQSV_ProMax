@@ -249,8 +249,9 @@ export function settleDoubleBattle(
 ): DoubleSettlement {
   const request = core.request;
   if (request.kind !== "ended") throw new Error("settle a 2v2 only after it has ended");
-  const outcome = request.outcome,
-    owners = party.slice(0, core.playerCount);
+  const outcome = request.outcome;
+  if (outcome.winner === "none") throw new Error("a retreat has no 2v2 settlement");
+  const owners = party.slice(0, core.playerCount);
   owners.forEach((pet, member) => {
     const unit = core.playerUnit(member);
     pet.currentHp = unit.hp();
@@ -316,7 +317,7 @@ export function createTanNguyetBattle(
   );
 }
 
-function doubleBattleOnScreen(
+export function doubleBattleOnScreen(
   services: BattleServices,
   setup: DoubleBattleSetup,
   symbol: string,

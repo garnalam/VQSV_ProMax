@@ -20,6 +20,7 @@ import { BattleItems } from "./BattleItems";
 import { BasicEnemyAi, type EnemyController } from "./EnemyController";
 import { PetProgression } from "./PetProgression";
 import { DivinePetSeal } from "../../pet/DivinePetSeal";
+import { applyTowerBond } from "../../meta/BondingTower";
 import type { DoubleSkillRules } from "./DoubleBattleTypes";
 import { ENCOUNTER_NATURE_FALLBACK, type BattleSetup, type CombatantSetup } from "./BattleTypes";
 import {
@@ -238,9 +239,12 @@ export class BattleServices {
     const row = this.speciesRows.get(pet.speciesId),
       // `DivinePetSeal.scale`: an owned Divine pet fights at 30% (120% once the golden title is won).
       percent = this.divinePercent?.(pet.speciesId) ?? 100,
-      stats = DivinePetSeal.scaleStats(
-        this.petStats.coreStats(pet.speciesId, pet.level, pet.quality, pet.nature ?? 0),
-        percent,
+      stats = applyTowerBond(
+        DivinePetSeal.scaleStats(
+          this.petStats.coreStats(pet.speciesId, pet.level, pet.quality, pet.nature ?? 0),
+          percent,
+        ),
+        pet.towerBond,
       ),
       skillIds = pet.skillIds?.length
         ? [...pet.skillIds]
@@ -256,6 +260,7 @@ export class BattleServices {
       // `BattleUnit.fromPet` hands the unit the save's nature byte, and an unset one is 0.
       nature: pet.nature ?? 0,
       stats,
+      wideStats: pet.towerBond ? true : undefined,
       hp:
         percent === 100
           ? (pet.currentHp ?? stats.hp)

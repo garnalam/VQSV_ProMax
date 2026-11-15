@@ -65,6 +65,7 @@ import { AREA_MAP_CLOSE_RECT, type AreaMapDoor, type AreaMapView } from "./AreaM
 import { choiceRowAt } from "./WorldHud";
 import { CauVongShopPanelState, type CauVongShopSource } from "./CauVongShop";
 import { CauVongIncubatorPanelState, type CauVongIncubatorSource } from "./CauVongIncubatorPanel";
+import { BondingTowerPanelState, type TowerPanelSource } from "./BondingTowerPanel";
 import {
   clampIndexIntoVisible,
   dragScroll,
@@ -108,6 +109,7 @@ export type WorldPanelMode =
   | "giftCode"
   | "battlePass"
   | "battlePassHelp"
+  | "bondingTower"
   | "worldShop"
   | "worldShopSell"
   | "worldShopSellConfirm"
@@ -127,6 +129,7 @@ export const MENU_ROW_PORTABLE_SHOP = 0;
 export const MENU_ROW_FASHION = 6;
 export const MENU_ROW_CHALLENGE = 7;
 export const MENU_ROW_BATTLE_PASS = 8;
+export const MENU_ROW_BONDING_TOWER = 9;
 /** `GAMEMENU` row 1, "Sủng vật" (`petstate.ui`). */
 export const MENU_ROW_PET = 1;
 /** `GAMEMENU` row 2, "Lưng bao" (`bag.ui`). */
@@ -355,6 +358,7 @@ export const MENU_LABELS = [
   "Thời trang",
   "Tái đấu & Giftcode",
   "Thẻ Fan Cứng VQSV",
+  "Tháp Gắn Kết",
 ];
 export const SYSTEM_LABELS = [
   "Tiếp tục trò chơi",
@@ -373,6 +377,7 @@ export const MENU_TITLE_TOKENS = [
   "Thời trang",
   "Quà tặng",
   "Thẻ Fan Cứng",
+  "Tháp Gắn Kết",
 ];
 
 export type WorldPlate = "system" | "menu";
@@ -441,6 +446,14 @@ export function rideCardAt(x: number, y: number): number {
 }
 
 export class WorldPanel {
+  readonly bondingTower = new BondingTowerPanelState();
+  towerSource: TowerPanelSource = {
+    view: () => undefined,
+    challenge: () => "Chưa thể khiêu chiến.",
+    craft: () => "Chưa thể ghép trái tim.",
+    nurture: () => "Chưa thể bồi dưỡng.",
+    sweep: () => "Chưa thể quét tầng.",
+  };
   systemSource = {
     volumeLevel: () => 0,
     setVolumeLevel: (_level: number) => {},
@@ -3310,6 +3323,16 @@ export class WorldPanel {
       if (pressed.includes("back") || pressed.includes("confirm")) this.mode = "battlePass";
       return;
     }
+    if (this.mode === "bondingTower") {
+      const next = this.bondingTower.tick(pressed, this.towerSource);
+      if (next === "battle") this.close();
+      else if (next === "menu") {
+        this.mode = "gamemenu";
+        this.select(MENU_ROW_BONDING_TOWER);
+        this.keepSelectedVisible(MENU_LABELS.length);
+      }
+      return;
+    }
     if (this.mode === "convenience") {
       this.tickConvenience(pressed);
       return;
@@ -3558,6 +3581,10 @@ export class WorldPanel {
    */
   click(layout: SourceUiLayout, x: number, y: number): boolean {
     if (!this.visible) return false;
+    if (this.mode === "bondingTower") {
+      this.pressed.push(...this.bondingTower.click(x, y, this.towerSource.view()));
+      return true;
+    }
     if (this.mode === "wharf") {
       this.clickWharf(layout, x, y);
       return true;
@@ -4151,7 +4178,7 @@ export class WorldPanel {
   }
 
   /**
-   * `VqsvPanelRuntime.mouseWheel`: the game menu (nine rows in a six-row window) scrolls and keeps the
+   * `VqsvPanelRuntime.mouseWheel`: the game menu scrolls in its six-row window and keeps the
    * cursor inside the window; the system menu moves its cursor.
    */
   wheel(steps: number): void {
@@ -4446,6 +4473,12 @@ export class WorldPanel {
     }
     if (this.mode === "gamemenu" && this.selected === MENU_ROW_BATTLE_PASS) {
       this.openBattlePass();
+      return;
+    }
+    if (this.mode === "gamemenu" && this.selected === MENU_ROW_BONDING_TOWER) {
+      this.mode = "bondingTower";
+      this.openedTicks = 0;
+      this.bondingTower.open();
       return;
     }
     if (this.mode === "gamemenu" && this.selected === MENU_ROW_BAG) {

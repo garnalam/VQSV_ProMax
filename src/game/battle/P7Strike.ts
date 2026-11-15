@@ -19,6 +19,33 @@ import {
   type StatusUnitBase,
 } from "./StatusState";
 
+/** Hỗn Loạn and Quỷ Mị redirect the damage calculation without committing the skill's effects. */
+export function resolveSelfHitDamage(
+  rules: BattleRules,
+  caster: StatusUnit,
+  skillId: number,
+  visualSpriteId: number,
+  actedFirst: boolean,
+  roll: (label: string) => number,
+) {
+  const unit = {
+    speciesId: caster.speciesId,
+    attack: caster.currentStats.attack,
+    defense: caster.currentStats.defense,
+    visualSpriteId,
+    unit: caster,
+  };
+  const unified = rules.web?.unifiedStrike(caster, caster, skillId, actedFirst, roll);
+  return rules.damage.damage({
+    attacker: unit,
+    target: unit,
+    skillId,
+    randomPercent: roll,
+    unifiedPower: unified?.power,
+    defenseIgnorePercent: unified && SignatureSkills.pierce(0, unified.defenseIgnore),
+  });
+}
+
 /**
  * `VqsvBattleRuntime.applyP7Damage` and the post-damage step that follows it.
  *

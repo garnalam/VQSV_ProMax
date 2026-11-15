@@ -330,7 +330,7 @@ export function drawRows(
   }
 }
 
-/** `drawGameMenuRows`: the six slots draw the scrolled window of the nine labels. */
+/** `drawGameMenuRows`: the six slots draw the scrolled window of menu labels. */
 function drawGameMenuRows(
   g: CanvasRenderingContext2D,
   art: WorldPanelArt,

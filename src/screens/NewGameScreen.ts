@@ -39,6 +39,7 @@ import { drawCauVongIncubator } from "../rendering/CauVongIncubatorRenderer";
 import { drawWardrobe } from "../rendering/WardrobeRenderer";
 import { drawFashionShop } from "../rendering/FashionShopRenderer";
 import { drawBattlePass, drawChallenge } from "../rendering/MetaSystemsRenderer";
+import { drawBondingTower } from "../rendering/BondingTowerRenderer";
 import { battleUiState } from "../game/battle/BattleUiState";
 import type { GameSave } from "../persistence/SaveRepository";
 import type { SaveRepository } from "../persistence/SaveRepository";
@@ -1274,6 +1275,12 @@ export class NewGameScreen implements Screen {
       (this.host.panel.mode === "battlePass" || this.host.panel.mode === "battlePassHelp")
     ) {
       drawBattlePass(g, this.host.panel, this.boot.panelFont);
+    } else if (this.host.panel.visible && this.host.panel.mode === "bondingTower") {
+      const panel = this.host.panel;
+      drawBondingTower(g, this.boot.panelFont, panel.bondingTower, panel.towerSource.view(), {
+        icon: this.assets.pack.imageElement("bonding-tower-art.tower.png"),
+        portrait: (id) => this.assets.pack.imageElement(`bonding-tower-art.${id}.png`),
+      });
     } else if (
       this.host.panel.visible &&
       (

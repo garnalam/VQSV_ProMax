@@ -384,6 +384,7 @@ export type StatusUnitSeed = {
   ownerSide: number;
   formationSlot: number;
   base: StatusUnitBase;
+  wideStats?: boolean;
   /** `PetState.heldEquipmentId`; omitted is the same as `NO_HELD_ITEM`. */
   heldItemId?: number;
 };
@@ -435,6 +436,7 @@ export class StatusUnit {
   formationSlot: number;
   readonly baseStats: StatusUnitBase;
   readonly currentStats: StatusUnitBase;
+  private readonly wideStats: boolean;
   readonly statuses: StatusState;
   /**
    * The item this unit holds, which the engine stores in the form column: `PetBattleAdapter` casts
@@ -461,6 +463,7 @@ export class StatusUnit {
     this.formationSlot = seed.formationSlot;
     this.baseStats = { ...seed.base };
     this.currentStats = { ...seed.base };
+    this.wideStats = seed.wideStats === true;
     this.statuses = new StatusState(effects.catalog);
     this.heldItemId = seed.heldItemId ?? NO_HELD_ITEM;
     this.openingAttackSuppression = 0;
@@ -586,12 +589,12 @@ export class StatusUnit {
   private applySourceBadgeBaseStats(): void {
     if (this.ownerSide !== 0) return;
     if (this.badge.maxHpPercent > 0) {
-      this.baseStats.hp = toShort(
+      this.baseStats.hp = this.statValue(
         Math.trunc((this.baseStats.hp * (100 + this.badge.maxHpPercent)) / 100),
       );
     }
     if (this.badge.baseDefensePercent > 0) {
-      this.baseStats.defense = toShort(
+      this.baseStats.defense = this.statValue(
         Math.trunc((this.baseStats.defense * (100 + this.badge.baseDefensePercent)) / 100),
       );
     }
@@ -606,7 +609,7 @@ export class StatusUnit {
     if (this.ownerSide !== 0 || percent <= 0 || this.badgeRoundGrowthCurrent >= cap) return false;
     this.badgeRoundGrowthCurrent = Math.min(cap, this.badgeRoundGrowthCurrent + percent);
     const grow = (base: number) =>
-      toShort(Math.trunc((base * (100 + this.badgeRoundGrowthCurrent)) / 100));
+      this.statValue(Math.trunc((base * (100 + this.badgeRoundGrowthCurrent)) / 100));
     this.currentStats.attack = grow(this.baseStats.attack);
     this.currentStats.defense = grow(this.baseStats.defense);
     this.currentStats.speed = grow(this.baseStats.speed);
@@ -649,8 +652,12 @@ export class StatusUnit {
   /** `BattleUnit.setHp`, including the death pass that clears every status. */
   setHp(hp: number): void {
     const before = this.currentStats.hp;
-    this.currentStats.hp = toShort(Math.max(0, Math.min(this.maxHp(), hp)));
+    this.currentStats.hp = this.statValue(Math.max(0, Math.min(this.maxHp(), hp)));
     if (before > 0 && this.currentStats.hp <= 0) this.clearStatusesOnDeath();
+  }
+
+  statValue(value: number): number {
+    return this.wideStats ? Math.trunc(value) : toShort(value);
   }
 
   /**
@@ -894,10 +901,10 @@ export class StatusUnit {
 
     // The engine writes attack and defense twice, the first pair immediately overwritten by the
     // pair that adds the characteristic's contribution; only the second pair is ported.
-    this.currentStats.attack = toShort(Math.max(0, attack + this.traitStatBonus("attack")));
-    this.currentStats.defense = toShort(Math.max(0, defense + this.traitStatBonus("defense")));
+    this.currentStats.attack = this.statValue(Math.max(0, attack + this.traitStatBonus("attack")));
+    this.currentStats.defense = this.statValue(Math.max(0, defense + this.traitStatBonus("defense")));
     speed = this.projectAgility(speed);
-    this.currentStats.speed = toShort(Math.max(0, speed + this.traitStatBonus("speed")));
+    this.currentStats.speed = this.statValue(Math.max(0, speed + this.traitStatBonus("speed")));
   }
 
   /**

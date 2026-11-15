@@ -436,6 +436,44 @@ export function createSourceTrainerBattle(
   );
 }
 
+/** Seat a practice opponent with the standard trainer entry and no persistent settlement. */
+export function createSinglePracticeBattle(
+  services: BattleServices,
+  setup: BattleSetup,
+  party: SavedPet[],
+  profile: PackBattleAiProfile,
+  actorId: number,
+  playerActorSpriteId: number,
+): BattleRuntime {
+  const first = setup.enemy[0];
+  const encounter: BattleContext["encounter"] = [first.speciesId, first.level, first.nature];
+  const definition = coreDefinition({
+    id: `source-encounter-${encounter.join("-")}`,
+    player: party[0],
+    playerSetup: setup.player[0],
+    enemy: [...setup.enemy],
+    npcEntry: true,
+    presentation: { playerActorSpriteId, enemyActorSpriteId: first.spriteId ?? 0 },
+    partySize: party.length,
+    captureAllowed: false,
+  });
+  return new BattleRuntime(
+    {
+      actorId,
+      encounter,
+      flags: [0, 1],
+      mode: [0, 2],
+      branchTargets: [],
+    },
+    new BattleDefinitionRegistry([definition]),
+    services.rules,
+    undefined,
+    [],
+    [],
+    { core: profiledCore(services, setup, profile), party, services, entryPresentation: true },
+  );
+}
+
 /**
  * `services.newCore` with the request's own AI profile: the same seat setup (badges, the post-EXP
  * heal, the enemy's thiên phú), the enemy's brain the AI-v2 controller over the basic AI, running on

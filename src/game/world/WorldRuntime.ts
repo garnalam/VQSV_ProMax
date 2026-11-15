@@ -74,6 +74,7 @@ import {
 } from "../economy/BattleRewards";
 import type { PackBattleAiEncounterRow } from "../../data/GameData";
 import { BATTLE_RESULT_LOST, BattleRuntime } from "../battle/BattleRuntime";
+import { createBondingTowerBattle } from "../battle/BondingTowerBattle";
 import type { BattleServices } from "../battle/engine/BattleServices";
 import { ENCOUNTER_NATURE_FALLBACK } from "../battle/engine/BattleTypes";
 import { settleBattle, type BattleSettlementReport } from "../battle/engine/BattleSettlement";
@@ -416,6 +417,7 @@ import {
   type RaceWindow,
 } from "./LucHanhDieuRace";
 import type { RegionalRematch } from "../meta/RegionalChallenges";
+import { towerBondStat, type TowerFloor, type TowerPetSpec } from "../meta/BondingTower";
 import {
   applyBattlePassEvent,
   type BattlePassCatalog,
@@ -687,7 +689,10 @@ export class WorldRuntime {
   /** Golden rank two also applies to pets received after the collection reward. */
   synchronizeGoldenBankReward(): void {
     synchronizeGoldenBadgeBankReward(this.flags.badges, this.meta.campaign.petBank, (pet) =>
-      this.sources.petStats.coreStats(pet.speciesId, pet.level, pet.quality, pet.nature ?? 0).hp);
+      towerBondStat(
+        this.sources.petStats.coreStats(pet.speciesId, pet.level, pet.quality, pet.nature ?? 0).hp,
+        pet.towerBond,
+      ));
   }
   /** `encounterStepsRemaining`: -1 until the room's first countdown is drawn. */
   encounterStepsRemaining = -1;
@@ -1830,6 +1835,8 @@ export class WorldRuntime {
       this.battle?.handleInput(commands, this.inventory);
       this.battle?.tick();
       if (this.battle?.complete) {
+        if (this.bondingTowerRun)
+          return this.finishBondingTowerBattle(this.battle.outcome?.winner === "player");
         const battle = this.battle,
           // The fight of an event group: its records carry the rewards and the ledger, so the world
           // hands the finished battle back to the scene instead of closing the group itself.
@@ -2707,6 +2714,7 @@ export class WorldRuntime {
     battle.handleInput(commands);
     battle.tick();
     if (!battle.finished) return null;
+    if (this.bondingTowerRun) return this.finishBondingTowerBattle(battle.winner === "player");
     const services = this.sources.battle!,
       settlement = settleDoubleBattle(battle.core, this.pets, this.inventory, services.progression),
       won = settlement.winner === "player",
@@ -2938,6 +2946,72 @@ export class WorldRuntime {
     }));
   }
 
+  private bondingTowerRun: {
+    returnPhase: "freeworld" | "returnWorld";
+    onResult: (won: boolean) => void;
+  } | null = null;
+
+  get bondingTowerBattleActive(): boolean {
+    return this.bondingTowerRun !== null;
+  }
+
+  startBondingTower(
+    floor: TowerFloor,
+    pets: Readonly<Record<string, TowerPetSpec>>,
+    onResult: (won: boolean) => void,
+  ): boolean {
+    const services = this.sources.battle;
+    if (
+      !services ||
+      !this.onFreeMap ||
+      this.mapLoading ||
+      this.npcService ||
+      this.tanNguyetModal ||
+      this.repelPrompt ||
+      this.raceBlocksPanel ||
+      this.cauVongMinigameOpen ||
+      this.switchCycle ||
+      this.obstacleCut ||
+      this.hazardSpin ||
+      this.vortex ||
+      !this.pets.some((pet) => (pet.currentHp ?? 1) > 0) ||
+      (floor.double && this.pets.length < 2)
+    )
+      return false;
+    const battle = createBondingTowerBattle(
+      services,
+      floor,
+      pets,
+      this.pets,
+      this.player.sprite,
+      (sprite) => this.sources.doubleFallTicks?.(sprite) ?? 8,
+      this.battleCharms(false),
+    );
+    this.bondingTowerRun = {
+      returnPhase: this.phase === "returnWorld" ? "returnWorld" : "freeworld",
+      onResult,
+    };
+    this.battle = battle.single ?? null;
+    this.doubleBattle = battle.double ?? null;
+    if (battle.single) this.prepareBattleSprites(battle.single);
+    if (battle.double)
+      for (const sprite of battle.double.core.spriteIds()) this.sources.prepareSprite?.(sprite);
+    this.setPlayerFacing(false, true);
+    this.nextBattleEntryMode = 2;
+    this.setPhase("battleEntry");
+    return true;
+  }
+
+  private finishBondingTowerBattle(won: boolean): WorldAction {
+    const run = this.bondingTowerRun!;
+    this.battle = null;
+    this.doubleBattle = null;
+    this.bondingTowerRun = null;
+    this.setPhase(run.returnPhase);
+    run.onResult(won);
+    return "autosave";
+  }
+
   /** A gamemenu rematch: authored roster/AI, but no room-script reward or ledger owner. */
   startRegionalRematch(rematch: RegionalRematch): boolean {
     const services = this.sources.battle;
@@ -3030,12 +3104,10 @@ export class WorldRuntime {
   /** `op39RefreshPets`: revive the roster and refill every learned skill's PP. */
   private refreshPets(): void {
     for (const pet of this.pets) {
-      pet.currentHp = this.sources.petStats.coreStats(
-        pet.speciesId,
-        pet.level,
-        pet.quality,
-        pet.nature ?? 0,
-      ).hp;
+      pet.currentHp = towerBondStat(
+        this.sources.petStats.coreStats(pet.speciesId, pet.level, pet.quality, pet.nature ?? 0).hp,
+        pet.towerBond,
+      );
       pet.skillPp = (pet.skillIds ?? []).map(
         (skillId) => this.sources.battleRules.damage.skillRow(skillId)?.ppMax ?? 0,
       );
