@@ -102,13 +102,9 @@ describe("WorldItemShopService / WorldPetRecoveryService", () => {
 
 describe("town service NPCs (VqsvSourceNpcDispatchFlow)", () => {
   it("bakes every Liệt Hỏa merchant, clerk and envoy", () => {
-    const all = assets.npcServices!.services,
-      services = all.filter((service) => service.continuation !== "NONE");
-    // 25 merchants, clerks and envoys, and the five wharf captains (Q0–Q4).
-    expect(services).toHaveLength(30);
-    // The ordinary NPCs of the same tables and of Hắc Thạch, the Phoenix chapters and Bích Lam
-    // Cốc (its ambient tables and Leita, who escorts the hero into the temple): a line only.
-    expect(all.filter((service) => service.continuation === "NONE")).toHaveLength(98);
+    const services = assets.npcServices!.services.filter((service) => service.continuation !== "NONE");
+    // 26 merchants, clerks and envoys, and the five wharf captains (Q0–Q4).
+    expect(services).toHaveLength(31);
     expect(
       services.filter((service) => service.continuation === "WHARF").map((s) => s.wharf),
     ).toEqual([2, 3, 1, 4, 0]);

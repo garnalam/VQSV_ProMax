@@ -539,3 +539,52 @@ describe("Bích Thủy ambient dialogue", () => {
     expect(world.npcDialog?.speaker).toBe("Eliza");
   });
 });
+
+describe("Thủy Mộc ambient dialogue", () => {
+  it("lets Salmond talk at the southern dock", async () => {
+    const host = await standAt(baseSave({}, 12), 1, 5, 168, 213, DIRECTION_UP);
+    const world = host.world!;
+    expect(world.talkPrompt?.actorId).toBe(27);
+    host.step(["confirm"]);
+    expect(world.npcDialog?.speaker).toBe("Salmond");
+  });
+
+  it("opens the southern dock shop after ABell's greeting", async () => {
+    const host = await standAt(baseSave({}, 12), 1, 5, 120, 265, DIRECTION_UP);
+    const world = host.world!;
+    expect(world.talkPrompt?.actorId).toBe(29);
+    host.step(["confirm"]);
+    expect(world.npcDialog?.speaker).toBe("ABell");
+    for (let i = 0; i < 200 && world.npcDialog; i++) host.step(["confirm"]);
+    expect(host.panel.mode).toBe("worldShop");
+  });
+
+  it("shows Maghull's ordinary line after winning her trainer fight", async () => {
+    const host = await standAt(baseSave({ "1:1:2": 3 }, 12), 1, 1, 97, 76, DIRECTION_UP);
+    const world = host.world!;
+    expect(world.talkPrompt?.actorId).toBe(49);
+    host.step(["confirm"]);
+    expect(world.npcDialog?.speaker).toBe("Maghull");
+  });
+
+  it("keeps Maghull's trainer event ahead of the ordinary line", async () => {
+    const host = await standAt(baseSave({}, 12), 1, 1, 97, 76, DIRECTION_UP);
+    const world = host.world!;
+    host.step(["confirm"]);
+    expect(world.activeEventGroup).toEqual({ scene: 1, room: 1, group: 2 });
+    expect(world.npcDialog).toBeNull();
+  });
+});
+
+describe("Niêm Thổ and Nguyên Mộc ambient dialogue", () => {
+  it.each([
+    { speaker: "Owen", scene: 4, room: 1, x: 124, y: 176, actorId: 46 },
+    { speaker: "Sullbac", scene: 3, room: 3, x: 143, y: 234, actorId: 48 },
+  ])("lets $speaker talk when approached", async ({ speaker, scene, room, x, y, actorId }) => {
+    const host = await standAt(baseSave({}, 25), scene, room, x, y, DIRECTION_UP);
+    const world = host.world!;
+    expect(world.talkPrompt?.actorId).toBe(actorId);
+    host.step(["confirm"]);
+    expect(world.npcDialog?.speaker).toBe(speaker);
+  });
+});

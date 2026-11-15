@@ -1794,6 +1794,7 @@ export class WorldRuntime {
         roomOwner(this.sceneId, this.roomIndex, (ref) =>
           this.eventState.sourceEventStateComplete(ref.scene, ref.room, ref.group),
         )?.runtime,
+        (scene, room, group) => this.eventState.sourceEventStateComplete(scene, room, group),
       ),
       service = this.cloudReturnService(prompt.actorId, own);
     if (!service) return false;
