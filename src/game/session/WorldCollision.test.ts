@@ -588,3 +588,48 @@ describe("Niêm Thổ and Nguyên Mộc ambient dialogue", () => {
     expect(world.npcDialog?.speaker).toBe(speaker);
   });
 });
+
+describe("Hắc Thạch guard dialogue", () => {
+  it.each([
+    { room: 3, x: 64, y: 448, actorId: 62, line: "Silia đại nhân" },
+    { room: 5, x: 116, y: 262, actorId: 19, line: "hai đạo quán" },
+  ])("opens soldier $actorId's original line in room $room", async ({ room, x, y, actorId, line }) => {
+    const host = await standAt(baseSave({ "5:5:0": 3 }, 29), 5, room, x, y, DIRECTION_UP);
+    const world = host.world!;
+    expect(world.actors.get(actorId)?.visible).toBe(true);
+    host.step(["confirm"]);
+    expect(world.npcDialog?.speaker).toBe("Binh lính Hắc Long");
+    host.step(["confirm"]);
+    expect(world.npcDialog?.text).toContain(line);
+  });
+
+  it.each([
+    { room: 3, x: 120, y: 223, actorId: 60, line: "Hắc Bảo Châu" },
+    { room: 3, x: 137, y: 238, actorId: 61, line: "Yafei điện hạ" },
+    { room: 3, x: 57, y: 449, actorId: 62, line: "Silia đại nhân" },
+    { room: 3, x: 122, y: 255, actorId: 64, line: "Mười sáu năm" },
+    { room: 5, x: 116, y: 262, actorId: 19, line: "hai đạo quán" },
+  ])("opens soldier $actorId's original line when tapping his sprite", async ({ room, x, y, actorId, line }) => {
+    const host = await standAt(baseSave({ "5:5:0": 3 }, 29), 5, room, x, y, DIRECTION_UP);
+    const world = host.world!;
+    const guard = world.actors.get(actorId)!;
+    const [dx, dy, width, height] = sources.world.pointerMask!(guard)!;
+    host.pointer(
+      guard.x + dx + Math.floor(width / 2) - world.cameraX,
+      guard.y + dy + Math.floor(height / 2) - world.cameraY,
+    );
+    expect(world.npcDialog?.speaker).toBe("Binh lính Hắc Long");
+    host.step(["confirm"]);
+    expect(world.npcDialog?.text).toContain(line);
+  });
+});
+
+it("lets Leita in Bích Lam Cốc speak and escort the hero into the temple", async () => {
+  const host = await standAt(baseSave({ "7:2:1": 3 }, 34), 7, 2, 557, 107, DIRECTION_UP);
+  const world = host.world!;
+  expect(world.actors.get(76)?.visible).toBe(true);
+  host.step(["confirm"]);
+  expect(world.npcDialog?.speaker).toBe("Leita");
+  for (let i = 0; i < 200 && world.npcDialog; i++) host.step(["confirm"]);
+  expect([world.sceneId, world.roomIndex]).toEqual([11, 3]);
+});

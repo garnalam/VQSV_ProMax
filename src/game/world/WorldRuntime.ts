@@ -1777,26 +1777,37 @@ export class WorldRuntime {
   }
   /** The faced talkable actor of this room that runs a service, started; false when none. */
   private startNpcService(): boolean {
-    const selected =
-      this.pointerActor === undefined ? undefined : this.actors.get(this.pointerActor);
-    const prompt =
-      this.pointerActor === undefined
-        ? this.talkPrompt
-        : selected && talkEligible(selected) && this.actorInteractionRequested(selected)
-          ? { actorId: selected.id }
-          : null;
-    if (!prompt) return false;
-    const own = npcServiceAt(
+    const complete = (scene: number, room: number, group: number) =>
+      this.eventState.sourceEventStateComplete(scene, room, group);
+    const owner = roomOwner(this.sceneId, this.roomIndex, (ref) =>
+      complete(ref.scene, ref.room, ref.group),
+    )?.runtime;
+    const serviceAt = (actorId: number) =>
+      npcServiceAt(
         this.sources.npcServices,
         this.sceneId,
         this.roomIndex,
-        prompt.actorId,
-        roomOwner(this.sceneId, this.roomIndex, (ref) =>
-          this.eventState.sourceEventStateComplete(ref.scene, ref.room, ref.group),
-        )?.runtime,
-        (scene, room, group) => this.eventState.sourceEventStateComplete(scene, room, group),
-      ),
-      service = this.cloudReturnService(prompt.actorId, own);
+        actorId,
+        owner,
+        complete,
+      );
+    let service: NpcService | undefined;
+    if (this.pointerActor !== undefined) {
+      const selected = this.actors.get(this.pointerActor);
+      if (selected && this.actorInteractionRequested(selected)) {
+        const own = serviceAt(selected.id);
+        service = talkEligible(selected) ? this.cloudReturnService(selected.id, own) : own;
+      }
+    } else {
+      const prompt = this.talkPrompt;
+      if (prompt) service = this.cloudReturnService(prompt.actorId, serviceAt(prompt.actorId));
+      // Source dispatch can address named actors whose behavior never draws a talk bubble.
+      service ??= this.sources.npcServices?.services.find((row) => {
+        if (row.scene !== this.sceneId || row.room !== this.roomIndex) return false;
+        const actor = this.actors.get(row.actorId);
+        return actor && !talkEligible(actor) && this.playerFaces(actor) && serviceAt(actor.id) === row;
+      });
+    }
     if (!service) return false;
     const flow = new NpcServiceFlow(service),
       actor = this.actors.get(service.actorId);
