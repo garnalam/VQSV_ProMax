@@ -509,3 +509,33 @@ describe("talking across a shop counter (WorldTalkPromptEngine with source masks
     expect(world.npcDialog?.speaker).toBe("ABell");
   });
 });
+
+describe("Bích Thủy ambient dialogue", () => {
+  it.each([
+    [65, 456, 416, "Binh lính Hắc Long", "Hắc Long Quân vạn tuế!"],
+    [73, 289, 428, "Eliza", "Trong lúc này có thể sử dụng lá sen."],
+  ])("opens the original dialogue for outdoor NPC %i", async (actorId, x, y, speaker, line) => {
+    const host = await standAt(baseSave({}, 16), 2, 1, x, y, DIRECTION_UP);
+    const world = host.world!;
+    expect([world.sceneId, world.roomIndex]).toEqual([2, 1]);
+    expect(world.talkPrompt?.actorId).toBe(actorId);
+    host.step(["confirm"]);
+    expect(world.npcDialog?.speaker).toBe(speaker);
+    host.step(["confirm"]);
+    expect(world.npcDialog?.text).toContain(line);
+    host.step(["confirm"]);
+    expect(world.npcDialog).toBeNull();
+  });
+
+  it("opens Eliza's dialogue when the player taps her sprite", async () => {
+    const host = await standAt(baseSave({}, 16), 2, 1, 289, 428, DIRECTION_UP);
+    const world = host.world!;
+    const eliza = world.actors.get(73)!;
+    const [dx, dy, width, height] = sources.world.pointerMask!(eliza)!;
+    host.pointer(
+      eliza.x + dx + Math.floor(width / 2) - world.cameraX,
+      eliza.y + dy + Math.floor(height / 2) - world.cameraY,
+    );
+    expect(world.npcDialog?.speaker).toBe("Eliza");
+  });
+});
