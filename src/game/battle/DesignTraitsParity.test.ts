@@ -5,6 +5,7 @@ import { GameData } from "../../data/GameData";
 import { Pack } from "../../pack/Pack";
 import { DesignTraitMechanics } from "./DesignTraits";
 import { StatusEffects } from "./StatusState";
+import { loadBattleRules } from "./BattleRules";
 
 vi.stubGlobal("fetch", async (input: string) => ({
   ok: true,
@@ -30,6 +31,22 @@ const unit = (speciesId: number, ownerSide = 0) =>
   });
 
 describe("Test Huy characteristic runtime parity", () => {
+  it.each([9, 10])("reduces species %i's first direct hit by 40 percent once each round", async (speciesId) => {
+    const rules = await loadBattleRules(data);
+    const create = (id: number, ownerSide: number) => rules.traits.unit({
+      speciesId: id, ownerSide, formationSlot: 0,
+      base: { hp: 10_000, attack: 100, defense: 100, speed: 100 },
+    });
+    const source = create(280, 1), target = create(speciesId, 0);
+    expect(rules.traits.incoming(source, target, 100)).toBe(60);
+    expect(rules.traits.incoming(source, target, 100)).toBe(100);
+    target.designTraitState.round++;
+    expect(rules.traits.incoming(source, target, 100)).toBe(60);
+    const balance = (await data.designTraitBalanceBySpecies()).get(speciesId)!;
+    expect(balance.value).toBe(40);
+    expect(balance.description).toContain("40%");
+  });
+
   it("caps repeated stack gains at three and still refreshes duration", () => {
     const actor = unit(0);
     for (let i = 0; i < 5; i++) mechanics.stack(actor, 19, i + 1, 3, 10);
