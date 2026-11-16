@@ -366,6 +366,7 @@ export function createSourceTrainerBattle(
     sceneId?: number;
     /** Authored boss stats (Kim Diễm Long Vương) instead of the species' own. */
     encounterStats?: CombatantSetup["stats"];
+    boss?: BattleSetup["boss"];
     /** A share of the stats by species (Đại Điện's hidden Divine pets keep their seal). */
     enemyStatPercent?: (speciesId: number) => number;
   },
@@ -404,6 +405,7 @@ export function createSourceTrainerBattle(
     inventory: bag,
     charms,
     sceneId: request.sceneId,
+    boss: request.boss,
     capturePolicy: "TRAINER_OWNED_FORBIDDEN",
   };
   const core = request.profile

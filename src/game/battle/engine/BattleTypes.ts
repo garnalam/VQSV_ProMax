@@ -79,6 +79,8 @@ export type CombatantSetup = {
 };
 
 export type BattleSetup = {
+  /** The authored encounter, independent of an owned pet's species. */
+  boss?: "kim-diem-long-vuong";
   /** Source scene and ownership gate for Cầu Vồng's mirrored item recovery. */
   sceneId?: number;
   capturePolicy?: string;

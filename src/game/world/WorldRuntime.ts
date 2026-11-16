@@ -6680,6 +6680,7 @@ export class WorldRuntime {
       {
         ...request,
         sceneId: this.sceneId,
+        boss: key === KIM_DIEM_BATTLE_KEY ? "kim-diem-long-vuong" : undefined,
         // ProMax: Đại Điện's (51) hidden Divine pets fight under the same seal as an owned one.
         enemyStatPercent: key.startsWith(`${SUMMON_PREFIX}51:`)
           ? (speciesId) => this.divineSeal?.percent(speciesId, true) ?? 100

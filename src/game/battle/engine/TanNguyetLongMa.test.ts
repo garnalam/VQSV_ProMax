@@ -116,6 +116,47 @@ function playRound(core: Core, target: 0 | 1): void {
 }
 
 describe("Tàn Nguyệt Long Ma — TanNguyetLongMaBattleMechanics in the 2v2 core", () => {
+  it("keeps both Hoa Tien Tu and Long Ma at full PP after actions and PP wipes", () => {
+    const core = bossFight();
+    for (const slot of [0, 1] as const) core.unit(slot).skillPp.fill(0);
+    const playerPp = [...core.unit(2).skillPp];
+    playRound(core, 1);
+    for (const slot of [0, 1] as const) {
+      const unit = core.unit(slot);
+      expect(core.events.some((event) => event.type === "strike" && event.slot === slot)).toBe(
+        true,
+      );
+      expect([...unit.skillPp]).toEqual(
+        unit.skillIds.map((id) => (id < 0 ? 0 : rules.damage.skillRow(id)!.ppMax)),
+      );
+    }
+    expect(core.unit(2).skillPp.some((pp, slot) => pp < playerPp[slot])).toBe(true);
+    expect(core.events.some((event) => event.type === "ppExhausted")).toBe(false);
+  });
+
+  it("keeps finite PP for the same species outside the Tan Nguyet boss encounter", () => {
+    const setup = tanNguyetBattleSetup(services, party() as never);
+    const core = newDoubleBattleCore(
+      services,
+      {
+        ...setup,
+        boss: undefined,
+        enemyProfile: { ...setup.enemyProfile, itemBudget: 0 },
+      },
+      TAN_NGUYET_SYMBOL,
+      7,
+    );
+    core.start();
+    for (const slot of [0, 1] as const) core.unit(slot).skillPp.fill(0);
+    playRound(core, 1);
+    for (const slot of [0, 1] as const) {
+      expect(core.unit(slot).skillPp.every((pp) => pp === 0)).toBe(true);
+      expect(core.events.some((event) => event.type === "strike" && event.slot === slot)).toBe(
+        false,
+      );
+    }
+  });
+
   it("enters Hoa Tiên Tử and the boss exactly as Java's configureEncounterUnit leaves them", () => {
     const java = golden.scenarios.find((scenario) => scenario.name === "tan-nguyet-100")!;
     const core = bossFight(100, java.units.enemy[0].physicalTraitId);
