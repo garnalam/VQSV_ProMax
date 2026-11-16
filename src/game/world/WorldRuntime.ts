@@ -161,6 +161,7 @@ import {
   type CauVongHero,
   type CauVongMechanic,
   cauVongActorSnapshots,
+  cauVongCampusNpcPassable,
   cauVongNpcRequested,
   cauVongPropRequested,
   cauVongTalkTarget,
@@ -4218,7 +4219,15 @@ export class WorldRuntime {
       // props by theirs, the rest as the source row says.
       const mechanics = this.cauVongMechanics();
       if (!mechanics) return false;
-      const snapshots = cauVongActorSnapshots(this.actors.values(), mechanics);
+      // Only movement yields to the lower witness in 30:6's crowded formation; talking still
+      // uses the unmodified actors and footprints.
+      const actors =
+        this.roomIndex === 30
+          ? [...this.actors.values()].filter(
+              (actor) => !cauVongCampusNpcPassable(this.roomIndex, actor, this.actors),
+            )
+          : this.actors.values();
+      const snapshots = cauVongActorSnapshots(actors, mechanics);
       // `CauVongBranchTreasures.obstacle`: every shown chest blocks by its floor footprint.
       for (const t of this.branches()?.treasures(this.roomIndex) ?? [])
         if (t.state !== -1)

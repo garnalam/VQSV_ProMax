@@ -28,6 +28,23 @@ export type CauVongCollisionDocument = { rooms: Record<string, Record<string, Ca
 /** `CauVongNpcGeometry.FOOTPRINT`, which is also its `INTERACTION` mask. */
 export const CAU_VONG_NPC_FOOTPRINT: CollisionMask = [-8, -7, 16, 14];
 
+/** `CauVongCampusNpcPassage`: 30:6's lower witness must leave a lane along the shore. */
+export function cauVongCampusNpcPassable(
+  room: number,
+  actor: StoryActor,
+  actors: ReadonlyMap<number, StoryActor>,
+): boolean {
+  if (room !== 30 || actor.id !== 30 || actor.sprite !== 10002) return false;
+  return [
+    [28, 300, 380],
+    [29, 340, 380],
+    [30, 320, 400],
+  ].every(([id, x, y]) => {
+    const witness = actors.get(id);
+    return witness?.visible && witness.x === x && witness.y === y;
+  });
+}
+
 /** `actorLookup`'s snapshots for the room's actors, positions and visibility read live. */
 export function cauVongActorSnapshots(
   actors: Iterable<StoryActor>,
