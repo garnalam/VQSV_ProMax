@@ -8,6 +8,7 @@ import {
   SAFARI_BALLS,
   SAFARI_FEE,
   type SafariAction,
+  type SafariEncounter,
   type SafariMap,
   type SafariRun,
 } from "../meta/Safari";
@@ -34,6 +35,12 @@ export class SafariSession {
   tickCount = 0;
   moving = false;
   confirmExit = false;
+  throwAnimation: {
+    action: "bait" | "rock";
+    encounter: SafariEncounter;
+    tick: number;
+    outcome: "caught" | "fled" | "stay" | "run";
+  } | null = null;
 
   constructor(private readonly port: SafariPort) {}
 
@@ -79,7 +86,7 @@ export class SafariSession {
   }
 
   leave(): void {
-    if (this.port.blocked()) return;
+    if (this.port.blocked() || this.throwAnimation) return;
     this.port.setRun(undefined);
     this.confirmExit = false;
     this.visible = false;
@@ -90,11 +97,12 @@ export class SafariSession {
   act(action: SafariAction): void {
     const run = this.run,
       encounter = run?.encounter;
-    if (!run || !encounter || this.port.blocked()) return;
+    if (!run || !encounter || this.port.blocked() || this.throwAnimation) return;
     if (action === "ball" && !this.port.hasSpace()) {
       this.message = "Đội và ngân hàng pet đã đầy. Bóng được giữ lại.";
       return;
     }
+    const before = structuredClone(encounter);
     if (action === "ball") run.balls--;
     const result = resolveSafariTurn(
       encounter,
@@ -103,6 +111,9 @@ export class SafariSession {
       (bound) => safariRandom(run, bound),
     );
     if (result === "caught") this.port.receive(encounter.pet);
+    if (action === "bait" || action === "rock") {
+      this.throwAnimation = { action, encounter: before, tick: 0, outcome: result };
+    }
     this.message =
       result === "caught"
         ? "Đã bắt được pet!"
@@ -131,6 +142,11 @@ export class SafariSession {
   tick(commands: readonly InputCommand[]): void {
     this.tickCount++;
     this.moving = false;
+    if (this.throwAnimation) {
+      this.throwAnimation.tick++;
+      if (this.throwAnimation.tick >= 26) this.throwAnimation = null;
+      return;
+    }
     if (this.run) this.visible = true;
     if (!this.visible || this.port.blocked()) return;
     if (commands.includes("back")) {

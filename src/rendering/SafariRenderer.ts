@@ -3,6 +3,7 @@ import type { GameAssets } from "../game/story/GameAssets";
 import type { SafariSession } from "../game/world/SafariSession";
 import type { PanelFontRenderer } from "./PanelFontRenderer";
 import type { CanvasRenderer } from "./CanvasRenderer";
+import { drawSafariItem } from "./SafariItemRenderer";
 
 type SafariArt = {
   hero: (
@@ -97,27 +98,71 @@ export function drawSafari(
     text(`Bạn có ${badges} huy hiệu`, 15, 167);
     text("Vào Safari", 72, 211, "#ffdc66");
     text("Enter để vào · B để đóng", 15, 241);
-  } else if (run.encounter) {
-    const pet = run.encounter.pet,
+  } else if (run.encounter || safari.throwAnimation) {
+    const animation = safari.throwAnimation;
+    const encounter = animation?.encounter ?? run.encounter!;
+    const pet = encounter.pet,
       row = assets.petStats.speciesRow(pet.speciesId);
     g.fillStyle = "#101d1b";
     g.fillRect(0, 35, 240, 201);
     g.drawImage(assets.pack.imageElement("safari.battle-platform.png"), 115, 132, 110, 45);
+    const impact = animation ? animation.tick - 14 : -1;
+    const fleeing = animation?.outcome === "fled" && impact >= 4;
+    const petX =
+      175 +
+      (fleeing
+        ? (impact - 4) * 12
+        : impact >= 0 && impact < 5 && animation?.action === "rock"
+          ? impact % 2
+            ? -3
+            : 3
+          : 0);
+    const petY =
+      145 -
+      (impact >= 0 && impact < 8 && animation?.action === "bait"
+        ? Math.abs(Math.sin((impact * Math.PI) / 4)) * 4
+        : 0);
+    g.save();
+    if (fleeing) g.globalAlpha = Math.max(0, 1 - (impact - 4) / 7);
     art.pet(
       g,
       pet.visualSpriteId ?? row?.spriteId ?? 0,
       pet.nature ?? 0,
       pet.shinyColor ?? -1,
-      175,
-      145,
+      petX,
+      petY,
     );
+    g.restore();
     art.hero(g, 57, 217, 2, false);
+    if (animation) {
+      const progress = Math.min(1, animation.tick / 14);
+      const x = 57 + (175 - 57) * progress;
+      const y = 188 + (133 - 188) * progress - 52 * Math.sin(progress * Math.PI);
+      if (animation.tick < 17) {
+        g.save();
+        g.translate(x, y);
+        g.rotate(progress * Math.PI * 2);
+        drawSafariItem(g, animation.action, -5, -4);
+        g.restore();
+      }
+      if (impact >= 0 && impact < 5) {
+        g.fillStyle = animation.action === "rock" ? "#d0d8d1" : "#f3cd61";
+        const radius = 4 + impact * 2;
+        for (const [dx, dy] of [
+          [-1, -1],
+          [1, -1],
+          [-1, 1],
+          [1, 1],
+        ])
+          g.fillRect(175 + dx * radius, 135 + dy * radius, 2, 2);
+      }
+    }
     text(row?.name ?? "Pet hoang dã", 8, 48);
     text(`Cấp ${pet.level} · HP đầy`, 8, 69);
     text(
-      run.encounter.effect === "bait"
+      encounter.effect === "bait"
         ? "Đang ăn mồi"
-        : run.encounter.effect === "rock"
+        : encounter.effect === "rock"
           ? "Đang nổi giận"
           : "Bình thường",
       8,
@@ -127,12 +172,9 @@ export function drawSafari(
     for (const [i, label] of ["Bóng", "Mồi", "Đá", "Chạy"].entries()) {
       const x = (i % 2) * 120 + 12,
         y = 242 + Math.floor(i / 2) * 27;
-      text(
-        (safari.selection === i ? "> " : "  ") + label,
-        x,
-        y,
-        safari.selection === i ? "#ffdc66" : "#ffffff",
-      );
+      if (i === 1 || i === 2) drawSafariItem(g, i === 1 ? "bait" : "rock", x + 10, y + 1);
+      text(label, x + 25, y, safari.selection === i ? "#ffdc66" : "#ffffff");
+      if (safari.selection === i) text(">", x, y, "#ffdc66");
     }
   }
   if (safari.confirmExit) {
@@ -141,7 +183,18 @@ export function drawSafari(
     text("Enter để rời · B để tiếp tục", 8, 202);
   }
   band(294, 26);
-  const message = failed ? "Lưu lỗi. Enter để thử lại." : saving ? "Đang lưu..." : safari.message;
+  const animation = safari.throwAnimation;
+  const message = failed
+    ? "Lưu lỗi. Enter để thử lại."
+    : animation
+      ? animation.tick < 14
+        ? animation.action === "bait"
+          ? "Đang ném mồi..."
+          : "Đang ném đá..."
+        : "Pet hoang đang phản ứng..."
+      : saving
+        ? "Đang lưu..."
+        : safari.message;
   let line = message;
   while (font.width(line) > 224) line = line.slice(0, -1);
   text(line, 8, 301, failed ? "#ffb7a3" : "#ffffff");

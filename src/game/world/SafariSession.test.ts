@@ -52,6 +52,30 @@ function fixture() {
 }
 
 describe("Safari session", () => {
+  it("shows a throw once and locks actions until the wild pet reaction finishes", () => {
+    const f = fixture();
+    f.safari.enter(42);
+    f.safari.run!.encounter = {
+      pet: { speciesId: 29, quality: 2, level: 30 },
+      effect: "neutral",
+      turns: 0,
+    };
+    f.safari.act("bait");
+    expect(f.safari.throwAnimation).toMatchObject({ action: "bait", tick: 0, outcome: "stay" });
+    const seed = f.safari.run!.seed;
+    const saves = f.saves;
+    f.safari.act("rock");
+    f.safari.leave();
+    for (let i = 0; i < 26; i++) f.safari.tick(["confirm"]);
+    expect(f.safari.throwAnimation).toBeNull();
+    expect(f.safari.run!.seed).toBe(seed);
+    expect(f.saves).toBe(saves);
+    expect(f.safari.run!.balls).toBe(30);
+    f.safari.act("rock");
+    expect(f.safari.throwAnimation?.action).toBe("rock");
+    expect(f.saves).toBe(saves + 1);
+  });
+
   it("charges once, rejects insufficient badges and respects the world entry guard", () => {
     const f = fixture();
     f.wallet.badges = 19;
