@@ -643,6 +643,7 @@ export class GameAssets {
       "safari.battle-platform.png",
       ...result.safariMap.sources.map((source) => `safari.atlas-${source.id}.png`),
     ]);
+    await result.prepareSprite(battleServices.captureAnimation.spriteId);
     result.rideRooms = rideRooms;
     result.cauVongCollision = cauVongCollision.rooms;
     result.cauVongSquare = cauVongSquare;

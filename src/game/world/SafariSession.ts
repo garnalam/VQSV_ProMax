@@ -1,5 +1,7 @@
 import type { InputCommand } from "../../core/input/GameCommand";
 import type { SavedPet } from "../../persistence/save/GameSave";
+import { DEFAULT_CAPTURE_ANIMATION, type CaptureAnimation } from "../battle/BattleDefinition";
+import { captureDuration, captureVisualAt, type CaptureSpec } from "../battle/CaptureAnimation";
 import {
   pickSafariPet,
   resolveSafariTurn,
@@ -25,6 +27,7 @@ export type SafariPort = {
   receive: (pet: SavedPet) => void;
   save: () => void;
   blocked: () => boolean;
+  captureAnimation?: () => CaptureAnimation;
 };
 
 /** One Safari run suspends the original room; its only persistent state lives in the save. */
@@ -36,10 +39,12 @@ export class SafariSession {
   moving = false;
   confirmExit = false;
   throwAnimation: {
-    action: "bait" | "rock";
+    action: "ball" | "bait" | "rock";
     encounter: SafariEncounter;
     tick: number;
     outcome: "caught" | "fled" | "stay" | "run";
+    balls: number;
+    position: { x: number; y: number; direction: number };
   } | null = null;
 
   constructor(private readonly port: SafariPort) {}
@@ -49,6 +54,25 @@ export class SafariSession {
   }
   get map(): SafariMap | undefined {
     return this.port.map();
+  }
+  get captureSpec(): CaptureSpec {
+    const spec = this.port.captureAnimation?.() ?? DEFAULT_CAPTURE_ANIMATION;
+    return {
+      captureSpriteId: spec.spriteId,
+      captureDurations: spec.durations,
+      captureEffectDurations: spec.effectDurations,
+      captureShrinkSteps: spec.shrinkSteps,
+      captureRestoreSteps: spec.restoreSteps,
+    };
+  }
+  get captureVisual() {
+    const animation = this.throwAnimation;
+    if (!animation || animation.action !== "ball" || animation.tick >= this.captureTicks)
+      return null;
+    return captureVisualAt(this.captureSpec, animation.tick, animation.outcome === "caught");
+  }
+  get captureTicks(): number {
+    return captureDuration(this.captureSpec, this.throwAnimation?.outcome === "caught");
   }
 
   open(): void {
@@ -111,8 +135,15 @@ export class SafariSession {
       (bound) => safariRandom(run, bound),
     );
     if (result === "caught") this.port.receive(encounter.pet);
-    if (action === "bait" || action === "rock") {
-      this.throwAnimation = { action, encounter: before, tick: 0, outcome: result };
+    if (action !== "run") {
+      this.throwAnimation = {
+        action,
+        encounter: before,
+        tick: 0,
+        outcome: result,
+        balls: run.balls,
+        position: { x: run.x, y: run.y, direction: run.direction },
+      };
     }
     this.message =
       result === "caught"
@@ -144,7 +175,11 @@ export class SafariSession {
     this.moving = false;
     if (this.throwAnimation) {
       this.throwAnimation.tick++;
-      if (this.throwAnimation.tick >= 26) this.throwAnimation = null;
+      const duration =
+        this.throwAnimation.action === "ball"
+          ? this.captureTicks + (this.throwAnimation.outcome === "caught" ? 0 : 8)
+          : 26;
+      if (this.throwAnimation.tick >= duration) this.throwAnimation = null;
       return;
     }
     if (this.run) this.visible = true;

@@ -52,6 +52,33 @@ function fixture() {
 }
 
 describe("Safari session", () => {
+  it("uses the game's original ball phases and blocks another turn throughout capture", () => {
+    const f = fixture();
+    f.safari.enter(42);
+    const run = f.safari.run!;
+    run.encounter = { pet: { speciesId: 29, level: 30, quality: 2 }, effect: "neutral", turns: 0 };
+    // Force a miss so the original shrink, shake and restore phases can all be observed.
+    let seed = 0;
+    while (((Math.imul(seed, 1664525) + 1013904223) >>> 0) % 10000 < 2500) seed++;
+    run.seed = seed;
+    f.safari.act("ball");
+    expect(f.safari.captureVisual).toMatchObject({ spriteId: 269, state: 0, phase: "throw" });
+    for (let i = 0; i < 8; i++) f.safari.tick([]);
+    expect(f.safari.captureVisual).toMatchObject({
+      state: 1,
+      hideEnemy: true,
+      effect: { scale10: 10 },
+    });
+    for (let i = 0; i < 9; i++) f.safari.tick([]);
+    expect(f.safari.captureVisual).toMatchObject({ state: 2, phase: "capture" });
+    for (let i = 0; i < 25; i++) f.safari.tick([]);
+    expect(f.safari.captureVisual).toMatchObject({ state: 1, effect: { scale10: 4 } });
+    f.safari.act("ball");
+    expect(run.balls).toBe(29);
+    for (let i = 0; i < 16; i++) f.safari.tick([]);
+    expect(f.safari.throwAnimation).toBeNull();
+  });
+
   it("shows a throw once and locks actions until the wild pet reaction finishes", () => {
     const f = fixture();
     f.safari.enter(42);

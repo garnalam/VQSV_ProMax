@@ -1,3 +1,4 @@
+import { captureVisualAt, type CaptureVisual } from "./CaptureAnimation";
 import { winResultIndexWithCapture } from "./BattleOutcomeEngine";
 import { battleSeatTables } from "./BattleSeats";
 import { landPetStateButtons } from "./BattleLandscape";
@@ -736,68 +737,14 @@ export class BattleRuntime {
         ? tutorial.retryText
         : "";
   }
-  get captureVisual(): {
-    spriteId: number;
-    state: number;
-    tick: number;
-    hideEnemy: boolean;
-    phase: "throw" | "capture" | "ground";
-    effect?: { scale10: number; dx: number; dy: number };
-  } | null {
+  get captureVisual(): CaptureVisual | null {
     if (this.interactiveStage !== "captureFail" && this.interactiveStage !== "captureSuccess")
       return null;
-    const tutorial = this.captureSpec,
-      [d0, , d2] = tutorial.captureDurations,
-      [shrinkDuration, restoreDuration] = tutorial.captureEffectDurations,
-      t = this.captureTick;
-    if (t < d0)
-      return {
-        spriteId: tutorial.captureSpriteId,
-        state: 0,
-        tick: t,
-        hideEnemy: false,
-        phase: "throw",
-      };
-    let local = t - d0;
-    if (local < shrinkDuration)
-      return {
-        spriteId: tutorial.captureSpriteId,
-        state: 1,
-        tick: 0,
-        hideEnemy: true,
-        phase: "capture",
-        effect: this.captureEffect(tutorial.captureShrinkSteps, local, shrinkDuration),
-      };
-    local -= shrinkDuration;
-    if (local < d2)
-      return {
-        spriteId: tutorial.captureSpriteId,
-        state: 2,
-        tick: local,
-        hideEnemy: true,
-        phase: "capture",
-      };
-    local -= d2;
-    if (this.interactiveStage === "captureSuccess")
-      return {
-        spriteId: tutorial.captureSpriteId,
-        state: 3,
-        tick: local,
-        hideEnemy: true,
-        phase: "ground",
-      };
-    return {
-      spriteId: tutorial.captureSpriteId,
-      state: 1,
-      tick: 0,
-      hideEnemy: true,
-      phase: "capture",
-      effect: this.captureEffect(
-        tutorial.captureRestoreSteps,
-        Math.min(local, restoreDuration - 1),
-        restoreDuration,
-      ),
-    };
+    return captureVisualAt(
+      this.captureSpec,
+      this.captureTick,
+      this.interactiveStage === "captureSuccess",
+    );
   }
   catchChoice(inventory: Record<string, number>): { label: string; quantity: number } | null {
     const tutorial = this.definition.tutorial;
@@ -2508,16 +2455,7 @@ export class BattleRuntime {
       }
     }
   }
-  private captureEffect(
-    steps: Array<[number, number, number]>,
-    tick: number,
-    duration: number,
-  ): { scale10: number; dx: number; dy: number } {
-    const span = Math.max(1, Math.floor(duration / Math.max(1, steps.length))),
-      index = Math.max(0, Math.min(steps.length - 1, Math.floor(tick / span))),
-      step = steps[index] ?? [10, 0, 0];
-    return { scale10: step[0], dx: step[1], dy: step[2] };
-  }
+
   /**
    * The bag list. On the core it shows only what the fight can use — the balls for Bắt, the recovery
    * items for Đạo cụ — and remembers the item id behind each row.

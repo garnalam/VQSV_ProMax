@@ -352,6 +352,8 @@ function portableShopDescription(row: number, lastClaim: number): string {
 
 export class GameplayHost {
   readonly safari = new SafariSession({
+    captureAnimation: () =>
+      this.sources.world.battle?.captureAnimation ?? this.sources.worldContract.capture,
     map: () => this.sources.safariMap,
     run: () => this.world?.meta.safari,
     setRun: (run) => {

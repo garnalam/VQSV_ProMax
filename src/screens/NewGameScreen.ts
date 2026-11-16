@@ -406,7 +406,7 @@ export class NewGameScreen implements Screen {
 
   /** Whether a frame between two ticks would differ (something is walking or the camera pans). */
   animating(): boolean {
-    if (this.host.safari.run) return true;
+    if (this.host.safari.run || this.host.safari.throwAnimation) return true;
     return !this.frozen && this.motion.moving;
   }
   /**
@@ -441,6 +441,7 @@ export class NewGameScreen implements Screen {
         this.assets,
         this.boot.panelFont,
         {
+          heroSprite: this.world?.player.sprite ?? 0,
           hero: (g, x, y, direction, moving) => {
             const player = this.world?.player;
             if (player)
