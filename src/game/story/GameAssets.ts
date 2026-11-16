@@ -1,4 +1,5 @@
 import { TaskOptionCatalog } from "../quest/TaskOption";
+import type { SafariMap } from "../meta/Safari";
 import type { ShopStockDocument } from "../shop/PortableShop";
 import type { NpcServicesDocument } from "../world/NpcServices";
 import {
@@ -393,6 +394,7 @@ export class GameAssets {
     readonly campaignSystems?: CampaignSystemsDocument,
     readonly bondingTower?: TowerContent,
   ) {}
+  safariMap?: SafariMap;
   roomName(scene: number, room: number): string {
     return this.roomNames[`${scene}:${room}`] ?? "";
   }
@@ -633,6 +635,14 @@ export class GameAssets {
     );
     // The whole world (Liệt Hỏa and Cầu Vồng) is in the bake now; only the opening and Scene 1
     // are fetched before the first frame, every other room when the world first needs it.
+    result.safariMap = await pack.json<SafariMap>("safari.map.json");
+    await pack.imagesFor([
+      "safari.ground.png",
+      "safari.gate.png",
+      "safari.water.png",
+      "safari.battle-platform.png",
+      ...result.safariMap.sources.map((source) => `safari.atlas-${source.id}.png`),
+    ]);
     result.rideRooms = rideRooms;
     result.cauVongCollision = cauVongCollision.rooms;
     result.cauVongSquare = cauVongSquare;

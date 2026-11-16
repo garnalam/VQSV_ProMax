@@ -138,6 +138,7 @@ export const MENU_ROW_FASHION = 6;
 export const MENU_ROW_CHALLENGE = 7;
 export const MENU_ROW_BATTLE_PASS = 8;
 export const MENU_ROW_BONDING_TOWER = 9;
+export const MENU_ROW_SAFARI = 10;
 /** `GAMEMENU` row 1, "Sủng vật" (`petstate.ui`). */
 export const MENU_ROW_PET = 1;
 /** `GAMEMENU` row 2, "Lưng bao" (`bag.ui`). */
@@ -368,6 +369,7 @@ export const MENU_LABELS = [
   "Tái đấu & Giftcode",
   "Thẻ Fan Cứng VQSV",
   "Tháp Gắn Kết",
+  "Safari",
 ];
 /** The row an admin account sees after the nine game rows (web only; the server checks the role). */
 export const ADMIN_MENU_LABEL = "Admin Tool";
@@ -390,6 +392,7 @@ export const MENU_TITLE_TOKENS = [
   "Quà tặng",
   "Thẻ Fan Cứng",
   "Tháp Gắn Kết",
+  "Safari",
 ];
 
 export type WorldPlate = "system" | "menu";
@@ -458,6 +461,7 @@ export function rideCardAt(x: number, y: number): number {
 }
 
 export class WorldPanel {
+  safariSource: { open: () => void } = { open: () => {} };
   readonly bondingTower = new BondingTowerPanelState();
   towerSource: TowerPanelSource = {
     view: () => undefined,
@@ -4489,6 +4493,11 @@ export class WorldPanel {
    * yet keep the cursor where it is, the way the source's PENDING branch does.
    */
   private confirm(): void {
+    if (this.mode === "gamemenu" && this.selected === MENU_ROW_SAFARI) {
+      this.close();
+      this.safariSource.open();
+      return;
+    }
     if (this.mode === "gamesystem") {
       if (this.selected === 0) this.close();
       else if (this.selected === 1) {
