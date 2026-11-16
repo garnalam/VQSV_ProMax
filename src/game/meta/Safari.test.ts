@@ -36,13 +36,15 @@ describe("Safari rules", () => {
 
   it("applies bait on its last turn and cancels it immediately with rock", () => {
     const pet = encounter();
-    expect(resolveSafariTurn(pet, "bait", 40, rolls(0, 50))).toBe("stay");
+    expect(resolveSafariTurn(pet, "bait", 40, rolls(0, 60))).toBe("stay");
     expect(pet).toMatchObject({ effect: "neutral", turns: 0 });
     pet.effect = "bait";
     pet.turns = 253;
-    resolveSafariTurn(pet, "bait", 40, rolls(4, 50));
+    resolveSafariTurn(pet, "bait", 40, rolls(4, 60));
     expect(pet.turns).toBe(254);
     expect(resolveSafariTurn(pet, "rock", 40, rolls(79))).toBe("fled");
+    expect(resolveSafariTurn(encounter(), "ball", 40, rolls(9999, 119))).toBe("fled");
+    expect(resolveSafariTurn(encounter(), "ball", 40, rolls(9999, 120))).toBe("stay");
   });
 
   it("resolves capture before flee, caps catch chance and runs without RNG", () => {

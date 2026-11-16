@@ -103,7 +103,7 @@ export function resolveSafariTurn(
   if (!species) throw new Error("Unknown Safari species");
   if (action === "ball" && random(10000) < Math.min(3380, species.catchRate * factor))
     return "caught";
-  if (random(256) < Math.min(256, Math.max(0, Math.floor(speed * 2 * factor)))) return "fled";
+  if (random(256) < Math.min(256, Math.max(0, Math.floor(speed * 3 * factor)))) return "fled";
   encounter.turns = Math.max(0, encounter.turns - 1);
   if (encounter.turns === 0) encounter.effect = "neutral";
   return "stay";
