@@ -641,6 +641,13 @@ export class GameAssets {
       "safari.gate.png",
       "safari.water.png",
       "safari.battle-platform.png",
+      "safari.battle-background.png",
+      "safari.player-platform.png",
+      "safari.bait.png",
+      "safari.rock.png",
+      "safari.bait-large.png",
+      "safari.rock-large.png",
+      "safari.title-sign.png",
       ...result.safariMap.sources.map((source) => `safari.atlas-${source.id}.png`),
     ]);
     await result.prepareSprite(battleServices.captureAnimation.spriteId);

@@ -45,7 +45,7 @@ const {
   MENU_ROW_BONDING_TOWER,
   MENU_ROW_PET,
   MENU_ROW_RECORD,
-  MENU_ROW_SAFARI,
+  MENU_LABELS,
   MENU_ROW_SAVE,
   MENU_ROW_TASK,
   MENU_ROW_WIDGETS,
@@ -121,14 +121,16 @@ const freeWorld = (): SessionStart => ({
 });
 
 describe("Safari integration", () => {
-  it("opens from the game menu, persists its fee and restores the same run and room", async () => {
+  it("opens from a wharf captain, persists its fee and restores the same run and room", async () => {
     const { host, saves, repository } = session(freeWorld(), undefined, ADMIN);
     const world = host.world!;
     world.currency.badges = 50;
     const location = world.snapshot().location;
     host.step([]);
-    host.panel.open();
-    host.panel.selected = MENU_ROW_SAFARI;
+    const dock = sources.world.npcServices!.wharfs!.find((row) => row.index === 0)!;
+    host.panel.openWharf(dock, host.safariEnabled);
+    expect(host.panel.wharf?.labels).toContain("Khu Safari");
+    host.panel.selected = host.panel.wharfSafariRow;
     host.step(["confirm"]);
     expect(host.safari.visible).toBe(true);
     host.step(["confirm"]);
@@ -570,13 +572,13 @@ describe("GameplayHost mouse routing (pointerPressedGame / pointerMovedGame / mo
     host.pointerMove(row.x + 10, row.y + 5);
     expect(host.panel.selected).toBe(3);
     host.wheel(9);
-    expect(host.panel.listScroll).toBe(MENU_ROW_SAFARI - 6);
+    expect(host.panel.listScroll).toBe(MENU_LABELS.length - 6);
     const bar = GAME_MENU_SCROLLBAR;
     host.wheel(-9);
     // The bar takes the press (no click), then the moving pointer drags the thumb.
     expect(host.pointerPress(bar.x + 1, bar.y + 2)).toBe(true);
     host.pointerMove(bar.x + 1, bar.y + bar.h);
-    expect(host.panel.listScroll).toBe(MENU_ROW_SAFARI - 6);
+    expect(host.panel.listScroll).toBe(MENU_LABELS.length - 6);
     host.pointerRelease();
     host.pointerMove(row.x + 10, row.y + 5);
     expect(host.panel.selected).toBe(host.panel.listScroll + 3);

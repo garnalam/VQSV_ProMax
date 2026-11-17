@@ -144,7 +144,6 @@ export const MENU_ROW_FASHION = 6;
 export const MENU_ROW_CHALLENGE = 7;
 export const MENU_ROW_BATTLE_PASS = 8;
 export const MENU_ROW_BONDING_TOWER = 9;
-export const MENU_ROW_SAFARI = 10;
 /** `GAMEMENU` row 1, "Sủng vật" (`petstate.ui`). */
 export const MENU_ROW_PET = 1;
 /** `GAMEMENU` row 2, "Lưng bao" (`bag.ui`). */
@@ -329,6 +328,8 @@ export const EAST_WHARF_ROW_WIDGETS = [5, 6, 7] as const;
 export const TEMPLE_WHARF_ROW_WIDGETS = [5, 6, 7, 8, 9] as const;
 /** Q4, Thần Điện Mã Đầu: the one dock on `wharf2.ui`. */
 const WHARF_TEMPLE = 4;
+/** The web-only Safari row a town dock's captain offers. */
+export const WHARF_SAFARI_LABEL = "Khu Safari";
 /** `taskOption.ui`: the two answer rows (backgrounds 10/11, cursors 7/8, labels 17/18). */
 export const TASK_OPTION_ROWS = [10, 11] as const;
 /** `GAMEMENU` row 5, "Lưu dữ liệu". */
@@ -375,7 +376,6 @@ export const MENU_LABELS = [
   "Tái đấu & Giftcode",
   "Thẻ Fan Cứng VQSV",
   "Tháp Gắn Kết",
-  "Safari",
 ];
 /** The row an admin account sees after the nine game rows (web only; the server checks the role). */
 export const ADMIN_MENU_LABEL = "Admin Tool";
@@ -398,7 +398,6 @@ export const MENU_TITLE_TOKENS = [
   "Quà tặng",
   "Thẻ Fan Cứng",
   "Tháp Gắn Kết",
-  "Safari",
 ];
 
 export type WorldPlate = "system" | "menu";
@@ -3042,12 +3041,23 @@ export class WorldPanel {
     gateOpen: () => false,
   };
   private wharfTravel: WharfRoute | null = null;
-  /** `openSourceWharfFromWorld`: `wharf1.ui` (Q0–Q3) or `wharf2.ui` (Q4) on its first row. */
-  openWharf(dock: WharfDock): void {
+  /** The "Khu Safari" row of the open dock, or -1 (web only). */
+  wharfSafariRow = -1;
+  /**
+   * `openSourceWharfFromWorld`: `wharf1.ui` (Q0–Q3) or `wharf2.ui` (Q4) on its first row. Web only
+   * (owner, 2026-11-17): with `safari` the captain also offers "Khu Safari" above "Không ra hàng";
+   * a dock with that extra row is drawn on the five-row `wharf2.ui`. The temple dock's five rows
+   * already fill it, so it has no Safari row.
+   */
+  openWharf(dock: WharfDock, safari = false): void {
     this.visible = true;
     this.mode = "wharf";
     this.pressed.length = 0;
-    this.wharf = dock;
+    const room = safari && dock.labels.length < TEMPLE_WHARF_ROW_WIDGETS.length;
+    this.wharfSafariRow = room ? dock.labels.length - 1 : -1;
+    this.wharf = room
+      ? { ...dock, labels: [...dock.labels.slice(0, -1), WHARF_SAFARI_LABEL, dock.labels.at(-1)!] }
+      : dock;
     this.wharfMessage = null;
     this.wharfTravel = null;
     this.selected = 0;
@@ -3056,10 +3066,13 @@ export class WorldPanel {
   }
   /** `wharf2.ui` is the temple dock's five-row menu; the others use `wharf1.ui`. */
   get wharfLayoutName(): "wharf1" | "wharf2" {
-    return this.wharf?.index === WHARF_TEMPLE ? "wharf2" : "wharf1";
+    return this.wharf?.index === WHARF_TEMPLE ||
+      (this.wharf?.labels.length ?? 0) > EAST_WHARF_ROW_WIDGETS.length
+      ? "wharf2"
+      : "wharf1";
   }
   get wharfRowWidgets(): readonly number[] {
-    return this.wharf?.index === WHARF_TEMPLE ? TEMPLE_WHARF_ROW_WIDGETS : EAST_WHARF_ROW_WIDGETS;
+    return this.wharfLayoutName === "wharf2" ? TEMPLE_WHARF_ROW_WIDGETS : EAST_WHARF_ROW_WIDGETS;
   }
   /** The route the player sailed on, once (`travelSourceWharfRoute`); null otherwise. */
   takeWharfTravel(): WharfRoute | null {
@@ -3080,7 +3093,10 @@ export class WorldPanel {
     else if (pressed.includes("down")) this.select(clamp(this.selected + 1, 0, last));
     else if (pressed.includes("back") || (pressed.includes("confirm") && this.selected === last))
       this.close();
-    else if (pressed.includes("confirm")) {
+    else if (pressed.includes("confirm") && this.selected === this.wharfSafariRow) {
+      this.close();
+      this.safariSource.open();
+    } else if (pressed.includes("confirm")) {
       const row = dock.routes[this.selected];
       if (!row) return;
       const route = wharfRoute(row, dock.labels[this.selected]);
@@ -3093,20 +3109,33 @@ export class WorldPanel {
       this.close();
     }
   }
+  /**
+   * The dock row under a point: a row's band reaches 27 px down, but never into the next row's
+   * (`wharf2.ui` rows are 18 px apart, so the bands would otherwise pick the row above).
+   */
+  private wharfRowAt(layout: SourceUiLayout, x: number, y: number): number {
+    const labels = this.wharf?.labels ?? [],
+      widgets = this.wharfRowWidgets;
+    for (let i = 0; i < widgets.length && i < labels.length; i++) {
+      const row = layout.widget(widgets[i]),
+        next = i + 1 < labels.length ? layout.widget(widgets[i + 1] ?? -1) : undefined,
+        bottom = next ? Math.min(row ? row.y + 27 : 0, next.y - 5) : (row?.y ?? 0) + 27;
+      if (row && x >= row.x - 4 && x <= row.x + row.w + 12 && y >= row.y - 4 && y <= bottom)
+        return i;
+    }
+    return -1;
+  }
   /** A row selects and sails (5); the softkeys are 5 and Back. */
   private clickWharf(layout: SourceUiLayout, x: number, y: number): void {
     if (this.wharfMessage) {
       this.pressed.push("confirm");
       return;
     }
-    const labels = this.wharf?.labels ?? [];
-    for (let i = 0; i < this.wharfRowWidgets.length && i < labels.length; i++) {
-      const row = layout.widget(this.wharfRowWidgets[i]);
-      if (row && x >= row.x - 4 && x <= row.x + row.w + 12 && y >= row.y - 4 && y <= row.y + 27) {
-        this.select(i);
-        this.pressed.push("confirm");
-        return;
-      }
+    const hit = this.wharfRowAt(layout, x, y);
+    if (hit >= 0) {
+      this.select(hit);
+      this.pressed.push("confirm");
+      return;
     }
     if (panelConfirmHit(x, y)) this.pressed.push("confirm");
     else if (panelBackHit(x, y)) this.pressed.push("back");
@@ -3257,14 +3286,9 @@ export class WorldPanel {
         ? this.menuLabels
         : [];
   }
-  /**
-   * The game menu's rows. Safari (the last of `MENU_LABELS`) and "Admin Tool" are listed for an
-   * admin account only (owner, 2026-11-17: Safari is off for players for now).
-   */
+  /** The game menu's rows; "Admin Tool" is listed for an admin account only. */
   get menuLabels(): string[] {
-    return this.adminSource.enabled()
-      ? [...MENU_LABELS, ADMIN_MENU_LABEL]
-      : MENU_LABELS.slice(0, MENU_ROW_SAFARI);
+    return this.adminSource.enabled() ? [...MENU_LABELS, ADMIN_MENU_LABEL] : MENU_LABELS;
   }
   get menuRowCount(): number {
     return this.menuLabels.length;
@@ -4020,12 +4044,8 @@ export class WorldPanel {
     if (!this.visible) return;
     if (this.mode === "wharf") {
       if (this.wharfMessage) return;
-      const labels = this.wharf?.labels ?? [];
-      for (let i = 0; i < this.wharfRowWidgets.length && i < labels.length; i++) {
-        const row = layout.widget(this.wharfRowWidgets[i]);
-        if (row && x >= row.x - 4 && x <= row.x + row.w + 12 && y >= row.y - 4 && y <= row.y + 27)
-          this.select(i);
-      }
+      const hit = this.wharfRowAt(layout, x, y);
+      if (hit >= 0) this.select(hit);
       return;
     }
     if (this.mode === "taskOption") {
@@ -4516,12 +4536,6 @@ export class WorldPanel {
    * yet keep the cursor where it is, the way the source's PENDING branch does.
    */
   private confirm(): void {
-    if (this.mode === "gamemenu" && this.selected === MENU_ROW_SAFARI) {
-      if (!this.adminSource.enabled()) return;
-      this.close();
-      this.safariSource.open();
-      return;
-    }
     if (this.mode === "gamesystem") {
       if (this.selected === 0) this.close();
       else if (this.selected === 1) {

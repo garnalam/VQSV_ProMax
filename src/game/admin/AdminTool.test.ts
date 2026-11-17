@@ -38,7 +38,7 @@ const { SaveService } = await import("../../persistence/SaveService");
 const { scene1Save } = await import("../../dev/parityCheckpoints");
 const { SCENE1_RESUME } = await import("../../persistence/save/migrations");
 const { GameplayHost, gameplaySources } = await import("../session/GameplayHost");
-const { WorldPanel, MENU_LABELS, MENU_ROW_ADMIN, MENU_ROW_SAFARI, ADMIN_MENU_LABEL } =
+const { WorldPanel, MENU_LABELS, MENU_ROW_ADMIN, ADMIN_MENU_LABEL } =
   await import("../world/WorldPanel");
 const { ADMIN_BOSS_SPECIES, experienceForLevels, grantItem, setCurrency, adminSpeciesChoices } =
   await import("./AdminTool");
@@ -121,8 +121,7 @@ describe("Admin Tool menu row", () => {
   it("is hidden for a normal account and opens the tool for an admin", () => {
     const normal = new WorldPanel();
     normal.open();
-    // Safari is the last game row and, for now, an admin-only one too.
-    expect(normal.labels).toEqual(MENU_LABELS.slice(0, MENU_ROW_SAFARI));
+    expect(normal.labels).toEqual(MENU_LABELS);
     normal.selected = MENU_ROW_ADMIN;
     normal.tick(["confirm"]);
     expect(normal.labels).not.toContain(ADMIN_MENU_LABEL);
@@ -140,18 +139,21 @@ describe("Admin Tool menu row", () => {
     expect(admin.visible).toBe(false);
   });
 
-  it("keeps Safari to admin accounts for now: no row, no button, no new run", () => {
-    expect(MENU_LABELS[MENU_ROW_SAFARI]).toBe("Safari");
-    expect(MENU_ROW_SAFARI).toBe(MENU_LABELS.length - 1);
-
+  it("keeps Safari to admin accounts for now: no captain row, no new run", () => {
+    const dock = { index: 0, title: "Bến", labels: ["A", "Không ra hàng"], routes: [[]] };
+    expect(MENU_LABELS).not.toContain("Safari");
     const normal = new WorldPanel(),
       asked = { count: 0 };
     normal.safariSource = { open: () => asked.count++ };
-    normal.open();
-    expect(normal.menuLabels).not.toContain("Safari");
-    normal.selected = MENU_ROW_SAFARI;
+    normal.openWharf(dock, false);
+    expect(normal.wharf?.labels).toEqual(dock.labels);
+    expect(normal.wharfSafariRow).toBe(-1);
+    normal.openWharf(dock, true);
+    expect(normal.wharf?.labels).toEqual(["A", "Khu Safari", "Không ra hàng"]);
+    normal.selected = normal.wharfSafariRow;
     normal.tick(["confirm"]);
-    expect(asked.count).toBe(0);
+    expect(asked.count).toBe(1);
+    expect(normal.visible).toBe(false);
 
     const player = session().host;
     expect(player.safariEnabled).toBe(false);
@@ -160,7 +162,6 @@ describe("Admin Tool menu row", () => {
 
     const admin = session({ enabled: () => true, open: () => {} }).host;
     expect(admin.safariEnabled).toBe(true);
-    expect(admin.panel.menuLabels).toContain("Safari");
     admin.safari.open();
     expect(admin.safari.visible).toBe(true);
   });

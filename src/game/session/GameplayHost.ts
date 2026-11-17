@@ -391,6 +391,7 @@ export class GameplayHost {
       return pet;
     },
     speed: (id) => this.sources.world.petStats.coreStats(id, 1, 0).speed,
+    speciesName: (id) => this.sources.world.petStats.speciesRow(id)?.name,
     receive: (pet) => {
       const world = this.world;
       if (!world) return;
@@ -1581,17 +1582,6 @@ export class GameplayHost {
       const layout = this.sources.layouts.get("world"),
         canvas = fromUi(x, y),
         button = layout ? world.hud.buttonAt(layout, canvas.x, canvas.y, cornerShift) : "none";
-      const safariX = canvas.x - cornerShift("tr").x;
-      if (
-        this.safariEnabled &&
-        safariX >= 183 &&
-        safariX < 238 &&
-        canvas.y >= 36 &&
-        canvas.y < 58
-      ) {
-        this.safari.open();
-        return [];
-      }
       if (button !== "none") {
         this.pressHudButton(world, button);
         return [];
@@ -2499,7 +2489,7 @@ export class GameplayHost {
         const dock = this.sources.world.npcServices?.wharfs?.find(
           (row) => row.index === service.wharf,
         );
-        if (dock) this.panel.openWharf(dock);
+        if (dock) this.panel.openWharf(dock, this.safariEnabled);
         break;
       }
       case "CAU_VONG_SHOP":

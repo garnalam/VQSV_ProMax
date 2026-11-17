@@ -6,7 +6,7 @@ import {
   bagSlotAt,
   bagTabAt,
   MENU_ROW_BAG,
-  MENU_ROW_SAFARI,
+  MENU_LABELS,
   MENU_ROW_SAVE,
   MENU_ROW_TASK,
   MENU_ROW_WIDGETS,
@@ -46,7 +46,7 @@ function box(source: SourceUiLayout, id: number) {
 }
 
 /** A player account's game menu: every row but Safari, which is admin-only for now. */
-const PLAYER_MENU_ROWS = MENU_ROW_SAFARI;
+const PLAYER_MENU_ROWS = MENU_LABELS.length;
 
 describe("baked world panel layout", () => {
   it("carries the two plates the free-world HUD draws", () => {

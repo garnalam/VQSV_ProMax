@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import type { SavedPet } from "../../persistence/save/GameSave";
 import type { SafariMap, SafariRun } from "../meta/Safari";
-import { SafariSession } from "./SafariSession";
+import { SAFARI_COMMANDS, SafariSession } from "./SafariSession";
 
 const map: SafariMap = JSON.parse(readFileSync("public/pack/safari/map.json", "utf8"));
 function fixture() {
@@ -172,6 +172,79 @@ describe("Safari session", () => {
     expect(f.safari.run?.balls).toBe(30);
     f.safari.leave();
     expect(f.safari.run).toBeUndefined();
+  });
+
+  it("saves on the encounter, not on every tile walked", () => {
+    const f = fixture();
+    f.safari.enter(42);
+    const run = f.safari.run!;
+    run.steps = 3;
+    const saves = f.saves;
+    let ticks = 0;
+    while (!run.encounter && ticks++ < 200) f.safari.tick([ticks < 100 ? "holdUp" : "holdLeft"]);
+    expect(run.encounter).not.toBeNull();
+    expect(f.saves).toBe(saves + 1);
+  });
+
+  it("asks before the gate ends the run, and staying keeps the hero inside", () => {
+    const f = fixture();
+    f.safari.enter(42);
+    const run = f.safari.run!;
+    for (let i = 0; i < 40 && !f.safari.confirmExit; i++) f.safari.tick(["holdDown"]);
+    expect(f.safari.confirmExit).toBe(true);
+    expect(f.safari.run).toBeDefined();
+    const [, gateY] = map.exitTiles;
+    expect(run.y).toBeLessThan(gateY * map.tileSize);
+    f.safari.click(170, 190); // "Ở lại"
+    expect(f.safari.confirmExit).toBe(false);
+    expect(f.safari.run?.balls).toBe(30);
+    for (let i = 0; i < 40 && !f.safari.confirmExit; i++) f.safari.tick(["holdDown"]);
+    f.safari.click(70, 190); // "Rời khu"
+    expect(f.safari.run).toBeUndefined();
+  });
+
+  it("only the drawn buttons act: a stray tap neither pays nor leaves", () => {
+    const f = fixture();
+    f.safari.open();
+    f.safari.click(120, 300); // message bar
+    f.safari.click(120, 250);
+    expect(f.safari.run).toBeUndefined();
+    expect(f.wallet.badges).toBe(100);
+    f.safari.click(68, 228); // "Vào Safari"
+    expect(f.safari.run?.balls).toBe(30);
+    expect(f.wallet.badges).toBe(80);
+    f.safari.run!.encounter = {
+      pet: { speciesId: 29, quality: 2, level: 30 },
+      effect: "neutral",
+      turns: 0,
+    };
+    f.safari.click(200, 10); // "Rời"
+    expect(f.safari.confirmExit).toBe(true);
+    f.safari.click(30, 297); // the "Ném bóng" tile under the dialog
+    f.safari.click(120, 300);
+    expect(f.safari.run).toBeDefined();
+    expect(f.safari.run!.balls).toBe(30);
+    f.safari.click(200, 10);
+    expect(f.safari.confirmExit).toBe(false);
+    f.safari.leave();
+    f.safari.open();
+    f.safari.click(172, 228); // "Đóng"
+    expect(f.safari.visible).toBe(false);
+  });
+
+  it("each command tile throws its own item, and the odds follow the pet's mood", () => {
+    const f = fixture();
+    f.safari.enter(42);
+    const run = f.safari.run!;
+    run.encounter = { pet: { speciesId: 29, quality: 2, level: 30 }, effect: "neutral", turns: 0 };
+    expect(f.safari.odds).toEqual({ catch: 25, flee: 0 });
+    f.safari.click(SAFARI_COMMANDS[1][0] + 5, SAFARI_COMMANDS[1][1] + 5);
+    expect(f.safari.throwAnimation?.action).toBe("bait");
+    expect(f.safari.odds?.catch).toBe(13);
+    for (let i = 0; i < 30; i++) f.safari.tick([]);
+    f.safari.click(SAFARI_COMMANDS[3][0] + 5, SAFARI_COMMANDS[3][1] + 5);
+    expect(run.encounter).toBeNull();
+    expect(run.balls).toBe(30);
   });
 
   it("stays active without a time limit and cannot move through a blocked tile", () => {

@@ -478,6 +478,7 @@ export class NewGameScreen implements Screen {
               );
           },
         },
+        { cell: (index) => this.boot.cell(257, index), layout: this.boot.battleLayout },
         this.world?.currency.badges ?? 0,
         this.host.safariSaving,
         this.host.safariSaveFailed,
@@ -1965,15 +1966,6 @@ export class NewGameScreen implements Screen {
       g.setTransform(base.a, base.b, base.c, base.d, base.e + d.x * base.a, base.f + d.y * base.d);
     };
     const base = g.getTransform();
-    // Safari's button: admin accounts only for now (`GameplayHost.safariEnabled`).
-    if (this.host.safariEnabled) {
-      pin("tr");
-      g.fillStyle = "#174b37";
-      g.fillRect(183, 36, 55, 22);
-      g.strokeStyle = "#d6c879";
-      g.strokeRect(183, 36, 55, 22);
-      font.centered(g, "Safari", 183, 55, 41, "#ffffff");
-    }
     pin("tl");
     // The banner drops in at widget 1 (aligned to its top-left), the name scrolls in widget 6.
     if (hud.titleAnimationTick >= 0) {

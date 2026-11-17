@@ -531,7 +531,15 @@ export function drawWharfPanel(
   fillBand(g, layout, 3, 0xbee7f2, 102);
   fillBand(g, layout, 4, 0x6cb7bb, 8);
   drawWidgetCell(g, art, layout, 1);
-  drawRows(g, art, layout, panel.wharfRowWidgets, dock.labels, panel.selected);
+  // A town dock with the Safari row has four rows on the five-row `wharf2.ui`.
+  drawRows(
+    g,
+    art,
+    layout,
+    panel.wharfRowWidgets.slice(0, dock.labels.length),
+    dock.labels,
+    panel.selected,
+  );
   drawTextWide(
     g,
     art,
