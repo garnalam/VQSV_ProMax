@@ -139,6 +139,8 @@ export type GameSave = {
     campaign: CampaignState;
     tower?: TowerState;
     safari?: SafariRun;
+    /** The day key (`rematchDayKey`, UTC+7) of the last Safari entry: one entry a day. */
+    safariDay?: number;
   };
   pets: SavedPet[];
 };
@@ -296,6 +298,7 @@ function isMeta(value: unknown): boolean {
   return (
     optional(value.tower, isTower) &&
     optional(value.safari, isSafari) &&
+    optional(value.safariDay, integer) &&
     typeof fashion.selected === "string" &&
     Array.isArray(fashion.owned) &&
     fashion.owned.every((key) => typeof key === "string") &&

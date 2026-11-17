@@ -56,10 +56,13 @@ export function drawSafari(
   failed: boolean,
 ): void {
   const g = renderer.context,
-    run = safari.run,
+    // A run that just ended stays on screen while the boat home sets off.
+    run = safari.run ?? safari.departing?.run,
     animation = safari.throwAnimation,
     image = (name: string) => assets.pack.imageElement(`safari.${name}.png`);
-  const encounter = animation?.encounter ?? run?.encounter ?? null;
+  // During the wild-battle entry wipe the map is still what is under it.
+  const encounter =
+    animation?.encounter ?? (safari.entryTick >= 0 ? null : (run?.encounter ?? null));
   const walking = !!run && !encounter;
   renderer.worldSpace();
   if (walking) drawMap(g, safari, assets, art);
@@ -92,8 +95,8 @@ export function drawSafari(
     drawBallIcon(g, assets, safari, 8, 9);
     kit.text(`${run!.balls}/${SAFARI_BALLS} bóng`, 22, 8);
     if (safari.caughtThisVisit > 0) kit.text(`· bắt ${safari.caughtThisVisit}`, 76, 8, "#fff16a");
-  } else drawEntry(g, kit, image, badges);
-  if (run || animation) kit.button(SAFARI_BUTTONS.exit, "Rời", false, [196, 4, 40, 20]);
+  } else drawEntry(g, kit, image, badges, safari.usedToday);
+  if (safari.run || animation) kit.button(SAFARI_BUTTONS.exit, "Rời", false, [196, 4, 40, 20]);
 
   // The message: always shown under an encounter, for a while on the map and the entry screen.
   const message = failed
@@ -122,7 +125,7 @@ function drawMap(
   art: SafariArt,
 ): void {
   const map = safari.map,
-    position = safari.run;
+    position = safari.run ?? safari.departing?.run;
   g.fillStyle = "#123b34";
   g.fillRect(0, 0, viewport.width, viewport.height);
   if (!position || !map) return;
@@ -385,27 +388,36 @@ function drawEntry(
   kit: Kit,
   image: (name: string) => HTMLImageElement,
   badges: number,
+  usedToday: boolean,
 ): void {
   const sign = image("title-sign");
   drawImage(g, sign, Math.floor((240 - (sign.naturalWidth || 126)) / 2), 26);
-  kit.panel(16, 78, 208, 126);
+  kit.panel(16, 74, 208, 136);
   const rows: [string, string][] = [
     ["Khu Safari rừng nhiệt đới", "#fff16a"],
     [`Phí vào: ${SAFARI_FEE} huy hiệu`, "#fff"],
     [`Nhận ${SAFARI_BALLS} bóng, hết bóng là hết lượt`, "#fff"],
     ["Pet cấp 30-40, có pet hiếm cấp 40", "#fff"],
+    [
+      usedToday ? "Hết lượt hôm nay, mở lại lúc 0:00" : "Mỗi ngày 1 lượt, mở lại lúc 0:00",
+      usedToday ? "#ff9a7a" : "#9cf29c",
+    ],
     ["Ném mồi: khó bắt, ít bỏ chạy", "#c6e8ff"],
     ["Ném đá: dễ bắt, dễ bỏ chạy", "#c6e8ff"],
   ];
-  for (const [i, [line, color]] of rows.entries()) kit.text(line, 24, 85 + i * 15, color);
+  for (const [i, [line, color]] of rows.entries()) kit.text(line, 24, 81 + i * 15, color);
   const short = badges < SAFARI_FEE;
   kit.text(
     `Bạn có ${badges} huy hiệu`,
     24,
-    85 + rows.length * 15 + 3,
+    81 + rows.length * 15 + 4,
     short ? "#ff9a7a" : "#9cf29c",
   );
-  kit.button(SAFARI_BUTTONS.enter, short ? "Thiếu huy hiệu" : "Vào Safari", !short);
+  kit.button(
+    SAFARI_BUTTONS.enter,
+    usedToday ? "Hết lượt" : short ? "Thiếu huy hiệu" : "Vào Safari",
+    !short && !usedToday,
+  );
   kit.button(SAFARI_BUTTONS.close, "Đóng", false);
 }
 

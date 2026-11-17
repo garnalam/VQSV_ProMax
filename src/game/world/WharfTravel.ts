@@ -51,7 +51,14 @@ export class WharfTravel {
   /** Set on the tick the boat leaves the screen: the host lands the hero, then calls `landed`. */
   landingDue = false;
 
-  constructor(readonly route: WharfRoute) {
+  /**
+   * @param safari web only: the crossing to ("in") or from ("out") Safari, which lands nowhere —
+   * Safari is drawn over the room the hero stays in.
+   */
+  constructor(
+    readonly route: WharfRoute,
+    readonly safari: "in" | "out" | null = null,
+  ) {
     this.boatY = route.boatMode === 0 ? 10 : SCREEN_H - 10;
   }
 

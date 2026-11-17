@@ -2,7 +2,7 @@ import { cornerShift, fromUi, viewport } from "../../core/Viewport";
 import { SafariSession } from "../world/SafariSession";
 import type { SafariMap } from "../meta/Safari";
 import type { NpcServicesDocument } from "../world/NpcServices";
-import { WharfTravel } from "../world/WharfTravel";
+import { WharfTravel, type WharfRoute } from "../world/WharfTravel";
 import { doubleBattleFallTicks } from "../battle/DoubleEventBattle";
 import { battlePanelPoint } from "../battle/BattleLandscape";
 import { worldPanelPoint } from "../world/WorldLandscape";
@@ -128,6 +128,7 @@ import { redeemGiftCode, type GiftCodeDocument, type GiftCodeResult } from "../m
 import {
   cycleRematchRegion,
   recordRematchStart,
+  rematchDayKey,
   rematchStatus,
   resolveRematchRegion,
 } from "../meta/RegionalChallenges";
@@ -392,6 +393,11 @@ export class GameplayHost {
     },
     speed: (id) => this.sources.world.petStats.coreStats(id, 1, 0).speed,
     speciesName: (id) => this.sources.world.petStats.speciesRow(id)?.name,
+    today: () => rematchDayKey(Date.now()),
+    entryDay: () => this.world?.meta.safariDay,
+    setEntryDay: (day) => {
+      if (this.world) this.world.meta.safariDay = day;
+    },
     receive: (pet) => {
       const world = this.world;
       if (!world) return;
@@ -1121,6 +1127,19 @@ export class GameplayHost {
   }
 
   private stepLayers(commands: InputCommand[]): GameplayLayer {
+    // The boat to and from Safari owns the session until it has landed.
+    if (this.wharfTravelState?.safari) {
+      this.tickWharfTravel();
+      return "panel";
+    }
+    if (this.safari.takeArrival()) {
+      this.wharfTravelState = new WharfTravel(this.safariRoute(0), "in");
+      return "panel";
+    }
+    if (this.safari.takeDeparture()) {
+      this.wharfTravelState = new WharfTravel(this.safariRoute(2), "out");
+      return "panel";
+    }
     if (this.safari.run || this.safari.visible) {
       if (this.world?.tickMapLoading()) return "panel";
       this.safari.tick(commands);
@@ -1176,11 +1195,30 @@ export class GameplayHost {
   get wharfTravel(): WharfTravel | null {
     return this.wharfTravelState;
   }
+  /** The Safari crossing: the ocean scene of a wharf trip; the hero's room does not change. */
+  private safariRoute(boatMode: 0 | 2): WharfRoute {
+    const world = this.world;
+    return {
+      gate: { scene: 0, room: 0, group: 0 },
+      target: {
+        scene: world?.sceneId ?? 0,
+        room: world?.roomIndex ?? 0,
+        x: world?.player.x ?? 0,
+        y: world?.player.y ?? 0,
+        direction: 0,
+      },
+      boatMode,
+      label: "Khu Safari",
+    };
+  }
   private tickWharfTravel(): void {
     const travel = this.wharfTravelState!,
       world = this.world;
     travel.tick();
-    if (travel.landingDue && world?.arriveByBoat(travel.route.target)) travel.landed();
+    // Once the ocean is up the run that just ended is no longer drawn.
+    if (travel.safari === "out" && travel.oceanVisible) this.safari.departing = null;
+    if (travel.landingDue && (travel.safari || world?.arriveByBoat(travel.route.target)))
+      travel.landed();
     if (travel.done) this.wharfTravelState = null;
   }
 

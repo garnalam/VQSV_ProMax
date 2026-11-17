@@ -31,7 +31,19 @@ export type SafariPort = {
   captureAnimation?: () => CaptureAnimation;
   /** The species name for messages ("Đã bắt được Uy Qua!"); "pet" without it. */
   speciesName?: (id: number) => string | undefined;
+  /**
+   * Owner (2026-11-17): one Safari entry a day, the day turning at 0:00 (UTC+7). `today` is the
+   * current day key, `entryDay` the day of the last entry in the save; without them no limit.
+   */
+  today?: () => number;
+  entryDay?: () => number | undefined;
+  setEntryDay?: (day: number) => void;
 };
+
+/** The wild-battle entry wipe's length, as a world fight's `battleEntry` phase (25 ticks). */
+export const SAFARI_ENTRY_TICKS = 25;
+/** How long the map stays up after the last ball, so the run's closing line can be read. */
+const LAST_BALL_LINGER_TICKS = 45;
 
 /** Tap targets in the 240x320 UI space, shared by the renderer and `click`: [x, y, width, height]. */
 export const SAFARI_BUTTONS = {
@@ -66,6 +78,15 @@ export class SafariSession {
   private text = "";
   moving = false;
   confirmExit = false;
+  /** Ticks into the wild-battle entry wipe over the map; -1 when none plays. */
+  entryTick = -1;
+  /** Set by `enter`: the host sails the hero to Safari (`takeArrival`). */
+  private arriving = false;
+  /**
+   * The run that just ended, kept so its map can be drawn while the boat leaves; `delay` ticks
+   * before the host may start the trip home (`takeDeparture`), -1 once it has.
+   */
+  departing: { run: SafariRun; delay: number } | null = null;
   throwAnimation: {
     action: "ball" | "bait" | "rock";
     encounter: SafariEncounter;
@@ -125,8 +146,32 @@ export class SafariSession {
     return captureDuration(this.captureSpec, this.throwAnimation?.outcome === "caught");
   }
 
+  /** The day's entry is spent (a clock set back before the stored day counts as spent too). */
+  get usedToday(): boolean {
+    const today = this.port.today?.(),
+      last = this.port.entryDay?.();
+    return today !== undefined && last !== undefined && last >= today;
+  }
+  takeArrival(): boolean {
+    const due = this.arriving;
+    this.arriving = false;
+    return due;
+  }
+  takeDeparture(): boolean {
+    const departing = this.departing;
+    if (!departing || departing.delay !== 0 || this.throwAnimation) return false;
+    departing.delay = -1;
+    this.visible = false;
+    this.confirmExit = false;
+    return true;
+  }
+  private depart(run: SafariRun, delay: number): void {
+    this.departing = { run: { ...structuredClone(run), encounter: null }, delay };
+  }
+
   open(): void {
     if (!this.run && !this.port.canEnter()) return;
+    this.departing = null;
     this.visible = true;
     this.selection = 0;
     this.confirmExit = false;
@@ -138,6 +183,10 @@ export class SafariSession {
     const map = this.map,
       wallet = this.port.wallet();
     if (!map || !wallet || !this.port.canEnter()) return;
+    if (this.usedToday) {
+      this.message = "Hôm nay bạn đã vào Safari rồi. Lượt mới mở lúc 0:00.";
+      return;
+    }
     if (wallet.badges < SAFARI_FEE) {
       this.message = `Cần ${SAFARI_FEE} huy hiệu để vào Safari.`;
       return;
@@ -155,6 +204,11 @@ export class SafariSession {
     run.steps = 12 + safariRandom(run, 11);
     wallet.badges -= SAFARI_FEE;
     this.caughtThisVisit = 0;
+    const today = this.port.today?.();
+    if (today !== undefined) this.port.setEntryDay?.(today);
+    this.departing = null;
+    this.entryTick = -1;
+    this.arriving = true;
     this.port.setRun(run);
     this.message = "Đã vào Safari. Đi lại để gặp pet.";
     this.port.save();
@@ -162,9 +216,11 @@ export class SafariSession {
 
   leave(): void {
     if (this.port.blocked() || this.throwAnimation) return;
+    const run = this.run;
+    if (run) this.depart(run, 0);
     this.port.setRun(undefined);
     this.confirmExit = false;
-    this.visible = false;
+    if (!run) this.visible = false;
     this.message = "Đã rời khu Safari.";
     this.port.save();
   }
@@ -221,6 +277,7 @@ export class SafariSession {
       this.selection = 0;
     }
     if (run.balls === 0) {
+      this.depart(run, LAST_BALL_LINGER_TICKS);
       this.port.setRun(undefined);
       this.message += ` Hết bóng, lượt Safari kết thúc (bắt được ${this.caughtThisVisit} pet).`;
     }
@@ -237,6 +294,19 @@ export class SafariSession {
           ? this.captureTicks + (this.throwAnimation.outcome === "caught" ? 0 : 8)
           : 26;
       if (this.throwAnimation.tick >= duration) this.throwAnimation = null;
+      return;
+    }
+    // Waiting for the boat home: nothing more happens in this run.
+    if (this.departing && this.departing.delay >= 0) {
+      if (this.departing.delay > 0) this.departing.delay--;
+      return;
+    }
+    if (this.entryTick >= 0) {
+      if (++this.entryTick >= SAFARI_ENTRY_TICKS) {
+        this.entryTick = -1;
+        // The pet's slide-in starts as the wipe ends.
+        this.messageTick = this.tickCount;
+      }
       return;
     }
     if (this.run) this.visible = true;
@@ -318,6 +388,7 @@ export class SafariSession {
       run.steps = 12 + safariRandom(run, 11);
       this.selection = 0;
       this.message = "Gặp pet hoang dã!";
+      this.entryTick = 0;
       // Only checkpoints save (encounters, throws, entering, leaving, the page hiding): a save per
       // tile froze the hero on every step while it reached the server.
       this.port.save();

@@ -206,6 +206,11 @@ export class NewGameScreen implements Screen {
    */
   tick(input: InputSnapshot, sameFrame = false): void {
     if (this.frozen) return;
+    // A boat to or from Safari takes no input; the host ticks it.
+    if (this.host.wharfTravel?.safari) {
+      this.step([], sameFrame);
+      return;
+    }
     if (this.host.safari.run || this.host.safari.visible) {
       const commands = gameplayCommands(input);
       if (this.host.safariSaveFailed && commands.includes("confirm")) this.host.retrySafariSave();
@@ -416,7 +421,8 @@ export class NewGameScreen implements Screen {
 
   /** Whether a frame between two ticks would differ (something is walking or the camera pans). */
   animating(): boolean {
-    if (this.host.safari.run || this.host.safari.throwAnimation) return true;
+    if (this.host.safari.run || this.host.safari.throwAnimation || this.host.wharfTravel?.safari)
+      return true;
     return !this.frozen && this.motion.moving;
   }
   /**
@@ -444,7 +450,32 @@ export class NewGameScreen implements Screen {
       : 1;
   }
   render(r: CanvasRenderer, alpha = 1): void {
-    if (this.host.safari.run || this.host.safari.visible) {
+    const safariTravel = this.host.wharfTravel?.safari ? this.host.wharfTravel : null;
+    if (safariTravel && this.world && safariTravel.phase < 4) {
+      // Leaving: the Safari map fades to black before the ocean, as a room does on a wharf trip.
+      if (safariTravel.safari === "out" && !safariTravel.oceanVisible) {
+        this.renderSafari(r);
+        r.worldSpace();
+        r.context.fillStyle = `rgba(0,0,0,${safariTravel.fadeAlpha / 255})`;
+        fillCanvas(r.context);
+        r.uiSpace();
+      } else this.renderWharfTravel(r, safariTravel, this.world);
+      return;
+    }
+    if (this.host.safari.run || this.host.safari.visible || this.host.safari.departing) {
+      this.renderSafari(r);
+      // The bars open over Safari once the boat has landed there.
+      if (safariTravel) this.drawWharfBars(r, safariTravel);
+      if (this.host.safari.entryTick >= 0) {
+        r.uiSpace();
+        this.drawBattleEntryTransition(r.context, this.host.safari.entryTick);
+      }
+      return;
+    }
+    this.renderWorldFrame(r, alpha);
+  }
+  private renderSafari(r: CanvasRenderer): void {
+    {
       drawSafari(
         r,
         this.host.safari,
@@ -483,8 +514,9 @@ export class NewGameScreen implements Screen {
         this.host.safariSaving,
         this.host.safariSaveFailed,
       );
-      return;
     }
+  }
+  private renderWorldFrame(r: CanvasRenderer, alpha: number): void {
     this.motion.alpha = this.frozen ? 1 : alpha;
     // `VqsvSceneView.render`: the loading screen replaces the frame, the world is not drawn under it.
     if (this.host.mapLoadingActive) {

@@ -2,11 +2,12 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import type { SavedPet } from "../../persistence/save/GameSave";
 import type { SafariMap, SafariRun } from "../meta/Safari";
-import { SAFARI_COMMANDS, SafariSession } from "./SafariSession";
+import { SAFARI_COMMANDS, SAFARI_ENTRY_TICKS, SafariSession } from "./SafariSession";
 
 const map: SafariMap = JSON.parse(readFileSync("public/pack/safari/map.json", "utf8"));
-function fixture() {
+function fixture(day?: { today: number }) {
   let run: SafariRun | undefined,
+    entryDay: number | undefined,
     saves = 0,
     roomBlocked = false,
     full = false,
@@ -31,6 +32,13 @@ function fixture() {
     save: () => {
       saves++;
     },
+    ...(day && {
+      today: () => day.today,
+      entryDay: () => entryDay,
+      setEntryDay: (value: number) => {
+        entryDay = value;
+      },
+    }),
   });
   return {
     safari,
@@ -227,6 +235,7 @@ describe("Safari session", () => {
     f.safari.click(200, 10);
     expect(f.safari.confirmExit).toBe(false);
     f.safari.leave();
+    expect(f.safari.takeDeparture()).toBe(true);
     f.safari.open();
     f.safari.click(172, 228); // "Đóng"
     expect(f.safari.visible).toBe(false);
@@ -245,6 +254,58 @@ describe("Safari session", () => {
     f.safari.click(SAFARI_COMMANDS[3][0] + 5, SAFARI_COMMANDS[3][1] + 5);
     expect(run.encounter).toBeNull();
     expect(run.balls).toBe(30);
+  });
+
+  it("allows one entry a day, opening again once the day turns", () => {
+    const day = { today: 100 },
+      f = fixture(day);
+    f.safari.enter(42);
+    expect(f.safari.run).toBeDefined();
+    f.safari.leave();
+    expect(f.safari.usedToday).toBe(true);
+    f.safari.enter(42);
+    expect(f.safari.run).toBeUndefined();
+    expect(f.wallet.badges).toBe(80);
+    expect(f.safari.message).toContain("0:00");
+    day.today = 101;
+    expect(f.safari.usedToday).toBe(false);
+    f.safari.enter(42);
+    expect(f.safari.run).toBeDefined();
+    expect(f.wallet.badges).toBe(60);
+  });
+
+  it("sails in on entering and out once the run ends, holding input meanwhile", () => {
+    const f = fixture();
+    f.safari.enter(42);
+    expect(f.safari.takeArrival()).toBe(true);
+    expect(f.safari.takeArrival()).toBe(false);
+    const run = f.safari.run!;
+    run.balls = 1;
+    run.encounter = { pet: { speciesId: 29, quality: 2, level: 30 }, effect: "neutral", turns: 0 };
+    f.safari.act("ball");
+    expect(f.safari.run).toBeUndefined();
+    // The map stays up through the throw and a short read of the closing line, then the boat goes.
+    expect(f.safari.departing?.run.encounter).toBeNull();
+    expect(f.safari.takeDeparture()).toBe(false);
+    for (let i = 0; i < 200 && !f.safari.takeDeparture(); i++) f.safari.tick(["confirm"]);
+    expect(f.safari.visible).toBe(false);
+    expect(f.wallet.badges).toBe(80);
+  });
+
+  it("plays the wild-battle entry wipe before an encounter takes commands", () => {
+    const f = fixture();
+    f.safari.enter(42);
+    const run = f.safari.run!;
+    run.steps = 1;
+    for (let i = 0; i < 200 && !run.encounter; i++)
+      f.safari.tick([i < 100 ? "holdUp" : "holdLeft"]);
+    expect(f.safari.entryTick).toBe(0);
+    f.safari.tick(["confirm"]);
+    expect(run.balls).toBe(30);
+    for (let i = 0; i < SAFARI_ENTRY_TICKS; i++) f.safari.tick([]);
+    expect(f.safari.entryTick).toBe(-1);
+    f.safari.tick(["confirm"]);
+    expect(f.safari.throwAnimation?.action).toBe("ball");
   });
 
   it("stays active without a time limit and cannot move through a blocked tile", () => {
