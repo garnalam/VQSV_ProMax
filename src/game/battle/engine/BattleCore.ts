@@ -245,6 +245,7 @@ export class BattleCore {
     while (this.queue.length > 0) {
       const action = this.queue.shift()!;
       this.act(action);
+      this.restoreBossPp();
       if (this.finished()) return;
       if (this.endOnPpExhaustion(action.side)) return;
       if (this.openRequest) return; // a pivot is waiting for the player
@@ -687,6 +688,15 @@ export class BattleCore {
   private readonly fainted = new Set<DesignTraitUnit>();
   private readonly ppExhaustion = new PpExhaustion();
 
+  /** ProMax: the Kim Diễm encounter's enemy team never runs out, even after a PP drain. */
+  private restoreBossPp(): void {
+    if (this.setup.boss !== "kim-diem-long-vuong") return;
+    for (const unit of this.sides.enemy.party)
+      unit.skillIds.forEach((id, slot) => {
+        unit.skillPp[slot] = id < 0 ? 0 : this.ppMax(id);
+      });
+  }
+
   /** Web rule: both teams out of PP; the one that ran dry first loses (see `PpExhaustion`). */
   private endOnPpExhaustion(actor: SideId): boolean {
     const loser = this.ppExhaustion.observe(this.sides.player.party, this.sides.enemy.party, actor);
@@ -886,6 +896,7 @@ export class BattleCore {
   }
 
   private enemyCommand(): BattleCommand {
+    this.restoreBossPp();
     // Web rule (with `PpExhaustion`): a dry pet hands over to a reserve that still has PP, or the
     // fight could stall on a team that is not out of PP but never fields the pet that has it.
     const active = this.activeUnit("enemy");

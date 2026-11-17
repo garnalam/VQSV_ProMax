@@ -439,6 +439,7 @@ export class DoubleBattleCore {
 
   /** `buildRoundActions`: player selections, the companion, both enemies (joint), sorted. */
   private buildRoundActions(): void {
+    this.restoreBossPp();
     this.actions = [];
     this.acted.fill(false);
     this.selections.forEach((selection) => {
@@ -1211,8 +1212,18 @@ export class DoubleBattleCore {
 
   private readonly ppExhaustion = new PpExhaustion();
 
+  /** ProMax: Ma Mộc Cộng Sinh gives the whole boss team inexhaustible PP, including Hoa. */
+  private restoreBossPp(): void {
+    if (!this.maMoc) return;
+    for (const unit of this.enemyUnits)
+      unit.skillIds.forEach((id, slot) => {
+        unit.skillPp[slot] = id < 0 ? 0 : this.ppMax(id);
+      });
+  }
+
   /** Web rule: both teams out of PP; the one that ran dry first loses (see `PpExhaustion`). */
   private endOnPpExhaustion(actorSlot: DoubleSlot): boolean {
+    this.restoreBossPp();
     if (this.openRequest?.kind === "ended") return true;
     // The player can switch a benched pet with PP in, so the whole roster counts; the NPC never
     // switches by choice in a 2v2, so only the two it has on the field can still act.
