@@ -1,8 +1,8 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { defineConfig, type Plugin } from "vitest/config";
 import { resolve } from "node:path";
-// Plain JavaScript shared with the Cloudflare Pages Function (types in admin-api.d.mts).
-import { adminRoute } from "../../shared/admin-api.mjs";
+import { existsSync } from "node:fs";
+import { pathToFileURL } from "node:url";
 
 /**
  * Where `npm run dev` sends `/api` (accounts and saves): the Cloudflare Pages deployment by
@@ -37,10 +37,14 @@ function adminDevApi(api: string): Plugin {
   return {
     name: "vqsv-admin-dev-api",
     configureServer(server) {
+      const sharedAdmin = resolve(__dirname, "../../shared/admin-api.mjs");
+      // A standalone checkout sends admin requests through the normal API proxy.
+      if (!existsSync(sharedAdmin)) return;
       server.middlewares.use(async (req, res, next) => {
         const path = (req.url ?? "").split("?")[0];
         if (!path.startsWith("/api/admin/")) return next();
         try {
+          const { adminRoute } = await import(/* @vite-ignore */ pathToFileURL(sharedAdmin).href);
           const me = await fetch(`${api}/api/auth/me`, {
             headers: { cookie: req.headers.cookie ?? "" },
             cache: "no-store",
@@ -73,7 +77,9 @@ export default defineConfig({
     rollupOptions: {
       input: {
         game: resolve(__dirname, "index.html"),
-        wiki: resolve(__dirname, "wiki.html"),
+        ...(existsSync(resolve(__dirname, "wiki.html"))
+          ? { wiki: resolve(__dirname, "wiki.html") }
+          : {}),
       },
     },
   },

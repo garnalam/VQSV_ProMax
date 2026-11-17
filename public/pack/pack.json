@@ -2083,6 +2083,20 @@
           }
         }
       ]
+    },
+    {
+      "id": "safari",
+      "kind": "root",
+      "resolution": "root",
+      "root": "safari",
+      "shapes": [
+        { "name": "map", "path": "map.json" },
+        { "name": "art", "path": "{image}.png" }
+      ],
+      "producer": {
+        "kind": "copy",
+        "what": "Safari map and art from huypham691/server d5382bea49bed7c073a7727d745850e46f775d93"
+      }
     }
   ]
 }

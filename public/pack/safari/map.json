@@ -1,0 +1,9878 @@
+{
+  "version": 1,
+  "id": "safari-tropical",
+  "width": 960,
+  "height": 768,
+  "tileSize": 16,
+  "columns": 60,
+  "rows": 48,
+  "background": "safari.ground.png",
+  "spawn": [
+    488,
+    696
+  ],
+  "exitTiles": [
+    29,
+    46,
+    3,
+    2
+  ],
+  "gate": {
+    "image": "safari.gate.png",
+    "x": 424,
+    "y": 684,
+    "footY": 737,
+    "collisions": [
+      [
+        435,
+        729,
+        10,
+        8
+      ],
+      [
+        515,
+        729,
+        10,
+        8
+      ]
+    ]
+  },
+  "water": {
+    "x": 80,
+    "y": 0,
+    "width": 192,
+    "height": 536,
+    "image": "safari.water.png",
+    "frameCount": 8,
+    "frameMs": 100
+  },
+  "objects": [
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 156,
+      "y": -23,
+      "footY": 28,
+      "collision": [
+        170,
+        18,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 511,
+      "y": -23,
+      "footY": 28,
+      "collision": [
+        525,
+        18,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 535,
+      "y": -57,
+      "footY": 28,
+      "collision": [
+        556,
+        18,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 930,
+      "y": -23,
+      "footY": 28,
+      "collision": [
+        944,
+        18,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 322,
+      "y": -21,
+      "footY": 30,
+      "collision": [
+        336,
+        20,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 191,
+      "y": -20,
+      "footY": 31,
+      "collision": [
+        205,
+        21,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 283,
+      "y": -54,
+      "footY": 31,
+      "collision": [
+        304,
+        21,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 417,
+      "y": -20,
+      "footY": 31,
+      "collision": [
+        431,
+        21,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 481,
+      "y": -20,
+      "footY": 31,
+      "collision": [
+        495,
+        21,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 669,
+      "y": -20,
+      "footY": 31,
+      "collision": [
+        683,
+        21,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 833,
+      "y": -54,
+      "footY": 31,
+      "collision": [
+        854,
+        21,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 265,
+      "y": -19,
+      "footY": 32,
+      "collision": [
+        279,
+        22,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 597,
+      "y": -53,
+      "footY": 32,
+      "collision": [
+        618,
+        22,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 894,
+      "y": -19,
+      "footY": 32,
+      "collision": [
+        908,
+        22,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 230,
+      "y": -18,
+      "footY": 33,
+      "collision": [
+        244,
+        23,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 583,
+      "y": -18,
+      "footY": 33,
+      "collision": [
+        597,
+        23,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 53,
+      "y": -51,
+      "footY": 34,
+      "collision": [
+        74,
+        24,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 768,
+      "y": -17,
+      "footY": 34,
+      "collision": [
+        782,
+        24,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": -28,
+      "y": -16,
+      "footY": 35,
+      "collision": [
+        -14,
+        25,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 354,
+      "y": -16,
+      "footY": 35,
+      "collision": [
+        368,
+        25,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 648,
+      "y": -16,
+      "footY": 35,
+      "collision": [
+        662,
+        25,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 739,
+      "y": -50,
+      "footY": 35,
+      "collision": [
+        760,
+        25,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 5,
+      "y": -15,
+      "footY": 36,
+      "collision": [
+        19,
+        26,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 89,
+      "y": -49,
+      "footY": 36,
+      "collision": [
+        110,
+        26,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 447,
+      "y": -49,
+      "footY": 36,
+      "collision": [
+        468,
+        26,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 709,
+      "y": -15,
+      "footY": 36,
+      "collision": [
+        723,
+        26,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 805,
+      "y": -14,
+      "footY": 37,
+      "collision": [
+        819,
+        27,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 862,
+      "y": -14,
+      "footY": 37,
+      "collision": [
+        876,
+        27,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 32,
+      "y": -47,
+      "footY": 38,
+      "collision": [
+        53,
+        28,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 394,
+      "y": -13,
+      "footY": 38,
+      "collision": [
+        408,
+        28,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 348,
+      "y": 5,
+      "footY": 56,
+      "collision": [
+        362,
+        46,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 511,
+      "y": 5,
+      "footY": 56,
+      "collision": [
+        525,
+        46,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 925,
+      "y": 5,
+      "footY": 56,
+      "collision": [
+        939,
+        46,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 162,
+      "y": -28,
+      "footY": 57,
+      "collision": [
+        183,
+        47,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 379,
+      "y": -27,
+      "footY": 58,
+      "collision": [
+        400,
+        48,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 836,
+      "y": 7,
+      "footY": 58,
+      "collision": [
+        850,
+        48,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 894,
+      "y": 7,
+      "footY": 58,
+      "collision": [
+        908,
+        48,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 863,
+      "y": 9,
+      "footY": 60,
+      "collision": [
+        877,
+        50,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 60,
+      "y": 10,
+      "footY": 61,
+      "collision": [
+        74,
+        51,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": -7,
+      "y": -23,
+      "footY": 62,
+      "collision": [
+        14,
+        52,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 448,
+      "y": 11,
+      "footY": 62,
+      "collision": [
+        462,
+        52,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 415,
+      "y": 12,
+      "footY": 63,
+      "collision": [
+        429,
+        53,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 745,
+      "y": 12,
+      "footY": 63,
+      "collision": [
+        759,
+        53,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 540,
+      "y": 13,
+      "footY": 64,
+      "collision": [
+        554,
+        54,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 760,
+      "y": -21,
+      "footY": 64,
+      "collision": [
+        781,
+        54,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": -39,
+      "y": -19,
+      "footY": 66,
+      "collision": [
+        -18,
+        56,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 472,
+      "y": -19,
+      "footY": 66,
+      "collision": [
+        493,
+        56,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 798,
+      "y": 15,
+      "footY": 66,
+      "collision": [
+        812,
+        56,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 33,
+      "y": 17,
+      "footY": 68,
+      "collision": [
+        47,
+        58,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 92,
+      "y": 17,
+      "footY": 68,
+      "collision": [
+        106,
+        58,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 935,
+      "y": 35,
+      "footY": 86,
+      "collision": [
+        949,
+        76,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 60,
+      "y": 36,
+      "footY": 87,
+      "collision": [
+        74,
+        77,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "understory",
+      "atlas": 12,
+      "source": [
+        64,
+        92,
+        84,
+        39
+      ],
+      "x": 233,
+      "y": 49,
+      "footY": 88,
+      "collision": null
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 39,
+      "y": 38,
+      "footY": 89,
+      "collision": [
+        53,
+        79,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": -28,
+      "y": 44,
+      "footY": 95,
+      "collision": [
+        -14,
+        85,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 0,
+      "y": 46,
+      "footY": 97,
+      "collision": [
+        14,
+        87,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 894,
+      "y": 47,
+      "footY": 98,
+      "collision": [
+        908,
+        88,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 759,
+      "y": 86,
+      "footY": 102,
+      "collision": null
+    },
+    {
+      "kind": "rock",
+      "atlas": 209,
+      "source": [
+        50,
+        0,
+        38,
+        25
+      ],
+      "x": 864,
+      "y": 80,
+      "footY": 105,
+      "collision": [
+        876,
+        95,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "understory",
+      "atlas": 12,
+      "source": [
+        64,
+        92,
+        84,
+        39
+      ],
+      "x": 207,
+      "y": 70,
+      "footY": 109,
+      "collision": null
+    },
+    {
+      "kind": "understory",
+      "atlas": 12,
+      "source": [
+        64,
+        92,
+        84,
+        39
+      ],
+      "x": 319,
+      "y": 74,
+      "footY": 113,
+      "collision": null
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 39,
+      "y": 65,
+      "footY": 116,
+      "collision": [
+        53,
+        106,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 898,
+      "y": 31,
+      "footY": 116,
+      "collision": [
+        919,
+        106,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 927,
+      "y": 67,
+      "footY": 118,
+      "collision": [
+        941,
+        108,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": -8,
+      "y": 34,
+      "footY": 119,
+      "collision": [
+        13,
+        109,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": -26,
+      "y": 72,
+      "footY": 123,
+      "collision": [
+        -12,
+        113,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "rock",
+      "atlas": 209,
+      "source": [
+        50,
+        0,
+        38,
+        25
+      ],
+      "x": 746,
+      "y": 102,
+      "footY": 127,
+      "collision": [
+        758,
+        117,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 323,
+      "y": 50,
+      "footY": 135,
+      "collision": [
+        344,
+        125,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "rock",
+      "atlas": 209,
+      "source": [
+        50,
+        0,
+        38,
+        25
+      ],
+      "x": 85,
+      "y": 113,
+      "footY": 138,
+      "collision": [
+        97,
+        128,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "tropical-canopy",
+      "atlas": 12,
+      "source": [
+        0,
+        0,
+        144,
+        92
+      ],
+      "x": -22,
+      "y": 47,
+      "footY": 139,
+      "collision": null
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 331,
+      "y": 57,
+      "footY": 142,
+      "collision": [
+        352,
+        132,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 409,
+      "y": 126,
+      "footY": 142,
+      "collision": null
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 797,
+      "y": 129,
+      "footY": 145,
+      "collision": null
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 41,
+      "y": 95,
+      "footY": 146,
+      "collision": [
+        55,
+        136,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 936,
+      "y": 97,
+      "footY": 148,
+      "collision": [
+        950,
+        138,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 854,
+      "y": 134,
+      "footY": 150,
+      "collision": null
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": -3,
+      "y": 66,
+      "footY": 151,
+      "collision": [
+        18,
+        141,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 422,
+      "y": 135,
+      "footY": 151,
+      "collision": null
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 902,
+      "y": 101,
+      "footY": 152,
+      "collision": [
+        916,
+        142,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": -36,
+      "y": 103,
+      "footY": 154,
+      "collision": [
+        -22,
+        144,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 298,
+      "y": 139,
+      "footY": 155,
+      "collision": null
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 326,
+      "y": 142,
+      "footY": 158,
+      "collision": null
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 733,
+      "y": 74,
+      "footY": 159,
+      "collision": [
+        754,
+        149,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 810,
+      "y": 144,
+      "footY": 160,
+      "collision": null
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 761,
+      "y": 160,
+      "footY": 176,
+      "collision": null
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 27,
+      "y": 93,
+      "footY": 178,
+      "collision": [
+        48,
+        168,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 891,
+      "y": 94,
+      "footY": 179,
+      "collision": [
+        912,
+        169,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 342,
+      "y": 129,
+      "footY": 180,
+      "collision": [
+        356,
+        170,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 6,
+      "y": 131,
+      "footY": 182,
+      "collision": [
+        20,
+        172,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": -38,
+      "y": 99,
+      "footY": 184,
+      "collision": [
+        -17,
+        174,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 931,
+      "y": 135,
+      "footY": 186,
+      "collision": [
+        945,
+        176,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 360,
+      "y": 149,
+      "footY": 200,
+      "collision": [
+        374,
+        190,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "tropical-canopy",
+      "atlas": 12,
+      "source": [
+        0,
+        0,
+        144,
+        92
+      ],
+      "x": 273,
+      "y": 112,
+      "footY": 204,
+      "collision": null
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 906,
+      "y": 155,
+      "footY": 206,
+      "collision": [
+        920,
+        196,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "rock",
+      "atlas": 209,
+      "source": [
+        50,
+        0,
+        38,
+        25
+      ],
+      "x": 816,
+      "y": 182,
+      "footY": 207,
+      "collision": [
+        828,
+        197,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": -35,
+      "y": 160,
+      "footY": 211,
+      "collision": [
+        -21,
+        201,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": -9,
+      "y": 127,
+      "footY": 212,
+      "collision": [
+        12,
+        202,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 30,
+      "y": 161,
+      "footY": 212,
+      "collision": [
+        44,
+        202,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 873,
+      "y": 164,
+      "footY": 215,
+      "collision": [
+        887,
+        205,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 926,
+      "y": 166,
+      "footY": 217,
+      "collision": [
+        940,
+        207,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 836,
+      "y": 202,
+      "footY": 218,
+      "collision": null
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 372,
+      "y": 169,
+      "footY": 220,
+      "collision": [
+        386,
+        210,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "understory",
+      "atlas": 12,
+      "source": [
+        64,
+        92,
+        84,
+        39
+      ],
+      "x": 60,
+      "y": 185,
+      "footY": 224,
+      "collision": null
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 618,
+      "y": 215,
+      "footY": 231,
+      "collision": null
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": -39,
+      "y": 151,
+      "footY": 236,
+      "collision": [
+        -18,
+        226,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 887,
+      "y": 152,
+      "footY": 237,
+      "collision": [
+        908,
+        227,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 921,
+      "y": 153,
+      "footY": 238,
+      "collision": [
+        942,
+        228,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "lily",
+      "atlas": 209,
+      "source": [
+        38,
+        41,
+        34,
+        24
+      ],
+      "x": 128,
+      "y": 216,
+      "footY": 240,
+      "collision": null
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 354,
+      "y": 191,
+      "footY": 242,
+      "collision": [
+        368,
+        232,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": -1,
+      "y": 195,
+      "footY": 246,
+      "collision": [
+        13,
+        236,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "rock",
+      "atlas": 209,
+      "source": [
+        50,
+        0,
+        38,
+        25
+      ],
+      "x": 615,
+      "y": 221,
+      "footY": 246,
+      "collision": [
+        627,
+        236,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 33,
+      "y": 163,
+      "footY": 248,
+      "collision": [
+        54,
+        238,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "understory",
+      "atlas": 12,
+      "source": [
+        64,
+        92,
+        84,
+        39
+      ],
+      "x": 323,
+      "y": 214,
+      "footY": 253,
+      "collision": null
+    },
+    {
+      "kind": "understory",
+      "atlas": 12,
+      "source": [
+        64,
+        92,
+        84,
+        39
+      ],
+      "x": 637,
+      "y": 215,
+      "footY": 254,
+      "collision": null
+    },
+    {
+      "kind": "understory",
+      "atlas": 12,
+      "source": [
+        64,
+        92,
+        84,
+        39
+      ],
+      "x": 213,
+      "y": 216,
+      "footY": 255,
+      "collision": null
+    },
+    {
+      "kind": "water-flower",
+      "atlas": 209,
+      "source": [
+        88,
+        0,
+        23,
+        20
+      ],
+      "x": 106,
+      "y": 240,
+      "footY": 260,
+      "collision": null
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 330,
+      "y": 176,
+      "footY": 261,
+      "collision": [
+        351,
+        251,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": -33,
+      "y": 217,
+      "footY": 268,
+      "collision": [
+        -19,
+        258,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "understory",
+      "atlas": 12,
+      "source": [
+        64,
+        92,
+        84,
+        39
+      ],
+      "x": 795,
+      "y": 229,
+      "footY": 268,
+      "collision": null
+    },
+    {
+      "kind": "rock",
+      "atlas": 209,
+      "source": [
+        50,
+        0,
+        38,
+        25
+      ],
+      "x": 403,
+      "y": 244,
+      "footY": 269,
+      "collision": [
+        415,
+        259,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "water-flower",
+      "atlas": 209,
+      "source": [
+        88,
+        0,
+        23,
+        20
+      ],
+      "x": 233,
+      "y": 250,
+      "footY": 270,
+      "collision": null
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 366,
+      "y": 256,
+      "footY": 272,
+      "collision": null
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 865,
+      "y": 223,
+      "footY": 274,
+      "collision": [
+        879,
+        264,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 893,
+      "y": 190,
+      "footY": 275,
+      "collision": [
+        914,
+        265,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 928,
+      "y": 226,
+      "footY": 277,
+      "collision": [
+        942,
+        267,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 7,
+      "y": 227,
+      "footY": 278,
+      "collision": [
+        21,
+        268,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "lily",
+      "atlas": 209,
+      "source": [
+        38,
+        41,
+        34,
+        24
+      ],
+      "x": 177,
+      "y": 254,
+      "footY": 278,
+      "collision": null
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 833,
+      "y": 268,
+      "footY": 284,
+      "collision": null
+    },
+    {
+      "kind": "understory",
+      "atlas": 12,
+      "source": [
+        64,
+        92,
+        84,
+        39
+      ],
+      "x": 378,
+      "y": 246,
+      "footY": 285,
+      "collision": null
+    },
+    {
+      "kind": "lily",
+      "atlas": 209,
+      "source": [
+        38,
+        41,
+        34,
+        24
+      ],
+      "x": 137,
+      "y": 264,
+      "footY": 288,
+      "collision": null
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 785,
+      "y": 276,
+      "footY": 292,
+      "collision": null
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 929,
+      "y": 245,
+      "footY": 296,
+      "collision": [
+        943,
+        286,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": -35,
+      "y": 248,
+      "footY": 299,
+      "collision": [
+        -21,
+        289,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 3,
+      "y": 251,
+      "footY": 302,
+      "collision": [
+        17,
+        292,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 857,
+      "y": 221,
+      "footY": 306,
+      "collision": [
+        878,
+        296,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "understory",
+      "atlas": 12,
+      "source": [
+        64,
+        92,
+        84,
+        39
+      ],
+      "x": 402,
+      "y": 268,
+      "footY": 307,
+      "collision": null
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 900,
+      "y": 257,
+      "footY": 308,
+      "collision": [
+        914,
+        298,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 70,
+      "y": 295,
+      "footY": 311,
+      "collision": null
+    },
+    {
+      "kind": "rock",
+      "atlas": 209,
+      "source": [
+        50,
+        0,
+        38,
+        25
+      ],
+      "x": 406,
+      "y": 296,
+      "footY": 321,
+      "collision": [
+        418,
+        311,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 867,
+      "y": 275,
+      "footY": 326,
+      "collision": [
+        881,
+        316,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 817,
+      "y": 277,
+      "footY": 328,
+      "collision": [
+        831,
+        318,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 1,
+      "y": 278,
+      "footY": 329,
+      "collision": [
+        15,
+        319,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 922,
+      "y": 246,
+      "footY": 331,
+      "collision": [
+        943,
+        321,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "understory",
+      "atlas": 12,
+      "source": [
+        64,
+        92,
+        84,
+        39
+      ],
+      "x": 95,
+      "y": 293,
+      "footY": 332,
+      "collision": null
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": -26,
+      "y": 283,
+      "footY": 334,
+      "collision": [
+        -12,
+        324,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 894,
+      "y": 284,
+      "footY": 335,
+      "collision": [
+        908,
+        325,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 822,
+      "y": 296,
+      "footY": 347,
+      "collision": [
+        836,
+        337,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 867,
+      "y": 333,
+      "footY": 349,
+      "collision": null
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 218,
+      "y": 265,
+      "footY": 350,
+      "collision": [
+        239,
+        340,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 803,
+      "y": 336,
+      "footY": 352,
+      "collision": null
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 525,
+      "y": 304,
+      "footY": 355,
+      "collision": [
+        539,
+        345,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 898,
+      "y": 271,
+      "footY": 356,
+      "collision": [
+        919,
+        346,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "understory",
+      "atlas": 12,
+      "source": [
+        64,
+        92,
+        84,
+        39
+      ],
+      "x": 604,
+      "y": 319,
+      "footY": 358,
+      "collision": null
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 531,
+      "y": 274,
+      "footY": 359,
+      "collision": [
+        552,
+        349,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 23,
+      "y": 277,
+      "footY": 362,
+      "collision": [
+        44,
+        352,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": -1,
+      "y": 278,
+      "footY": 363,
+      "collision": [
+        20,
+        353,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "understory",
+      "atlas": 12,
+      "source": [
+        64,
+        92,
+        84,
+        39
+      ],
+      "x": 517,
+      "y": 324,
+      "footY": 363,
+      "collision": null
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 926,
+      "y": 278,
+      "footY": 363,
+      "collision": [
+        947,
+        353,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": -27,
+      "y": 313,
+      "footY": 364,
+      "collision": [
+        -13,
+        354,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 866,
+      "y": 281,
+      "footY": 366,
+      "collision": [
+        887,
+        356,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "understory",
+      "atlas": 12,
+      "source": [
+        64,
+        92,
+        84,
+        39
+      ],
+      "x": 75,
+      "y": 335,
+      "footY": 374,
+      "collision": null
+    },
+    {
+      "kind": "understory",
+      "atlas": 12,
+      "source": [
+        64,
+        92,
+        84,
+        39
+      ],
+      "x": 80,
+      "y": 341,
+      "footY": 380,
+      "collision": null
+    },
+    {
+      "kind": "water-flower",
+      "atlas": 209,
+      "source": [
+        88,
+        0,
+        23,
+        20
+      ],
+      "x": 143,
+      "y": 360,
+      "footY": 380,
+      "collision": null
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 507,
+      "y": 295,
+      "footY": 380,
+      "collision": [
+        528,
+        370,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 558,
+      "y": 296,
+      "footY": 381,
+      "collision": [
+        579,
+        371,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 590,
+      "y": 365,
+      "footY": 381,
+      "collision": null
+    },
+    {
+      "kind": "understory",
+      "atlas": 12,
+      "source": [
+        64,
+        92,
+        84,
+        39
+      ],
+      "x": 782,
+      "y": 349,
+      "footY": 388,
+      "collision": null
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": -24,
+      "y": 339,
+      "footY": 390,
+      "collision": [
+        -10,
+        380,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 885,
+      "y": 305,
+      "footY": 390,
+      "collision": [
+        906,
+        380,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 35,
+      "y": 307,
+      "footY": 392,
+      "collision": [
+        56,
+        382,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 926,
+      "y": 312,
+      "footY": 397,
+      "collision": [
+        947,
+        387,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": -4,
+      "y": 347,
+      "footY": 398,
+      "collision": [
+        10,
+        388,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 109,
+      "y": 390,
+      "footY": 406,
+      "collision": null
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 5,
+      "y": 365,
+      "footY": 416,
+      "collision": [
+        19,
+        406,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": -35,
+      "y": 372,
+      "footY": 423,
+      "collision": [
+        -21,
+        413,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 924,
+      "y": 338,
+      "footY": 423,
+      "collision": [
+        945,
+        413,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 558,
+      "y": 373,
+      "footY": 424,
+      "collision": [
+        572,
+        414,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 816,
+      "y": 341,
+      "footY": 426,
+      "collision": [
+        837,
+        416,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 898,
+      "y": 375,
+      "footY": 426,
+      "collision": [
+        912,
+        416,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 42,
+      "y": 377,
+      "footY": 428,
+      "collision": [
+        56,
+        418,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 357,
+      "y": 422,
+      "footY": 438,
+      "collision": null
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 379,
+      "y": 425,
+      "footY": 441,
+      "collision": null
+    },
+    {
+      "kind": "understory",
+      "atlas": 12,
+      "source": [
+        64,
+        92,
+        84,
+        39
+      ],
+      "x": 382,
+      "y": 404,
+      "footY": 443,
+      "collision": null
+    },
+    {
+      "kind": "tropical-canopy",
+      "atlas": 12,
+      "source": [
+        0,
+        0,
+        144,
+        92
+      ],
+      "x": 841,
+      "y": 351,
+      "footY": 443,
+      "collision": null
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 27,
+      "y": 361,
+      "footY": 446,
+      "collision": [
+        48,
+        436,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 926,
+      "y": 396,
+      "footY": 447,
+      "collision": [
+        940,
+        437,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 368,
+      "y": 433,
+      "footY": 449,
+      "collision": null
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": -2,
+      "y": 401,
+      "footY": 452,
+      "collision": [
+        12,
+        442,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": -29,
+      "y": 403,
+      "footY": 454,
+      "collision": [
+        -15,
+        444,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "understory",
+      "atlas": 12,
+      "source": [
+        64,
+        92,
+        84,
+        39
+      ],
+      "x": 263,
+      "y": 417,
+      "footY": 456,
+      "collision": null
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 885,
+      "y": 371,
+      "footY": 456,
+      "collision": [
+        906,
+        446,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 863,
+      "y": 441,
+      "footY": 457,
+      "collision": null
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 618,
+      "y": 444,
+      "footY": 460,
+      "collision": null
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 612,
+      "y": 459,
+      "footY": 475,
+      "collision": null
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 824,
+      "y": 460,
+      "footY": 476,
+      "collision": null
+    },
+    {
+      "kind": "rock",
+      "atlas": 209,
+      "source": [
+        50,
+        0,
+        38,
+        25
+      ],
+      "x": 343,
+      "y": 452,
+      "footY": 477,
+      "collision": [
+        355,
+        467,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 568,
+      "y": 461,
+      "footY": 477,
+      "collision": null
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": -29,
+      "y": 396,
+      "footY": 481,
+      "collision": [
+        -8,
+        471,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 36,
+      "y": 430,
+      "footY": 481,
+      "collision": [
+        50,
+        471,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "understory",
+      "atlas": 12,
+      "source": [
+        64,
+        92,
+        84,
+        39
+      ],
+      "x": 684,
+      "y": 444,
+      "footY": 483,
+      "collision": null
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 338,
+      "y": 400,
+      "footY": 485,
+      "collision": [
+        359,
+        475,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 888,
+      "y": 400,
+      "footY": 485,
+      "collision": [
+        909,
+        475,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 1,
+      "y": 436,
+      "footY": 487,
+      "collision": [
+        15,
+        477,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 330,
+      "y": 403,
+      "footY": 488,
+      "collision": [
+        351,
+        478,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 918,
+      "y": 403,
+      "footY": 488,
+      "collision": [
+        939,
+        478,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 399,
+      "y": 473,
+      "footY": 489,
+      "collision": null
+    },
+    {
+      "kind": "rock",
+      "atlas": 209,
+      "source": [
+        50,
+        0,
+        38,
+        25
+      ],
+      "x": 334,
+      "y": 480,
+      "footY": 505,
+      "collision": [
+        346,
+        495,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 40,
+      "y": 456,
+      "footY": 507,
+      "collision": [
+        54,
+        497,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 322,
+      "y": 425,
+      "footY": 510,
+      "collision": [
+        343,
+        500,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 923,
+      "y": 425,
+      "footY": 510,
+      "collision": [
+        944,
+        500,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "lily",
+      "atlas": 209,
+      "source": [
+        38,
+        41,
+        34,
+        24
+      ],
+      "x": 152,
+      "y": 488,
+      "footY": 512,
+      "collision": null
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 60,
+      "y": 465,
+      "footY": 516,
+      "collision": [
+        74,
+        506,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": -1,
+      "y": 466,
+      "footY": 517,
+      "collision": [
+        13,
+        507,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": -23,
+      "y": 467,
+      "footY": 518,
+      "collision": [
+        -9,
+        508,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 889,
+      "y": 433,
+      "footY": 518,
+      "collision": [
+        910,
+        508,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 314,
+      "y": 468,
+      "footY": 519,
+      "collision": [
+        328,
+        509,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 510,
+      "y": 511,
+      "footY": 527,
+      "collision": null
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 292,
+      "y": 481,
+      "footY": 532,
+      "collision": [
+        306,
+        522,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 926,
+      "y": 487,
+      "footY": 538,
+      "collision": [
+        940,
+        528,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 61,
+      "y": 488,
+      "footY": 539,
+      "collision": [
+        75,
+        529,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": -24,
+      "y": 494,
+      "footY": 545,
+      "collision": [
+        -10,
+        535,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 839,
+      "y": 530,
+      "footY": 546,
+      "collision": null
+    },
+    {
+      "kind": "rock",
+      "atlas": 209,
+      "source": [
+        50,
+        0,
+        38,
+        25
+      ],
+      "x": 305,
+      "y": 522,
+      "footY": 547,
+      "collision": [
+        317,
+        537,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 886,
+      "y": 462,
+      "footY": 547,
+      "collision": [
+        907,
+        537,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 3,
+      "y": 497,
+      "footY": 548,
+      "collision": [
+        17,
+        538,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 36,
+      "y": 497,
+      "footY": 548,
+      "collision": [
+        50,
+        538,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 792,
+      "y": 542,
+      "footY": 558,
+      "collision": null
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 925,
+      "y": 518,
+      "footY": 569,
+      "collision": [
+        939,
+        559,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 30,
+      "y": 485,
+      "footY": 570,
+      "collision": [
+        51,
+        560,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 895,
+      "y": 523,
+      "footY": 574,
+      "collision": [
+        909,
+        564,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": -32,
+      "y": 493,
+      "footY": 578,
+      "collision": [
+        -11,
+        568,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": -1,
+      "y": 527,
+      "footY": 578,
+      "collision": [
+        13,
+        568,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "understory",
+      "atlas": 12,
+      "source": [
+        64,
+        92,
+        84,
+        39
+      ],
+      "x": 784,
+      "y": 542,
+      "footY": 581,
+      "collision": null
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 776,
+      "y": 533,
+      "footY": 584,
+      "collision": [
+        790,
+        574,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "rock",
+      "atlas": 209,
+      "source": [
+        50,
+        0,
+        38,
+        25
+      ],
+      "x": 728,
+      "y": 564,
+      "footY": 589,
+      "collision": [
+        740,
+        579,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 892,
+      "y": 545,
+      "footY": 596,
+      "collision": [
+        906,
+        586,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 873,
+      "y": 547,
+      "footY": 598,
+      "collision": [
+        887,
+        588,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": -41,
+      "y": 516,
+      "footY": 601,
+      "collision": [
+        -20,
+        591,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 929,
+      "y": 550,
+      "footY": 601,
+      "collision": [
+        943,
+        591,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 7,
+      "y": 551,
+      "footY": 602,
+      "collision": [
+        21,
+        592,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 28,
+      "y": 551,
+      "footY": 602,
+      "collision": [
+        42,
+        592,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 741,
+      "y": 519,
+      "footY": 604,
+      "collision": [
+        762,
+        594,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 79,
+      "y": 593,
+      "footY": 609,
+      "collision": null
+    },
+    {
+      "kind": "rock",
+      "atlas": 209,
+      "source": [
+        50,
+        0,
+        38,
+        25
+      ],
+      "x": 757,
+      "y": 591,
+      "footY": 616,
+      "collision": [
+        769,
+        606,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 872,
+      "y": 576,
+      "footY": 627,
+      "collision": [
+        886,
+        617,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 928,
+      "y": 580,
+      "footY": 631,
+      "collision": [
+        942,
+        621,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": -35,
+      "y": 581,
+      "footY": 632,
+      "collision": [
+        -21,
+        622,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 30,
+      "y": 581,
+      "footY": 632,
+      "collision": [
+        44,
+        622,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 899,
+      "y": 581,
+      "footY": 632,
+      "collision": [
+        913,
+        622,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 7,
+      "y": 582,
+      "footY": 633,
+      "collision": [
+        21,
+        623,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "rock",
+      "atlas": 209,
+      "source": [
+        50,
+        0,
+        38,
+        25
+      ],
+      "x": 47,
+      "y": 608,
+      "footY": 633,
+      "collision": [
+        59,
+        623,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "understory",
+      "atlas": 12,
+      "source": [
+        64,
+        92,
+        84,
+        39
+      ],
+      "x": 467,
+      "y": 597,
+      "footY": 636,
+      "collision": null
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 748,
+      "y": 626,
+      "footY": 642,
+      "collision": null
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 370,
+      "y": 638,
+      "footY": 654,
+      "collision": null
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": -24,
+      "y": 608,
+      "footY": 659,
+      "collision": [
+        -10,
+        649,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "understory",
+      "atlas": 12,
+      "source": [
+        64,
+        92,
+        84,
+        39
+      ],
+      "x": 40,
+      "y": 621,
+      "footY": 660,
+      "collision": null
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 899,
+      "y": 609,
+      "footY": 660,
+      "collision": [
+        913,
+        650,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 929,
+      "y": 610,
+      "footY": 661,
+      "collision": [
+        943,
+        651,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 2,
+      "y": 612,
+      "footY": 663,
+      "collision": [
+        16,
+        653,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 864,
+      "y": 579,
+      "footY": 664,
+      "collision": [
+        885,
+        654,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "flower",
+      "atlas": 218,
+      "source": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "x": 226,
+      "y": 655,
+      "footY": 671,
+      "collision": null
+    },
+    {
+      "kind": "understory",
+      "atlas": 12,
+      "source": [
+        64,
+        92,
+        84,
+        39
+      ],
+      "x": 840,
+      "y": 633,
+      "footY": 672,
+      "collision": null
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": -27,
+      "y": 636,
+      "footY": 687,
+      "collision": [
+        -13,
+        677,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 23,
+      "y": 604,
+      "footY": 689,
+      "collision": [
+        44,
+        679,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 927,
+      "y": 638,
+      "footY": 689,
+      "collision": [
+        941,
+        679,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 863,
+      "y": 607,
+      "footY": 692,
+      "collision": [
+        884,
+        682,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 894,
+      "y": 609,
+      "footY": 694,
+      "collision": [
+        915,
+        684,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 5,
+      "y": 645,
+      "footY": 696,
+      "collision": [
+        19,
+        686,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 349,
+      "y": 631,
+      "footY": 716,
+      "collision": [
+        370,
+        706,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 254,
+      "y": 667,
+      "footY": 718,
+      "collision": [
+        268,
+        708,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 792,
+      "y": 633,
+      "footY": 718,
+      "collision": [
+        813,
+        708,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 673,
+      "y": 668,
+      "footY": 719,
+      "collision": [
+        687,
+        709,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 739,
+      "y": 668,
+      "footY": 719,
+      "collision": [
+        753,
+        709,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 311,
+      "y": 636,
+      "footY": 721,
+      "collision": [
+        332,
+        711,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 639,
+      "y": 636,
+      "footY": 721,
+      "collision": [
+        660,
+        711,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 922,
+      "y": 636,
+      "footY": 721,
+      "collision": [
+        943,
+        711,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 284,
+      "y": 671,
+      "footY": 722,
+      "collision": [
+        298,
+        712,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 39,
+      "y": 672,
+      "footY": 723,
+      "collision": [
+        53,
+        713,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 705,
+      "y": 673,
+      "footY": 724,
+      "collision": [
+        719,
+        714,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 834,
+      "y": 639,
+      "footY": 724,
+      "collision": [
+        855,
+        714,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 860,
+      "y": 673,
+      "footY": 724,
+      "collision": [
+        874,
+        714,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 906,
+      "y": 674,
+      "footY": 725,
+      "collision": [
+        920,
+        715,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": -24,
+      "y": 675,
+      "footY": 726,
+      "collision": [
+        -10,
+        716,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 217,
+      "y": 641,
+      "footY": 726,
+      "collision": [
+        238,
+        716,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": -3,
+      "y": 643,
+      "footY": 728,
+      "collision": [
+        18,
+        718,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 190,
+      "y": 643,
+      "footY": 728,
+      "collision": [
+        211,
+        718,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 771,
+      "y": 643,
+      "footY": 728,
+      "collision": [
+        792,
+        718,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": -27,
+      "y": 695,
+      "footY": 746,
+      "collision": [
+        -13,
+        736,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 106,
+      "y": 695,
+      "footY": 746,
+      "collision": [
+        120,
+        736,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 544,
+      "y": 695,
+      "footY": 746,
+      "collision": [
+        558,
+        736,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 897,
+      "y": 695,
+      "footY": 746,
+      "collision": [
+        911,
+        736,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 225,
+      "y": 662,
+      "footY": 747,
+      "collision": [
+        246,
+        737,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 860,
+      "y": 662,
+      "footY": 747,
+      "collision": [
+        881,
+        737,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 192,
+      "y": 663,
+      "footY": 748,
+      "collision": [
+        213,
+        738,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 168,
+      "y": 698,
+      "footY": 749,
+      "collision": [
+        182,
+        739,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 353,
+      "y": 664,
+      "footY": 749,
+      "collision": [
+        374,
+        739,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 382,
+      "y": 698,
+      "footY": 749,
+      "collision": [
+        396,
+        739,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 757,
+      "y": 664,
+      "footY": 749,
+      "collision": [
+        778,
+        739,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 322,
+      "y": 665,
+      "footY": 750,
+      "collision": [
+        343,
+        740,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 735,
+      "y": 699,
+      "footY": 750,
+      "collision": [
+        749,
+        740,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 807,
+      "y": 699,
+      "footY": 750,
+      "collision": [
+        821,
+        740,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 69,
+      "y": 700,
+      "footY": 751,
+      "collision": [
+        83,
+        741,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 250,
+      "y": 666,
+      "footY": 751,
+      "collision": [
+        271,
+        741,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 575,
+      "y": 700,
+      "footY": 751,
+      "collision": [
+        589,
+        741,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 693,
+      "y": 666,
+      "footY": 751,
+      "collision": [
+        714,
+        741,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 926,
+      "y": 666,
+      "footY": 751,
+      "collision": [
+        947,
+        741,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 831,
+      "y": 701,
+      "footY": 752,
+      "collision": [
+        845,
+        742,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 294,
+      "y": 702,
+      "footY": 753,
+      "collision": [
+        308,
+        743,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 649,
+      "y": 702,
+      "footY": 753,
+      "collision": [
+        663,
+        743,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 681,
+      "y": 702,
+      "footY": 753,
+      "collision": [
+        695,
+        743,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 42,
+      "y": 704,
+      "footY": 755,
+      "collision": [
+        56,
+        745,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 129,
+      "y": 670,
+      "footY": 755,
+      "collision": [
+        150,
+        745,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 8,
+      "y": 705,
+      "footY": 756,
+      "collision": [
+        22,
+        746,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 616,
+      "y": 707,
+      "footY": 758,
+      "collision": [
+        630,
+        748,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 192,
+      "y": 691,
+      "footY": 776,
+      "collision": [
+        213,
+        766,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 927,
+      "y": 725,
+      "footY": 776,
+      "collision": [
+        941,
+        766,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 745,
+      "y": 726,
+      "footY": 777,
+      "collision": [
+        759,
+        767,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 766,
+      "y": 726,
+      "footY": 777,
+      "collision": [
+        780,
+        767,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 599,
+      "y": 693,
+      "footY": 778,
+      "collision": [
+        620,
+        768,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 634,
+      "y": 693,
+      "footY": 778,
+      "collision": [
+        655,
+        768,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 698,
+      "y": 693,
+      "footY": 778,
+      "collision": [
+        719,
+        768,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 63,
+      "y": 728,
+      "footY": 779,
+      "collision": [
+        77,
+        769,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 810,
+      "y": 728,
+      "footY": 779,
+      "collision": [
+        824,
+        769,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 36,
+      "y": 729,
+      "footY": 780,
+      "collision": [
+        50,
+        770,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 94,
+      "y": 729,
+      "footY": 780,
+      "collision": [
+        108,
+        770,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 125,
+      "y": 729,
+      "footY": 780,
+      "collision": [
+        139,
+        770,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 262,
+      "y": 729,
+      "footY": 780,
+      "collision": [
+        276,
+        770,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 671,
+      "y": 695,
+      "footY": 780,
+      "collision": [
+        692,
+        770,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 226,
+      "y": 696,
+      "footY": 781,
+      "collision": [
+        247,
+        771,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 354,
+      "y": 730,
+      "footY": 781,
+      "collision": [
+        368,
+        771,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": -31,
+      "y": 697,
+      "footY": 782,
+      "collision": [
+        -10,
+        772,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 326,
+      "y": 732,
+      "footY": 783,
+      "collision": [
+        340,
+        773,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 163,
+      "y": 733,
+      "footY": 784,
+      "collision": [
+        177,
+        774,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 839,
+      "y": 733,
+      "footY": 784,
+      "collision": [
+        853,
+        774,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 862,
+      "y": 734,
+      "footY": 785,
+      "collision": [
+        876,
+        775,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "broadleaf",
+      "atlas": 219,
+      "source": [
+        43,
+        0,
+        43,
+        51
+      ],
+      "x": 291,
+      "y": 735,
+      "footY": 786,
+      "collision": [
+        305,
+        776,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 546,
+      "y": 701,
+      "footY": 786,
+      "collision": [
+        567,
+        776,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 577,
+      "y": 701,
+      "footY": 786,
+      "collision": [
+        598,
+        776,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": -4,
+      "y": 703,
+      "footY": 788,
+      "collision": [
+        17,
+        778,
+        14,
+        10
+      ]
+    },
+    {
+      "kind": "palm",
+      "atlas": 10093,
+      "source": [
+        7,
+        0,
+        57,
+        85
+      ],
+      "x": 885,
+      "y": 703,
+      "footY": 788,
+      "collision": [
+        906,
+        778,
+        14,
+        10
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": 12,
+      "resource": "safari.atlas-12.png"
+    },
+    {
+      "id": 209,
+      "resource": "safari.atlas-209.png"
+    },
+    {
+      "id": 218,
+      "resource": "safari.atlas-218.png"
+    },
+    {
+      "id": 219,
+      "resource": "safari.atlas-219.png"
+    },
+    {
+      "id": 10093,
+      "resource": "safari.atlas-10093.png"
+    }
+  ],
+  "blocked": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+  ],
+  "encounterAreas": [
+    {
+      "id": "south-west",
+      "cells": [
+        [
+          15,
+          31
+        ],
+        [
+          14,
+          31
+        ],
+        [
+          15,
+          32
+        ],
+        [
+          16,
+          31
+        ],
+        [
+          16,
+          32
+        ],
+        [
+          17,
+          32
+        ],
+        [
+          14,
+          32
+        ],
+        [
+          13,
+          32
+        ],
+        [
+          13,
+          33
+        ],
+        [
+          15,
+          33
+        ],
+        [
+          18,
+          32
+        ],
+        [
+          18,
+          33
+        ],
+        [
+          11,
+          33
+        ],
+        [
+          12,
+          33
+        ],
+        [
+          14,
+          33
+        ],
+        [
+          16,
+          33
+        ],
+        [
+          17,
+          33
+        ],
+        [
+          13,
+          34
+        ],
+        [
+          14,
+          34
+        ],
+        [
+          15,
+          34
+        ],
+        [
+          17,
+          34
+        ],
+        [
+          12,
+          34
+        ],
+        [
+          16,
+          34
+        ],
+        [
+          13,
+          35
+        ],
+        [
+          18,
+          34
+        ],
+        [
+          14,
+          35
+        ],
+        [
+          15,
+          35
+        ],
+        [
+          16,
+          35
+        ],
+        [
+          17,
+          35
+        ],
+        [
+          18,
+          35
+        ],
+        [
+          15,
+          36
+        ]
+      ]
+    },
+    {
+      "id": "west-grove",
+      "cells": [
+        [
+          17,
+          16
+        ],
+        [
+          18,
+          16
+        ],
+        [
+          19,
+          16
+        ],
+        [
+          20,
+          16
+        ],
+        [
+          17,
+          17
+        ],
+        [
+          18,
+          17
+        ],
+        [
+          19,
+          17
+        ],
+        [
+          20,
+          17
+        ],
+        [
+          21,
+          17
+        ],
+        [
+          22,
+          17
+        ],
+        [
+          16,
+          18
+        ],
+        [
+          17,
+          18
+        ],
+        [
+          18,
+          18
+        ],
+        [
+          19,
+          18
+        ],
+        [
+          21,
+          18
+        ],
+        [
+          22,
+          18
+        ],
+        [
+          20,
+          18
+        ],
+        [
+          16,
+          19
+        ],
+        [
+          17,
+          19
+        ],
+        [
+          18,
+          19
+        ],
+        [
+          20,
+          19
+        ],
+        [
+          21,
+          19
+        ],
+        [
+          22,
+          19
+        ],
+        [
+          15,
+          19
+        ],
+        [
+          19,
+          19
+        ],
+        [
+          15,
+          20
+        ],
+        [
+          16,
+          20
+        ],
+        [
+          17,
+          20
+        ],
+        [
+          18,
+          20
+        ],
+        [
+          19,
+          20
+        ],
+        [
+          20,
+          20
+        ],
+        [
+          21,
+          20
+        ],
+        [
+          22,
+          20
+        ],
+        [
+          16,
+          21
+        ],
+        [
+          17,
+          21
+        ],
+        [
+          18,
+          21
+        ],
+        [
+          19,
+          21
+        ],
+        [
+          20,
+          21
+        ]
+      ]
+    },
+    {
+      "id": "north-grove",
+      "cells": [
+        [
+          39,
+          4
+        ],
+        [
+          36,
+          5
+        ],
+        [
+          37,
+          5
+        ],
+        [
+          38,
+          5
+        ],
+        [
+          39,
+          5
+        ],
+        [
+          40,
+          5
+        ],
+        [
+          41,
+          5
+        ],
+        [
+          35,
+          5
+        ],
+        [
+          35,
+          6
+        ],
+        [
+          36,
+          6
+        ],
+        [
+          37,
+          6
+        ],
+        [
+          38,
+          6
+        ],
+        [
+          39,
+          6
+        ],
+        [
+          40,
+          6
+        ],
+        [
+          41,
+          6
+        ],
+        [
+          42,
+          6
+        ],
+        [
+          34,
+          7
+        ],
+        [
+          35,
+          7
+        ],
+        [
+          36,
+          7
+        ],
+        [
+          37,
+          7
+        ],
+        [
+          38,
+          7
+        ],
+        [
+          39,
+          7
+        ],
+        [
+          40,
+          7
+        ],
+        [
+          41,
+          7
+        ],
+        [
+          42,
+          7
+        ],
+        [
+          43,
+          7
+        ],
+        [
+          35,
+          8
+        ],
+        [
+          36,
+          8
+        ],
+        [
+          37,
+          8
+        ],
+        [
+          38,
+          8
+        ],
+        [
+          39,
+          8
+        ],
+        [
+          40,
+          8
+        ],
+        [
+          41,
+          8
+        ],
+        [
+          42,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "east-grove",
+      "cells": [
+        [
+          43,
+          22
+        ],
+        [
+          44,
+          22
+        ],
+        [
+          41,
+          22
+        ],
+        [
+          42,
+          22
+        ],
+        [
+          45,
+          22
+        ],
+        [
+          41,
+          23
+        ],
+        [
+          42,
+          23
+        ],
+        [
+          43,
+          23
+        ],
+        [
+          44,
+          23
+        ],
+        [
+          45,
+          23
+        ],
+        [
+          46,
+          23
+        ],
+        [
+          40,
+          24
+        ],
+        [
+          41,
+          24
+        ],
+        [
+          42,
+          24
+        ],
+        [
+          43,
+          24
+        ],
+        [
+          44,
+          24
+        ],
+        [
+          45,
+          24
+        ],
+        [
+          46,
+          24
+        ],
+        [
+          47,
+          24
+        ],
+        [
+          41,
+          25
+        ],
+        [
+          42,
+          25
+        ],
+        [
+          43,
+          25
+        ],
+        [
+          44,
+          25
+        ],
+        [
+          45,
+          25
+        ],
+        [
+          46,
+          25
+        ],
+        [
+          47,
+          25
+        ],
+        [
+          40,
+          25
+        ],
+        [
+          40,
+          26
+        ],
+        [
+          41,
+          26
+        ],
+        [
+          42,
+          26
+        ],
+        [
+          43,
+          26
+        ],
+        [
+          44,
+          26
+        ],
+        [
+          45,
+          26
+        ],
+        [
+          46,
+          26
+        ],
+        [
+          47,
+          26
+        ],
+        [
+          41,
+          27
+        ],
+        [
+          42,
+          27
+        ],
+        [
+          43,
+          27
+        ],
+        [
+          44,
+          27
+        ],
+        [
+          45,
+          27
+        ],
+        [
+          46,
+          27
+        ],
+        [
+          42,
+          28
+        ],
+        [
+          43,
+          28
+        ],
+        [
+          44,
+          28
+        ]
+      ]
+    },
+    {
+      "id": "south-east",
+      "cells": [
+        [
+          38,
+          36
+        ],
+        [
+          39,
+          36
+        ],
+        [
+          35,
+          37
+        ],
+        [
+          36,
+          36
+        ],
+        [
+          37,
+          36
+        ],
+        [
+          37,
+          37
+        ],
+        [
+          38,
+          37
+        ],
+        [
+          39,
+          37
+        ],
+        [
+          40,
+          36
+        ],
+        [
+          42,
+          37
+        ],
+        [
+          36,
+          37
+        ],
+        [
+          40,
+          37
+        ],
+        [
+          41,
+          37
+        ],
+        [
+          34,
+          37
+        ],
+        [
+          36,
+          38
+        ],
+        [
+          38,
+          38
+        ],
+        [
+          39,
+          38
+        ],
+        [
+          43,
+          37
+        ],
+        [
+          34,
+          38
+        ],
+        [
+          35,
+          38
+        ],
+        [
+          37,
+          38
+        ],
+        [
+          40,
+          38
+        ],
+        [
+          41,
+          38
+        ],
+        [
+          42,
+          38
+        ],
+        [
+          43,
+          38
+        ],
+        [
+          35,
+          39
+        ],
+        [
+          37,
+          39
+        ],
+        [
+          40,
+          39
+        ],
+        [
+          43,
+          39
+        ],
+        [
+          34,
+          39
+        ],
+        [
+          36,
+          39
+        ],
+        [
+          38,
+          39
+        ],
+        [
+          39,
+          39
+        ],
+        [
+          41,
+          39
+        ],
+        [
+          42,
+          39
+        ],
+        [
+          35,
+          40
+        ],
+        [
+          36,
+          40
+        ],
+        [
+          39,
+          40
+        ],
+        [
+          41,
+          40
+        ],
+        [
+          37,
+          40
+        ],
+        [
+          38,
+          40
+        ],
+        [
+          40,
+          40
+        ],
+        [
+          42,
+          40
+        ],
+        [
+          38,
+          41
+        ],
+        [
+          39,
+          41
+        ],
+        [
+          37,
+          41
+        ],
+        [
+          40,
+          41
+        ]
+      ]
+    }
+  ]
+}

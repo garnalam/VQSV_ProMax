@@ -2,6 +2,7 @@ import type { EventStateSnapshot } from "../../game/world/EventStateLedger";
 import type { WorldFlagsSnapshot } from "../../game/world/WorldFlags";
 import type { CampaignState } from "../../game/campaign/CampaignSystems";
 import type { TowerState } from "../../game/meta/BondingTower";
+import type { SafariRun } from "../../game/meta/Safari";
 
 /** Bump together with a new entry in `migrations.ts`. */
 export const CURRENT_SAVE_VERSION = 34;
@@ -125,6 +126,7 @@ export type GameSave = {
     };
     campaign: CampaignState;
     tower?: TowerState;
+    safari?: SafariRun;
   };
   pets: SavedPet[];
 };
@@ -230,6 +232,42 @@ function isTower(value: unknown): boolean {
   );
 }
 
+function isSafari(value: unknown): boolean {
+  if (!record(value)) return false;
+  const encounter = value.encounter;
+  return (
+    integer(value.balls) &&
+    value.balls >= 1 &&
+    value.balls <= 30 &&
+    integer(value.x) &&
+    value.x >= 0 &&
+    value.x < 960 &&
+    integer(value.y) &&
+    value.y >= 0 &&
+    value.y < 768 &&
+    integer(value.direction) &&
+    value.direction >= 0 &&
+    value.direction <= 3 &&
+    integer(value.steps) &&
+    value.steps >= 1 &&
+    value.steps <= 22 &&
+    integer(value.seed) &&
+    value.seed >= 0 &&
+    value.seed <= 0xffffffff &&
+    (encounter === null ||
+      (record(encounter) &&
+        isSavedPet(encounter.pet) &&
+        [29, 46, 30, 54, 86, 5, 74, 45, 273, 272, 271, 270, 269].includes(
+          encounter.pet.speciesId,
+        ) &&
+        ["neutral", "bait", "rock"].includes(String(encounter.effect)) &&
+        integer(encounter.turns) &&
+        encounter.turns >= 0 &&
+        encounter.turns <= 255 &&
+        (encounter.effect === "neutral") === (encounter.turns === 0)))
+  );
+}
+
 function isMeta(value: unknown): boolean {
   if (
     !record(value) ||
@@ -245,6 +283,7 @@ function isMeta(value: unknown): boolean {
     charmActive = record(charms.active) ? charms.active : {};
   return (
     optional(value.tower, isTower) &&
+    optional(value.safari, isSafari) &&
     typeof fashion.selected === "string" &&
     Array.isArray(fashion.owned) &&
     fashion.owned.every((key) => typeof key === "string") &&
