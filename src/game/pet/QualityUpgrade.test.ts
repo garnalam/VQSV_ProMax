@@ -112,6 +112,29 @@ describe("Nâng phẩm screen (tickQualityUpgrade)", () => {
     expect([session.closed, session.mainIndex]).toEqual([true, 1]);
   });
 
+  it("reports each attempt to the host so it is saved at once, failure included", () => {
+    const main = pet(2, 2),
+      fodder = pet(1, 2);
+    let attempts = 0;
+    const session = new QualityUpgradeSession(
+      {
+        roster: [pet(9, 1), main, fodder],
+        bank: [],
+        equipment: [],
+        rules,
+        roll: () => 9999,
+        attempted: () => attempts++,
+      },
+      main,
+    );
+    session.tick(["confirm"]);
+    session.tick(["confirm"]);
+    session.tick(["left"]);
+    session.tick(["confirm"]);
+    for (let i = 0; i < CHARGE_COMMIT_TICK; i++) session.tick([]);
+    expect([session.result?.outcome, attempts]).toEqual(["FAILURE", 1]);
+  });
+
   it("a maxed pet says so and finds no phôi", () => {
     const main = pet(2, 5),
       session = new QualityUpgradeSession(

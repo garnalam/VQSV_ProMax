@@ -151,6 +151,14 @@ describe("Safari integration", () => {
     expect(restored.host.world!.currency.badges).toBe(30);
   });
 
+  it("draws a thiên phú per hatched pet instead of one per species", () => {
+    const { host } = session(freeWorld());
+    const talents = new Set<number | undefined>();
+    for (let i = 0; i < 40; i++) talents.add(host.world!.createHatchedPet(29, 5)?.physicalTraitId);
+    expect(talents.has(undefined)).toBe(false);
+    expect(talents.size).toBeGreaterThan(3);
+  });
+
   it("saves a captured pet and the final ball in the same snapshot", async () => {
     const { host, saves, repository } = session(freeWorld(), undefined, ADMIN);
     host.world!.currency.badges = 50;

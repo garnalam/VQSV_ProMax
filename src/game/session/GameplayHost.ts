@@ -209,6 +209,15 @@ export type GameplaySources = {
  * `TextBox.dialog`: pages of four lines, as wide as `dialog.ui` widget 14 (230 px); in landscape
  * the box spans the canvas, so its lines are as wide as the canvas less the margins.
  */
+/** A uniform draw in [0, bound) from the platform's cryptographic source (no modulo bias). */
+function freshRoll(bound: number): number {
+  const limit = Math.floor(0x100000000 / bound) * bound,
+    word = new Uint32Array(1);
+  do globalThis.crypto.getRandomValues(word);
+  while (word[0] >= limit);
+  return word[0] % bound;
+}
+
 function dialogPagination(boot: BootAssets): (tagged: string) => string[] {
   const width = boot.dialogLayout.w(14, 230);
   return (tagged) =>
@@ -2289,7 +2298,11 @@ export class GameplayHost {
           protectedPet: (pet) => pools?.releaseProtected(pet.speciesId) ?? false,
           maxHp: (pet) => services.partyMember(pet).stats.hp,
         },
-        roll: () => world.worldRandomBounded("quality-upgrade", ROLL_BOUND),
+        // Owner (2026-11-17): a fresh draw each attempt. The seeded world stream (seed 0 for every
+        // new save, its position kept in the save) handed the same failing roll back after a reload.
+        roll: () => freshRoll(ROLL_BOUND),
+        // The result is saved at once, so a reload can neither undo a failure nor repeat a roll.
+        attempted: () => this.saves.save(this.snapshot(world)),
       },
       main,
     );

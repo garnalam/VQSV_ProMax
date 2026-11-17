@@ -27,6 +27,8 @@ export type QualitySessionWorld = {
   rules: QualityRules;
   /** `qualityUpgradeRandom.nextIntBounded(.., 10000)`. */
   roll: () => number;
+  /** Web only: an attempt went through (either way); the host saves it at once. */
+  attempted?: () => void;
 };
 
 export class QualityUpgradeSession {
@@ -233,6 +235,7 @@ export class QualityUpgradeSession {
       return;
     }
     this.result = attempt;
+    this.world.attempted?.();
     this.phase = 2;
     this.ticks = 0;
     this.status = "Đang mở khóa phẩm mới...";

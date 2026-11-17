@@ -499,6 +499,12 @@ import {
 
 /** Boards already checked by `restoreMinigame` (a loaded save is checked once). */
 const CHECKED_MINIGAMES = new WeakSet<CauVongMinigameState>();
+/** 60 random bits for a thiên phú roll that has no seeded draw (Safari, gifts without a server seed). */
+function freshTalentEntropy(): bigint {
+  const words = new Uint32Array(2);
+  globalThis.crypto.getRandomValues(words);
+  return (BigInt(words[0] & 0x3fffffff) << 30n) | BigInt(words[1] & 0x3fffffff);
+}
 
 /** `PetCollectionProgression.CONVENIENCE_REWARD_MILESTONES`. */
 const CONVENIENCE_REWARD_MILESTONES = COLLECTION_REWARD_MILESTONES;
@@ -1595,6 +1601,15 @@ export class WorldRuntime {
     pet.skillIds = skillIds;
     pet.skillPp = skillIds.map((id) => this.sources.battleRules.damage.skillRow(id)?.ppMax ?? 0);
     giveShinyColor(pet);
+    // Owner (2026-11-17): every hatched pet draws its own thiên phú. `petFromSource` derives it from
+    // species, level, quality, nature and slot, so two eggs of one species always hatched the same.
+    const traits = this.sources.battle?.rules.traitRegistry;
+    if (traits) {
+      const entropy = draw
+        ? (BigInt(draw("egg.talent", 0x40000000)) << 30n) | BigInt(draw("egg.talent2", 0x40000000))
+        : freshTalentEntropy();
+      pet.physicalTraitId = traits.sanitizePhysicalTraitId(traits.roll(entropy));
+    }
     return pet;
   }
   /**
@@ -1842,7 +1857,9 @@ export class WorldRuntime {
       service ??= this.sources.npcServices?.services.find((row) => {
         if (row.scene !== this.sceneId || row.room !== this.roomIndex) return false;
         const actor = this.actors.get(row.actorId);
-        return actor && !talkEligible(actor) && this.playerFaces(actor) && serviceAt(actor.id) === row;
+        return (
+          actor && !talkEligible(actor) && this.playerFaces(actor) && serviceAt(actor.id) === row
+        );
       });
     }
     if (!service) return false;
@@ -2096,7 +2113,10 @@ export class WorldRuntime {
       this.tapWalk = null;
       const actor = walk.actor >= 0 ? this.actors.get(walk.actor) : undefined;
       if (!actor?.visible) return null;
-      this.player.direction = this.directionToward(actor.x + actor.renderOffsetX, actor.y + actor.renderOffsetY);
+      this.player.direction = this.directionToward(
+        actor.x + actor.renderOffsetX,
+        actor.y + actor.renderOffsetY,
+      );
       this.setPlayerFacing(false, true);
       return { commands: ["confirm"], talkTo: actor.id };
     }
@@ -2148,7 +2168,8 @@ export class WorldRuntime {
     this.tapWalk = null;
     const target = actor >= 0 ? this.actors.get(actor) : undefined;
     if (target && this.actorInteractionRequested(target)) return false;
-    if (!target && Math.abs(x - this.player.x) <= 12 && Math.abs(y - this.player.y) <= 12) return !!prior;
+    if (!target && Math.abs(x - this.player.x) <= 12 && Math.abs(y - this.player.y) <= 12)
+      return !!prior;
     const goal = target
       ? { x: target.x + target.renderOffsetX, y: target.y + target.renderOffsetY }
       : { x, y };
@@ -2201,7 +2222,9 @@ export class WorldRuntime {
             : near(to.x, to.y, speed),
       // A door out of the room ends the route there, so only the door that was tapped is entered.
       forbidden: (to, from) =>
-        doors.some((door) => door !== tappedDoor && doorOverlaps(to, door) && !doorOverlaps(from, door)),
+        doors.some(
+          (door) => door !== tappedDoor && doorOverlaps(to, door) && !doorOverlaps(from, door),
+        ),
       distance: (px, py) => Math.hypot(px - goal.x, py - goal.y),
       // An actor is spoken to from as far as a tap reaches (48 px a side); ground has no limit.
       fallbackWithin: actor >= 0 ? 48 : undefined,
@@ -2741,7 +2764,12 @@ export class WorldRuntime {
       );
       // Web (touch accessibility): a tap farther off walks there, and to an actor speaks on arrival.
       // A service NPC's line on screen (free world, no event) still takes the tap as its confirm.
-      if (this.onFreeMap && !this.npcService && !this.obstacleCut && this.startTapWalk(at.x, at.y, this.pointerActor ?? -1)) {
+      if (
+        this.onFreeMap &&
+        !this.npcService &&
+        !this.obstacleCut &&
+        this.startTapWalk(at.x, at.y, this.pointerActor ?? -1)
+      ) {
         this.pointerActor = undefined;
         return;
       }
@@ -2997,9 +3025,21 @@ export class WorldRuntime {
   private adminArrival(scene: number, room: number): { x: number; y: number; direction: number } {
     const door = (this.sources.registry.room(scene, room)?.doors ?? []).find((row) => row.target);
     if (door)
-      return roomDoorArrival({ scene, room, row: door.row, x: door.x, y: door.y, facing: door.facing, target: door.target! });
+      return roomDoorArrival({
+        scene,
+        room,
+        row: door.row,
+        x: door.x,
+        y: door.y,
+        facing: door.facing,
+        target: door.target!,
+      });
     const asset = this.sources.room(scene, room) as { width?: number; height?: number } | undefined;
-    return { x: Math.floor((asset?.width ?? 240) / 2), y: Math.floor((asset?.height ?? 320) / 2), direction: DIRECTION_DOWN };
+    return {
+      x: Math.floor((asset?.width ?? 240) / 2),
+      y: Math.floor((asset?.height ?? 320) / 2),
+      direction: DIRECTION_DOWN,
+    };
   }
   private useRoomDoor(door: RoomDoor): WorldAction | null {
     const { scene, room, entry } = door.target;
@@ -3057,7 +3097,14 @@ export class WorldRuntime {
       // away (`WorldEventDispatcher`), so the notice shows once per approach.
       if (gymDoubleNeedsPair(services, group, battleActor, this.pets)) {
         this.startScript({ scene: group.scene, room: group.room, group: -1 }, "gym:needs-pair", [
-          { type: "text", text: GYM_NEEDS_PAIR_TEXT, speaker: "", mode: 0, wait: true, kind: "dialog" },
+          {
+            type: "text",
+            text: GYM_NEEDS_PAIR_TEXT,
+            speaker: "",
+            mode: 0,
+            wait: true,
+            kind: "dialog",
+          },
         ]);
         return null;
       }
@@ -3187,7 +3234,8 @@ export class WorldRuntime {
   ledgerContext(): string {
     if (this.doubleBattle) return "battle:2v2";
     if (this.battle) return `battle:${this.battleEncounter?.encounter.encounterKey ?? "wild"}`;
-    if (this.event) return `event:${this.event.ref.scene}:${this.event.ref.room}:${this.event.ref.group}`;
+    if (this.event)
+      return `event:${this.event.ref.scene}:${this.event.ref.room}:${this.event.ref.group}`;
     if (this.phase !== "freeworld" && this.phase !== "returnWorld") return `phase:${this.phase}`;
     return "world";
   }
@@ -8287,8 +8335,7 @@ export class WorldRuntime {
       !this.restoringSave &&
       !this.eventState.sourceEventStateComplete(10, 12, 4)
     ) {
-      for (let id = 0; id <= 27; id++)
-        this.flags.mutateSourceWorldFlag(1, switchFlag(10, 12, id));
+      for (let id = 0; id <= 27; id++) this.flags.mutateSourceWorldFlag(1, switchFlag(10, 12, id));
       this.eventState.resetEvent(10, 12, 0);
     }
     this.dispatcher.enterRoom(scene, room);
