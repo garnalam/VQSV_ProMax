@@ -32,14 +32,14 @@
     "unresolved": "How flat Power combines with buff 0 (Suc Luc), which in BattleUnit.computeDamage replaces the whole damage instead of adding to the skill's power. Settled when these six families are ported last."
   },
   "strengthRule": {
-    "formula": "value = limits === damageReductionCappedAt100 ? min(100, sourceValue * factor) : sourceValue * factor",
+    "formula": "value = unit === Power ? sourceValue * factor / 2 : limits === damageReductionCappedAt100 ? min(100, sourceValue * factor) : sourceValue * factor",
     "damageReductionCapPercent": 100,
     "clampedCount": 5,
     "limitsCounts": {
       "capsRemoved": 254,
       "damageReductionCappedAt100": 26
     },
-    "note": "Reproduces all 280 workbook values exactly, and is the same clamp Java applies to the four damage-reduction families, so those 26 rows agree with the Java export too."
+    "note": "Flat Power is halved from the workbook balance. The existing clamp still applies to the four damage-reduction families."
   },
   "limitsText": {
     "capsRemoved": "Đã bỏ trần hiệu quả và số lần tối đa mỗi trận. Năm họ đặc tính tích tầng cộng dồn tối đa 3 tầng. Dấu đơn vẫn không cộng dồn; điều kiện, thời hạn và nhịp kích hoạt theo mô tả. HP/PP hồi không vượt tối đa của pet/chiêu; DEF còn lại không âm.",
@@ -86,12 +86,12 @@
       "type": "low_hp_power_trade",
       "factor": 6,
       "sourceValue": 21,
-      "value": 126,
+      "value": 63,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "HP dưới 50%: chiêu damage kế tiếp +126 Power, sau đó trả 5% HP tối đa, không tự gục. 1 lần/3 lượt, không kích nếu HP không đủ trả.",
+      "description": "HP dưới 50%: chiêu damage kế tiếp +63 Power, sau đó trả 5% HP tối đa, không tự gục. 1 lần/3 lượt, không kích nếu HP không đủ trả.",
       "matchesJavaExport": false,
-      "summary": "Khi HP còn dưới 50%, chiêu tấn công tiếp theo được cộng 126 uy lực, đổi lại pet mất 5% HP tối đa (không bao giờ tự làm mình gục; không đủ HP để trả thì không kích hoạt). Cứ 3 lượt kích hoạt được 1 lần."
+      "summary": "Khi HP còn dưới 50%, chiêu tấn công tiếp theo được cộng 63 uy lực, đổi lại pet mất 5% HP tối đa (không bao giờ tự làm mình gục; không đủ HP để trả thì không kích hoạt). Cứ 3 lượt kích hoạt được 1 lần."
     },
     {
       "speciesId": 2,
@@ -222,12 +222,12 @@
       "type": "first_hit_guard",
       "factor": 10,
       "sourceValue": 6,
-      "value": 60,
+      "value": 40,
       "unit": "%",
       "limits": "damageReductionCappedAt100",
-      "description": "Giảm 60% damage trực tiếp đầu tiên nhận trong mỗi lượt. Không giảm DOT/chi phí HP; không kích phản đòn.",
-      "matchesJavaExport": true,
-      "summary": "Trong mỗi lượt, đòn tấn công đầu tiên trúng pet bị giảm 60% sát thương. Không giảm sát thương mỗi lượt (như Gieo Hạt, Hủ Thực) hay HP pet tự trả khi dùng chiêu."
+      "description": "Giảm 40% damage trực tiếp đầu tiên nhận trong mỗi lượt. Không giảm DOT/chi phí HP; không kích phản đòn.",
+      "matchesJavaExport": false,
+      "summary": "Trong mỗi lượt, đòn tấn công đầu tiên trúng pet bị giảm 40% sát thương. Không giảm sát thương mỗi lượt (như Gieo Hạt, Hủ Thực) hay HP pet tự trả khi dùng chiêu."
     },
     {
       "speciesId": 10,
@@ -239,12 +239,12 @@
       "type": "first_hit_guard",
       "factor": 10,
       "sourceValue": 9,
-      "value": 90,
+      "value": 40,
       "unit": "%",
       "limits": "damageReductionCappedAt100",
-      "description": "Giảm 90% damage trực tiếp đầu tiên nhận trong mỗi lượt. Không giảm DOT/chi phí HP; không kích phản đòn.",
-      "matchesJavaExport": true,
-      "summary": "Trong mỗi lượt, đòn tấn công đầu tiên trúng pet bị giảm 90% sát thương. Không giảm sát thương mỗi lượt (như Gieo Hạt, Hủ Thực) hay HP pet tự trả khi dùng chiêu."
+      "description": "Giảm 40% damage trực tiếp đầu tiên nhận trong mỗi lượt. Không giảm DOT/chi phí HP; không kích phản đòn.",
+      "matchesJavaExport": false,
+      "summary": "Trong mỗi lượt, đòn tấn công đầu tiên trúng pet bị giảm 40% sát thương. Không giảm sát thương mỗi lượt (như Gieo Hạt, Hủ Thực) hay HP pet tự trả khi dùng chiêu."
     },
     {
       "speciesId": 11,
@@ -290,12 +290,12 @@
       "type": "alternating_skill_combo",
       "factor": 6,
       "sourceValue": 15,
-      "value": 90,
+      "value": 45,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Dùng 2 chiêu trực tiếp khác nhau liên tiếp: chiêu trực tiếp tiếp theo +90 Power rồi xóa đà. Không tích từ hit phụ; khống chế bỏ lượt/đổi pet xóa đà.",
+      "description": "Dùng 2 chiêu trực tiếp khác nhau liên tiếp: chiêu trực tiếp tiếp theo +45 Power rồi xóa đà. Không tích từ hit phụ; khống chế bỏ lượt/đổi pet xóa đà.",
       "matchesJavaExport": false,
-      "summary": "Dùng 2 chiêu tấn công khác nhau liên tiếp thì chiêu tấn công kế tiếp được cộng 90 uy lực, sau đó đếm lại từ đầu. Bị khống chế mất lượt hoặc rời sân thì mất chuỗi."
+      "summary": "Dùng 2 chiêu tấn công khác nhau liên tiếp thì chiêu tấn công kế tiếp được cộng 45 uy lực, sau đó đếm lại từ đầu. Bị khống chế mất lượt hoặc rời sân thì mất chuỗi."
     },
     {
       "speciesId": 14,
@@ -307,12 +307,12 @@
       "type": "alternating_skill_combo",
       "factor": 6,
       "sourceValue": 16,
-      "value": 96,
+      "value": 48,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Dùng 2 chiêu trực tiếp khác nhau liên tiếp: chiêu trực tiếp tiếp theo +96 Power rồi xóa đà. Không tích từ hit phụ; khống chế bỏ lượt/đổi pet xóa đà.",
+      "description": "Dùng 2 chiêu trực tiếp khác nhau liên tiếp: chiêu trực tiếp tiếp theo +48 Power rồi xóa đà. Không tích từ hit phụ; khống chế bỏ lượt/đổi pet xóa đà.",
       "matchesJavaExport": false,
-      "summary": "Dùng 2 chiêu tấn công khác nhau liên tiếp thì chiêu tấn công kế tiếp được cộng 96 uy lực, sau đó đếm lại từ đầu. Bị khống chế mất lượt hoặc rời sân thì mất chuỗi."
+      "summary": "Dùng 2 chiêu tấn công khác nhau liên tiếp thì chiêu tấn công kế tiếp được cộng 48 uy lực, sau đó đếm lại từ đầu. Bị khống chế mất lượt hoặc rời sân thì mất chuỗi."
     },
     {
       "speciesId": 15,
@@ -511,12 +511,12 @@
       "type": "utility_next_power",
       "factor": 6,
       "sourceValue": 10,
-      "value": 60,
+      "value": 30,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Sau chiêu Power 0: chiêu damage kế tiếp +60 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
+      "description": "Sau chiêu Power 0: chiêu damage kế tiếp +30 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
       "matchesJavaExport": false,
-      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 60 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
+      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 30 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
     },
     {
       "speciesId": 27,
@@ -528,12 +528,12 @@
       "type": "utility_next_power",
       "factor": 6,
       "sourceValue": 17,
-      "value": 102,
+      "value": 51,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Sau chiêu Power 0: chiêu damage kế tiếp +102 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
+      "description": "Sau chiêu Power 0: chiêu damage kế tiếp +51 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
       "matchesJavaExport": false,
-      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 102 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
+      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 51 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
     },
     {
       "speciesId": 28,
@@ -562,12 +562,12 @@
       "type": "status_followup",
       "factor": 6,
       "sourceValue": 13,
-      "value": 78,
+      "value": 39,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +78 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
+      "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +39 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
       "matchesJavaExport": false,
-      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 78 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
+      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 39 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
     },
     {
       "speciesId": 30,
@@ -835,12 +835,12 @@
       "type": "utility_next_power",
       "factor": 6,
       "sourceValue": 16,
-      "value": 96,
+      "value": 48,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Sau chiêu Power 0: chiêu damage kế tiếp +96 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
+      "description": "Sau chiêu Power 0: chiêu damage kế tiếp +48 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
       "matchesJavaExport": false,
-      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 96 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
+      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 48 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
     },
     {
       "speciesId": 46,
@@ -852,12 +852,12 @@
       "type": "utility_next_power",
       "factor": 6,
       "sourceValue": 17,
-      "value": 102,
+      "value": 51,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Sau chiêu Power 0: chiêu damage kế tiếp +102 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
+      "description": "Sau chiêu Power 0: chiêu damage kế tiếp +51 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
       "matchesJavaExport": false,
-      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 102 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
+      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 51 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
     },
     {
       "speciesId": 47,
@@ -1158,12 +1158,12 @@
       "type": "alternating_skill_combo",
       "factor": 6,
       "sourceValue": 10,
-      "value": 60,
+      "value": 30,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Dùng 2 chiêu trực tiếp khác nhau liên tiếp: chiêu trực tiếp tiếp theo +60 Power rồi xóa đà. Không tích từ hit phụ; khống chế bỏ lượt/đổi pet xóa đà.",
+      "description": "Dùng 2 chiêu trực tiếp khác nhau liên tiếp: chiêu trực tiếp tiếp theo +30 Power rồi xóa đà. Không tích từ hit phụ; khống chế bỏ lượt/đổi pet xóa đà.",
       "matchesJavaExport": false,
-      "summary": "Dùng 2 chiêu tấn công khác nhau liên tiếp thì chiêu tấn công kế tiếp được cộng 60 uy lực, sau đó đếm lại từ đầu. Bị khống chế mất lượt hoặc rời sân thì mất chuỗi."
+      "summary": "Dùng 2 chiêu tấn công khác nhau liên tiếp thì chiêu tấn công kế tiếp được cộng 30 uy lực, sau đó đếm lại từ đầu. Bị khống chế mất lượt hoặc rời sân thì mất chuỗi."
     },
     {
       "speciesId": 65,
@@ -1175,12 +1175,12 @@
       "type": "electric_charge",
       "factor": 6,
       "sourceValue": 8,
-      "value": 48,
+      "value": 24,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 48 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 24 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
       "matchesJavaExport": false,
-      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 48 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
+      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 24 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
     },
     {
       "speciesId": 66,
@@ -1192,12 +1192,12 @@
       "type": "electric_charge",
       "factor": 6,
       "sourceValue": 11,
-      "value": 66,
+      "value": 33,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 66 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 33 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
       "matchesJavaExport": false,
-      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 66 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
+      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 33 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
     },
     {
       "speciesId": 67,
@@ -1209,12 +1209,12 @@
       "type": "electric_charge",
       "factor": 6,
       "sourceValue": 14,
-      "value": 84,
+      "value": 42,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 84 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 42 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
       "matchesJavaExport": false,
-      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 84 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
+      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 42 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
     },
     {
       "speciesId": 68,
@@ -1566,12 +1566,12 @@
       "type": "debuff_resonance",
       "factor": 6,
       "sourceValue": 13,
-      "value": 78,
+      "value": 39,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Đặt mới debuff bằng chiêu: nhận 1 dấu âm trong 2 lượt; chiêu trực tiếp kế tiếp +78 Power rồi xóa dấu. Không tích từ DOT tick, tối đa 1 dấu.",
+      "description": "Đặt mới debuff bằng chiêu: nhận 1 dấu âm trong 2 lượt; chiêu trực tiếp kế tiếp +39 Power rồi xóa dấu. Không tích từ DOT tick, tối đa 1 dấu.",
       "matchesJavaExport": false,
-      "summary": "Khi dùng chiêu gây được hiệu ứng xấu mới, chiêu tấn công kế tiếp trong 2 lượt được cộng 78 uy lực. Mất máu mỗi lượt không tính là gây hiệu ứng mới; không cộng dồn."
+      "summary": "Khi dùng chiêu gây được hiệu ứng xấu mới, chiêu tấn công kế tiếp trong 2 lượt được cộng 39 uy lực. Mất máu mỗi lượt không tính là gây hiệu ứng mới; không cộng dồn."
     },
     {
       "speciesId": 89,
@@ -1889,12 +1889,12 @@
       "type": "status_followup",
       "factor": 6,
       "sourceValue": 8,
-      "value": 48,
+      "value": 24,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +48 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
+      "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +24 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
       "matchesJavaExport": false,
-      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 48 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
+      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 24 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
     },
     {
       "speciesId": 108,
@@ -1906,12 +1906,12 @@
       "type": "status_followup",
       "factor": 6,
       "sourceValue": 11,
-      "value": 66,
+      "value": 33,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +66 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
+      "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +33 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
       "matchesJavaExport": false,
-      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 66 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
+      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 33 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
     },
     {
       "speciesId": 109,
@@ -1923,12 +1923,12 @@
       "type": "status_followup",
       "factor": 6,
       "sourceValue": 14,
-      "value": 84,
+      "value": 42,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +84 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
+      "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +42 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
       "matchesJavaExport": false,
-      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 84 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
+      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 42 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
     },
     {
       "speciesId": 110,
@@ -2127,12 +2127,12 @@
       "type": "electric_charge",
       "factor": 6,
       "sourceValue": 8,
-      "value": 48,
+      "value": 24,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 48 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 24 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
       "matchesJavaExport": false,
-      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 48 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
+      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 24 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
     },
     {
       "speciesId": 122,
@@ -2144,12 +2144,12 @@
       "type": "electric_charge",
       "factor": 6,
       "sourceValue": 11,
-      "value": 66,
+      "value": 33,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 66 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 33 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
       "matchesJavaExport": false,
-      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 66 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
+      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 33 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
     },
     {
       "speciesId": 123,
@@ -2161,12 +2161,12 @@
       "type": "electric_charge",
       "factor": 6,
       "sourceValue": 14,
-      "value": 84,
+      "value": 42,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 84 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 42 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
       "matchesJavaExport": false,
-      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 84 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
+      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 42 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
     },
     {
       "speciesId": 124,
@@ -2178,12 +2178,12 @@
       "type": "electric_charge",
       "factor": 6,
       "sourceValue": 13,
-      "value": 78,
+      "value": 39,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 78 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 39 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
       "matchesJavaExport": false,
-      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 78 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
+      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 39 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
     },
     {
       "speciesId": 125,
@@ -2246,12 +2246,12 @@
       "type": "alternating_skill_combo",
       "factor": 6,
       "sourceValue": 15,
-      "value": 90,
+      "value": 45,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Dùng 2 chiêu trực tiếp khác nhau liên tiếp: chiêu trực tiếp tiếp theo +90 Power rồi xóa đà. Không tích từ hit phụ; khống chế bỏ lượt/đổi pet xóa đà.",
+      "description": "Dùng 2 chiêu trực tiếp khác nhau liên tiếp: chiêu trực tiếp tiếp theo +45 Power rồi xóa đà. Không tích từ hit phụ; khống chế bỏ lượt/đổi pet xóa đà.",
       "matchesJavaExport": false,
-      "summary": "Dùng 2 chiêu tấn công khác nhau liên tiếp thì chiêu tấn công kế tiếp được cộng 90 uy lực, sau đó đếm lại từ đầu. Bị khống chế mất lượt hoặc rời sân thì mất chuỗi."
+      "summary": "Dùng 2 chiêu tấn công khác nhau liên tiếp thì chiêu tấn công kế tiếp được cộng 45 uy lực, sau đó đếm lại từ đầu. Bị khống chế mất lượt hoặc rời sân thì mất chuỗi."
     },
     {
       "speciesId": 129,
@@ -2280,12 +2280,12 @@
       "type": "utility_next_power",
       "factor": 6,
       "sourceValue": 10,
-      "value": 60,
+      "value": 30,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Sau chiêu Power 0: chiêu damage kế tiếp +60 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
+      "description": "Sau chiêu Power 0: chiêu damage kế tiếp +30 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
       "matchesJavaExport": false,
-      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 60 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
+      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 30 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
     },
     {
       "speciesId": 131,
@@ -2297,12 +2297,12 @@
       "type": "utility_next_power",
       "factor": 6,
       "sourceValue": 14,
-      "value": 84,
+      "value": 42,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Sau chiêu Power 0: chiêu damage kế tiếp +84 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
+      "description": "Sau chiêu Power 0: chiêu damage kế tiếp +42 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
       "matchesJavaExport": false,
-      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 84 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
+      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 42 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
     },
     {
       "speciesId": 132,
@@ -2314,12 +2314,12 @@
       "type": "utility_next_power",
       "factor": 6,
       "sourceValue": 17,
-      "value": 102,
+      "value": 51,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Sau chiêu Power 0: chiêu damage kế tiếp +102 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
+      "description": "Sau chiêu Power 0: chiêu damage kế tiếp +51 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
       "matchesJavaExport": false,
-      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 102 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
+      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 51 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
     },
     {
       "speciesId": 133,
@@ -2501,12 +2501,12 @@
       "type": "debuff_resonance",
       "factor": 6,
       "sourceValue": 8,
-      "value": 48,
+      "value": 24,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Đặt mới debuff bằng chiêu: nhận 1 dấu âm trong 2 lượt; chiêu trực tiếp kế tiếp +48 Power rồi xóa dấu. Không tích từ DOT tick, tối đa 1 dấu.",
+      "description": "Đặt mới debuff bằng chiêu: nhận 1 dấu âm trong 2 lượt; chiêu trực tiếp kế tiếp +24 Power rồi xóa dấu. Không tích từ DOT tick, tối đa 1 dấu.",
       "matchesJavaExport": false,
-      "summary": "Khi dùng chiêu gây được hiệu ứng xấu mới, chiêu tấn công kế tiếp trong 2 lượt được cộng 48 uy lực. Mất máu mỗi lượt không tính là gây hiệu ứng mới; không cộng dồn."
+      "summary": "Khi dùng chiêu gây được hiệu ứng xấu mới, chiêu tấn công kế tiếp trong 2 lượt được cộng 24 uy lực. Mất máu mỗi lượt không tính là gây hiệu ứng mới; không cộng dồn."
     },
     {
       "speciesId": 144,
@@ -2518,12 +2518,12 @@
       "type": "debuff_resonance",
       "factor": 6,
       "sourceValue": 11,
-      "value": 66,
+      "value": 33,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Đặt mới debuff bằng chiêu: nhận 1 dấu âm trong 2 lượt; chiêu trực tiếp kế tiếp +66 Power rồi xóa dấu. Không tích từ DOT tick, tối đa 1 dấu.",
+      "description": "Đặt mới debuff bằng chiêu: nhận 1 dấu âm trong 2 lượt; chiêu trực tiếp kế tiếp +33 Power rồi xóa dấu. Không tích từ DOT tick, tối đa 1 dấu.",
       "matchesJavaExport": false,
-      "summary": "Khi dùng chiêu gây được hiệu ứng xấu mới, chiêu tấn công kế tiếp trong 2 lượt được cộng 66 uy lực. Mất máu mỗi lượt không tính là gây hiệu ứng mới; không cộng dồn."
+      "summary": "Khi dùng chiêu gây được hiệu ứng xấu mới, chiêu tấn công kế tiếp trong 2 lượt được cộng 33 uy lực. Mất máu mỗi lượt không tính là gây hiệu ứng mới; không cộng dồn."
     },
     {
       "speciesId": 145,
@@ -2535,12 +2535,12 @@
       "type": "debuff_resonance",
       "factor": 6,
       "sourceValue": 14,
-      "value": 84,
+      "value": 42,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Đặt mới debuff bằng chiêu: nhận 1 dấu âm trong 2 lượt; chiêu trực tiếp kế tiếp +84 Power rồi xóa dấu. Không tích từ DOT tick, tối đa 1 dấu.",
+      "description": "Đặt mới debuff bằng chiêu: nhận 1 dấu âm trong 2 lượt; chiêu trực tiếp kế tiếp +42 Power rồi xóa dấu. Không tích từ DOT tick, tối đa 1 dấu.",
       "matchesJavaExport": false,
-      "summary": "Khi dùng chiêu gây được hiệu ứng xấu mới, chiêu tấn công kế tiếp trong 2 lượt được cộng 84 uy lực. Mất máu mỗi lượt không tính là gây hiệu ứng mới; không cộng dồn."
+      "summary": "Khi dùng chiêu gây được hiệu ứng xấu mới, chiêu tấn công kế tiếp trong 2 lượt được cộng 42 uy lực. Mất máu mỗi lượt không tính là gây hiệu ứng mới; không cộng dồn."
     },
     {
       "speciesId": 146,
@@ -2603,12 +2603,12 @@
       "type": "status_followup",
       "factor": 6,
       "sourceValue": 8,
-      "value": 48,
+      "value": 24,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +48 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
+      "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +24 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
       "matchesJavaExport": false,
-      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 48 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
+      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 24 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
     },
     {
       "speciesId": 150,
@@ -2620,12 +2620,12 @@
       "type": "status_followup",
       "factor": 6,
       "sourceValue": 14,
-      "value": 84,
+      "value": 42,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +84 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
+      "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +42 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
       "matchesJavaExport": false,
-      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 84 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
+      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 42 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
     },
     {
       "speciesId": 151,
@@ -2637,12 +2637,12 @@
       "type": "status_followup",
       "factor": 6,
       "sourceValue": 14,
-      "value": 84,
+      "value": 42,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +84 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
+      "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +42 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
       "matchesJavaExport": false,
-      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 84 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
+      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 42 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
     },
     {
       "speciesId": 152,
@@ -2722,12 +2722,12 @@
       "type": "utility_next_power",
       "factor": 6,
       "sourceValue": 10,
-      "value": 60,
+      "value": 30,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Sau chiêu Power 0: chiêu damage kế tiếp +60 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
+      "description": "Sau chiêu Power 0: chiêu damage kế tiếp +30 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
       "matchesJavaExport": false,
-      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 60 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
+      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 30 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
     },
     {
       "speciesId": 157,
@@ -2739,12 +2739,12 @@
       "type": "utility_next_power",
       "factor": 6,
       "sourceValue": 17,
-      "value": 102,
+      "value": 51,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Sau chiêu Power 0: chiêu damage kế tiếp +102 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
+      "description": "Sau chiêu Power 0: chiêu damage kế tiếp +51 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
       "matchesJavaExport": false,
-      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 102 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
+      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 51 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
     },
     {
       "speciesId": 158,
@@ -2892,12 +2892,12 @@
       "type": "alternating_skill_combo",
       "factor": 6,
       "sourceValue": 15,
-      "value": 90,
+      "value": 45,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Dùng 2 chiêu trực tiếp khác nhau liên tiếp: chiêu trực tiếp tiếp theo +90 Power rồi xóa đà. Không tích từ hit phụ; khống chế bỏ lượt/đổi pet xóa đà.",
+      "description": "Dùng 2 chiêu trực tiếp khác nhau liên tiếp: chiêu trực tiếp tiếp theo +45 Power rồi xóa đà. Không tích từ hit phụ; khống chế bỏ lượt/đổi pet xóa đà.",
       "matchesJavaExport": false,
-      "summary": "Dùng 2 chiêu tấn công khác nhau liên tiếp thì chiêu tấn công kế tiếp được cộng 90 uy lực, sau đó đếm lại từ đầu. Bị khống chế mất lượt hoặc rời sân thì mất chuỗi."
+      "summary": "Dùng 2 chiêu tấn công khác nhau liên tiếp thì chiêu tấn công kế tiếp được cộng 45 uy lực, sau đó đếm lại từ đầu. Bị khống chế mất lượt hoặc rời sân thì mất chuỗi."
     },
     {
       "speciesId": 167,
@@ -2909,12 +2909,12 @@
       "type": "alternating_skill_combo",
       "factor": 6,
       "sourceValue": 15,
-      "value": 90,
+      "value": 45,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Dùng 2 chiêu trực tiếp khác nhau liên tiếp: chiêu trực tiếp tiếp theo +90 Power rồi xóa đà. Không tích từ hit phụ; khống chế bỏ lượt/đổi pet xóa đà.",
+      "description": "Dùng 2 chiêu trực tiếp khác nhau liên tiếp: chiêu trực tiếp tiếp theo +45 Power rồi xóa đà. Không tích từ hit phụ; khống chế bỏ lượt/đổi pet xóa đà.",
       "matchesJavaExport": false,
-      "summary": "Dùng 2 chiêu tấn công khác nhau liên tiếp thì chiêu tấn công kế tiếp được cộng 90 uy lực, sau đó đếm lại từ đầu. Bị khống chế mất lượt hoặc rời sân thì mất chuỗi."
+      "summary": "Dùng 2 chiêu tấn công khác nhau liên tiếp thì chiêu tấn công kế tiếp được cộng 45 uy lực, sau đó đếm lại từ đầu. Bị khống chế mất lượt hoặc rời sân thì mất chuỗi."
     },
     {
       "speciesId": 168,
@@ -3164,12 +3164,12 @@
       "type": "debuff_resonance",
       "factor": 6,
       "sourceValue": 13,
-      "value": 78,
+      "value": 39,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Đặt mới debuff bằng chiêu: nhận 1 dấu âm trong 2 lượt; chiêu trực tiếp kế tiếp +78 Power rồi xóa dấu. Không tích từ DOT tick, tối đa 1 dấu.",
+      "description": "Đặt mới debuff bằng chiêu: nhận 1 dấu âm trong 2 lượt; chiêu trực tiếp kế tiếp +39 Power rồi xóa dấu. Không tích từ DOT tick, tối đa 1 dấu.",
       "matchesJavaExport": false,
-      "summary": "Khi dùng chiêu gây được hiệu ứng xấu mới, chiêu tấn công kế tiếp trong 2 lượt được cộng 78 uy lực. Mất máu mỗi lượt không tính là gây hiệu ứng mới; không cộng dồn."
+      "summary": "Khi dùng chiêu gây được hiệu ứng xấu mới, chiêu tấn công kế tiếp trong 2 lượt được cộng 39 uy lực. Mất máu mỗi lượt không tính là gây hiệu ứng mới; không cộng dồn."
     },
     {
       "speciesId": 183,
@@ -3198,12 +3198,12 @@
       "type": "utility_next_power",
       "factor": 6,
       "sourceValue": 17,
-      "value": 102,
+      "value": 51,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Sau chiêu Power 0: chiêu damage kế tiếp +102 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
+      "description": "Sau chiêu Power 0: chiêu damage kế tiếp +51 Power trong 2 lượt rồi xóa dấu, tối đa 1 dấu. Không lặp để tích nhiều tầng.",
       "matchesJavaExport": false,
-      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 102 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
+      "summary": "Sau khi dùng chiêu không gây sát thương (chiêu hỗ trợ), chiêu tấn công kế tiếp trong 2 lượt được cộng 51 uy lực. Dùng chiêu hỗ trợ nhiều lần cũng không cộng dồn."
     },
     {
       "speciesId": 185,
@@ -3674,12 +3674,12 @@
       "type": "status_followup",
       "factor": 6,
       "sourceValue": 8,
-      "value": 48,
+      "value": 24,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +48 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
+      "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +24 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
       "matchesJavaExport": false,
-      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 48 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
+      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 24 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
     },
     {
       "speciesId": 213,
@@ -3691,12 +3691,12 @@
       "type": "status_followup",
       "factor": 6,
       "sourceValue": 14,
-      "value": 84,
+      "value": 42,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +84 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
+      "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +42 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
       "matchesJavaExport": false,
-      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 84 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
+      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 42 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
     },
     {
       "speciesId": 214,
@@ -3708,12 +3708,12 @@
       "type": "electric_charge",
       "factor": 6,
       "sourceValue": 8,
-      "value": 48,
+      "value": 24,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 48 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 24 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
       "matchesJavaExport": false,
-      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 48 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
+      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 24 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
     },
     {
       "speciesId": 215,
@@ -3725,12 +3725,12 @@
       "type": "electric_charge",
       "factor": 6,
       "sourceValue": 11,
-      "value": 66,
+      "value": 33,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 66 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 33 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
       "matchesJavaExport": false,
-      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 66 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
+      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 33 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
     },
     {
       "speciesId": 216,
@@ -3742,12 +3742,12 @@
       "type": "electric_charge",
       "factor": 6,
       "sourceValue": 14,
-      "value": 84,
+      "value": 42,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 84 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 42 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
       "matchesJavaExport": false,
-      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 84 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
+      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 42 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
     },
     {
       "speciesId": 217,
@@ -3810,12 +3810,12 @@
       "type": "low_hp_power_trade",
       "factor": 6,
       "sourceValue": 15,
-      "value": 90,
+      "value": 45,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "HP dưới 50%: chiêu damage kế tiếp +90 Power, sau đó trả 5% HP tối đa, không tự gục. 1 lần/3 lượt, không kích nếu HP không đủ trả.",
+      "description": "HP dưới 50%: chiêu damage kế tiếp +45 Power, sau đó trả 5% HP tối đa, không tự gục. 1 lần/3 lượt, không kích nếu HP không đủ trả.",
       "matchesJavaExport": false,
-      "summary": "Khi HP còn dưới 50%, chiêu tấn công tiếp theo được cộng 90 uy lực, đổi lại pet mất 5% HP tối đa (không bao giờ tự làm mình gục; không đủ HP để trả thì không kích hoạt). Cứ 3 lượt kích hoạt được 1 lần."
+      "summary": "Khi HP còn dưới 50%, chiêu tấn công tiếp theo được cộng 45 uy lực, đổi lại pet mất 5% HP tối đa (không bao giờ tự làm mình gục; không đủ HP để trả thì không kích hoạt). Cứ 3 lượt kích hoạt được 1 lần."
     },
     {
       "speciesId": 221,
@@ -3827,12 +3827,12 @@
       "type": "low_hp_power_trade",
       "factor": 6,
       "sourceValue": 22,
-      "value": 132,
+      "value": 66,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "HP dưới 50%: chiêu damage kế tiếp +132 Power, sau đó trả 5% HP tối đa, không tự gục. 1 lần/3 lượt, không kích nếu HP không đủ trả.",
+      "description": "HP dưới 50%: chiêu damage kế tiếp +66 Power, sau đó trả 5% HP tối đa, không tự gục. 1 lần/3 lượt, không kích nếu HP không đủ trả.",
       "matchesJavaExport": false,
-      "summary": "Khi HP còn dưới 50%, chiêu tấn công tiếp theo được cộng 132 uy lực, đổi lại pet mất 5% HP tối đa (không bao giờ tự làm mình gục; không đủ HP để trả thì không kích hoạt). Cứ 3 lượt kích hoạt được 1 lần."
+      "summary": "Khi HP còn dưới 50%, chiêu tấn công tiếp theo được cộng 66 uy lực, đổi lại pet mất 5% HP tối đa (không bao giờ tự làm mình gục; không đủ HP để trả thì không kích hoạt). Cứ 3 lượt kích hoạt được 1 lần."
     },
     {
       "speciesId": 222,
@@ -3912,12 +3912,12 @@
       "type": "status_followup",
       "factor": 6,
       "sourceValue": 8,
-      "value": 48,
+      "value": 24,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +48 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
+      "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +24 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
       "matchesJavaExport": false,
-      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 48 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
+      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 24 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
     },
     {
       "speciesId": 227,
@@ -3929,12 +3929,12 @@
       "type": "status_followup",
       "factor": 6,
       "sourceValue": 11,
-      "value": 66,
+      "value": 33,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +66 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
+      "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +33 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
       "matchesJavaExport": false,
-      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 66 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
+      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 33 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
     },
     {
       "speciesId": 228,
@@ -3946,12 +3946,12 @@
       "type": "status_followup",
       "factor": 6,
       "sourceValue": 14,
-      "value": 84,
+      "value": 42,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +84 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
+      "description": "Sau khi tự đặt thành công debuff mới: đòn trực tiếp tiếp theo +42 Power trong 2 lượt rồi tiêu dấu. 1 dấu; không kích từ làm mới cùng debuff.",
       "matchesJavaExport": false,
-      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 84 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
+      "summary": "Sau khi gây được một hiệu ứng xấu mới lên đối thủ, đòn tấn công kế tiếp trong 2 lượt được cộng 42 uy lực. Gây lại hiệu ứng đối thủ đang có thì không tính; không cộng dồn."
     },
     {
       "speciesId": 229,
@@ -4184,12 +4184,12 @@
       "type": "electric_charge",
       "factor": 6,
       "sourceValue": 8,
-      "value": 48,
+      "value": 24,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 48 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 24 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
       "matchesJavaExport": false,
-      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 48 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
+      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 24 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
     },
     {
       "speciesId": 243,
@@ -4201,12 +4201,12 @@
       "type": "electric_charge",
       "factor": 6,
       "sourceValue": 11,
-      "value": 66,
+      "value": 33,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 66 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 33 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
       "matchesJavaExport": false,
-      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 66 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
+      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 33 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
     },
     {
       "speciesId": 244,
@@ -4218,12 +4218,12 @@
       "type": "electric_charge",
       "factor": 6,
       "sourceValue": 14,
-      "value": 84,
+      "value": 42,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 84 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
+      "description": "Mỗi lần trực tiếp đánh trúng hoặc bị đánh trúng: tích 42 Power, cộng dồn tối đa 3 tầng, 3 lượt. Đòn hệ chính kế tiếp tiêu hết tầng; tối đa 1 tầng/lượt.",
       "matchesJavaExport": false,
-      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 84 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
+      "summary": "Mỗi lần đánh trúng hoặc bị đánh trúng, pet tích 42 uy lực trong 3 lượt, tích chồng tối đa 3 lần (mỗi lượt 1 lần). Chiêu tấn công cùng hệ của pet kế tiếp dùng hết số uy lực đã tích."
     },
     {
       "speciesId": 245,
@@ -4694,12 +4694,12 @@
       "type": "debuff_resonance",
       "factor": 6,
       "sourceValue": 15,
-      "value": 90,
+      "value": 45,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Đặt mới debuff bằng chiêu: nhận 1 dấu âm trong 2 lượt; chiêu trực tiếp kế tiếp +90 Power rồi xóa dấu. Không tích từ DOT tick, tối đa 1 dấu.",
+      "description": "Đặt mới debuff bằng chiêu: nhận 1 dấu âm trong 2 lượt; chiêu trực tiếp kế tiếp +45 Power rồi xóa dấu. Không tích từ DOT tick, tối đa 1 dấu.",
       "matchesJavaExport": false,
-      "summary": "Khi dùng chiêu gây được hiệu ứng xấu mới, chiêu tấn công kế tiếp trong 2 lượt được cộng 90 uy lực. Mất máu mỗi lượt không tính là gây hiệu ứng mới; không cộng dồn."
+      "summary": "Khi dùng chiêu gây được hiệu ứng xấu mới, chiêu tấn công kế tiếp trong 2 lượt được cộng 45 uy lực. Mất máu mỗi lượt không tính là gây hiệu ứng mới; không cộng dồn."
     },
     {
       "speciesId": 273,
@@ -4773,12 +4773,12 @@
       "type": "alternating_skill_combo",
       "factor": 6,
       "sourceValue": 16,
-      "value": 96,
+      "value": 48,
       "unit": "Power",
       "limits": "capsRemoved",
-      "description": "Dùng 2 chiêu trực tiếp khác nhau liên tiếp: chiêu trực tiếp tiếp theo +96 Power rồi xóa đà. Không tích từ hit phụ; khống chế bỏ lượt/đổi pet xóa đà.",
+      "description": "Dùng 2 chiêu trực tiếp khác nhau liên tiếp: chiêu trực tiếp tiếp theo +48 Power rồi xóa đà. Không tích từ hit phụ; khống chế bỏ lượt/đổi pet xóa đà.",
       "matchesJavaExport": false,
-      "summary": "Dùng 2 chiêu tấn công khác nhau liên tiếp thì chiêu tấn công kế tiếp được cộng 96 uy lực, sau đó đếm lại từ đầu. Bị khống chế mất lượt hoặc rời sân thì mất chuỗi."
+      "summary": "Dùng 2 chiêu tấn công khác nhau liên tiếp thì chiêu tấn công kế tiếp được cộng 48 uy lực, sau đó đếm lại từ đầu. Bị khống chế mất lượt hoặc rời sân thì mất chuỗi."
     },
     {
       "speciesId": 277,

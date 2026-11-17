@@ -116,12 +116,31 @@ export function unsupportedEventBattle(
 }
 
 /**
+ * Web rule (owner, 2026-11-16): a gym's 2v2 (`GYM_TRAINER` / `GYM_LEADER`, scene 9) has the player
+ * command both slots, so it needs two living pets. Java falls back to a 1v1 on the decoded roster
+ * with fewer; the web refuses the fight instead (`WorldRuntime.startEvent` says why).
+ */
+export function gymDoubleNeedsPair(
+  services: BattleServices,
+  group: GroupRef,
+  actorId: number,
+  party: readonly SavedPet[],
+): boolean {
+  const resolved = resolve(services, group, actorId);
+  if (!resolved.ok || enumName(resolved.row.encounter.battleFormat) !== "SIMULTANEOUS_2V2")
+    return false;
+  const kind = enumName(resolved.row.encounter.encounterClass);
+  return (
+    (kind === "GYM_TRAINER" || kind === "GYM_LEADER") &&
+    party.filter((pet) => (pet.currentHp ?? 1) > 0).length < 2
+  );
+}
+
+/**
  * The 2v2 descriptor to seat for this fight, or null for an ordinary 1v1.
  *
- * `VqsvBattleEventDescriptor.request`: every SIMULTANEOUS_2V2 encounter is fought 2v2. A gym
- * (`GYM_TRAINER` / `GYM_LEADER`, scene 9) has the player command both slots, so it needs two living
- * pets — with fewer, Java falls back to the decoded source roster, which `createEventBattle` builds.
- * The one non-gym 2v2 (Bích Thủy WS-2's soldiers, `SCENE2_ROOM0_GROUP1_SOLDIERS`) needs only one:
+ * `VqsvBattleEventDescriptor.request`: every SIMULTANEOUS_2V2 encounter is fought 2v2. A gym needs
+ * two living pets (`gymDoubleNeedsPair`: the world does not start it with fewer). The one non-gym 2v2 (Bích Thủy WS-2's soldiers, `SCENE2_ROOM0_GROUP1_SOLDIERS`) needs only one:
  * the player commands slot 2 and Harry's lent pets hold slot 3 under the COMPANION AI.
  */
 export function doubleEventBattleSymbol(
@@ -366,6 +385,7 @@ export function createSourceTrainerBattle(
     sceneId?: number;
     /** Authored boss stats (Kim Diễm Long Vương) instead of the species' own. */
     encounterStats?: CombatantSetup["stats"];
+    boss?: BattleSetup["boss"];
     /** A share of the stats by species (Đại Điện's hidden Divine pets keep their seal). */
     enemyStatPercent?: (speciesId: number) => number;
   },
@@ -404,6 +424,7 @@ export function createSourceTrainerBattle(
     inventory: bag,
     charms,
     sceneId: request.sceneId,
+    boss: request.boss,
     capturePolicy: "TRAINER_OWNED_FORBIDDEN",
   };
   const core = request.profile

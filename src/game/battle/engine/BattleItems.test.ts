@@ -152,17 +152,15 @@ describe("Cầu Vồng player-item recovery", () => {
     expect(core.bag()[4]).toBe(0);
   });
 
-  it("restores PP to a full-HP enemy with missing PP", () => {
+  it("has no PP to restore on a full-HP NPC pet, whose PP never runs out (ProMax)", () => {
     const core = single({ enemy: [pet()] });
     const events = core.submit({ kind: "item", itemId: 8 });
-    expect(events).toContainEqual(
-      expect.objectContaining({
-        type: "item",
-        seat: { side: "enemy", member: 0 },
-        hpGained: 0,
-        ppGained: 40,
-      }),
-    );
+    // The fight refills the NPC's PP itself, so the mirrored PP item finds nothing missing.
+    expect(
+      events.some((e) => e.type === "item" && e.seat.side === "enemy" && (e.ppGained ?? 0) > 0),
+    ).toBe(false);
+    const enemy = core.unit("enemy", 0);
+    expect(enemy.skillIds.every((id, slot) => id < 0 || enemy.skillPp[slot] > 0)).toBe(true);
   });
 
   it.each([{ sceneId: 97 }, { capturePolicy: "WILD_ALLOWED" }, { pvp: true }])(
@@ -232,7 +230,7 @@ describe("Cầu Vồng player-item recovery", () => {
     expect(core.bag()[4]).toBe(0);
   });
 
-  it("2v2 PP items choose the lowest total PP fraction when HP is full", () => {
+  it("2v2 PP items find no PP missing on NPC pets, whose PP never runs out (ProMax)", () => {
     const core = new DoubleBattleCore(
       rules,
       { items, skillRules, rulebook, catalog },
@@ -255,14 +253,15 @@ describe("Cầu Vồng player-item recovery", () => {
     core.start();
     core.submit({ kind: "item", itemId: 6, member: 0 });
     const events = core.submit({ kind: "skill", skillIndex: 0, target: 0 });
-    expect(events).toContainEqual(
-      expect.objectContaining({
-        type: "item",
-        target: 1,
-        ppGained: 33,
-        cauVongRecovery: { speciesId: 68 },
-      }),
-    );
+    expect(
+      events.some(
+        (e) => e.type === "item" && (e.target ?? -1) >= 0 && e.target! < 2 && (e.ppGained ?? 0) > 0,
+      ),
+    ).toBe(false);
+    for (const slot of [0, 1] as const) {
+      const enemy = core.unit(slot);
+      expect(enemy.skillIds.every((id, i) => id < 0 || enemy.skillPp[i] > 0)).toBe(true);
+    }
   });
 
   it("2v2 falls back to a living reserve and names its free recovery", () => {

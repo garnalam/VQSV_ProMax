@@ -284,7 +284,9 @@ describe("each divine beast's meeting rect lies at his feet in the APK layout", 
 });
 
 describe("task 46: Tomas's ritual in Vĩnh Hằng Kinh Phiên (7:2:g6), as JavaSE's XhtC4Runtime", () => {
-  it("starts as the hero steps in from 7:1 (the way from the temple); from every other door he walks to it", async () => {
+  // The APK dropped g6's rect (JAR [240,352,64,32]): its gate (7:0:1 done) is the whole trigger, so
+  // the ritual starts as the hero steps into 7:2 by any door (world/apk-events.json `groups`).
+  it("starts as the hero steps in, by every door", async () => {
     const { sourceDoors } = await import("../world/WorldTransition");
     const base = afterChain!;
     const states = Object.fromEntries(
@@ -309,9 +311,7 @@ describe("task 46: Tomas's ritual in Vĩnh Hằng Kinh Phiên (7:2:g6), as JavaS
           world: { ...base.world!, mainTaskProgress: 46 },
         });
       game.settle({});
-      if (from.scene === 7 && from.room === 1)
-        expect(game.world().eventState.sourceEventState(7, 2, 6), "on arrival from 7:1").toBe(3);
-      else await game.play(7, 2, 6);
+      expect(game.world().eventState.sourceEventState(7, 2, 6), `on arrival from ${from.scene}:${from.room}`).toBe(3);
       const end = await game.snapshot();
       expect(end.eventStates?.["7:2:6"], `from ${from.scene}:${from.room}`).toBe(3);
       expect(end.location.sceneId, `from ${from.scene}:${from.room}`).toBe(8);

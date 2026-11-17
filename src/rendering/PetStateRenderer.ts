@@ -245,7 +245,7 @@ export class PetStateRenderer {
     if (selected) {
       const name = ui.rows[start + selectedSlot]?.name ?? "";
       if (tab === 1) this.stats(g, name, selected, tick);
-      else if (tab === 2) this.traits(g, name, selected, tick);
+      else if (tab === 2) this.traits(g, name, selected, tick, ui.talent === true);
       else if (tab === 3) this.skills(g, name, selected, tick);
       else this.overview(g, name, selected, tick);
     }
@@ -557,21 +557,28 @@ export class PetStateRenderer {
     this.tiny(g, `B${buffs} / D${debuffs}`, 157, 201, 46, debuffs > 0 ? 16757417 : 13101785);
   }
 
-  /** `drawPetStateTraitDetails`: Đặc tính (the species trait selected). */
-  private traits(g: CanvasRenderingContext2D, name: string, pet: BattleUiPet, tick: number) {
+  /** `drawPetStateTraitDetails`: Đặc tính or Thiên phú, whichever row is selected. */
+  private traits(
+    g: CanvasRenderingContext2D,
+    name: string,
+    pet: BattleUiPet,
+    tick: number,
+    talent: boolean,
+  ) {
     const accent = petStateAccent(pet.element);
     fill(g, 30, 84, 178, 27, darkerColor(accent));
     fill(g, 30, 109, 178, 2, lighterColor(accent));
     this.marquee(g, name, 36, 88, 74, WHITE, tick);
     this.marquee(g, `Hệ: ${pet.elementName || "--"}`, 114, 88, 86, 12380142, tick);
     this.marquee(g, `Chủng: ${pet.speciesName || "--"}`, 36, 99, 164, 12380142, tick + 17);
-    this.traitRow(g, `Đặc tính: ${pet.trait?.name ?? ""}`, 113, true, tick);
-    this.traitRow(g, `Thiên phú: ${pet.talent?.name ?? ""}`, 128, false, tick);
+    this.traitRow(g, `Đặc tính: ${pet.trait?.name ?? ""}`, 113, !talent, tick);
+    this.traitRow(g, `Thiên phú: ${pet.talent?.name ?? ""}`, 128, talent, tick);
     fill(g, 30, 148, 176, 62, 15924217);
-    fill(g, 30, 148, 176, 12, 2980994);
+    fill(g, 30, 148, 176, 12, talent ? 13985106 : 2980994);
     rect(g, 30, 148, 175, 61, 8239288);
-    this.marquee(g, "Mô tả đặc tính", 36, 150, 164, WHITE, tick);
-    this.wrapped(g, pet.trait?.description ?? "", 36, 164, 164, 41, tick);
+    this.marquee(g, talent ? "Mô tả thiên phú" : "Mô tả đặc tính", 36, 150, 164, WHITE, tick);
+    const shown = talent ? pet.talent : pet.trait;
+    this.wrapped(g, shown?.description ?? "", 36, 164, 164, 41, tick);
   }
   /** `drawPetStateTraitRow`. */
   private traitRow(

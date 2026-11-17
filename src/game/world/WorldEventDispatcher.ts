@@ -272,6 +272,11 @@ export class WorldEventDispatcher {
     );
   }
   private dispatchable(trigger: WorldEventTrigger): boolean {
+    // Bug fix: Jones' egg exchange (4:5:g15) ends in op14, which closed it after the first egg.
+    // JavaSE (`NiemThoC2Runtime`) opens `JonesExchange` on every talk once 4:5:g18 is complete.
+    const { scene, room, group } = trigger.group;
+    if (scene === 4 && room === 5 && group === 15 && trigger.kind === "actor")
+      return this.ledger.sourceEventStateComplete(4, 5, 18);
     if (
       !this.ledger.sourceEventStateDispatchable(
         trigger.group.scene,

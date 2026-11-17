@@ -34,7 +34,10 @@ import {
 import { LoginOverlay } from "./LoginOverlay";
 import { AdminToolOverlay } from "./AdminToolOverlay";
 import { AdminApi } from "../account/AdminApi";
-import { RemoteAccountService } from "../account/RemoteAccountService";
+import { ADMIN_RELOAD_EVENT, RemoteAccountService } from "../account/RemoteAccountService";
+import { RewardsApi } from "../account/RewardsApi";
+import { GiftMailbox } from "./GiftMailbox";
+import { LiveChannel } from "./LiveChannel";
 import { importJavaSave, parseJavaProperties } from "../persistence/save/JavaSaveImport";
 import { importCatalogFor } from "../persistence/save/JavaSaveCatalog";
 
@@ -62,12 +65,31 @@ export class GameApp {
   /** The signed-in account; `admin` lists the Admin Tool in the game menu. */
   private account: Account | null = null;
   private adminTool: AdminToolOverlay | null = null;
+  /** Server gift codes and the mailbox, for an online account only. */
+  private readonly rewards =
+    this.accounts instanceof RemoteAccountService ? new RewardsApi() : null;
+  /** The gameplay screen on now, which the mailbox delivers gifts into. */
+  private gameplay: NewGameScreen | null = null;
+  private readonly mailbox = this.rewards
+    ? new GiftMailbox(this.rewards, () => this.gameplay?.host ?? null)
+    : null;
+  /** The admin page's commands to this game and its online heartbeat (online accounts only). */
+  private readonly live =
+    this.accounts instanceof RemoteAccountService
+      ? new LiveChannel(
+          () => this.gameplay?.host ?? null,
+          (reason) => this.reloadForAdmin(reason),
+        )
+      : null;
+  private reloading = false;
   private speedX2 = readSpeedPreference();
   private audio: AudioManager | null = null;
   private assets: BootAssets | null = null;
   private gameAssets: GameAssets | null = null;
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new CanvasRenderer(canvas);
+    // The server refused a save because an admin changed it since this game loaded it.
+    window.addEventListener(ADMIN_RELOAD_EVENT, () => this.reloadForAdmin("save"));
     bindDomInput(this.input, canvas, (clientX, clientY) => {
       // Screens read presses in the 240x320 UI box (`viewport.ui`), wherever it sits on the canvas.
       const bounds = canvas.getBoundingClientRect();
@@ -195,7 +217,58 @@ export class GameApp {
           },
         }
       : null;
+    screen.rewards = this.rewards;
+    this.gameplay = screen;
+    if (this.account) {
+      this.mailbox?.start();
+      this.live?.start();
+    }
     return screen;
+  }
+  /**
+   * An admin asked this game to reload (`LiveChannel`), or changed its save: the game reloads and
+   * plays on from the cloud save. A plain reload first saves where the hero stands, when he can.
+   */
+  private reloadForAdmin(reason: string | undefined): void {
+    if (this.reloading) return;
+    this.reloading = true;
+    this.live?.stop();
+    this.mailbox?.stop();
+    if (!reason) this.gameplay?.host?.saveIfResting();
+    const note = document.createElement("div");
+    note.textContent = reason
+      ? "Quản trị viên vừa cập nhật tiến trình của bạn. Game đang tải lại…"
+      : "Quản trị viên yêu cầu tải lại game. Đang tải lại…";
+    note.setAttribute("role", "status");
+    note.style.cssText =
+      "position:fixed;left:50%;top:16px;transform:translateX(-50%);z-index:9999;max-width:calc(100% - 32px);" +
+      "padding:10px 14px;border-radius:8px;background:#1d2b44;color:#fff;font:14px/1.4 system-ui,sans-serif;" +
+      "box-shadow:0 4px 16px rgba(0,0,0,.4)";
+    document.body.append(note);
+    void this.reenterForAdmin(note);
+  }
+  /**
+   * Plays on from the cloud save without leaving the page, so the player stays signed in: a fresh
+   * save repository reads the server's row again. Anything unexpected reloads the whole page.
+   */
+  private async reenterForAdmin(note: HTMLElement): Promise<void> {
+    const written = this.activeSaveService?.flush().catch(() => undefined) ?? Promise.resolve();
+    await Promise.race([written, new Promise((resolve) => window.setTimeout(resolve, 4_000))]);
+    await new Promise((resolve) => window.setTimeout(resolve, 800));
+    const account = this.account;
+    try {
+      if (!account) throw new Error("signed out");
+      // The old session stops here: no more ticks, and its saver writes nothing after this point.
+      this.screens.replace(BLANK);
+      this.gameplay = null;
+      this.activeSaveService = null;
+      this.saves = this.accounts.saves(account);
+      await this.startBoundary({ loadSave: true, skipIntro: false, speedX2: this.speedX2 });
+      note.remove();
+      this.reloading = false;
+    } catch {
+      window.location.reload();
+    }
   }
   /**
    * The first panel (and where leaving the game returns to): sign in to play on from the
@@ -203,6 +276,9 @@ export class GameApp {
    */
   private showLogin(): void {
     this.account = null;
+    this.gameplay = null;
+    this.mailbox?.stop();
+    this.live?.stop();
     this.adminTool?.hide();
     this.gameplayClock.setSpeedX2(false);
     this.audio?.playMenu();

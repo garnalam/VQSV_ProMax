@@ -15,6 +15,7 @@
 // (`cau-vong-world/four-gates.json`); this file is the owner's decisions.
 import type { AcademyBattle } from "./CauVongAcademy";
 import type { CauVongAward, CauVongCue, CauVongPart, CauVongPetCue } from "./CauVongCutscene";
+import { CAU_VONG_NPC_FOOTPRINT, type CauVongMechanic } from "./CauVongWorld";
 
 type Say = Extract<CauVongCue, { k: "say" }>;
 /** Java's `Integer.MAX_VALUE` "to the end" bound, as the bake keys the replies ("room:event:from:2147483647"). */
@@ -750,6 +751,20 @@ export function fourGatesWalker(
   // `CauVongWestGateRuntime`: 18's first visit writes its line (18:100). 17/19/57/58 are chapter 8.
   if (room === 18 && !w.done(18, 100)) return { kind: "line", text: doc.text.west18 };
   return null;
+}
+
+/** A Soái is added by the North Gate scene, so the base room has no NPC footprint for him. */
+export function fourGatesTalkers(
+  doc: CauVongFourGatesDocument | undefined,
+  room: number,
+  done: FourGatesWorld["done"],
+): Record<number, CauVongMechanic> | undefined {
+  if (!doc || room !== 9 || !done(9, doc.parts.NORTH_NOTICE.flag) || done(9, 104)) return;
+  const aSoaiId = doc.actors[room]?.[13];
+  if (aSoaiId === undefined) return;
+  return {
+    [aSoaiId]: { kind: 0, behavior: 1, dx: 10, dy: 19, mask: CAU_VONG_NPC_FOOTPRINT, talk: "npc" },
+  };
 }
 
 /** `CauVongFourGateSourceRuntime.applyCast` (and the 52 lever's frame). */

@@ -7,6 +7,7 @@
  * living pet a usable slot again. When both went dry in the same action (a drain charm emptying the
  * foe with the blow that spent the actor's last PP), the acting team spent its PP first and loses.
  */
+import type { BattleItem } from "./BattleItems";
 
 type Side = "player" | "enemy";
 
@@ -23,6 +24,29 @@ export function teamOutOfPp(team: PpTeam): boolean {
     living.length > 0 &&
     living.every((unit) => unit.skillIds.every((id, slot) => id < 0 || unit.skillPp[slot] <= 0))
   );
+}
+
+/**
+ * ProMax, a fight against an NPC: its PP never runs out, so "both teams dry" can never happen. The
+ * player's team has lost once it is dry with nothing left in the bag that gives PP back — otherwise
+ * a foe that cannot knock the last pet out would pass turns with it forever.
+ */
+export function playerOutOfPpForGood(
+  team: PpTeam,
+  bag: Readonly<Record<number, number>>,
+  itemsAllowed: boolean,
+  item: (id: number) => BattleItem | undefined,
+): boolean {
+  if (!teamOutOfPp(team)) return false;
+  if (!itemsAllowed) return true;
+  return !Object.entries(bag).some(([id, count]) => {
+    if (count <= 0) return false;
+    const found = item(Number(id));
+    return (
+      found?.kind === "recovery" &&
+      (found.mechanic === "restore_pp" || found.mechanic === "restore_hp_pp")
+    );
+  });
 }
 
 export class PpExhaustion {

@@ -32,14 +32,26 @@ The actors only the APK has are added too (`added`, 131): props and wandering vi
 from the start. Hidden ones and new gated obstacles (cuttable trees, breakable rocks) are left out,
 since no APK event here would show or clear them.
 
-## Event positions
+## Events (APK records)
 
-`node apk-events.mjs <jarDecodedEventDir> <jarEventDir> <apkEventDir> public/pack/world` writes
-`world/apk-events.json`: the APK values of the records that hold world positions (op13 trigger
-rectangles, op8 places, op22 arrivals in the room the next op6/op76 loads, op57/58 block tiles), in
-game coordinates. `GameApp` lays them over the story registry with the actors. The screen-space
-records (op9/11/21) stay. A room whose count of an opcode changed in the APK keeps the JAR values
-for that opcode (13 records).
+`node apk-events.mjs <jarEventDir> <apkEventDir> public/pack/world` writes `world/apk-events.json` (v2).
+`event-decode.mjs` reads a scene_N.mid whole, as the game does (game/l.java, game/e.java, b/a.java,
+b/b.java); on the JAR originals it reproduces modules/event/decoded exactly. The APK keeps every
+room's group count, so the two are compared group by group:
+
+- same record list: `rooms` edits `[group, record, shortArgs]` with the APK's world positions (op8,
+  op13 with its size, op22 in the room the next op6/op76 loads, op57/58), moved into game
+  coordinates, and its other changed short arguments (op6 arrival actor, op36, ...).
+- rewritten by the APK (23 groups: rects dropped so the event runs on entering, as 9:1:g0 and
+  7:2:g6; rects swapped for op15 gates, 10:8:g1 and 10:12:g2; a rect added, 7:2:g1; camera pans cut
+  in the Lôi Kỳ Lân block rooms): `groups`, the APK's records whole, matched to the JAR's by
+  opcode and text.
+
+Screen-space records (op9/11/21/48/51) and texts keep the JAR values. Scene 0 is left alone, and
+groups a story route plays by record index (5:3:g0 in the opening, 1:3:g0) keep the JAR list and
+take only the positions. `GameApp` lays it over the registry with the actors (`applyApkEvents`).
+The old scan matched the k-th op13 of a whole room, so where the APK moved a rect from one group to
+another (7:2) it gave one group's rect to the other.
 
 ## UI layouts (APK 320x240)
 

@@ -181,7 +181,9 @@ describe("Bích Lam Cốc C1 side quests: Karen's four elements and the lucky fr
       "Doranle bệ hạ. Đây là thứ Karen nhờ tôi giao chongài.",
     );
     expect(played.get("11:3:1")!.lines.at(-1)).toBe("Đạt được: Cao cấp cầu x 2");
-    expect(save.story.quest?.branch).toBe("22:3,24:3,25:3,26:1");
+    // 21:1 is the resume repair (`recoverBranchTasks`): the fixture's ledger has Jani Las's offer
+    // 5:5:g1 ended in op14, which only "Tiếp nhận" reaches.
+    expect(save.story.quest?.branch).toBe("21:1,22:3,24:3,25:3,26:1");
     // `AimieFruitCompletion` reads flag 20, the fruit Karen hands over in 7:6:g2.
     expect(save.world?.sourceWorldFlags).toContain(20);
   });

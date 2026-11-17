@@ -34,6 +34,7 @@ import { WorldPanel } from "../world/WorldPanel";
 import { DoorGraph, type StoryGraph } from "../story/StoryGraph";
 import { StoryDirector, type StoryAction, type StorySignal } from "../story/StoryDirector";
 import type { QuestCatalog } from "../quest/QuestCatalog";
+import { TASK_ACTIVE, TASK_COMPLETE, TASK_NONE } from "../quest/QuestLog";
 import { AREA_MAP_NO_MAP_TEXT, AreaMapView, type AreaMapCatalog } from "../world/AreaMap";
 import {
   PET_ITEM_MISSING,
@@ -62,6 +63,7 @@ import {
 } from "../record/RecordBook";
 
 import type { AdminGrant } from "../../account/AdminApi";
+import type { ClaimedGift } from "../../account/RewardsApi";
 import {
   ADMIN_KIND_LABELS,
   adminItemChoices,
@@ -82,6 +84,7 @@ import type { PetSkillRow, PetSkillSheet } from "../world/WorldPanel";
 import { EvolutionSession } from "../pet/EvolutionSession";
 import { repairEvolvedSprite, type EvolutionCatalog } from "../pet/Evolution";
 import { QualityUpgradeSession } from "../pet/QualityUpgradeSession";
+import { EconomyLedger } from "../economy/EconomyLedger";
 import { ROLL_BOUND } from "../pet/QualityUpgrade";
 import {
   skillElementName,
@@ -119,7 +122,7 @@ import {
   type PortableShopInventory,
 } from "../shop/PortableShop";
 import { buyFashionBags, exchangeFashion, openFashionBag } from "../fashion/FashionEconomy";
-import { redeemGiftCode, type GiftCodeDocument } from "../meta/GiftCodes";
+import { redeemGiftCode, type GiftCodeDocument, type GiftCodeResult } from "../meta/GiftCodes";
 import {
   cycleRematchRegion,
   recordRematchStart,
@@ -301,6 +304,8 @@ export type GameplayHooks = {
   volume?: { level: () => number; setLevel: (level: number) => void };
   /** The signed-in account is an admin: the game menu lists "Admin Tool", which opens it. */
   admin?: { enabled: () => boolean; open: () => void };
+  /** An online account: gift codes the packaged catalog does not know are asked of the server. */
+  rewards?: { redeem: (code: string, bankFree: number) => Promise<ClaimedGift> };
 };
 
 /** What the Admin Tool's lists show. */
@@ -647,7 +652,11 @@ export class GameplayHost {
       },
     };
     this.panel.charmSource = {
-      definitions: () => this.sources.world.rainbowCharms?.definitions ?? [],
+      // The manager reads the list first each frame: a charm gifted since the last look is owned.
+      definitions: () => {
+        this.world?.syncCharms();
+        return this.sources.world.rainbowCharms?.definitions ?? [];
+      },
       tier: (id) => this.world?.campaign.charms.tiers[String(id)] ?? 0,
       owns: (id) => this.world?.campaign.charms.tiers[String(id)] !== undefined,
       activeId: (slot) => this.world?.campaign.charms.active[slot] ?? -1,
@@ -841,8 +850,11 @@ export class GameplayHost {
     this.panel.giftCodeSource = {
       redeem: (code) => {
         const world = this.world;
-        return world && this.sources.giftCodes
-          ? redeemGiftCode(
+        if (this.redeemingOnServer)
+          return { outcome: "invalid", code, message: "Đang kiểm tra mã trên máy chủ..." };
+        const local: GiftCodeResult =
+          world && this.sources.giftCodes
+            ? redeemGiftCode(
               this.sources.giftCodes.codes,
               {
                 currency: world.currency,
@@ -859,7 +871,28 @@ export class GameplayHost {
               code,
               Date.now(),
             )
-          : { outcome: "invalid", code, message: "Giftcode chưa sẵn sàng." };
+            : { outcome: "invalid", code, message: "Giftcode chưa sẵn sàng." };
+        // A code the packaged catalog does not know may be one an admin made on the server.
+        const rewards = this.hooks.rewards;
+        if (!world || !rewards || local.outcome !== "invalid" || !this.sources.giftCodes)
+          return local;
+        if (!/^[A-Z0-9_-]{4,32}$/.test(local.code)) return local;
+        this.redeemingOnServer = true;
+        rewards
+          .redeem(local.code, this.petBankFree)
+          .then((gift) => {
+            this.ledger.expect(`gift:${local.code}`);
+            const lines = this.applyGifts(gift.grants);
+            this.panel.giftCodeMessage = lines
+              ? `Đã nhận quà: ${gift.body}`
+              : "Chỉ nhận được quà khi đang ở bản đồ.";
+          })
+          .catch((error: unknown) => {
+            this.panel.giftCodeMessage =
+              error instanceof Error ? error.message : "Không kiểm tra được giftcode.";
+          })
+          .finally(() => (this.redeemingOnServer = false));
+        return { outcome: "invalid", code: local.code, message: "Đang kiểm tra mã trên máy chủ..." };
       },
     };
     this.panel.battlePassSource = {
@@ -940,6 +973,7 @@ export class GameplayHost {
       const world = this.story.enterWorld(this.createWorld(start.save));
       const record = start.save.story.quest as Parameters<StoryDirector["restore"]>[0];
       this.director?.restore(record, start.save.progress.activeTask ?? world.flags.activeTask);
+      this.recoverBranchTasks(world);
       this.observed = {
         world: true,
         room: `${world.sceneId}:${world.roomIndex}`,
@@ -984,7 +1018,33 @@ export class GameplayHost {
   }
 
   /** One simulation tick with this tick's commands. Returns the layer that owned it. */
+  /** Web only: where each money change and pet came from, carried in the save (`EconomyLedger`). */
+  private ledger = new EconomyLedger();
+  /** Names the source of the next money or pet change (a letter, a server gift code). */
+  expectLedger(source: string): void {
+    this.ledger.expect(source);
+  }
+  private ledgerContext(world: WorldRuntime): string {
+    return this.panel.visible ? `panel:${this.panel.mode}` : world.ledgerContext();
+  }
+  private observeLedger(world: WorldRuntime, context: string): void {
+    this.ledger.observe(world.currency.money, [...world.pets, ...world.campaign.petBank], context);
+  }
+
   step(commands: InputCommand[]): GameplayLayer {
+    // A change found after the tick is put down to what the game was in when the tick began (a
+    // fight paying out as it closes), or, from free walking, to what the tick opened.
+    const world = this.world,
+      before = world ? this.ledgerContext(world) : "world",
+      layer = this.stepLayers(commands);
+    if (world && world === this.world) {
+      const after = this.ledgerContext(world);
+      this.observeLedger(world, before === "world" ? after : before);
+    }
+    return layer;
+  }
+
+  private stepLayers(commands: InputCommand[]): GameplayLayer {
     // `Scene.tick`'s first branch, above every layer: a room swap holds the whole session for its
     // 16 ticks, so a cutscene that started on the same tick waits behind the loading screen too.
     if (this.world?.tickMapLoading()) {
@@ -1106,7 +1166,7 @@ export class GameplayHost {
    * `AdminApi.authorize` reach here; the lists' own caps (99 per bag stack, one copy of a piece of
    * equipment, the bank's capacity) still hold.
    */
-  applyAdminGrant(grant: AdminGrant): string {
+  applyAdminGrant(grant: AdminGrant, save = true): string {
     const world = this.world;
     if (!world) return "Chỉ dùng được khi đang ở bản đồ.";
     const petStats = this.sources.world.petStats;
@@ -1135,6 +1195,21 @@ export class GameplayHost {
         setCurrency(world.currency, grant.money, grant.badges);
         message = `Tiền: ${world.currency.money}, huy hiệu: ${world.currency.badges}.`;
         break;
+      case "addCurrency": {
+        const before = { ...world.currency };
+        setCurrency(
+          world.currency,
+          world.currency.money + grant.money,
+          world.currency.badges + grant.badges,
+        );
+        const money = world.currency.money - before.money,
+          badges = world.currency.badges - before.badges;
+        message =
+          [money ? `+${money} tiền` : "", badges ? `+${badges} huy hiệu` : ""]
+            .filter(Boolean)
+            .join(", ") + ".";
+        break;
+      }
       case "buffPet": {
         const pet = world.pets[grant.slot];
         if (!pet) return "Không có pet ở ô này.";
@@ -1165,8 +1240,84 @@ export class GameplayHost {
         break;
       }
     }
-    this.saves.save(this.snapshot(world));
+    if (save) this.saves.save(this.snapshot(world));
     return message;
+  }
+
+  /** A server gift code is being checked; another confirm waits for it. */
+  private redeemingOnServer = false;
+  /** Gift notices that arrived while something else was on screen. */
+  private readonly giftNotices: { title: string; text: string }[] = [];
+
+  /** Free slots in the pet bank, which a gift's pets go into. */
+  get petBankFree(): number {
+    const world = this.world;
+    return world ? Math.max(0, world.petBankCapacity() - world.campaign.petBank.length) : 0;
+  }
+
+  /** The hero stands free on the map with nothing open: a gift notice may open now. */
+  get readyForGift(): boolean {
+    const world = this.story.worldActive ? this.world : null;
+    return !!world && !this.mapLoadingActive && !this.panel.visible && world.restingForSuspendSave;
+  }
+
+  /**
+   * Gifts from the server (gift codes, the mailbox): every grant applied, then one save. Null
+   * while no world is loaded; otherwise one line per grant saying what landed.
+   */
+  applyGifts(grants: readonly AdminGrant[]): string[] | null {
+    const world = this.world;
+    if (!world) return null;
+    const lines = grants.map((grant) => this.applyAdminGrant(grant, false));
+    this.saves.save(this.snapshot(world));
+    return lines;
+  }
+
+  /** Where the player is and what holds them, for the admin page's online list (`LiveChannel`). */
+  livePresence(): Record<string, string | number | boolean> {
+    const world = this.world;
+    if (!world) return { layer: this.storyCutscene ? "cutscene" : "story" };
+    return {
+      scene: world.sceneId,
+      room: world.roomIndex,
+      x: world.player.x,
+      y: world.player.y,
+      phase: world.phase,
+      layer: this.storyCutscene ? "cutscene" : this.panel.visible ? "panel" : "world",
+      ...(this.panel.visible ? { panel: String(this.panel.mode) } : {}),
+      battle: !!world.battle || !!world.doubleBattle,
+      riding: (world.meta.campaign.ride?.activeIndex ?? -1) >= 0,
+      resting: this.readyForGift,
+      mainTask: world.questState.mainTaskProgress,
+      money: world.currency.money,
+    };
+  }
+
+  /** Saves now when the hero stands free (before an admin's reload); false when it cannot. */
+  saveIfResting(): boolean {
+    const world = this.world;
+    if (!world || !this.readyForGift) return false;
+    this.saves.save(this.snapshot(world));
+    return true;
+  }
+
+  /** A claimed mailbox gift: applied now, its notice shown as soon as the screen is free. */
+  deliverGift(gift: ClaimedGift): boolean {
+    const lines = this.applyGifts(gift.grants);
+    if (!lines) return false;
+    this.queueGiftNotice(gift.title, [gift.body, ...lines].filter(Boolean).join(" "));
+    return true;
+  }
+
+  queueGiftNotice(title: string, text: string): void {
+    this.giftNotices.push({ title, text });
+    this.showGiftNotice();
+  }
+
+  /** Opens the oldest waiting gift notice when nothing else is on screen. */
+  showGiftNotice(): void {
+    const next = this.readyForGift ? this.giftNotices.shift() : undefined;
+    if (next) this.panel.openNotice(next.text, next.title);
   }
 
   private openPendingSkillPanel(): void {
@@ -1288,7 +1439,19 @@ export class GameplayHost {
 
   /** The save with the story director's node and quest log under `story.quest`. */
   snapshot(world: WorldRuntime) {
+    this.observeLedger(world, this.ledgerContext(world));
     const save = world.snapshot();
+    // `snapshot` itself may add a pet (the opening's bunny): it is the story's, and its uid is
+    // copied onto the save's copies.
+    this.observeLedger(world, "story");
+    const uids = (pets: readonly SavedPet[] | undefined, live: readonly SavedPet[]) =>
+      pets?.forEach((pet, i) => {
+        const uid = (live[i] as SavedPet & { uid?: string } | undefined)?.uid;
+        if (uid && live[i].speciesId === pet.speciesId) (pet as SavedPet & { uid?: string }).uid = uid;
+      });
+    uids(save.pets, world.pets);
+    uids(save.meta?.campaign?.petBank, world.campaign.petBank);
+    save.ledger = this.ledger.snapshot();
     if (this.director) save.story.quest = { ...this.director.snapshot() };
     return save;
   }
@@ -1547,6 +1710,32 @@ export class GameplayHost {
     return announced >= OPENING_QUEST_TASK
       ? Math.max(this.director.mainTask, announced)
       : this.director.mainTask;
+  }
+
+  /**
+   * Web repair: builds before this one could drop the whole quest log on resume (a saved node the
+   * build no longer had), and the next save kept it empty. The event ledger still remembers the
+   * groups that hand out (op43 accept) and finish (op44) each branch task, so a task whose
+   * completion group is done is complete, and one whose offer group is done is held. It only ever
+   * moves a task forward; a task the log already has keeps its status.
+   */
+  private recoverBranchTasks(world: WorldRuntime): void {
+    const log = this.director?.log,
+      tasks = this.sources.quests?.branchTasks;
+    if (!log || !tasks) return;
+    // The offer group ends in op14 (state 3) only on "Tiếp nhận"; a refusal ends it in op42. A
+    // completion group may since have been retired (state 4) by op77, which still means done.
+    const ledger = world.eventState,
+      accepted = (ref: { scene: number; room: number; group: number }) =>
+        ledger.sourceEventStateComplete(ref.scene, ref.room, ref.group),
+      finished = (ref: { scene: number; room: number; group: number }) =>
+        ledger.sourceEventStateInactive(ref.scene, ref.room, ref.group);
+    for (const task of tasks) {
+      const status = log.branchStatus(task.id);
+      if (status === TASK_COMPLETE) continue;
+      if (finished(task.completion)) log.setBranch(task.id, TASK_COMPLETE);
+      else if (status === TASK_NONE && accepted(task.offer)) log.setBranch(task.id, TASK_ACTIVE);
+    }
   }
 
   /** What `task.ui` lists: `mTask.mid` up to the current task, and the branch tasks held. */
@@ -2035,6 +2224,8 @@ export class GameplayHost {
 
   /** The screen and the parity harness build the world from the same source-backed services. */
   createWorld(save?: GameSave): WorldRuntime {
+    // The ledger follows the save it loads; a new game keeps counting where this session was.
+    this.ledger = new EconomyLedger(save?.ledger ?? { seq: this.ledger.snapshot().seq, entries: [] });
     const world = new WorldRuntime(
       this.sources.worldContract,
       {

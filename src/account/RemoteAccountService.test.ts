@@ -1,11 +1,16 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { AccountError, accountMessage } from "./AccountService";
-import { RemoteAccountService, RemoteSaveStore, type ApiFetch } from "./RemoteAccountService";
+import { ADMIN_RELOAD_EVENT, RemoteAccountService, RemoteSaveStore, type ApiFetch } from "./RemoteAccountService";
 import { SaveRepository } from "../persistence/SaveRepository";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { importJavaSave } from "../persistence/save/JavaSaveImport";
 import type { GameSave } from "../persistence/save/GameSave";
+import { DEV_BUILD_KEY_HEX, envelopeAad, hexBytes, openSave, sealSave } from "./SaveEnvelope";
+
+/** The server's envelope (`SaveEnvelope`): one ticket for the session, the dev build key. */
+const TICKET = btoa(String.fromCharCode(...new Uint8Array(32).fill(9))),
+  KEY = hexBytes(DEV_BUILD_KEY_HEX);
 
 const yes = () => true;
 const sample = importJavaSave(
@@ -32,6 +37,8 @@ type Row = {
   updatedAt: number;
   current: Uint8Array<ArrayBuffer>;
   backup: Uint8Array<ArrayBuffer>;
+  /** The last revision an admin wrote (server/store.mjs `admin_revision`). */
+  adminRevision?: number;
 };
 
 /** The Cloudflare API's save routes, in memory, as the Pages Function answers them. */
@@ -59,11 +66,17 @@ function fakeServer(rows: Row[] = []) {
         : json({ error: "Email hoặc mật khẩu không đúng." }, 401);
     }
     if (path === "/auth/register") return json({ error: "Email này đã có tài khoản." }, 409);
-    if (path === "/saves" && method === "GET") return json({ saves: rows.map(pub) });
-    const bytes = async () =>
-      new Uint8Array(await ((init.body as FormData).get("file") as Blob).arrayBuffer());
+    if (path === "/saves" && method === "GET") return json({ saves: rows.map(pub), ticket: TICKET });
+    // The game's own rows travel sealed for their row and revision, as server/app.mjs does.
+    const bytes = async (id: string | null, revision: number) => {
+      const sealed = new Uint8Array(await ((init.body as FormData).get("file") as Blob).arrayBuffer()),
+        text = await openSave(sealed, TICKET, [KEY], envelopeAad(id, revision, "up"));
+      return text === null ? null : new TextEncoder().encode(text);
+    };
     if (path === "/saves" && method === "POST") {
-      const data = await bytes(),
+      const data = await bytes(null, 0);
+      if (!data) return json({ error: "Save không hợp lệ." }, 400);
+      const
         row: Row = {
           id: `id-${next++}`,
           gameVersion: String((init.body as FormData).get("gameVersion")),
@@ -78,16 +91,27 @@ function fakeServer(rows: Row[] = []) {
     const [, , id, copy] = path.split("/"),
       row = rows.find((entry) => entry.id === id);
     if (!row) return json({ error: "Không tìm thấy bản save." }, 404);
-    if (method === "GET") return new Response(copy === "backup" ? row.backup : row.current);
+    if (method === "GET") {
+      const data = copy === "backup" ? row.backup : row.current;
+      if (row.gameVersion !== "web-native") return new Response(data);
+      return new Response(
+        (await sealSave(new TextDecoder().decode(data), TICKET, KEY, envelopeAad(row.id, row.revision, "down"))) as BodyInit,
+      );
+    }
     if (method === "DELETE") {
       rows.splice(rows.indexOf(row), 1);
       return json({ ok: true });
     }
     if (method === "PUT") {
       const revision = Number((init.body as FormData).get("revision"));
-      if (revision !== row.revision) return json({ error: "Bản save đã thay đổi." }, 409);
+      if (revision !== row.revision)
+        return row.adminRevision && row.adminRevision > revision
+          ? json({ error: "Quản trị viên vừa chỉnh.", code: "admin_changed" }, 409)
+          : json({ error: "Bản save đã thay đổi." }, 409);
+      const data = await bytes(row.id, revision);
+      if (!data) return json({ error: "Save không hợp lệ." }, 400);
       row.backup = row.current;
-      row.current = await bytes();
+      row.current = data;
       row.revision++;
       return json(pub(row));
     }
@@ -175,5 +199,29 @@ describe("RemoteSaveStore", () => {
     expect((await new SaveRepository(new RemoteSaveStore(server.api)).load())?.playTimeMillis).toBe(
       2,
     );
+  });
+
+  it("never writes over a save an admin changed: the game is told to reload instead", async () => {
+    const server = fakeServer(),
+      game = new RemoteSaveStore(server.api),
+      reloads = vi.fn();
+    vi.stubGlobal("window", new EventTarget());
+    window.addEventListener(ADMIN_RELOAD_EVENT, reloads);
+    try {
+      await game.putAll([["active", { ...createNewGameSave(), playTimeMillis: 1 }]]);
+      // The admin edits the save on the server.
+      const row = server.rows[0];
+      row.revision++;
+      row.adminRevision = row.revision;
+      const edited = row.current;
+      await expect(game.putAll([["active", { ...createNewGameSave(), playTimeMillis: 2 }]])).rejects.toThrow(
+        "Quản trị viên",
+      );
+      expect(reloads).toHaveBeenCalledTimes(1);
+      expect(server.rows[0].current).toBe(edited);
+      expect(server.rows[0].revision).toBe(2);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

@@ -58,6 +58,7 @@ import {
   createSourceTrainerBattle,
   createWildBattle,
   doubleEventBattleSymbol,
+  gymDoubleNeedsPair,
   eventBattleEncounter,
   unsupportedEventBattle,
 } from "../battle/EventBattle";
@@ -123,14 +124,14 @@ import {
   mapTop,
   type MapCollision,
 } from "./MapCollision";
-import { cameraGoal, roomClamp } from "./Camera";
+import { cameraGoal, fitCamera, roomClamp } from "./Camera";
 import { EventStateLedger } from "./EventStateLedger";
 import { BattleRandom } from "../battle/BattleRandom";
 import { MapLoadingRuntime } from "./MapLoadingRuntime";
 import { safeRoomArrival, wasBlockedArrival } from "./RoomArrivalSafety";
 import { worldPointerNear, worldPointerTarget } from "./WorldPointer";
-import { landPoint } from "../../core/LandCenter";
-import { viewport } from "../../core/Viewport";
+import { planWalk, walkKey, type WalkPlan } from "./TapWalk";
+import { fromUi, viewport } from "../../core/Viewport";
 import { WorldEventDispatcher, type WorldView } from "./WorldEventDispatcher";
 import {
   settledActorStates,
@@ -145,6 +146,7 @@ import { WorldEventRuntime, type WorldEventEffects } from "./WorldEventRuntime";
 import {
   roomDoorArrival,
   roomDoorRow,
+  doorOverlaps,
   sourceDoors,
   sourceRoomDoors,
   sourceRoomPortals,
@@ -214,6 +216,7 @@ import {
   type FourGatesAction,
   FourGatesOwner,
   fourGatesCast,
+  fourGatesTalkers,
   fourGatesWalker,
   isFourGateRoom,
   maskedCast,
@@ -460,6 +463,7 @@ import {
   type CharmPurse,
   type CharmResult,
   type RainbowCharmCatalog,
+  syncCharmOwnership,
 } from "../charm/RainbowCharms";
 import {
   charmLoadout,
@@ -510,6 +514,9 @@ const CLOUD_ROOM_ENTRANCES: ReadonlyMap<string, number> = new Map([
   ["7:4", 0],
 ]);
 const CHEST_EMPTY = "Bảo rương này đã trống";
+/** Web rule: a gym 2v2 needs two living pets in the party (`gymDoubleNeedsPair`). */
+const GYM_NEEDS_PAIR_TEXT =
+  "Đạo quán đấu đôi 2v2, đội hình cần ít nhất 2 sủng vật còn sức chiến đấu mới có thể khiêu chiến.";
 /** `XhtC3Runtime.ICE_TERRAIN`. */
 /** `NiemThoC3Runtime`: the upper gym floor's holes and where a fall lands (9:3). */
 const GYM_HOLE_ACTORS = [0, 1, 2, 3] as const,
@@ -993,6 +1000,7 @@ export class WorldRuntime {
       this.normalizePet(pet, index),
     );
     this.restoreCauVongIncubation();
+    this.syncCharms();
     // `SaveSessionSnapshotMapper`: every pet the session owns is collected, whatever the save says.
     this.collection = new PetCollection(save?.collection);
     this.collection.restoreConvenienceRewards(save?.convenienceRewardsClaimed);
@@ -1053,6 +1061,11 @@ export class WorldRuntime {
       y: save?.location.y ?? data.save.y,
       direction: save?.location.direction ?? 2,
     };
+    // Web only: an admin moved a stuck player here (server/live.mjs). With no spot given the hero
+    // starts at one of the room's doors, then — like walking in — on the nearest tile he can stand.
+    const adminPlaced = save?.location.adminPlaced === true;
+    if (adminPlaced && (this.savePoint.x < 0 || this.savePoint.y < 0))
+      Object.assign(this.savePoint, this.adminArrival(this.sceneId, this.roomIndex));
     this.restoringSave = save !== undefined;
     this.loadRoom(
       this.savePoint.scene,
@@ -1060,7 +1073,7 @@ export class WorldRuntime {
       this.savePoint.x,
       this.savePoint.y,
       this.savePoint.direction,
-      save ? "resume" : null,
+      adminPlaced ? "entry" : save ? "resume" : null,
     );
     if (save) {
       this.repairStrandedSave();
@@ -1175,8 +1188,16 @@ export class WorldRuntime {
         elements.has(element),
       );
     }
-    // Pet-record objectives put their source category in arg9 and required species in arg10.
-    if (args[8] === 0) return this.pets.some((pet) => pet.speciesId === args[10]);
+    // Pet-record objectives put their source category in arg9 and required species in arg10. The
+    // original (game/e.java `b(b.b)` case 0: `K.a(arg9, arg10) == 2`) reads the Đồ giám: the
+    // species caught, hatched or evolved once, wherever the pet is now (party, bank, released).
+    // Testing only the party left a catch sent to the bank (full party) undeliverable.
+    if (args[8] === 0)
+      return (
+        this.collection.collected(args[10]) || this.pets.some((pet) => pet.speciesId === args[10])
+      );
+    // Case 5: `K.G >= arg9`, the number of species collected.
+    if (args[8] === 5) return this.collection.collectedSpeciesCount() >= (args[9] ?? 0);
     return false;
   }
   get campaign(): CampaignState {
@@ -1477,19 +1498,34 @@ export class WorldRuntime {
       },
     };
   }
+  /**
+   * Web bug fix (`syncCharmOwnership`): a charm that reached the bag without its tier (an admin
+   * gift, a banked pet that wore it) is owned at tier I, and a tiered charm sits in the bag.
+   */
+  syncCharms(): void {
+    const catalog = this.sources.rainbowCharms;
+    if (!catalog) return;
+    const worn = [...this.pets, ...this.meta.campaign.petBank]
+      .map((pet) => pet.heldEquipmentId ?? NO_HELD_ITEM)
+      .filter((id) => id !== NO_HELD_ITEM);
+    syncCharmOwnership(catalog, this.meta.campaign.charms, this.bag.equipment, worn);
+  }
   craftCharm(id: number): CharmResult {
+    this.syncCharms();
     const catalog = this.sources.rainbowCharms;
     return catalog
       ? craftCharm(catalog, this.meta.campaign.charms, this.charmPurse(), id)
       : { outcome: "INVALID_CHARM", runtimeId: id, tierBefore: 0, tierAfter: 0 };
   }
   upgradeCharm(id: number): CharmResult {
+    this.syncCharms();
     const catalog = this.sources.rainbowCharms;
     return catalog
       ? upgradeCharm(catalog, this.meta.campaign.charms, this.charmPurse(), id)
       : { outcome: "NOT_OWNED", runtimeId: id, tierBefore: 0, tierAfter: 0 };
   }
   equipCharm(id: number): CharmResult {
+    this.syncCharms();
     const catalog = this.sources.rainbowCharms;
     return catalog
       ? equipCharm(catalog, this.meta.campaign.charms, id)
@@ -1989,6 +2025,205 @@ export class WorldRuntime {
     return !this.sources.roomReady || this.sources.roomReady(this.sceneId, this.roomIndex);
   }
   tick(commands: InputCommand[]): WorldAction {
+    const walk = this.tapWalkTick(commands);
+    if (!walk) return this.tickWorld(commands);
+    // The route's key for this tick, or the tap's actor spoken to on arrival.
+    if (walk.talkTo === undefined) return this.tickWorld(walk.commands);
+    this.pointerActor = walk.talkTo;
+    try {
+      return this.tickWorld(walk.commands);
+    } finally {
+      this.pointerActor = undefined;
+    }
+  }
+
+  // ------------------------------------------------------------------ web: tap to walk
+  /**
+   * Web only (touch accessibility): the route a map tap is walking. It holds one key per tick, the
+   * same step the arrow keys take; any key, a tap elsewhere or anything that leaves the free map
+   * ends it. With `actor` set, the hero turns to that actor on arrival and speaks to it.
+   */
+  private tapWalk: {
+    scene: number;
+    room: number;
+    target: { x: number; y: number };
+    actor: number;
+    plan: WalkPlan;
+    index: number;
+    stalled: number;
+    replans: number;
+  } | null = null;
+
+  /** Where the tap walk is heading (world px), for the marker the screen draws; null when idle. */
+  get tapWalkTarget(): { x: number; y: number } | null {
+    return this.tapWalk ? this.tapWalk.target : null;
+  }
+
+  cancelTapWalk(): void {
+    this.tapWalk = null;
+  }
+
+  private static readonly HOLD: Record<number, InputCommand> = {
+    [DIRECTION_UP]: "holdUp",
+    [DIRECTION_DOWN]: "holdDown",
+    [DIRECTION_LEFT]: "holdLeft",
+    [DIRECTION_RIGHT]: "holdRight",
+  };
+
+  /** The commands this tick's walk adds, or null when no walk is under way (or it just ended). */
+  private tapWalkTick(
+    commands: InputCommand[],
+  ): { commands: InputCommand[]; talkTo?: number } | null {
+    const walk = this.tapWalk;
+    if (!walk) return null;
+    if (
+      commands.length > 0 ||
+      !this.onFreeMap ||
+      walk.scene !== this.sceneId ||
+      walk.room !== this.roomIndex ||
+      this.platformRide ||
+      this.leafSummon ||
+      this.iceDirection !== null ||
+      this.vortex ||
+      this.npcService
+    ) {
+      this.tapWalk = null;
+      return null;
+    }
+    const here = walkKey(this.player.x, this.player.y);
+    if (here === walk.plan.end) {
+      this.tapWalk = null;
+      const actor = walk.actor >= 0 ? this.actors.get(walk.actor) : undefined;
+      if (!actor?.visible) return null;
+      this.player.direction = this.directionToward(actor.x + actor.renderOffsetX, actor.y + actor.renderOffsetY);
+      this.setPlayerFacing(false, true);
+      return { commands: ["confirm"], talkTo: actor.id };
+    }
+    const index = walk.plan.at.indexOf(here, walk.index);
+    if (index >= 0 && index !== walk.index) walk.stalled = 0;
+    else walk.stalled++;
+    // Off the route (pushed, slid, a moving NPC in the way): look for the way again.
+    if (index < 0 || walk.stalled > 6) {
+      if (++walk.replans > 5 || !this.planTapWalk(walk.target, walk.actor)) {
+        this.tapWalk = null;
+        return null;
+      }
+      return this.tapWalkTick(commands);
+    }
+    walk.index = index;
+    return { commands: [WorldRuntime.HOLD[walk.plan.directions[index]]] };
+  }
+
+  /**
+   * A press in the UI box as a point of the room. Landscape draws the map over the whole canvas with
+   * the camera fitted to it (`fitCamera`), so the press is read on the canvas, not on the centred
+   * 320x240 screen the panels use.
+   */
+  private tapWorldPoint(x: number, y: number): { x: number; y: number } {
+    if (!viewport.landscape) return { x: x + this.cameraX, y: y + this.cameraY };
+    const p = fromUi(x + 0.5, y + 0.5),
+      camera = fitCamera(this.sources.room(this.sceneId, this.roomIndex), {
+        x: this.cameraX,
+        y: this.cameraY,
+      });
+    return { x: Math.floor(p.x + camera.x), y: Math.floor(p.y + camera.y) };
+  }
+
+  /** The facing that looks from the hero toward (x, y): the longer axis wins. */
+  private directionToward(x: number, y: number): number {
+    const dx = x - this.player.x,
+      dy = y - this.player.y;
+    if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? DIRECTION_RIGHT : DIRECTION_LEFT;
+    return dy > 0 ? DIRECTION_DOWN : DIRECTION_UP;
+  }
+
+  /**
+   * A tap on the free map at world (x, y), on `actor` (-1 for open ground). True when the tap was
+   * taken as a walk (or a turn toward an unreachable spot); false leaves it to the confirm a tap has
+   * always been: an actor already within reach, or a tap on the hero himself.
+   */
+  private startTapWalk(x: number, y: number, actor: number): boolean {
+    const prior = this.tapWalk;
+    this.tapWalk = null;
+    const target = actor >= 0 ? this.actors.get(actor) : undefined;
+    if (target && this.actorInteractionRequested(target)) return false;
+    if (!target && Math.abs(x - this.player.x) <= 12 && Math.abs(y - this.player.y) <= 12) return !!prior;
+    const goal = target
+      ? { x: target.x + target.renderOffsetX, y: target.y + target.renderOffsetY }
+      : { x, y };
+    if (this.planTapWalk(goal, target ? target.id : -1)) return true;
+    // Nowhere to go (a wall all round): at least look that way.
+    this.player.direction = this.directionToward(goal.x, goal.y);
+    this.setPlayerFacing(false, true);
+    return true;
+  }
+
+  /** Plans the route to `goal` (an actor's foot when `actor` >= 0) and starts it. */
+  private planTapWalk(goal: { x: number; y: number }, actor: number): boolean {
+    const asset = this.sources.room(this.sceneId, this.roomIndex);
+    const map = asset && this.sources.collision(asset.mapId);
+    if (!map) return false;
+    const speed = this.playerMoveSpeed,
+      badge = this.flags.terrainBadgeGatedOpen(),
+      flying = this.hasHaiAuFlight(),
+      doors = sourceDoors(this.sources.registry, this.sceneId, this.roomIndex),
+      player = this.player,
+      step = (sx: number, sy: number, direction: number) => {
+        if (flying) {
+          const saved = [player.x, player.y] as const;
+          [player.x, player.y] = [sx, sy];
+          try {
+            const to = this.haiAuFlightStep(direction);
+            return { x: to.x, y: to.y, moved: to.moved };
+          } finally {
+            [player.x, player.y] = saved;
+          }
+        }
+        if (this.actorBlocksMove(sx, sy, direction, speed)) return { x: sx, y: sy, moved: false };
+        const to = stepWithTerrain(map, sx, sy, direction, badge, speed, this.movementTerrain);
+        if (this.sceneId === 98 && !cauVongEdgeClear(map, to, this.movementTerrain))
+          return { x: sx, y: sy, moved: false };
+        return { x: to.x, y: to.y, moved: to.moved };
+      },
+      tappedDoor = actor < 0 ? doors.find((door) => doorOverlaps(goal, door)) : undefined,
+      near = (px: number, py: number, reach: number) =>
+        Math.abs(px - goal.x) <= reach && Math.abs(py - goal.y) <= reach;
+    const plan = planWalk({
+      start: { x: player.x, y: player.y },
+      directions: [DIRECTION_DOWN, DIRECTION_RIGHT, DIRECTION_UP, DIRECTION_LEFT],
+      step,
+      goal: (to, _direction, moved, from) =>
+        actor >= 0
+          ? near(to.x, to.y, 20)
+          : tappedDoor
+            ? moved && doorOverlaps(to, tappedDoor) && !doorOverlaps(from, tappedDoor)
+            : near(to.x, to.y, speed),
+      // A door out of the room ends the route there, so only the door that was tapped is entered.
+      forbidden: (to, from) =>
+        doors.some((door) => door !== tappedDoor && doorOverlaps(to, door) && !doorOverlaps(from, door)),
+      distance: (px, py) => Math.hypot(px - goal.x, py - goal.y),
+      // An actor is spoken to from as far as a tap reaches (48 px a side); ground has no limit.
+      fallbackWithin: actor >= 0 ? 48 : undefined,
+    });
+    if (!plan) return false;
+    if (actor >= 0 && !plan.reachesGoal) {
+      const [ex, ey] = plan.end.split(",").map(Number);
+      if (!near(ex, ey, 48)) return false;
+    }
+    this.tapWalk = {
+      scene: this.sceneId,
+      room: this.roomIndex,
+      target: goal,
+      actor,
+      plan,
+      index: 0,
+      stalled: 0,
+      replans: this.tapWalk?.replans ?? 0,
+    };
+    return true;
+  }
+
+  private tickWorld(commands: InputCommand[]): WorldAction {
     this.tickCount++;
     // `VqsvGameRuntime.tick`: `DivinePetSeal.synchronize(session)` before anything reads a pet.
     this.synchronizeDivineSeal();
@@ -2496,13 +2731,19 @@ export class WorldRuntime {
     // ProMax: a tap on the map picks the actor drawn under it rather than the one the hero faces.
     const mapTap = this.onFreeMap || (this.phase === "event" && !!this.event?.activationIds.length);
     if (mapTap) {
-      const at = viewport.landscape ? landPoint(x, y) : { x, y };
+      const at = this.tapWorldPoint(x, y);
       this.pointerActor = worldPointerTarget(
         this.actors.values(),
-        at.x + this.cameraX,
-        at.y + this.cameraY,
+        at.x,
+        at.y,
         (actor) => this.sources.pointerMask?.(actor) ?? null,
       );
+      // Web (touch accessibility): a tap farther off walks there, and to an actor speaks on arrival.
+      // A service NPC's line on screen (free world, no event) still takes the tap as its confirm.
+      if (this.onFreeMap && !this.npcService && !this.obstacleCut && this.startTapWalk(at.x, at.y, this.pointerActor ?? -1)) {
+        this.pointerActor = undefined;
+        return;
+      }
     }
     try {
       if (this.tick(["confirm"]) === "autosave") this.saveRequested = true;
@@ -2751,6 +2992,14 @@ export class WorldRuntime {
    * Java arms the Liệt Hỏa arrival latch on the way in but its route owner never consults it, so
    * unlike `useDoor` there is nothing here to hold.
    */
+  /** Where an admin's teleport without a spot sets the hero down: a door of the room, else its middle. */
+  private adminArrival(scene: number, room: number): { x: number; y: number; direction: number } {
+    const door = (this.sources.registry.room(scene, room)?.doors ?? []).find((row) => row.target);
+    if (door)
+      return roomDoorArrival({ scene, room, row: door.row, x: door.x, y: door.y, facing: door.facing, target: door.target! });
+    const asset = this.sources.room(scene, room) as { width?: number; height?: number } | undefined;
+    return { x: Math.floor((asset?.width ?? 240) / 2), y: Math.floor((asset?.height ?? 320) / 2), direction: DIRECTION_DOWN };
+  }
   private useRoomDoor(door: RoomDoor): WorldAction | null {
     const { scene, room, entry } = door.target;
     if (this.sources.roomReady && !this.sources.roomReady(scene, room)) {
@@ -2803,6 +3052,14 @@ export class WorldRuntime {
     if (battleActor !== null) {
       const services = this.sources.battle;
       if (!services || unsupportedEventBattle(services, group, battleActor)) return null;
+      // Web rule: a gym 2v2 is never fought 1v1. The trigger stays latched until the hero steps
+      // away (`WorldEventDispatcher`), so the notice shows once per approach.
+      if (gymDoubleNeedsPair(services, group, battleActor, this.pets)) {
+        this.startScript({ scene: group.scene, room: group.room, group: -1 }, "gym:needs-pair", [
+          { type: "text", text: GYM_NEEDS_PAIR_TEXT, speaker: "", mode: 0, wait: true, kind: "dialog" },
+        ]);
+        return null;
+      }
     }
     this.runEvent(group);
     return null;
@@ -2925,6 +3182,14 @@ export class WorldRuntime {
   /** The gym 2v2 on screen (`VqsvDoubleBattleRuntime`), while one is up. */
   doubleBattle: DoubleBattleRuntime | null = null;
   private doubleContext: BattleContext | null = null;
+  /** Web only: what a money or pet change right now comes from (`EconomyLedger`). */
+  ledgerContext(): string {
+    if (this.doubleBattle) return "battle:2v2";
+    if (this.battle) return `battle:${this.battleEncounter?.encounter.encounterKey ?? "wild"}`;
+    if (this.event) return `event:${this.event.ref.scene}:${this.event.ref.room}:${this.event.ref.group}`;
+    if (this.phase !== "freeworld" && this.phase !== "returnWorld") return `phase:${this.phase}`;
+    return "world";
+  }
   /**
    * A gym NPC's simultaneous 2v2 (`VqsvDoubleBattleEventDescriptor.request`): the same entry wipe as
    * any fight, then the 2v2 screen. The group stays parked on op32 until `tickDoubleBattle` answers.
@@ -4257,8 +4522,9 @@ export class WorldRuntime {
             typeof opening | undefined);
     const dragon =
       this.roomIndex === SKY_CITY_ROOM ? this.sources.cauVongSummoning?.longVuong : undefined;
-    const withTalkers = {
+    const withTalkers: Record<string, CauVongMechanic> = {
       ...opening,
+      ...fourGatesTalkers(this.sources.cauVongFourGates, this.roomIndex, done),
       ...(talkers ?? {}),
       ...(dragon ? { [String(dragon.actor)]: dragon.mechanic as CauVongMechanic } : {}),
     };

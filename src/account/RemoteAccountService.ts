@@ -2,6 +2,8 @@ import { SaveRepository } from "../persistence/SaveRepository";
 import type { SaveStore } from "../persistence/save/SaveStore";
 import { decodeJavaSaveBytes } from "../persistence/save/JavaSaveEnvelope";
 import { AccountError, type Account, type AccountService } from "./AccountService";
+import { buildKey } from "./BuildKey";
+import { buildKeyId, envelopeAad, openSave, sealSave } from "./SaveEnvelope";
 
 /** The row this game keeps for each account; the Java game's own row is never written. */
 export const WEB_NATIVE_VERSION = "web-native";
@@ -96,10 +98,21 @@ export class RemoteAccountService implements AccountService {
 }
 
 async function listSaves(api: ApiFetch): Promise<SaveRow[]> {
+  return (await listing(api)).saves;
+}
+
+/** The account's save rows and this session's envelope ticket (`SaveEnvelope`). */
+async function listing(api: ApiFetch): Promise<{ saves: SaveRow[]; ticket: string }> {
   const response = await api("/saves");
   if (!response.ok) throw await refusal(response);
-  return ((await response.json()) as { saves: SaveRow[] }).saves ?? [];
+  const body = (await response.json()) as { saves?: SaveRow[]; ticket?: string };
+  return { saves: body.saves ?? [], ticket: body.ticket ?? "" };
 }
+
+const STALE_BUILD = "Game vừa được cập nhật. Hãy tải lại trang (Ctrl+F5) để chơi tiếp.";
+const ADMIN_CHANGED = "Quản trị viên vừa chỉnh tiến trình của bạn. Game sẽ tải lại.";
+/** Dispatched on `window` when the server says an admin changed the save: the page reloads it. */
+export const ADMIN_RELOAD_EVENT = "vqsv:admin-reload";
 
 /**
  * The save repository's store, backed by the account's own row on the server. The server keeps
@@ -108,6 +121,8 @@ async function listSaves(api: ApiFetch): Promise<SaveRow[]> {
  */
 export class RemoteSaveStore implements SaveStore {
   private row: SaveRow | null | undefined;
+  private ticket = "";
+  private readonly key = buildKey();
   private readonly cache = new Map<string, unknown>();
 
   constructor(private readonly api: ApiFetch = defaultFetch) {}
@@ -117,10 +132,20 @@ export class RemoteSaveStore implements SaveStore {
     const row = await this.ownRow();
     let value: unknown;
     if (row && (key === "active" || key === "backup")) {
-      const response = await this.api(`/saves/${row.id}${key === "backup" ? "/backup" : ""}`);
+      // The save comes down sealed (`SaveEnvelope`) in this build's key; an older tab is asked to reload.
+      const response = await this.api(`/saves/${row.id}${key === "backup" ? "/backup" : ""}`, {
+        headers: { "x-vqsv-build": await buildKeyId(this.key) },
+      });
+      if (response.status === 426) throw new AccountError("unknown", STALE_BUILD);
       if (response.ok) {
+        const text = await openSave(
+          new Uint8Array(await response.arrayBuffer()),
+          this.ticket,
+          [this.key],
+          envelopeAad(row.id, row.revision, "down"),
+        );
         try {
-          value = JSON.parse(await response.text());
+          value = text === null ? undefined : JSON.parse(text);
         } catch {
           value = undefined;
         }
@@ -148,12 +173,14 @@ export class RemoteSaveStore implements SaveStore {
 
   private async upload(value: unknown, retried = false): Promise<void> {
     const row = await this.ownRow(),
-      form = new FormData();
-    form.set(
-      "file",
-      new Blob([JSON.stringify(value)], { type: "application/json" }),
-      WEB_NATIVE_FILE,
-    );
+      form = new FormData(),
+      sealed = await sealSave(
+        JSON.stringify(value),
+        this.ticket,
+        this.key,
+        envelopeAad(row?.id ?? null, row?.revision ?? 0, "up"),
+      );
+    form.set("file", new Blob([sealed as BlobPart], { type: "application/octet-stream" }), WEB_NATIVE_FILE);
     form.set("name", WEB_NATIVE_NAME);
     form.set("gameVersion", WEB_NATIVE_VERSION);
     if (row) form.set("revision", String(row.revision));
@@ -161,19 +188,42 @@ export class RemoteSaveStore implements SaveStore {
       method: row ? "PUT" : "POST",
       body: form,
     });
+    if (response.status === 409) {
+      const code = await response
+        .clone()
+        .json()
+        .then((body: { code?: unknown }) => body.code)
+        .catch(() => null);
+      if (code === "admin_changed") {
+        // An admin changed this save after the game loaded it: never write over it — the game
+        // reloads the admin's version (GameApp listens).
+        if (typeof window !== "undefined") window.dispatchEvent(new Event(ADMIN_RELOAD_EVENT));
+        throw new AccountError("unknown", ADMIN_CHANGED);
+      }
+    }
     if (response.status === 409 && !retried) {
       // Another tab of the same player saved first: the newest play wins, as it does locally.
       this.row = undefined;
       return this.upload(value, true);
     }
-    if (!response.ok) throw await refusal(response);
+    if (!response.ok) {
+      const error = await refusal(response);
+      if (response.status === 400 && !retried) {
+        // A refused envelope: the ticket may be from a session the server renewed. Fetch it again once.
+        this.row = undefined;
+        return this.upload(value, true);
+      }
+      throw response.status === 400 ? new AccountError("unknown", STALE_BUILD) : error;
+    }
     this.row = (await response.json()) as SaveRow;
   }
 
   private async ownRow(): Promise<SaveRow | null> {
     if (this.row !== undefined) return this.row;
+    const { saves, ticket } = await listing(this.api);
+    this.ticket = ticket;
     this.row =
-      (await listSaves(this.api))
+      saves
         .filter((save) => save.gameVersion === WEB_NATIVE_VERSION)
         .sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0))[0] ?? null;
     return this.row;

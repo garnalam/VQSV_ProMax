@@ -441,15 +441,37 @@ describe(
         for (const pet of world.pets) expect(pet.currentHp).toBe(pet.maxHp);
       });
 
-      it("with one living pet the gym falls back to the source roster 1v1, as Java's request does", async () => {
-        const save = arrival();
-        const { world } = await challenge({
-          ...save,
-          pets: save.pets.map((pet, i) => (i === 0 ? pet : { ...pet, currentHp: 0 })),
+      // Web rule (owner): Java falls back to a 1v1 here; the web refuses the gym fight instead.
+      for (const [label, pets] of [
+        ["one living pet", (save: GameSave) => save.pets.map((pet, i) => (i === 0 ? pet : { ...pet, currentHp: 0 }))],
+        ["a one-pet party", (save: GameSave) => save.pets.slice(0, 1)],
+      ] as const)
+        it(`with ${label} the gym refuses the fight (no 1v1) and says two pets are needed`, async () => {
+          const save = arrival();
+          await assets.prepareRoom(9, 4);
+          const { host } = reload({
+            ...save,
+            pets: pets(save),
+            location: { sceneId: 9, roomIndex: 4, ...triggerPoint(9, 4, 0), direction: 3 },
+          });
+          while (host.mapLoadingActive) host.step([]);
+          const world = host.world!,
+            quincy = world.actors.get(2)!;
+          world.player.x = quincy.x;
+          world.player.y = quincy.y + 20;
+          world.player.direction = DIRECTION_UP;
+          const texts = new Set<string>();
+          for (let i = 0; i < 2000 && !world.battle && !world.doubleBattle; i++) {
+            if (world.eventScene?.textReady) texts.add(world.eventScene.currentText ?? "");
+            host.step(i % 2 === 0 ? ["confirm"] : []);
+          }
+          expect(world.battle).toBeNull();
+          expect(world.doubleBattle).toBeNull();
+          expect([...texts].some((t) => t.startsWith("Đạo quán đấu đôi 2v2"))).toBe(true);
+          // Back on the free map (this save roams in "returnWorld"), the group still open.
+          expect(["freeworld", "returnWorld"]).toContain(world.phase);
+          expect(world.eventState.sourceEventState(9, 4, 0)).not.toBe(3);
         });
-        expect(world.doubleBattle).toBeNull();
-        expect(world.battle).not.toBeNull();
-      });
     });
 
     it("an unbeaten gym trainer seals its tile; once beaten the hero walks past", async () => {

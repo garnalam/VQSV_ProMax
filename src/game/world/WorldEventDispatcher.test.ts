@@ -167,6 +167,15 @@ describe("free-world dispatch read from the decoded catalog", () => {
     expect(dispatcher.probe(atJones)).toMatchObject({
       trigger: { group: { scene: 4, room: 5, group: 18 } },
     });
+    // After the handoff Jones' egg exchange (g15) opens on every talk, also after an egg was bought.
+    ledger.op14CompleteEvent(4, 5, 18);
+    expect(dispatcher.probe(atJones)).toMatchObject({
+      trigger: { group: { scene: 4, room: 5, group: 15 } },
+    });
+    ledger.op14CompleteEvent(4, 5, 15);
+    expect(dispatcher.probe(atJones)).toMatchObject({
+      trigger: { group: { scene: 4, room: 5, group: 15 } },
+    });
   });
   it("keeps Niêm Thổ branch intermediate op43 rows on the active quest", () => {
     const ledger = new EventStateLedger(),

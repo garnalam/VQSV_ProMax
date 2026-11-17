@@ -284,6 +284,18 @@ describe("StoryDirector", () => {
     const unknown = new StoryDirector(graph, doors);
     unknown.restore({ node: "deleted-node" }, "NOT_A_TASK");
     expect(unknown.node.id).toBe("opening");
+
+    // A node this build no longer has keeps the player's branch tasks and tokens.
+    const renamed = new StoryDirector(graph, doors);
+    renamed.restore(
+      { node: "renamed-node", main: 3, mainDone: false, branch: "0:3,4:1", tokens: "ok" },
+      "RETURN_TO_ELDER",
+    );
+    expect(renamed.node.id).toBe("return-to-elder");
+    expect(renamed.log.branchStatus(0)).toBe(TASK_COMPLETE);
+    expect(renamed.log.branchStatus(4)).toBe(TASK_ACTIVE);
+    expect(renamed.log.hasToken("ok")).toBe(true);
+    expect(renamed.log.main).toBe(3);
   });
 
   it("sends the player back to the checkpoint only when the trigger room is out of reach", () => {

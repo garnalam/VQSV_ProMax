@@ -82,6 +82,8 @@ export type BattleUiState = {
   message: string;
   /** The pet screen's open tab: Hồ sơ, Chỉ số, Đặc tính, Kỹ năng. */
   tab?: number;
+  /** On the Đặc tính tab: Thiên phú is the selected row (`TraitDetail.PHYSICAL`), not Đặc tính. */
+  talent?: boolean;
   levelUp?: {
     /** The pet that levelled (the seat may show another one). */
     spriteId?: number;

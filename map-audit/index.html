@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'none'; form-action 'self'"
+    />
+    <title>Rà map · VQSV ProMax</title>
+    <link rel="icon" type="image/png" href="/icon-192.png" />
+    <style>
+      :root {
+        --bg: #0f1419;
+        --panel: #182029;
+        --line: #2a3542;
+        --text: #dce3ea;
+        --muted: #8a99a8;
+        --bad: #ff5a5a;
+        --ok: #4cd97b;
+        --accent: #ffd34d;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 14px/1.45 system-ui, "Segoe UI", Roboto, sans-serif;
+        height: 100vh;
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        grid-template-rows: auto 1fr;
+      }
+      header {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--line);
+        background: var(--panel);
+      }
+      header strong { font-size: 16px; }
+      header label { display: inline-flex; gap: 4px; align-items: center; color: var(--muted); }
+      header .grow { flex: 1; }
+      #status { color: var(--muted); }
+      aside {
+        overflow: auto;
+        border-right: 1px solid var(--line);
+        background: var(--panel);
+      }
+      aside input {
+        width: calc(100% - 20px);
+        margin: 10px;
+        padding: 6px 8px;
+        background: var(--bg);
+        color: var(--text);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+      }
+      .room {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 6px 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #1d2731;
+      }
+      .room:hover { background: #1f2a35; }
+      .room.active { background: #26394b; }
+      .room small { color: var(--muted); }
+      .badge { min-width: 22px; text-align: center; border-radius: 10px; padding: 0 6px; font-size: 12px; }
+      .badge.bad { background: var(--bad); color: #fff; }
+      .badge.ok { background: #1f5133; color: var(--ok); }
+      .badge.wait { background: var(--line); color: var(--muted); }
+      main { overflow: auto; position: relative; }
+      #info { padding: 10px 14px; border-bottom: 1px solid var(--line); }
+      #info h2 { margin: 0 0 4px; font-size: 16px; }
+      #findings { margin: 6px 0 0; padding-left: 18px; }
+      #findings li { color: var(--bad); cursor: pointer; }
+      #findings li.none { color: var(--ok); list-style: none; margin-left: -18px; }
+      #legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; color: var(--muted); font-size: 12px; }
+      #legend i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; vertical-align: -2px; margin-right: 4px; }
+      #wrap { padding: 14px; }
+      canvas { image-rendering: pixelated; display: block; background: #000; }
+      #hover {
+        position: fixed;
+        pointer-events: none;
+        background: rgba(0, 0, 0, 0.85);
+        border: 1px solid var(--line);
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 12px;
+        white-space: pre;
+        display: none;
+      }
+      @media (max-width: 760px) {
+        body { grid-template-columns: 1fr; grid-template-rows: auto 220px 1fr; }
+        aside { border-right: 0; border-bottom: 1px solid var(--line); }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <strong>Rà map APK ↔ web</strong>
+      <label><input type="checkbox" id="t-col" checked /> Ô chặn</label>
+      <label><input type="checkbox" id="t-reach" checked /> Vùng đi tới được</label>
+      <label><input type="checkbox" id="t-actors" checked /> NPC (APK / JAR)</label>
+      <label><input type="checkbox" id="t-rects" checked /> Ô sự kiện</label>
+      <label><input type="checkbox" id="t-doors" checked /> Cửa</label>
+      <label><input type="checkbox" id="t-top" checked /> Lớp trên</label>
+      <label>Phóng to <select id="zoom"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></label>
+      <span class="grow"></span>
+      <span id="status">Đang tải dữ liệu…</span>
+    </header>
+    <aside>
+      <input id="filter" placeholder="Lọc phòng (vd 7:10) hoặc gõ 'lỗi'" />
+      <div id="rooms"></div>
+    </aside>
+    <main>
+      <div id="info"></div>
+      <div id="wrap"><canvas id="map" width="10" height="10"></canvas></div>
+    </main>
+    <div id="hover"></div>
+    <script type="module" src="/src/mapaudit/main.ts"></script>
+  </body>
+</html>

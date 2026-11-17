@@ -38,6 +38,8 @@ export type SavedPet = {
    * palette.
    */
   shinyColor?: number;
+  /** Web only: the pet's own id in the money and pet log (`EconomyLedger`), given on first sight. */
+  uid?: string;
 };
 
 /** A level-up skill decision that must be completed before the finished battle resumes the world. */
@@ -55,7 +57,15 @@ export type GameSave = {
   format: typeof SAVE_FORMAT;
   version: typeof CURRENT_SAVE_VERSION;
   savedAt: string;
-  location: { sceneId: number; roomIndex: number; x: number; y: number; direction: number };
+  location: {
+    sceneId: number;
+    roomIndex: number;
+    x: number;
+    y: number;
+    direction: number;
+    /** Web only: an admin moved the hero here (server/live.mjs); x/y -1 means "at a door". */
+    adminPlaced?: boolean;
+  };
   /** Which runtime resumes the session, e.g. "scene1.bunny-capture". */
   resume: { owner: string };
   /** Quest progress; an absent field means "the chapter's initial value". */
@@ -90,6 +100,8 @@ export type GameSave = {
   repelSteps: number;
   /** JavaSE `sourceSkillLearnQueue`: unresolved level-up skills, in battle party/order. */
   pendingSkillLearns: PendingSkillLearn[];
+  /** Web only: the money and pet log since the game loaded (`EconomyLedger`; the server reads it). */
+  ledger?: import("../../game/economy/EconomyLedger").LedgerSnapshot;
   /**
    * JavaSE `progression.evolutionNoticeArmed` (the evolution tutorial has run, which opens the
    * convenience shop's evolve rows) and `collection.convenienceRewardsSnapshot()` (the eight

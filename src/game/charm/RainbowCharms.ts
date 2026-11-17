@@ -188,6 +188,37 @@ function ensureEquipment(purse: CharmPurse, id: number): void {
   if (!purse.equipment.includes(id)) purse.equipment.push(id);
 }
 
+/**
+ * Web bug fix: a charm is owned twice over, as an equipment id in the bag and as a tier in the
+ * charm state. Some paths write only the bag: an admin gift, the in-game admin tool, a pet that wore
+ * a charm (old saves) going into the bank. Such a charm stayed hidden on "Trang bị" (rows follow
+ * the tiers) while crafting refused it as "already owned". The two lists are made to agree: a charm
+ * in the bag or worn by a pet starts at tier I, a tiered charm goes back into the bag. Returns true
+ * when anything changed.
+ */
+export function syncCharmOwnership(
+  catalog: RainbowCharmCatalog,
+  state: CharmState,
+  equipment: number[],
+  worn: readonly number[] = [],
+): boolean {
+  let changed = false;
+  for (const charm of catalog.definitions) {
+    const id = charm.runtimeId,
+      key = String(id),
+      inBag = equipment.includes(id);
+    if (state.tiers[key] === undefined && (inBag || worn.includes(id))) {
+      state.tiers[key] = MIN_TIER;
+      changed = true;
+    }
+    if (state.tiers[key] !== undefined && !inBag) {
+      equipment.push(id);
+      changed = true;
+    }
+  }
+  return changed;
+}
+
 /** `RainbowCharmService.claimStarter` (retired in the panel, kept for the data path). */
 export function claimStarterCharm(state: CharmState, purse: CharmPurse): CharmResult {
   if (state.starterClaimed) return result("ALREADY_OWNED", STARTER_CHARM_ID, 0, 0);

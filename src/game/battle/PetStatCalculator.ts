@@ -26,6 +26,14 @@ const V4_GROWTH_DENOMINATOR = 49;
 export type PetCoreStats = { hp: number; attack: number; defense: number; speed: number };
 
 const BATTLE_STATS = ["hp", "attack", "defense", "speed"] as const;
+const TA_VAN_KHUYEN_THAN_SPECIES_ID = 14;
+
+function applySpeciesBalance(speciesId: number, stat: keyof PetCoreStats, value: number): number {
+  if (speciesId === TA_VAN_KHUYEN_THAN_SPECIES_ID && stat !== "attack") {
+    return Math.max(1, Math.floor((value * 80) / 100));
+  }
+  return value;
+}
 
 /**
  * Pet core stats from pack data, the way the shipped Java profile computes them.
@@ -35,8 +43,7 @@ const BATTLE_STATS = ["hp", "attack", "defense", "speed"] as const;
  * `BattleSpeciesRow.rawStat` that resolves its stats, that branch's numbers, and the ancestors whose
  * stats floor it. Every branch the catalog names is implemented here and graded against
  * `battle/golden-pet-stats.json`, which the Java engine wrote, so a wrong formula fails a test
- * instead of shipping a wrong number. Over every branch sits the evolution ancestry floor: an
- * evolved form cannot show less of a stat than any ancestor at the same level and quality.
+ * instead of shipping a wrong number. The evolution ancestry floor applies before balance changes.
  */
 export class PetStatCalculator {
   private constructor(
@@ -105,11 +112,12 @@ export class PetStatCalculator {
 
   /**
    * `BattleUnit.applyNatureType` over the growth stats: the three shiny natures bend hp, attack and
-   * speed, defense and every other nature pass through exactly as the species table has them.
+   * speed, defense and every other nature pass through as the species table has them. Species
+   * balance changes are applied after nature.
    */
   coreStats(speciesId: number, level: number, requestedQuality: number, nature = 0): PetCoreStats {
     const quality = this.resolveQuality(speciesId, requestedQuality);
-    return applyNatureType(
+    const stats = applyNatureType(
       {
         hp: this.statAt(speciesId, "hp", level, quality),
         attack: this.statAt(speciesId, "attack", level, quality),
@@ -118,11 +126,21 @@ export class PetStatCalculator {
       },
       nature,
     );
+    return {
+      hp: applySpeciesBalance(speciesId, "hp", stats.hp),
+      attack: stats.attack,
+      defense: applySpeciesBalance(speciesId, "defense", stats.defense),
+      speed: applySpeciesBalance(speciesId, "speed", stats.speed),
+    };
   }
 
-  /** Final battle stat: the species' own form, then raised to its strongest ancestor's. */
+  /** The species' own stat, raised to its ancestry floor before applying balance changes. */
   stat(speciesId: number, stat: keyof PetCoreStats, level: number, quality: number): number {
-    return this.statAt(speciesId, stat, level, this.resolveQuality(speciesId, quality));
+    return applySpeciesBalance(
+      speciesId,
+      stat,
+      this.statAt(speciesId, stat, level, this.resolveQuality(speciesId, quality)),
+    );
   }
 
   private statAt(

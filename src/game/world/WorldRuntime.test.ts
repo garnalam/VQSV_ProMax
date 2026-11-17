@@ -1078,4 +1078,33 @@ describe("world pointer actor selection", () => {
     runtime.pointer(elder.x - runtime.cameraX, elder.y - 8 - runtime.cameraY);
     expect(runtime.eventScene?.program.id).toBe("world:1:0:2");
   });
+
+  it("walks to an actor tapped out of reach and speaks to it on arrival", () => {
+    const runtime = rig(),
+      elder = runtime.actors.get(data.elderActor)!,
+      start = { x: elder.x + 80, y: elder.y };
+    runtime.player.x = start.x;
+    runtime.player.y = start.y;
+    runtime.cameraX = 0;
+    runtime.cameraY = 0;
+    runtime.pointer(elder.x, elder.y - 8);
+    expect(runtime.eventScene).toBeNull();
+    for (let i = 0; i < 400 && !runtime.eventScene; i++) runtime.tick([]);
+    expect(runtime.player.x !== start.x || runtime.player.y !== start.y).toBe(true);
+    expect(runtime.eventScene?.program.id).toBe("world:1:0:2");
+  });
+
+  it("walks to a tapped spot of open ground, and any key stops the walk", () => {
+    const runtime = rig(),
+      start = { x: runtime.player.x, y: runtime.player.y };
+    runtime.cameraX = 0;
+    runtime.cameraY = 0;
+    runtime.pointer(start.x, start.y + 60);
+    runtime.tick([]);
+    runtime.tick([]);
+    expect(runtime.tapWalkTarget).not.toBeNull();
+    expect(runtime.player.y).toBeGreaterThan(start.y);
+    runtime.tick(["holdUp"]);
+    expect(runtime.tapWalkTarget).toBeNull();
+  });
 });

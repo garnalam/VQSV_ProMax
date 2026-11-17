@@ -7,7 +7,7 @@ import type { DesignTraitProjection } from "../DesignTraitProjection";
 import type { DesignTraitUnit } from "../DesignTraits";
 import { resolveP7PostSkill } from "../P7PostSkill";
 import { resolveP7Strike } from "../P7Strike";
-import { PpExhaustion } from "./PpExhaustion";
+import { playerOutOfPpForGood } from "./PpExhaustion";
 import type { StatusInstance, StatusUnit as StatusUnitLike } from "../StatusState";
 import type { StatusWebRules } from "../StatusWebRules";
 import { BattleAiActorKey } from "../ai/BattleAiActorKey";
@@ -439,6 +439,7 @@ export class DoubleBattleCore {
 
   /** `buildRoundActions`: player selections, the companion, both enemies (joint), sorted. */
   private buildRoundActions(): void {
+    this.restoreBossPp();
     this.actions = [];
     this.acted.fill(false);
     this.selections.forEach((selection) => {
@@ -1209,21 +1210,35 @@ export class DoubleBattleCore {
     });
   }
 
-  private readonly ppExhaustion = new PpExhaustion();
+  /**
+   * ProMax: every 2v2 is against an NPC (gyms, Ma Mộc Cộng Sinh, the companion fights), and an
+   * NPC's team never runs out of PP — out-healing it with recovery items until it is dry is no way
+   * to win.
+   */
+  private restoreBossPp(): void {
+    for (const unit of this.enemyUnits)
+      unit.skillIds.forEach((id, slot) => {
+        unit.skillPp[slot] = id < 0 ? 0 : this.ppMax(id);
+      });
+  }
 
-  /** Web rule: both teams out of PP; the one that ran dry first loses (see `PpExhaustion`). */
-  private endOnPpExhaustion(actorSlot: DoubleSlot): boolean {
+  /**
+   * Web rule, ProMax form: the NPC's PP never runs out (`restoreBossPp`), so the player's side loses
+   * once it is out of PP with no PP item left to drink (see `playerOutOfPpForGood`).
+   */
+  private endOnPpExhaustion(_actorSlot: DoubleSlot): boolean {
+    this.restoreBossPp();
     if (this.openRequest?.kind === "ended") return true;
-    // The player can switch a benched pet with PP in, so the whole roster counts; the NPC never
-    // switches by choice in a 2v2, so only the two it has on the field can still act.
-    const loser = this.ppExhaustion.observe(
+    // The player can switch a benched pet with PP in, so the whole roster counts.
+    const dry = playerOutOfPpForGood(
       [...this.playerUnits, ...this.companionUnits],
-      [this.unit(0), this.unit(1)],
-      actorSlot >= 2 ? "player" : "enemy",
+      this.inventory,
+      this.itemsAllowed(),
+      (id) => this.deps.items.get(id),
     );
-    if (!loser) return false;
-    this.emit({ type: "ppExhausted", side: loser });
-    this.end(loser === "player" ? "enemy" : "player", true);
+    if (!dry) return false;
+    this.emit({ type: "ppExhausted", side: "player" });
+    this.end("enemy", true);
     return true;
   }
 

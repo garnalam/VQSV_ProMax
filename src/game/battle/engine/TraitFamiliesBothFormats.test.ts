@@ -22,6 +22,7 @@ const { BattleCore } = await import("./BattleCore");
 const { DoubleBattleCore } = await import("./DoubleBattleCore");
 const { BasicEnemyAi } = await import("./EnemyController");
 type CombatantSetup = import("./BattleTypes").CombatantSetup;
+type BattleSetup = import("./BattleTypes").BattleSetup;
 type BattleEvent = import("./BattleTypes").BattleEvent;
 type DoubleEvent = import("./DoubleBattleTypes").DoubleEvent;
 type DoubleSlot = 0 | 1 | 2 | 3;
@@ -641,11 +642,16 @@ describe("both teams out of PP: the team that ran dry first loses (web rule)", (
       skillPp: [pp],
     });
   };
-  const duelToEnd = (player: CombatantSetup[], enemy: CombatantSetup[]) => {
+  // A wild fight: an NPC's PP never runs out in ProMax, so only here can both teams go dry.
+  const duelToEnd = (
+    player: CombatantSetup[],
+    enemy: CombatantSetup[],
+    npc: Partial<BattleSetup> = { kind: "wild" },
+  ) => {
     const core = new BattleCore(
       rules,
       { items: services.items, relationClass: (id: number) => species[id]?.relationClass ?? 0 },
-      { format: "1v1", kind: "trainer", player, enemy },
+      { format: "1v1", kind: "wild", ...npc, player, enemy },
       new Sure(),
       new BasicEnemyAi(rules),
     );
@@ -690,20 +696,39 @@ describe("both teams out of PP: the team that ran dry first loses (web rule)", (
     expect(core.events.some((e) => e.type === "ppExhausted")).toBe(false);
   });
 
-  it("2v2: the same verdict over both teams' pets", () => {
+  it("1v1 against an NPC: its PP never runs out, so the player loses once dry with no PP item", () => {
+    for (const kind of ["trainer", "boss"] as const) {
+      // The NPC starts with a single use, yet out-lasting it is no longer a way to win.
+      const lost = duelToEnd([sturdy(210, 3)], [sturdy(34, 1)], { kind });
+      expect(lost.request, kind).toMatchObject({
+        kind: "ended",
+        outcome: { winner: "enemy", reason: "ppExhausted" },
+      });
+      expect(lost.unit("enemy", 0).skillPp[0], kind).toBeGreaterThan(0);
+    }
+    // A PP potion (item 6) in the bag keeps the dry player in the fight: it can still drink it.
+    const waiting = duelToEnd([sturdy(210, 1)], [sturdy(34, 1)], {
+      kind: "trainer",
+      inventory: { 6: 1 },
+    });
+    expect(waiting.events.some((e) => e.type === "ppExhausted")).toBe(false);
+  });
+
+  it("2v2 (always an NPC): the player's side loses once dry; the NPC never runs out", () => {
     const lost = doubleToEnd([sturdy(210, 1), sturdy(222, 1)], [sturdy(34, 3), sturdy(26, 3)]);
     expect(lost.request).toMatchObject({
       kind: "ended",
       outcome: { winner: "enemy", ppExhausted: true },
     });
-    const won = doubleToEnd([sturdy(210, 3), sturdy(222, 3)], [sturdy(34, 1), sturdy(26, 1)]);
-    expect(won.request).toMatchObject({
+    // Before ProMax the NPC's one use each meant the player won on PP; now it cannot.
+    const notWon = doubleToEnd([sturdy(210, 3), sturdy(222, 3)], [sturdy(34, 1), sturdy(26, 1)]);
+    expect(notWon.request).toMatchObject({
       kind: "ended",
-      outcome: { winner: "player", ppExhausted: true },
+      outcome: { winner: "enemy", ppExhausted: true },
     });
-    expect(won.events.find((e) => e.type === "ppExhausted")).toEqual({
+    expect(notWon.events.find((e) => e.type === "ppExhausted")).toEqual({
       type: "ppExhausted",
-      side: "enemy",
+      side: "player",
     });
   });
 });

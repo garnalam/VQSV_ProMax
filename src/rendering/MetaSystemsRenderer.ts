@@ -66,7 +66,7 @@ export function drawChallenge(
 ): void {
   if (panel.mode === "giftCode") {
     base(g, font, "GIFTCODE");
-    text(g, font, "Nhập mã quà tặng offline", 22, 84, "#a8cddd");
+    text(g, font, "Nhập mã quà tặng", 22, 84, "#a8cddd");
     box(g, 18, 106, 204, 31, "#071f2c", "#f2c862");
     text(g, font, panel.giftCodeInput || "_", 27, 116, "#fff16a");
     text(g, font, "A-Z, 0-9, - và _", 23, 148, "#719aaa");
@@ -98,7 +98,7 @@ export function drawChallenge(
   );
   box(g, 17, 169, 206, 42, panel.selected === 1 ? "#3b507a" : "#173f56", "#8ecbe3");
   text(g, font, "Giftcode", 25, 179, "#fff16a");
-  text(g, font, "Nhập và nhận quà từ catalog của bản build", 25, 194, "#a8cddd");
+  text(g, font, "Nhập mã để nhận quà", 25, 194, "#a8cddd");
   if (panel.giftCodeMessage) text(g, font, panel.giftCodeMessage, 20, 225, "#ffb3a7");
   action(g, font, "Chọn", 18, true);
   action(g, font, "Quay lại", 144);

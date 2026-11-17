@@ -2,6 +2,7 @@ import { TextEntryProxy } from "../core/input/TextEntryProxy";
 import { TouchGamepad } from "../core/input/TouchGamepad";
 import type { InputState } from "../core/input/InputState";
 import { enterFullscreenOnFirstGesture, mountFullscreenButton } from "./FullscreenButton";
+import { mountPadToggle } from "./PadToggle";
 import { fitStage, liveArea } from "./StageLayout";
 import { useLandscape } from "../core/Viewport";
 
@@ -26,6 +27,7 @@ export function mountPageShell(options: {
   const gamepad = new TouchGamepad(input, options.padLeft, options.padRight),
     keyboard = new TextEntryProxy(input);
   mountFullscreenButton(app);
+  mountPadToggle(app, () => gamepad.releaseAll());
   enterFullscreenOnFirstGesture();
 
   // What the last layout was measured from: a change seen on any frame lays the page out again, so

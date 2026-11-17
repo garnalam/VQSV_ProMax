@@ -25,7 +25,9 @@ import {
   listIndexAt,
   PET_STATE,
   petIndexAt,
+  petStatePageAt,
   scrollbarOf,
+  stepPetStatePage,
   SHOP_LIST,
   SKILL_LIST,
   type BattleListLayout,
@@ -916,9 +918,15 @@ export class BattleRuntime {
     }
     if (stage === "petList") {
       const buttons = landPetStateButtons() ?? PET_STATE;
-      const tab = PET_STATE.tabs.findIndex((rect) => contains(x, y, rect));
-      if (tab >= 0) this.ui.tab = tab;
-      else if (contains(x, y, PET_STATE.previous)) this.selectListRow(this.ui.selectedIndex - 1);
+      const page = petStatePageAt(
+        { tab: this.ui.tab ?? 0, talent: this.ui.talent === true },
+        x,
+        y,
+      );
+      if (page) {
+        this.ui.tab = page.tab;
+        this.ui.talent = page.talent;
+      } else if (contains(x, y, PET_STATE.previous)) this.selectListRow(this.ui.selectedIndex - 1);
       else if (contains(x, y, PET_STATE.next)) this.selectListRow(this.ui.selectedIndex + 1);
       else if (contains(x, y, buttons.action)) run("confirm");
       else if (contains(x, y, buttons.back)) run("back");
@@ -1932,9 +1940,17 @@ export class BattleRuntime {
       case "itemList":
       case "petList":
         if (stage === "petList") {
-          // Left and right turn the pet screen's tabs: Hồ sơ, Chỉ số, Đặc tính, Kỹ năng.
-          if (commands.includes("left")) this.ui.tab = ((this.ui.tab ?? 0) + 3) % 4;
-          if (commands.includes("right")) this.ui.tab = ((this.ui.tab ?? 0) + 1) % 4;
+          // Left and right turn the pet screen's pages: Hồ sơ, Chỉ số, Đặc tính, Thiên phú, Kỹ năng.
+          const left = commands.includes("left"),
+            right = commands.includes("right");
+          if (left !== right) {
+            const page = stepPetStatePage(
+              { tab: this.ui.tab ?? 0, talent: this.ui.talent === true },
+              right,
+            );
+            this.ui.tab = page.tab;
+            this.ui.talent = page.talent;
+          }
         }
         if (commands.includes("up"))
           this.selectListRow((this.ui.selectedIndex + count - 1) % count);
@@ -2578,6 +2594,7 @@ export class BattleRuntime {
       this.ui = {
         ...battleUiState("PET_STATE"),
         tab: this.ui.mode === "PET_STATE" ? this.ui.tab : 0,
+        talent: this.ui.mode === "PET_STATE" ? this.ui.talent : false,
         // The cursor stays where the player left it; a replacement screen opened on a pet that is
         // already down starts on the first one that can actually be sent out, so a plain confirm on
         // the default row is never a dead end.

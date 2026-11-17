@@ -66,7 +66,42 @@ export const PET_STATE = {
   ],
   action: { x: 42, y: 263, w: 64, h: 22 },
   back: { x: 144, y: 263, w: 56, h: 22 },
+  /** `PetStateDetailUiState.SPECIES_ROW_*` / `PHYSICAL_ROW_*`: Đặc tính, then Thiên phú. */
+  traitRows: [
+    { x: 30, y: 113, w: 176, h: 14 },
+    { x: 30, y: 128, w: 176, h: 14 },
+  ],
 } as const;
+
+/** The pet dashboard's page: its tab, and on the Đặc tính tab whether Thiên phú is the row shown. */
+export type PetStatePage = { tab: number; talent: boolean };
+
+/**
+ * `PetStateDetailUiState.handleKeyboard`: left/right walk Hồ sơ, Chỉ số, Đặc tính, Thiên phú, Kỹ
+ * năng — both trait rows are stops on the one Đặc tính tab.
+ */
+export function stepPetStatePage(page: PetStatePage, right: boolean): PetStatePage {
+  const tab = page.tab;
+  if (right) {
+    if (tab === 2 && !page.talent) return { tab: 2, talent: true };
+    return { tab: (tab + 1) % 4, talent: false };
+  }
+  if (tab === 2 && page.talent) return { tab: 2, talent: false };
+  const previous = (tab + 3) % 4;
+  return { tab: previous, talent: previous === 2 };
+}
+
+/**
+ * `PetStateDetailUiState.handlePointer`: a press on a tab, or on the Đặc tính tab on one of its two
+ * rows (so a touch screen can open Thiên phú); null when the press is on neither.
+ */
+export function petStatePageAt(page: PetStatePage, x: number, y: number): PetStatePage | null {
+  const tab = PET_STATE.tabs.findIndex((rect) => contains(x, y, rect));
+  if (tab >= 0) return { tab, talent: page.talent };
+  if (page.tab !== 2) return null;
+  const row = PET_STATE.traitRows.findIndex((rect) => contains(x, y, rect));
+  return row < 0 ? null : { tab: 2, talent: row === 1 };
+}
 
 /** `commandIndexAt`: the six command buttons along the bottom band. */
 export const COMMAND_CENTERS = [20, 56, 98, 137, 176, 218];

@@ -176,6 +176,20 @@ describe("RainbowCharmService", () => {
     expect(charms.charmResultMessage(crafted)).toBe("Chế tác thành công bùa cấp I.");
   });
 
+  it("owns a charm that reached the bag without its tier (admin gift, banked pet)", () => {
+    const owned = charms.emptyCharmState(),
+      wallet = purse(99999, 8, { 12: 9, 15: 9 });
+    owned.tiers["5048"] = 2;
+    wallet.equipment.push(5037, 3);
+    // 5037 in the bag only, 5057 worn by a pet only, 5048 tiered but missing from the bag.
+    expect(charms.syncCharmOwnership(catalog, owned, wallet.equipment, [5057, 1])).toBe(true);
+    expect(owned.tiers).toEqual({ 5037: 1, 5048: 2, 5057: 1 });
+    expect(wallet.equipment.sort((a, b) => a - b)).toEqual([3, 5037, 5048, 5057]);
+    expect(charms.syncCharmOwnership(catalog, owned, wallet.equipment, [5057])).toBe(false);
+    // Now listed on "Trang bị" and equippable instead of refused as "already owned".
+    expect(charms.equipCharm(catalog, owned, 5037).outcome).toBe("EQUIPPED");
+  });
+
   it("upgrades tier by tier with the species recipes and stops at V", () => {
     const owned = charms.emptyCharmState(),
       wallet = purse(1_000_000, 8, { 12: 99, 13: 99, 14: 99, 3000: 99, 3001: 99, 3002: 99 });

@@ -37,7 +37,7 @@ import {
   KimDiemDebuffReflection,
   KimDiemLongAn,
 } from "./KimDiemLongAn";
-import { PpExhaustion, teamOutOfPp } from "./PpExhaustion";
+import { playerOutOfPpForGood, PpExhaustion, teamOutOfPp } from "./PpExhaustion";
 import type { CharmLoadoutEntry, RainbowCharmBattleState } from "../../charm/RainbowCharmBattle";
 
 /** The projection's seats in a 1v1 (`VqsvBattleRuntime.TRAIT_ENEMY_SLOT` / `TRAIT_PLAYER_SLOT`). */
@@ -245,6 +245,7 @@ export class BattleCore {
     while (this.queue.length > 0) {
       const action = this.queue.shift()!;
       this.act(action);
+      this.restoreBossPp();
       if (this.finished()) return;
       if (this.endOnPpExhaustion(action.side)) return;
       if (this.openRequest) return; // a pivot is waiting for the player
@@ -687,8 +688,38 @@ export class BattleCore {
   private readonly fainted = new Set<DesignTraitUnit>();
   private readonly ppExhaustion = new PpExhaustion();
 
+  /**
+   * ProMax: an NPC's or boss's team never runs out of PP, even after a PP drain, so out-healing it
+   * with recovery items until it is dry is no way to win. Only a catchable wild pet and another
+   * player's team (PvP) spend PP as the player's do.
+   */
+  private npcInfinitePp(): boolean {
+    if (this.setup.pvp) return false;
+    return this.setup.kind !== "wild" || this.setup.captureAllowed === false;
+  }
+
+  private restoreBossPp(): void {
+    if (!this.npcInfinitePp()) return;
+    for (const unit of this.sides.enemy.party)
+      unit.skillIds.forEach((id, slot) => {
+        unit.skillPp[slot] = id < 0 ? 0 : this.ppMax(id);
+      });
+  }
+
   /** Web rule: both teams out of PP; the one that ran dry first loses (see `PpExhaustion`). */
   private endOnPpExhaustion(actor: SideId): boolean {
+    if (this.npcInfinitePp()) {
+      const dry = playerOutOfPpForGood(
+        this.sides.player.party,
+        this.inventory,
+        this.itemsAllowed(),
+        (id) => this.item(id),
+      );
+      if (!dry) return false;
+      this.emit({ type: "ppExhausted", side: "player" });
+      this.end({ winner: "enemy", reason: "ppExhausted" });
+      return true;
+    }
     const loser = this.ppExhaustion.observe(this.sides.player.party, this.sides.enemy.party, actor);
     if (!loser) return false;
     this.emit({ type: "ppExhausted", side: loser });
@@ -886,6 +917,7 @@ export class BattleCore {
   }
 
   private enemyCommand(): BattleCommand {
+    this.restoreBossPp();
     // Web rule (with `PpExhaustion`): a dry pet hands over to a reserve that still has PP, or the
     // fight could stall on a team that is not out of PP but never fields the pet that has it.
     const active = this.activeUnit("enemy");

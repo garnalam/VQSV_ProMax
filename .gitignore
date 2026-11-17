@@ -13,3 +13,6 @@ vitest-report.json
 
 # Wrangler local state
 .wrangler/
+
+# The save envelope build keys (renewed on every deploy, never committed)
+deploy/build-keys.txt

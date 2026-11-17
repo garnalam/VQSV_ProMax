@@ -364,4 +364,31 @@ describe("BattleCore: the enemy controller", () => {
     // 36 (Power 155) has no PP left: 30 is the one it can use.
     expect(enemySkill).toMatchObject({ skillId: 30 });
   });
+
+  it("gives an NPC's or boss's team inexhaustible PP, but not a wild pet's or a player's", () => {
+    const dry = { enemy: [pet(34, { skillIds: [30, 36, -1], skillPp: [5, 0] })] };
+    const enemySkill = (setup: Partial<BattleSetup>) => {
+      const core = fight({ ...dry, ...setup });
+      const events = core.submit({ kind: "skill", slot: 0 });
+      return {
+        skill: events.find((e) => e.type === "skill" && e.seat.side === "enemy"),
+        pp: core.unit("enemy", 0).skillPp[1],
+      };
+    };
+    for (const npc of [
+      { kind: "trainer" as const },
+      { kind: "boss" as const },
+      // A story monster the player may not catch is an authored boss, whatever `kind` says.
+      { kind: "wild" as const, captureAllowed: false },
+    ]) {
+      const { skill, pp } = enemySkill(npc);
+      expect(skill, JSON.stringify(npc)).toMatchObject({ skillId: 36 });
+      expect(pp, JSON.stringify(npc)).toBeGreaterThan(0);
+    }
+    for (const spent of [{ kind: "wild" as const }, { kind: "trainer" as const, pvp: true }]) {
+      const { skill, pp } = enemySkill(spent);
+      expect(skill, JSON.stringify(spent)).toMatchObject({ skillId: 30 });
+      expect(pp, JSON.stringify(spent)).toBe(0);
+    }
+  });
 });

@@ -1,8 +1,9 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { defineConfig, type Plugin } from "vitest/config";
 import { resolve } from "node:path";
-// Plain JavaScript shared with the Cloudflare Pages Function (types in admin-api.d.mts).
-import { adminRoute } from "../../shared/admin-api.mjs";
+import { existsSync, readFileSync } from "node:fs";
+// Plain JavaScript shared with the save backend (server/app.mjs; types in admin-grant.d.mts).
+import { adminRoute } from "./server/admin-grant.mjs";
 
 /**
  * Where `npm run dev` sends `/api` (accounts and saves): the Cloudflare Pages deployment by
@@ -39,7 +40,8 @@ function adminDevApi(api: string): Plugin {
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         const path = (req.url ?? "").split("?")[0];
-        if (!path.startsWith("/api/admin/")) return next();
+        // Only the in-game Admin Tool's two calls; the admin page's routes live on the save backend.
+        if (path !== "/api/admin/status" && path !== "/api/admin/grant") return next();
         try {
           const me = await fetch(`${api}/api/auth/me`, {
             headers: { cookie: req.headers.cookie ?? "" },
@@ -65,15 +67,31 @@ function adminDevApi(api: string): Plugin {
   };
 }
 
+/**
+ * The save envelope's build key (`src/account/SaveEnvelope.ts`): the first line of
+ * deploy/build-keys.txt, which every deploy renews (`deploy/rotate-build-key.mjs`); a dev build
+ * without the file uses the dev key. It goes into the bundle masked, never as plain hex.
+ */
+function buildKeyDefine(): string {
+  const file = resolve(__dirname, "deploy/build-keys.txt"),
+    hex = existsSync(file) ? readFileSync(file, "utf8").split(/\s+/).find((line) => /^[0-9a-f]{64}$/.test(line)) : undefined;
+  if (!hex) return "undefined";
+  const bytes = hex.match(/../g)!.map((pair, index) => parseInt(pair, 16) ^ ((index * 73 + 41) & 255));
+  return JSON.stringify(bytes);
+}
+
 // `npm test` covers the web game only and needs nothing outside this folder. Checks that compare
 // the pack against the Java source tree live in oracle/ and run with `npm run test:oracle`.
 export default defineConfig({
   plugins: [adminDevApi(API)],
+  define: { __VQSV_BK__: buildKeyDefine() },
   build: {
     rollupOptions: {
       input: {
         game: resolve(__dirname, "index.html"),
         wiki: resolve(__dirname, "wiki.html"),
+        admin: resolve(__dirname, "admin/index.html"),
+        mapaudit: resolve(__dirname, "map-audit/index.html"),
       },
     },
   },

@@ -8,7 +8,9 @@ import {
   listIndexAt,
   PET_STATE,
   petIndexAt,
+  petStatePageAt,
   SKILL_LIST,
+  stepPetStatePage,
 } from "./BattleListLayout";
 import { CPOS_GROUPS } from "./BattleRuntime";
 import { battleSeatTables } from "./BattleSeats";
@@ -390,8 +392,14 @@ export class DoubleBattleRuntime {
         const vertical = pressed("up") ? -1 : pressed("down") ? 1 : 0;
         if (vertical && count > 0)
           this.ui.selectedIndex = (this.ui.selectedIndex + count + vertical) % count;
-        if (pressed("left")) this.ui.tab = ((this.ui.tab ?? 0) + 3) % 4;
-        if (pressed("right")) this.ui.tab = ((this.ui.tab ?? 0) + 1) % 4;
+        if (pressed("left") !== pressed("right")) {
+          const page = stepPetStatePage(
+            { tab: this.ui.tab ?? 0, talent: this.ui.talent === true },
+            pressed("right"),
+          );
+          this.ui.tab = page.tab;
+          this.ui.talent = page.talent;
+        }
         if (pressed("confirm")) this.confirmPet();
         return;
       }
@@ -439,9 +447,15 @@ export class DoubleBattleRuntime {
       return;
     }
     if (this.stage === "pet") {
-      const tab = PET_STATE.tabs.findIndex((rect) => contains(x, y, rect));
-      if (tab >= 0) this.ui.tab = tab;
-      else if (contains(x, y, PET_STATE.previous)) this.handleInput(["up"]);
+      const page = petStatePageAt(
+        { tab: this.ui.tab ?? 0, talent: this.ui.talent === true },
+        x,
+        y,
+      );
+      if (page) {
+        this.ui.tab = page.tab;
+        this.ui.talent = page.talent;
+      } else if (contains(x, y, PET_STATE.previous)) this.handleInput(["up"]);
       else if (contains(x, y, PET_STATE.next)) this.handleInput(["down"]);
       else if (contains(x, y, PET_STATE.action)) this.handleInput(["confirm"]);
       else if (contains(x, y, PET_STATE.back)) this.handleInput(["back"]);

@@ -8,7 +8,13 @@ import type { SourceUiLayout } from "../../rendering/SourceUiLayout";
 import type { TaskRow, TaskTab } from "../quest/TaskBoard";
 import { BAG_TABS, bagActionLabel, type BagRow, type BagTab } from "../inventory/Bag";
 import type { BattleUiRow } from "../battle/BattleUiState";
-import { contains, PET_STATE, petIndexAt } from "../battle/BattleListLayout";
+import {
+  contains,
+  PET_STATE,
+  petIndexAt,
+  petStatePageAt,
+  stepPetStatePage,
+} from "../battle/BattleListLayout";
 import { SKILL_SLOTS } from "../battle/engine/PetProgression";
 import type { PendingSkillLearn } from "../../persistence/save/GameSave";
 import { PET_ITEM_USED, PET_PROMPT } from "../pet/PetScreen";
@@ -541,8 +547,10 @@ export class WorldPanel {
     this.saveMessage = success ? SAVE_TEXT.success : SAVE_TEXT.failure;
   }
 
-  /** The notice's line (`notice` mode). */
+  /** The notice's text (`notice` mode), wrapped onto as many lines as it needs. */
   notice = "";
+  /** The notice card's header. */
+  noticeTitle = "Thông báo";
 
   // ------------------------------------------------------------------ bodyShop.ui / shopbuy.ui / msgyn.ui
 
@@ -2137,6 +2145,8 @@ export class WorldPanel {
   petItem = -1;
   /** `battlePetStateDetailUi`'s page: Hồ sơ, Chỉ số, Đặc tính, Kỹ năng. */
   petTab = 0;
+  /** On the Đặc tính page: Thiên phú is the row shown (`TraitDetail.PHYSICAL`). */
+  petTalent = false;
   /** The list, `petsetting.ui` over it, or the release question (`sourceReleaseConfirmVisible`). */
   petStage:
     | "list"
@@ -2653,7 +2663,12 @@ export class WorldPanel {
     }
     // `battlePetStateDetailUi.handleKeyboard(left, right)` turns the dashboard's page first.
     if (pressed.includes("left") || pressed.includes("right")) {
-      this.petTab = (this.petTab + (pressed.includes("right") ? 1 : PET_TABS - 1)) % PET_TABS;
+      const page = stepPetStatePage(
+        { tab: this.petTab, talent: this.petTalent },
+        pressed.includes("right"),
+      );
+      this.petTab = page.tab % PET_TABS;
+      this.petTalent = page.talent;
       return;
     }
     const count = this.petCards.length;
@@ -2865,11 +2880,12 @@ export class WorldPanel {
   visibleListStart(rowCount: number): number {
     return clamp(this.listScroll, 0, Math.max(0, rowCount - TASK_VISIBLE_ROWS));
   }
-  /** A one-line notice card (a shortcut whose panel is not open yet), closed by confirm or back. */
-  openNotice(text: string): void {
+  /** A notice card (a shortcut whose panel is not open yet, a gift), closed by confirm or back. */
+  openNotice(text: string, title = "Thông báo"): void {
     this.visible = true;
     this.mode = "notice";
     this.notice = text;
+    this.noticeTitle = title;
     this.pressed.length = 0;
     this.openedTicks = 0;
   }
@@ -3558,8 +3574,11 @@ export class WorldPanel {
       else if (panelBackHit(x, y)) this.pressed.push("back");
       return;
     }
-    const tab = PET_STATE.tabs.findIndex((rect) => contains(x, y, rect));
-    if (tab >= 0) this.petTab = tab;
+    const page = petStatePageAt({ tab: this.petTab, talent: this.petTalent }, x, y);
+    if (page) {
+      this.petTab = page.tab;
+      this.petTalent = page.talent;
+    }
     else if (contains(x, y, PET_STATE.previous)) {
       this.select(Math.max(0, this.selected - 1));
       this.keepPetVisible();

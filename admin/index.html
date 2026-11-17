@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'none'; form-action 'self'"
+    />
+    <title>Quản trị · VQSV ProMax</title>
+    <link rel="icon" type="image/png" href="/icon-192.png" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap bar">
+        <strong>VQSV ProMax <span>Quản trị</span></strong>
+        <nav id="tabs" class="tabs" hidden>
+          <button data-tab="overview" class="active">Tổng quan</button>
+          <button data-tab="online">Đang chơi</button>
+          <button data-tab="players">Người chơi</button>
+          <button data-tab="codes">Giftcode</button>
+          <button data-tab="mail">Gửi quà</button>
+          <button data-tab="alerts">Cảnh báo <span id="alert-count" class="badge locked" hidden></span></button>
+          <button data-tab="audit">Nhật ký</button>
+        </nav>
+        <div class="links">
+          <small id="identity"></small>
+          <a href="/">Vào game</a>
+          <button id="logout" hidden>Đăng xuất</button>
+        </div>
+      </div>
+    </header>
+    <main class="wrap">
+      <p id="message" role="status" aria-live="polite" hidden></p>
+      <section id="sign-in" class="card login" hidden>
+        <h1>Đăng nhập quản trị</h1>
+        <form id="login">
+          <label>Email <input name="email" type="email" autocomplete="username" required /></label>
+          <label
+            >Mật khẩu
+            <input name="password" type="password" autocomplete="current-password" required
+          /></label>
+          <button class="primary" type="submit">Đăng nhập</button>
+        </form>
+      </section>
+      <div id="app" hidden></div>
+    </main>
+    <datalist id="item-list"></datalist>
+    <datalist id="species-list"></datalist>
+    <datalist id="room-list"></datalist>
+    <datalist id="branch-list"></datalist>
+    <script type="module" src="/src/admin/main.ts"></script>
+  </body>
+</html>

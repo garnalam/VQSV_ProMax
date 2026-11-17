@@ -70,8 +70,10 @@ export class StoryDirector {
       inferred = activeTask ? this.graph.nodeForActiveTask(activeTask) : undefined,
       node = saved ?? inferred ?? this.graph.start;
     this.current = node;
-    if (record?.node && saved) this.log.restore(record);
-    else if (node.mainTask !== undefined) this.log.startMain(node.mainTask);
+    // The quest log is the player's, whatever node it was saved at: a node this build no longer
+    // has (renamed or dropped by an update) must not throw away the branch tasks and tokens too.
+    if (record) this.log.restore(record);
+    if (!saved && node.mainTask !== undefined) this.log.startMain(node.mainTask);
   }
 
   /**

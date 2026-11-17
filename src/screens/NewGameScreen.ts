@@ -38,6 +38,8 @@ import {
 } from "../rendering/WorldPanelRenderer";
 import { drawAreaMap } from "../rendering/AreaMapRenderer";
 import { drawBag } from "../rendering/BagRenderer";
+import { wrapWords } from "../rendering/ModernShopKit";
+import type { ClaimedGift } from "../account/RewardsApi";
 import { BattleUiRenderer } from "../rendering/BattleUiRenderer";
 import { drawPetSetting, drawReleaseConfirm } from "../rendering/WorldPetOverlays";
 import { drawSourceChoice } from "../rendering/SourceChoiceRenderer";
@@ -132,6 +134,8 @@ export class NewGameScreen implements Screen {
   speed: { enabled: () => boolean; toggle: () => void } | null = null;
   /** Set by the app for an admin account: opens the Admin Tool over this session. */
   admin: { open: (host: GameplayHost) => void } | null = null;
+  /** Set by the app for an online account: server gift codes. */
+  rewards: { redeem: (code: string, bankFree: number) => Promise<ClaimedGift> } | null = null;
   /** The three-step JavaSE settings meter, wired to the app's persisted audio mixer. */
   volume: { level: () => number; setLevel: (level: number) => void } | null = null;
   /** Told after every tick what the screen is showing, so the app can pick the music for it. */
@@ -169,6 +173,12 @@ export class NewGameScreen implements Screen {
         admin: {
           enabled: () => this.admin !== null,
           open: () => this.admin?.open(this.host),
+        },
+        rewards: {
+          redeem: (code, bankFree) =>
+            this.rewards
+              ? this.rewards.redeem(code, bankFree)
+              : Promise.reject(new Error("Giftcode không tồn tại.")),
         },
       },
       start,
@@ -528,6 +538,18 @@ export class NewGameScreen implements Screen {
     this.drawActorSet(g, actors, 2, camera, undefined, true, cauVong);
     // `PLAYER_SHADOW` under the free-world hero, before the actors that may stand in front of it.
     if (actors === this.world?.actors) this.drawPlayerShadow(g, actors, camera);
+    // Web (touch): where a tap on the map is walking the hero, a pulsing ring on the ground.
+    const tapTarget = actors === this.world?.actors ? this.world.tapWalkTarget : null;
+    if (tapTarget) {
+      const pulse = (performance.now() % 800) / 800;
+      g.save();
+      g.strokeStyle = `rgba(255,236,120,${(0.95 - pulse * 0.6).toFixed(2)})`;
+      g.lineWidth = 2;
+      g.beginPath();
+      g.ellipse(tapTarget.x - camera.x, tapTarget.y - camera.y, 6 + pulse * 6, 3 + pulse * 3, 0, 0, Math.PI * 2);
+      g.stroke();
+      g.restore();
+    }
     this.drawActorSet(g, actors, 1, camera, undefined, true, cauVong);
     if (layers[3]) this.drawMapLayer(g, layers[3], mapCamera);
     this.drawActorSet(g, actors, 0, camera, undefined, true, cauVong);
@@ -1514,6 +1536,7 @@ export class NewGameScreen implements Screen {
             selectedIndex: panel.selected,
             scroll: panel.listScroll,
             tab: panel.petTab,
+            talent: panel.petTalent,
           },
           tick,
           land,
@@ -1954,14 +1977,15 @@ export class NewGameScreen implements Screen {
     font.draw(g, "x2", boxX + 14, boxY, ink);
     g.setTransform(base);
   }
-  /** The one-line notice card (a shortcut whose panel is not ported yet). */
+  /** The notice card (a shortcut whose panel is not ported yet, or a gift from the server). */
   private drawPanelCard(g: CanvasRenderingContext2D): void {
     const panel = this.host.panel,
       font = this.boot.panelFont,
       x = 18,
       w = 204,
-      h = 62,
-      y = Math.floor((320 - h) / 2) - 10;
+      lines = wrapWords(font, panel.notice, w - 16).slice(0, 14),
+      h = Math.max(62, 50 + lines.length * 13),
+      y = Math.max(4, Math.floor((320 - h) / 2) - 10);
     g.fillStyle = "rgba(0, 18, 28, 0.55)";
     fillCanvas(g);
     g.fillStyle = "#0b3d50";
@@ -1978,8 +2002,8 @@ export class NewGameScreen implements Screen {
     g.fill();
     g.fillStyle = "#f0a43c";
     g.fillRect(x, y + 21, w, 2);
-    font.centered(g, "Thông báo", x, w, y + 6, "#ffffff");
-    font.centered(g, panel.notice, x, w, y + 32, "#14384a");
+    font.centered(g, panel.noticeTitle, x, w, y + 6, "#ffffff");
+    lines.forEach((line, i) => font.centered(g, line, x, w, y + 32 + i * 13, "#14384a"));
     font.centered(g, "Nhấn 5 để đóng", x, w, y + h - 14, "#6e93a5");
   }
   /** A world sprite frame with its anchor at x,y. */
