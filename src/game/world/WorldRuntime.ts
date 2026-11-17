@@ -163,6 +163,7 @@ import {
   type CauVongHero,
   type CauVongMechanic,
   cauVongActorSnapshots,
+  cauVongCampusNpcPassable,
   cauVongNpcRequested,
   cauVongPropRequested,
   cauVongTalkTarget,
@@ -4483,7 +4484,15 @@ export class WorldRuntime {
       // props by theirs, the rest as the source row says.
       const mechanics = this.cauVongMechanics();
       if (!mechanics) return false;
-      const snapshots = cauVongActorSnapshots(this.actors.values(), mechanics);
+      // Only movement yields to the lower witness in 30:6's crowded formation; talking still
+      // uses the unmodified actors and footprints.
+      const actors =
+        this.roomIndex === 30
+          ? [...this.actors.values()].filter(
+              (actor) => !cauVongCampusNpcPassable(this.roomIndex, actor, this.actors),
+            )
+          : this.actors.values();
+      const snapshots = cauVongActorSnapshots(actors, mechanics);
       // `CauVongBranchTreasures.obstacle`: every shown chest blocks by its floor footprint.
       for (const t of this.branches()?.treasures(this.roomIndex) ?? [])
         if (t.state !== -1)
@@ -6946,6 +6955,7 @@ export class WorldRuntime {
       {
         ...request,
         sceneId: this.sceneId,
+        boss: key === KIM_DIEM_BATTLE_KEY ? "kim-diem-long-vuong" : undefined,
         // ProMax: Đại Điện's (51) hidden Divine pets fight under the same seal as an owned one.
         enemyStatPercent: key.startsWith(`${SUMMON_PREFIX}51:`)
           ? (speciesId) => this.divineSeal?.percent(speciesId, true) ?? 100

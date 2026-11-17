@@ -1,4 +1,5 @@
 import { WHARF_BOAT_SPRITE, WHARF_OCEAN_MAP, type WharfTravel } from "../game/world/WharfTravel";
+import { drawSafari } from "../rendering/SafariRenderer";
 import type { BootAssets } from "../pack/boot";
 import { roomBackdropColor, roomBackPic } from "../game/world/RoomBackdrop";
 import { gameplayCommands, gameplayShortcuts, type InputCommand } from "../core/input/GameCommand";
@@ -205,6 +206,14 @@ export class NewGameScreen implements Screen {
    */
   tick(input: InputSnapshot, sameFrame = false): void {
     if (this.frozen) return;
+    if (this.host.safari.run || this.host.safari.visible) {
+      const commands = gameplayCommands(input);
+      if (this.host.safariSaveFailed && commands.includes("confirm")) this.host.retrySafariSave();
+      else if (input.pointer.pressed)
+        this.host.safari.click(input.pointer.pressX, input.pointer.pressY);
+      else this.step(commands, sameFrame);
+      return;
+    }
     const pointer = input.pointer;
     // A press on a scrollbar is the bar's; any other press is a click. A finger on a list waits:
     // dragged, it scrolls (TouchSwipe); lifted in place, it is the click.
@@ -407,6 +416,7 @@ export class NewGameScreen implements Screen {
 
   /** Whether a frame between two ticks would differ (something is walking or the camera pans). */
   animating(): boolean {
+    if (this.host.safari.run || this.host.safari.throwAnimation) return true;
     return !this.frozen && this.motion.moving;
   }
   /**
@@ -434,6 +444,46 @@ export class NewGameScreen implements Screen {
       : 1;
   }
   render(r: CanvasRenderer, alpha = 1): void {
+    if (this.host.safari.run || this.host.safari.visible) {
+      drawSafari(
+        r,
+        this.host.safari,
+        this.assets,
+        this.boot.panelFont,
+        {
+          heroSprite: this.world?.player.sprite ?? 0,
+          hero: (g, x, y, direction, moving) => {
+            const player = this.world?.player;
+            if (player)
+              this.drawSprite(
+                g,
+                player.sprite,
+                (moving ? 3 : 0) + (direction === 3 ? 1 : direction),
+                this.host.safari.tickCount,
+                x,
+                y,
+                direction === 3,
+              );
+          },
+          pet: (g, sprite, nature, color, x, y) => {
+            const visual = this.assets.shinySprite(sprite, nature, color);
+            const frame = this.assets.frame(visual, 0, this.host.safari.tickCount);
+            if (!frame) return;
+            const image = this.assets.imageFor(frame, false);
+            if (image.complete)
+              g.drawImage(
+                this.assets.shinyImage(image, nature, visual, color),
+                x + frame.ox,
+                y + frame.oy,
+              );
+          },
+        },
+        this.world?.currency.badges ?? 0,
+        this.host.safariSaving,
+        this.host.safariSaveFailed,
+      );
+      return;
+    }
     this.motion.alpha = this.frozen ? 1 : alpha;
     // `VqsvSceneView.render`: the loading screen replaces the frame, the world is not drawn under it.
     if (this.host.mapLoadingActive) {
@@ -1907,6 +1957,12 @@ export class NewGameScreen implements Screen {
       g.setTransform(base.a, base.b, base.c, base.d, base.e + d.x * base.a, base.f + d.y * base.d);
     };
     const base = g.getTransform();
+    pin("tr");
+    g.fillStyle = "#174b37";
+    g.fillRect(183, 36, 55, 22);
+    g.strokeStyle = "#d6c879";
+    g.strokeRect(183, 36, 55, 22);
+    font.centered(g, "Safari", 183, 55, 41, "#ffffff");
     pin("tl");
     // The banner drops in at widget 1 (aligned to its top-left), the name scrolls in widget 6.
     if (hud.titleAnimationTick >= 0) {

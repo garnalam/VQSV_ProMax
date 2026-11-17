@@ -1,4 +1,6 @@
 import { cornerShift, fromUi, viewport } from "../../core/Viewport";
+import { SafariSession } from "../world/SafariSession";
+import type { SafariMap } from "../meta/Safari";
 import type { NpcServicesDocument } from "../world/NpcServices";
 import { WharfTravel } from "../world/WharfTravel";
 import { doubleBattleFallTicks } from "../battle/DoubleEventBattle";
@@ -198,6 +200,7 @@ export type GameplaySources = {
   unifiedBadges?: readonly UnifiedBadgeRecord[];
   metaSystems?: MetaSystemsDocument;
   bondingTower?: TowerContent;
+  safariMap?: SafariMap;
   giftCodes?: GiftCodeDocument;
 };
 
@@ -282,6 +285,7 @@ export function gameplaySources(assets: GameAssets, boot: BootAssets): GameplayS
     unifiedBadges: assets.unifiedBadges,
     metaSystems: assets.metaSystems,
     bondingTower: assets.bondingTower,
+    safariMap: assets.safariMap,
     giftCodes: assets.giftCodes,
     sceneRoom: (scene, room) => assets.getRoom(scene, room),
     worldContract: assets.worldContract,
@@ -352,6 +356,61 @@ function portableShopDescription(row: number, lastClaim: number): string {
 }
 
 export class GameplayHost {
+  readonly safari = new SafariSession({
+    captureAnimation: () =>
+      this.sources.world.battle?.captureAnimation ?? this.sources.worldContract.capture,
+    map: () => this.sources.safariMap,
+    run: () => this.world?.meta.safari,
+    setRun: (run) => {
+      if (this.world) this.world.meta.safari = run;
+    },
+    canEnter: () =>
+      !!this.world &&
+      this.story.worldActive &&
+      !this.storyCutscene &&
+      !this.mapLoadingActive &&
+      this.canOpenPanel(this.world),
+    wallet: () => this.world?.currency,
+    blocked: () => this.saves.pending > 0 || this.saves.lastError !== null,
+    hasSpace: () =>
+      !!this.world &&
+      (this.world.pets.length < 6 ||
+        this.world.campaign.petBank.length < this.world.petBankCapacity()),
+    createPet: (id, level, random) => {
+      const world = this.world;
+      if (!world) return undefined;
+      const pet = world.createHatchedPet(id, level);
+      if (!pet) return undefined;
+      pet.quality = 2;
+      pet.nature = random(100) < (world.kimDiemAmuletEquipped() ? 50 : 2) ? 7 + random(3) : 0;
+      pet.shinyColor = pet.nature >= 7 ? random(13) : -1;
+      const hp = this.sources.world.petStats.coreStats(id, level, pet.quality, pet.nature).hp;
+      pet.maxHp = hp;
+      pet.currentHp = hp;
+      return pet;
+    },
+    speed: (id) => this.sources.world.petStats.coreStats(id, 1, 0).speed,
+    receive: (pet) => {
+      const world = this.world;
+      if (!world) return;
+      const target = world.pets.length < 6 ? world.pets : world.campaign.petBank;
+      target.push({ ...pet, slot: target.length });
+      world.collectOwned(pet);
+      world.synchronizeGoldenBankReward();
+    },
+    save: () => {
+      if (this.world) this.saves.save(this.snapshot(this.world));
+    },
+  });
+  get safariSaving(): boolean {
+    return this.saves.pending > 0;
+  }
+  get safariSaveFailed(): boolean {
+    return this.saves.lastError !== null;
+  }
+  retrySafariSave(): void {
+    this.saves.retryLastFailure();
+  }
   /** What a pressed scrollbar thumb belongs to while it is held (`pointerCapture`). */
   private capture: "battle" | "panel" | null = null;
   readonly runtime: StorySceneRuntime;
@@ -386,6 +445,7 @@ export class GameplayHost {
     private readonly hooks: GameplayHooks,
     start: SessionStart = { kind: "opening" },
   ) {
+    this.panel.safariSource.open = () => this.safari.open();
     this.services = {
       room: sources.sceneRoom ?? sources.world.room,
       animationTicks: sources.world.animationTicks,
@@ -855,22 +915,22 @@ export class GameplayHost {
         const local: GiftCodeResult =
           world && this.sources.giftCodes
             ? redeemGiftCode(
-              this.sources.giftCodes.codes,
-              {
-                currency: world.currency,
-                items: world.inventory,
-                materials: world.bag.materials,
-                specials: world.bag.specials,
-                redeemed: world.meta.redeemedGiftCodes,
-                mainTask: world.flags.mainTaskProgress,
-                achievedBadgeCount: world.flags.badges.achievedSnapshot().filter(Boolean).length,
-                eventComplete: ({ scene, room, group }) =>
-                  world.eventState.sourceEventStateComplete(scene, room, group),
-                grantBadge: (id) => void world.flags.badges.grant(id),
-              },
-              code,
-              Date.now(),
-            )
+                this.sources.giftCodes.codes,
+                {
+                  currency: world.currency,
+                  items: world.inventory,
+                  materials: world.bag.materials,
+                  specials: world.bag.specials,
+                  redeemed: world.meta.redeemedGiftCodes,
+                  mainTask: world.flags.mainTaskProgress,
+                  achievedBadgeCount: world.flags.badges.achievedSnapshot().filter(Boolean).length,
+                  eventComplete: ({ scene, room, group }) =>
+                    world.eventState.sourceEventStateComplete(scene, room, group),
+                  grantBadge: (id) => void world.flags.badges.grant(id),
+                },
+                code,
+                Date.now(),
+              )
             : { outcome: "invalid", code, message: "Giftcode chưa sẵn sàng." };
         // A code the packaged catalog does not know may be one an admin made on the server.
         const rewards = this.hooks.rewards;
@@ -892,7 +952,11 @@ export class GameplayHost {
               error instanceof Error ? error.message : "Không kiểm tra được giftcode.";
           })
           .finally(() => (this.redeemingOnServer = false));
-        return { outcome: "invalid", code: local.code, message: "Đang kiểm tra mã trên máy chủ..." };
+        return {
+          outcome: "invalid",
+          code: local.code,
+          message: "Đang kiểm tra mã trên máy chủ...",
+        };
       },
     };
     this.panel.battlePassSource = {
@@ -1025,6 +1089,8 @@ export class GameplayHost {
     this.ledger.expect(source);
   }
   private ledgerContext(world: WorldRuntime): string {
+    // Safari's catches and fees are its own source, not free walking (`server/ledger.mjs` NOWHERE).
+    if (this.safari.run || this.safari.visible) return "safari";
     return this.panel.visible ? `panel:${this.panel.mode}` : world.ledgerContext();
   }
   private observeLedger(world: WorldRuntime, context: string): void {
@@ -1045,6 +1111,11 @@ export class GameplayHost {
   }
 
   private stepLayers(commands: InputCommand[]): GameplayLayer {
+    if (this.safari.run || this.safari.visible) {
+      if (this.world?.tickMapLoading()) return "panel";
+      this.safari.tick(commands);
+      return "panel";
+    }
     // `Scene.tick`'s first branch, above every layer: a room swap holds the whole session for its
     // 16 ticks, so a cutscene that started on the same tick waits behind the loading screen too.
     if (this.world?.tickMapLoading()) {
@@ -1446,8 +1517,9 @@ export class GameplayHost {
     this.observeLedger(world, "story");
     const uids = (pets: readonly SavedPet[] | undefined, live: readonly SavedPet[]) =>
       pets?.forEach((pet, i) => {
-        const uid = (live[i] as SavedPet & { uid?: string } | undefined)?.uid;
-        if (uid && live[i].speciesId === pet.speciesId) (pet as SavedPet & { uid?: string }).uid = uid;
+        const uid = (live[i] as (SavedPet & { uid?: string }) | undefined)?.uid;
+        if (uid && live[i].speciesId === pet.speciesId)
+          (pet as SavedPet & { uid?: string }).uid = uid;
       });
     uids(save.pets, world.pets);
     uids(save.meta?.campaign?.petBank, world.campaign.petBank);
@@ -1500,6 +1572,11 @@ export class GameplayHost {
       const layout = this.sources.layouts.get("world"),
         canvas = fromUi(x, y),
         button = layout ? world.hud.buttonAt(layout, canvas.x, canvas.y, cornerShift) : "none";
+      const safariX = canvas.x - cornerShift("tr").x;
+      if (safariX >= 183 && safariX < 238 && canvas.y >= 36 && canvas.y < 58) {
+        this.safari.open();
+        return [];
+      }
       if (button !== "none") {
         this.pressHudButton(world, button);
         return [];
@@ -1637,6 +1714,10 @@ export class GameplayHost {
    * so the save resumes exactly where play stopped. True when a save was queued.
    */
   saveBeforeSuspend(): boolean {
+    if (this.world?.meta.safari) {
+      this.saves.save(this.snapshot(this.world));
+      return true;
+    }
     const world = this.world;
     if (!world || !this.story.worldActive || this.mapLoadingActive || this.panel.visible)
       return false;
@@ -2225,7 +2306,9 @@ export class GameplayHost {
   /** The screen and the parity harness build the world from the same source-backed services. */
   createWorld(save?: GameSave): WorldRuntime {
     // The ledger follows the save it loads; a new game keeps counting where this session was.
-    this.ledger = new EconomyLedger(save?.ledger ?? { seq: this.ledger.snapshot().seq, entries: [] });
+    this.ledger = new EconomyLedger(
+      save?.ledger ?? { seq: this.ledger.snapshot().seq, entries: [] },
+    );
     const world = new WorldRuntime(
       this.sources.worldContract,
       {

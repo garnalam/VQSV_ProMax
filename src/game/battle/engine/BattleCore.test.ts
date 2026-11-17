@@ -72,6 +72,70 @@ const skillOrder = (events: readonly BattleEvent[]) =>
   events.flatMap((e) => (e.type === "skill" ? [e.seat.side] : []));
 
 describe("BattleCore: a whole fight", () => {
+  it("gives an NPC's team (Kim Diễm's too) inexhaustible PP after a PP wipe, not a wild pet's", () => {
+    for (const [boss, kind] of [
+      [false, "wild"],
+      [false, "trainer"],
+      [true, "trainer"],
+    ] as const) {
+      const npc = kind === "trainer";
+      const core = fight({
+        kind,
+        boss: boss ? "kim-diem-long-vuong" : undefined,
+        player: [
+          pet(280, { stats: { hp: 30000, attack: 1, defense: 1000, speed: 100 }, skillIds: [0] }),
+        ],
+        enemy: [
+          pet(280, {
+            stats: { hp: 30000, attack: 1, defense: 1000, speed: 10 },
+            skillIds: [0],
+            skillPp: [1],
+          }),
+        ],
+      });
+      const player = core.activeUnit("player"),
+        enemy = core.activeUnit("enemy");
+      const playerPp = player.skillPp[0];
+      core.submit({ kind: "skill", slot: 0 });
+      expect(player.skillPp[0]).toBe(playerPp - 1);
+      expect(enemy.skillPp[0]).toBe(npc ? rules.damage.skillRow(0)!.ppMax : 0);
+      enemy.skillPp.fill(0);
+      const events = core.submit({ kind: "skill", slot: 0 });
+      expect(events.some((event) => event.type === "skill" && event.seat.side === "enemy")).toBe(
+        npc,
+      );
+      expect(enemy.skillPp[0]).toBe(npc ? rules.damage.skillRow(0)!.ppMax : 0);
+      expect(events.some((event) => event.type === "ppExhausted")).toBe(false);
+    }
+  });
+
+  it("does not let Tu Than Xuc An exhaust the Kim Diem boss's entire deck", () => {
+    const core = fight({
+      kind: "trainer",
+      boss: "kim-diem-long-vuong",
+      player: [
+        pet(68, { stats: { hp: 30000, attack: 1, defense: 1000, speed: 100 }, skillIds: [0] }),
+      ],
+      enemy: [
+        pet(280, { stats: { hp: 30000, attack: 1, defense: 1000, speed: 10 }, skillIds: [135, 0] }),
+      ],
+    });
+    for (let round = 0; round < 3; round++) {
+      const events = core.submit({ kind: "skill", slot: 0 });
+      expect(events).toContainEqual(
+        expect.objectContaining({
+          type: "skill",
+          skillId: 135,
+          seat: { side: "enemy", member: 0 },
+        }),
+      );
+      expect(core.activeUnit("enemy").skillPp.slice(0, 2)).toEqual([
+        rules.damage.skillRow(135)!.ppMax,
+        rules.damage.skillRow(0)!.ppMax,
+      ]);
+    }
+  });
+
   it("resolves a unified signature turned back on its caster by Quỷ Mị", () => {
     const core = fight(
       {

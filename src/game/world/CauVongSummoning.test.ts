@@ -387,6 +387,22 @@ describe("CV0' Thiên Không: the summoning rooms", () => {
       stats: { hp: 30000, attack: 1450, defense: 500, speed: 100 },
       skillIds: [5, 8, 9, 29, 59],
     });
+    const core = world.battle!.core!;
+    core.activeUnit("enemy").skillPp.fill(0);
+    const player = core.activeUnit("player");
+    // The first slot with PP may be a Tuyệt kỹ that is not ready yet: use the first one the core takes.
+    const acted = player.skillIds.some((id, slot) => {
+      if (id < 0 || player.skillPp[slot] <= 0) return false;
+      try {
+        core.submit({ kind: "skill", slot });
+        return true;
+      } catch {
+        return false;
+      }
+    });
+    expect(acted).toBe(true);
+    const boss = core.activeUnit("enemy");
+    expect(boss.skillIds.every((id, slot) => id < 0 || boss.skillPp[slot] > 0)).toBe(true);
   });
 
   // Owner (2026-11-15): no recovery teleport after a loss. The hero stays in 49 and talks to him again.

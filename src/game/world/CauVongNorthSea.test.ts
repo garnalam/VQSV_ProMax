@@ -41,6 +41,7 @@ const { TIER_LOCK_WARNING, SKILL_NOT_READY_WARNING } = await import("../battle/e
 const { CV_WATER, RAINBOW_RIDE_OWNED_EVENT } = await import("../ride/RideSystem");
 const { NORTH_SEA_BOAT_SPRITE } = await import("./CauVongNorthSea");
 const { openingQuestDetail } = await import("./CauVongOpening");
+const { cauVongCampusNpcPassable, cauVongNpcRequested } = await import("./CauVongWorld");
 type NorthSeaDocument = import("./CauVongNorthSea").CauVongNorthSeaDocument;
 
 const pack = await Pack.load();
@@ -60,6 +61,92 @@ const says = (name: string) =>
   DOC.parts[name].steps.flatMap((cue) => (cue.k === "say" ? [cue] : []));
 const species = (key: string) => DOC.battles[key].members.map(([id]) => id);
 const actor = (room: number, source: number) => DOC.actors[String(room)][String(source)];
+
+/** The restored 30:6 rumours formation, as in the blocked campus walkway report. */
+const CAMPUS_PASSAGE: [number, number][] = [
+  ...[100, 102, 103, 104, 107].map((flag): [number, number] => [30, flag]),
+  ...["TOUR", "REPORTER", "MATCH_POST", "LEAD", "WITNESSES", "RUMOURS", "DOOR"].map(
+    (name): [number, number] => [30, DOC.parts[name].flag],
+  ),
+];
+
+describe("North Sea Academy's crowded walkway", () => {
+  for (const [startX, right] of [
+    [410, false],
+    [270, true],
+    [330, false],
+    [330, true],
+  ] as const)
+    it(`crosses the witnesses: start ${startX}, right ${right}`, () => {
+      const { world } = enter(30, startX, startX === 330 ? 419 : 379, CAMPUS_PASSAGE);
+      for (let i = 0; i < 20 && world.player.y < 423; i++) world.tick(["down"]);
+      for (let i = 0; i < 100 && (right ? world.player.x < 410 : world.player.x > 270); i++)
+        world.tick([right ? "right" : "left"]);
+      expect(right ? world.player.x >= 410 : world.player.x <= 270).toBe(true);
+      expect(world.roomIndex).toBe(30);
+      expect(world.player.y).toBeGreaterThanOrEqual(423);
+      expect(world.player.y).toBeLessThanOrEqual(432);
+      expect(world.eventVisible).toBe(false);
+      expect(
+        [28, 29, 30].map((id) => {
+          const npc = world.actors.get(id)!;
+          return [npc.x, npc.y, npc.visible];
+        }),
+      ).toEqual([
+        [300, 380, true],
+        [340, 380, true],
+        [320, 400, true],
+      ]);
+    });
+
+  it("keeps the upper witnesses solid and the alliance clerk's dialogue", () => {
+    const { world } = enter(30, 410, 399, CAMPUS_PASSAGE);
+    for (let i = 0; i < 70; i++) world.tick(["left"]);
+    expect(world.player.x).toBeGreaterThan(350);
+    world.player.x = 370;
+    world.player.y = 379;
+    world.player.direction = 3;
+    world.tick(["confirm"]);
+    play(world);
+    expect(world.eventScene?.choice?.options).toEqual(DOC.menus.continuation["9"]);
+  });
+
+  it("keeps the lower witness interactive and limits the passage to the crowded pose", () => {
+    const { world } = enter(30, 350, 419, CAMPUS_PASSAGE);
+    const npc = world.actors.get(30)!;
+    const mechanics = JSON.parse(
+      readFileSync(
+        resolve(import.meta.dirname, "../../../public/pack/cau-vong-world/collision.json"),
+        "utf8",
+      ),
+    ).rooms["98:30"];
+    const hero = {
+      x: 350,
+      y: 419,
+      direction: 3,
+      speed: 4,
+      mask: assets.collisionMask(world.player.sprite, world.player.state, 0),
+    };
+    expect(cauVongNpcRequested(hero, world.actors.values(), mechanics, 30, true)).toBe(true);
+    expect(
+      cauVongNpcRequested(
+        { ...hero, pointerTarget: 30 },
+        world.actors.values(),
+        mechanics,
+        30,
+        true,
+      ),
+    ).toBe(true);
+    expect(cauVongCampusNpcPassable(30, npc, world.actors)).toBe(true);
+    expect(cauVongCampusNpcPassable(48, npc, world.actors)).toBe(false);
+    expect(cauVongCampusNpcPassable(30, world.actors.get(28)!, world.actors)).toBe(false);
+    world.actors.get(29)!.x++;
+    expect(cauVongCampusNpcPassable(30, npc, world.actors)).toBe(false);
+    world.actors.get(29)!.x--;
+    world.actors.get(28)!.visible = false;
+    expect(cauVongCampusNpcPassable(30, npc, world.actors)).toBe(false);
+  });
+});
 
 /** Scene 98 past the opening, CV4 over (9:114), `flags` set, then `room` at (x, y). */
 function enter(room: number, x: number, y: number, flags: [number, number][] = []) {

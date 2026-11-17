@@ -113,6 +113,57 @@ const freeWorld = (): SessionStart => ({
   }),
 });
 
+describe("Safari integration", () => {
+  it("opens from the game menu, persists its fee and restores the same run and room", async () => {
+    const { host, saves, repository } = session(freeWorld());
+    const world = host.world!;
+    world.currency.badges = 50;
+    const location = world.snapshot().location;
+    host.step([]);
+    host.panel.open();
+    host.panel.selected = 10;
+    host.step(["confirm"]);
+    expect(host.safari.visible).toBe(true);
+    host.step(["confirm"]);
+    await saves.flush();
+    expect(saves.lastError).toBeNull();
+    const saved = (await repository.load())!;
+    expect(saved.meta?.safari?.balls).toBe(30);
+    expect(saved.currency?.badges).toBe(30);
+    expect(saved.location).toEqual(location);
+    const restored = session({ kind: "resume", save: saved }, repository);
+    expect(restored.host.safari.run).toEqual(host.safari.run);
+    restored.host.step(["back"]);
+    restored.host.step(["confirm"]);
+    await restored.saves.flush();
+    expect(restored.host.safari.run).toBeUndefined();
+    expect(restored.host.world!.snapshot().location).toEqual(location);
+    expect(restored.host.world!.currency.badges).toBe(30);
+  });
+
+  it("saves a captured pet and the final ball in the same snapshot", async () => {
+    const { host, saves, repository } = session(freeWorld());
+    host.world!.currency.badges = 50;
+    host.safari.open();
+    host.safari.enter(42);
+    await saves.flush();
+    const run = host.safari.run!;
+    run.balls = 1;
+    run.encounter = { pet: host.world!.createHatchedPet(29, 30)!, effect: "neutral", turns: 0 };
+    let seed = 0;
+    while (((Math.imul(seed, 1664525) + 1013904223) >>> 0) % 10000 >= 2500) seed++;
+    run.seed = seed;
+    const before = host.world!.pets.length;
+    host.safari.act("ball");
+    await saves.flush();
+    expect(saves.lastError).toBeNull();
+    const saved = (await repository.load())!;
+    expect(saved.meta?.safari).toBeUndefined();
+    expect(saved.pets).toHaveLength(before + 1);
+    expect(saved.pets.at(-1)?.speciesId).toBe(29);
+  });
+});
+
 describe("campaign service wiring", () => {
   it("opens the next tower floor after a real win and saves the original roster", async () => {
     const { host, saves, repository } = session(freeWorld()),
