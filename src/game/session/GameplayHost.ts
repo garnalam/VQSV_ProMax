@@ -366,6 +366,7 @@ export class GameplayHost {
     },
     canEnter: () =>
       !!this.world &&
+      this.safariEnabled &&
       this.story.worldActive &&
       !this.storyCutscene &&
       !this.mapLoadingActive &&
@@ -402,6 +403,14 @@ export class GameplayHost {
       if (this.world) this.saves.save(this.snapshot(this.world));
     },
   });
+  /**
+   * Owner (2026-11-17): Safari is switched off for players for now; only an admin account (the
+   * server-checked role that also shows "Admin Tool") sees its button and menu row and can start a
+   * run. A run a player already has in the save still resumes, so it can be finished and left.
+   */
+  get safariEnabled(): boolean {
+    return this.hooks.admin?.enabled() ?? false;
+  }
   get safariSaving(): boolean {
     return this.saves.pending > 0;
   }
@@ -1573,7 +1582,13 @@ export class GameplayHost {
         canvas = fromUi(x, y),
         button = layout ? world.hud.buttonAt(layout, canvas.x, canvas.y, cornerShift) : "none";
       const safariX = canvas.x - cornerShift("tr").x;
-      if (safariX >= 183 && safariX < 238 && canvas.y >= 36 && canvas.y < 58) {
+      if (
+        this.safariEnabled &&
+        safariX >= 183 &&
+        safariX < 238 &&
+        canvas.y >= 36 &&
+        canvas.y < 58
+      ) {
         this.safari.open();
         return [];
       }

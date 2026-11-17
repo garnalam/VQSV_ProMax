@@ -41,11 +41,11 @@ const { MAP_LOADING_TOTAL_TICKS } = await import("../world/MapLoadingRuntime");
 const { GameplayHost, gameplaySources } = await import("./GameplayHost");
 const {
   GAME_MENU_SCROLLBAR,
-  MENU_LABELS,
   MENU_ROW_BAG,
   MENU_ROW_BONDING_TOWER,
   MENU_ROW_PET,
   MENU_ROW_RECORD,
+  MENU_ROW_SAFARI,
   MENU_ROW_SAVE,
   MENU_ROW_TASK,
   MENU_ROW_WIDGETS,
@@ -59,10 +59,17 @@ const [boot, assets] = await Promise.all([loadBootAssets(pack), GameAssets.fromP
 const sources = gameplaySources(assets, boot),
   contract = assets.worldContract;
 
-function session(start: SessionStart, repository = new SaveRepository(new MemorySaveStore())) {
+/** An account whose server role is admin: it sees Safari, which is admin-only for now. */
+const ADMIN = { enabled: () => true, open: () => {} };
+
+function session(
+  start: SessionStart,
+  repository = new SaveRepository(new MemorySaveStore()),
+  admin?: { enabled: () => boolean; open: () => void },
+) {
   const saves = new SaveService(repository),
     exits = { count: 0 },
-    host = new GameplayHost(sources, saves, { onExit: () => exits.count++ }, start);
+    host = new GameplayHost(sources, saves, { onExit: () => exits.count++, admin }, start);
   waitOutMapLoading(host);
   return { host, saves, repository, exits };
 }
@@ -115,13 +122,13 @@ const freeWorld = (): SessionStart => ({
 
 describe("Safari integration", () => {
   it("opens from the game menu, persists its fee and restores the same run and room", async () => {
-    const { host, saves, repository } = session(freeWorld());
+    const { host, saves, repository } = session(freeWorld(), undefined, ADMIN);
     const world = host.world!;
     world.currency.badges = 50;
     const location = world.snapshot().location;
     host.step([]);
     host.panel.open();
-    host.panel.selected = 10;
+    host.panel.selected = MENU_ROW_SAFARI;
     host.step(["confirm"]);
     expect(host.safari.visible).toBe(true);
     host.step(["confirm"]);
@@ -131,6 +138,7 @@ describe("Safari integration", () => {
     expect(saved.meta?.safari?.balls).toBe(30);
     expect(saved.currency?.badges).toBe(30);
     expect(saved.location).toEqual(location);
+    // Reloaded on a player account: a run already in the save still resumes and can be left.
     const restored = session({ kind: "resume", save: saved }, repository);
     expect(restored.host.safari.run).toEqual(host.safari.run);
     restored.host.step(["back"]);
@@ -142,7 +150,7 @@ describe("Safari integration", () => {
   });
 
   it("saves a captured pet and the final ball in the same snapshot", async () => {
-    const { host, saves, repository } = session(freeWorld());
+    const { host, saves, repository } = session(freeWorld(), undefined, ADMIN);
     host.world!.currency.badges = 50;
     host.safari.open();
     host.safari.enter(42);
@@ -562,13 +570,13 @@ describe("GameplayHost mouse routing (pointerPressedGame / pointerMovedGame / mo
     host.pointerMove(row.x + 10, row.y + 5);
     expect(host.panel.selected).toBe(3);
     host.wheel(9);
-    expect(host.panel.listScroll).toBe(MENU_LABELS.length - 6);
+    expect(host.panel.listScroll).toBe(MENU_ROW_SAFARI - 6);
     const bar = GAME_MENU_SCROLLBAR;
     host.wheel(-9);
     // The bar takes the press (no click), then the moving pointer drags the thumb.
     expect(host.pointerPress(bar.x + 1, bar.y + 2)).toBe(true);
     host.pointerMove(bar.x + 1, bar.y + bar.h);
-    expect(host.panel.listScroll).toBe(MENU_LABELS.length - 6);
+    expect(host.panel.listScroll).toBe(MENU_ROW_SAFARI - 6);
     host.pointerRelease();
     host.pointerMove(row.x + 10, row.y + 5);
     expect(host.panel.selected).toBe(host.panel.listScroll + 3);

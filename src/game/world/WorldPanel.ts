@@ -3257,9 +3257,14 @@ export class WorldPanel {
         ? this.menuLabels
         : [];
   }
-  /** The game menu's rows: the nine of `MENU_LABELS`, plus "Admin Tool" for an admin account. */
+  /**
+   * The game menu's rows. Safari (the last of `MENU_LABELS`) and "Admin Tool" are listed for an
+   * admin account only (owner, 2026-11-17: Safari is off for players for now).
+   */
   get menuLabels(): string[] {
-    return this.adminSource.enabled() ? [...MENU_LABELS, ADMIN_MENU_LABEL] : MENU_LABELS;
+    return this.adminSource.enabled()
+      ? [...MENU_LABELS, ADMIN_MENU_LABEL]
+      : MENU_LABELS.slice(0, MENU_ROW_SAFARI);
   }
   get menuRowCount(): number {
     return this.menuLabels.length;
@@ -3582,8 +3587,7 @@ export class WorldPanel {
     if (page) {
       this.petTab = page.tab;
       this.petTalent = page.talent;
-    }
-    else if (contains(x, y, PET_STATE.previous)) {
+    } else if (contains(x, y, PET_STATE.previous)) {
       this.select(Math.max(0, this.selected - 1));
       this.keepPetVisible();
     } else if (contains(x, y, PET_STATE.next)) {
@@ -4513,6 +4517,7 @@ export class WorldPanel {
    */
   private confirm(): void {
     if (this.mode === "gamemenu" && this.selected === MENU_ROW_SAFARI) {
+      if (!this.adminSource.enabled()) return;
       this.close();
       this.safariSource.open();
       return;

@@ -3,10 +3,10 @@ import { describe, expect, it } from "vitest";
 import { SourceUiLayout } from "../../rendering/SourceUiLayout";
 import {
   GAME_MENU_SCROLLBAR,
-  MENU_LABELS,
   bagSlotAt,
   bagTabAt,
   MENU_ROW_BAG,
+  MENU_ROW_SAFARI,
   MENU_ROW_SAVE,
   MENU_ROW_TASK,
   MENU_ROW_WIDGETS,
@@ -44,6 +44,9 @@ function box(source: SourceUiLayout, id: number) {
   const widget = source.widget(id);
   return widget ? [widget.x, widget.y, widget.w, widget.h, widget.altId ?? -1] : null;
 }
+
+/** A player account's game menu: every row but Safari, which is admin-only for now. */
+const PLAYER_MENU_ROWS = MENU_ROW_SAFARI;
 
 describe("baked world panel layout", () => {
   it("carries the two plates the free-world HUD draws", () => {
@@ -112,7 +115,7 @@ describe("WorldPanel navigation", () => {
       true,
       "gamemenu",
       MENU_ROW_WIDGETS,
-      MENU_LABELS.length,
+      PLAYER_MENU_ROWS,
     ]);
     panel.close();
     panel.openSystem();
@@ -128,8 +131,8 @@ describe("WorldPanel navigation", () => {
     panel.open();
     panel.tick(["up"]);
     expect(panel.selected).toBe(0);
-    for (let i = 0; i < MENU_LABELS.length + 3; i++) panel.tick(["down"]);
-    expect(panel.selected).toBe(MENU_LABELS.length - 1);
+    for (let i = 0; i < PLAYER_MENU_ROWS + 3; i++) panel.tick(["down"]);
+    expect(panel.selected).toBe(PLAYER_MENU_ROWS - 1);
     panel.openSystem();
     for (let i = 0; i < SYSTEM_LABELS.length + 3; i++) panel.tick(["up"]);
     expect(panel.selected).toBe(0);
@@ -578,10 +581,10 @@ describe("world panel mouse (Java PC QoL)", () => {
     expect(panel.listScroll).toBe(2);
     expect(panel.selected).toBe(2);
     panel.wheel(5);
-    expect(panel.listScroll).toBe(MENU_LABELS.length - 6);
+    expect(panel.listScroll).toBe(PLAYER_MENU_ROWS - 6);
     panel.wheel(-5);
     expect(panel.listScroll).toBe(0);
-    expect(panel.selected).toBe(MENU_LABELS.length - 6);
+    expect(panel.selected).toBe(PLAYER_MENU_ROWS - 6);
   });
 
   it("moves the system menu's cursor with the wheel (it does not scroll)", () => {
@@ -716,8 +719,8 @@ describe("world panel mouse (Java PC QoL)", () => {
     expect(panel.pressScrollbar(x + 1, y + 2)).toBe(true);
     expect(panel.scrollbarDragging).toBe(true);
     panel.dragScrollbar(y + h);
-    expect(panel.listScroll).toBe(MENU_LABELS.length - 6);
-    expect(panel.selected).toBe(MENU_LABELS.length - 6);
+    expect(panel.listScroll).toBe(PLAYER_MENU_ROWS - 6);
+    expect(panel.selected).toBe(PLAYER_MENU_ROWS - 6);
     panel.releaseScrollbar();
     expect(panel.scrollbarDragging).toBe(false);
     // A press on the track above the thumb pages back up.

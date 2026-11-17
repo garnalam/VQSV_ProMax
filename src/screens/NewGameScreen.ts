@@ -596,7 +596,15 @@ export class NewGameScreen implements Screen {
       g.strokeStyle = `rgba(255,236,120,${(0.95 - pulse * 0.6).toFixed(2)})`;
       g.lineWidth = 2;
       g.beginPath();
-      g.ellipse(tapTarget.x - camera.x, tapTarget.y - camera.y, 6 + pulse * 6, 3 + pulse * 3, 0, 0, Math.PI * 2);
+      g.ellipse(
+        tapTarget.x - camera.x,
+        tapTarget.y - camera.y,
+        6 + pulse * 6,
+        3 + pulse * 3,
+        0,
+        0,
+        Math.PI * 2,
+      );
       g.stroke();
       g.restore();
     }
@@ -1957,12 +1965,15 @@ export class NewGameScreen implements Screen {
       g.setTransform(base.a, base.b, base.c, base.d, base.e + d.x * base.a, base.f + d.y * base.d);
     };
     const base = g.getTransform();
-    pin("tr");
-    g.fillStyle = "#174b37";
-    g.fillRect(183, 36, 55, 22);
-    g.strokeStyle = "#d6c879";
-    g.strokeRect(183, 36, 55, 22);
-    font.centered(g, "Safari", 183, 55, 41, "#ffffff");
+    // Safari's button: admin accounts only for now (`GameplayHost.safariEnabled`).
+    if (this.host.safariEnabled) {
+      pin("tr");
+      g.fillStyle = "#174b37";
+      g.fillRect(183, 36, 55, 22);
+      g.strokeStyle = "#d6c879";
+      g.strokeRect(183, 36, 55, 22);
+      font.centered(g, "Safari", 183, 55, 41, "#ffffff");
+    }
     pin("tl");
     // The banner drops in at widget 1 (aligned to its top-left), the name scrolls in widget 6.
     if (hud.titleAnimationTick >= 0) {
