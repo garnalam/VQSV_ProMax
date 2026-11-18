@@ -689,14 +689,16 @@ describe("kịch bản đặc tính phần 1: chạy trong 1v1 và 2v2", () => {
 
   it("38 Kiếm Giáp Hạn Quy: dưới 50% HP bị đánh thì có khiên, khiên vỡ thì nổ vào kẻ phá khiên", () => {
     const S = 38;
-    const me = () => pet(S, { skills: [0], hpPct: 49, stats: { hp: 900 } });
+    const me = () => pet(S, { skills: [0], hpPct: 49, stats: { hp: 1500 } });
+    // Khiên 33% HP tối đa: cần đối thủ đánh mạnh mới phá kịp trong 2 lượt.
+    const breaker = () => pet(34, { skills: [30], stats: { speed: 9999, hp: 99999, attack: 800 } });
     // Còn trên 50% HP thì chưa dựng khiên.
     expect(
       duel([pet(S, { skills: [0], stats: { hp: 99999 } })], [bruiser()], times(2)).procs(S),
     ).not.toContain("kiếm giáp");
     for (const r of [
-      duel([me()], [bruiser()], times(3)),
-      double([meek(), me()], [bruiser(), bruiser()], rounds(3, [0, 0])),
+      duel([me()], [breaker()], times(4)),
+      double([meek(), me()], [breaker(), breaker()], rounds(4, [0, 0])),
     ]) {
       expect(r.procs(S)).toContain("kiếm giáp");
       expect(r.procs(S)).toContain("khiên nổ");

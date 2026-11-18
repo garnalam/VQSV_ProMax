@@ -468,7 +468,7 @@ export const PART_5: Record<number, TraitScript> = {
   // 169 Cá Kình khổng lồ
   169: {
     name: "Kình triều dâng",
-    params: { regen: 3 },
+    params: { regen: 9 },
     text: "Mỗi lần bị đánh trúng, pet tích 1 tầng Triều (tối đa 3, mất khi rời sân). Cuối mỗi lượt, pet hồi {regen}% HP tối đa cho mỗi tầng Triều đang có.",
     onHitTaken(k) {
       tideHit(k);
@@ -481,7 +481,7 @@ export const PART_5: Record<number, TraitScript> = {
   // 170 Cá Kình một sừng
   170: {
     name: "Kình hống phá lãng",
-    params: { regen: 3, per: 20 },
+    params: { regen: 9, per: 20 },
     text: "Mỗi lần bị đánh trúng tích 1 tầng Triều (tối đa 3); cuối lượt hồi {regen}% HP tối đa mỗi tầng. Yếu Tắc Hải Thành · Tỏa tiêu toàn bộ Triều: mỗi tầng giúp đòn đó gây thêm {per}% sát thương.",
     onHitTaken(k) {
       tideHit(k);
@@ -501,7 +501,7 @@ export const PART_5: Record<number, TraitScript> = {
   // 171 Yếu Tắc Kình
   171: {
     name: "Yếu tắc hải thành",
-    params: { guard: 8, regen: 3 },
+    params: { guard: 8, regen: 9 },
     text: "Mỗi lần pet bị đánh trúng, và lần đầu mỗi lượt đồng đội bị đánh trúng, pet tích 1 tầng Triều (tối đa 3). Mỗi tầng giúp pet giảm {guard}% sát thương nhận. Cuối lượt, khi đã đủ 3 tầng, Triều rút: pet tiêu hết Triều, pet và đồng đội mỗi bên hồi {regen}% HP tối đa cho mỗi tầng đã tiêu.",
     onHitTaken(k) {
       tideHit(k);
@@ -837,41 +837,43 @@ export const PART_5: Record<number, TraitScript> = {
     },
   },
 
-  // 185 Quỷ Vương Địa Phủ
+  // 185 Quỷ Vương Địa Phủ (dạng công; chủ dự án 2026-11-18 đổi từ khiên thủ sang ghi sổ + phán quyết)
   185: {
     name: "Phán quyết Sổ Sinh Tử",
-    params: { keep: 30, shield: 120, drain: 25 },
-    text: "Mỗi trận 1 lần, khi HP tụt xuống 30% trở xuống (kể cả đòn lẽ ra hạ gục khi đang trên 50% HP), pet giữ lại ít nhất {keep}% HP và nhận khiên chắn {shield}% HP tối đa trong 2 lượt. Khi còn khiên, đòn hệ Quỷ hút {drain}% sát thương. Chiêu gỡ buff phá được khiên.",
+    params: { mark: 10, judge: 40, low: 40, drain: 50 },
+    text: "Mỗi đòn tấn công trúng ghi tên đối thủ vào Sổ Sinh Tử (1 tầng, tối đa 3, giữ 3 lượt); mỗi tầng giúp đòn của pet lên đối thủ đó gây thêm {mark}% sát thương. Đòn hệ Quỷ vào đối thủ đủ 3 tầng hoặc còn từ {low}% HP trở xuống là Phán quyết (cứ 2 lượt 1 lần): tiêu hết tầng, gây thêm {judge}% sát thương và hút {drain}% sát thương gây ra. Mỗi trận 1 lần, đòn lẽ ra hạ gục pet khi còn trên 50% HP thì pet trụ lại với 1 HP.",
+    outgoing(k, e) {
+      if (!e.skill?.attack) return;
+      const n = k.marked(e.target, "sổ sinh tử");
+      let bonus = n * k.p.mark;
+      const due = n >= 3 || k.hpPct(e.target) <= k.p.low;
+      if (isAttack(e.skill, GHOST) && due && k.ready("phán quyết", 2)) {
+        k.use("phán quyết");
+        k.unmark(e.target, "sổ sinh tử");
+        k.e.judge = 1;
+        bonus += k.p.judge;
+        k.proc("phán quyết", e.target);
+      }
+      return bonus;
+    },
+    onHitDealt(k, e) {
+      if (k.e.judge === 1 || !e.target.alive()) return;
+      k.mark(e.target, "sổ sinh tử", 3, 3);
+      k.proc("ghi sổ", e.target);
+    },
+    afterAction(k, e) {
+      if (k.e.judge !== 1) return;
+      k.e.judge = 0;
+      if (e.damage > 0) drain(k, e.damage, k.p.drain, "hút hồn");
+    },
     incoming(k, e) {
-      // Đòn lẽ ra hạ gục khi đang trên 50% HP: đặt trước khiên tạm đỡ phần vượt, để pet còn keep% HP.
+      // Đòn lẽ ra hạ gục khi đang trên 50% HP: khiên tạm đỡ phần vượt để pet còn 1 HP.
       if (!e.direct || k.v.judged || k.hpPct() <= 50) return;
       const hp = k.self.hp();
       if (e.damage < hp) return;
-      const keep = k.pctOf(k.self, k.p.keep);
-      k.shieldAmount(k.self, e.damage - (hp - keep), 1);
-      k.e.save = 1;
-    },
-    onDamaged(k, e) {
-      const keep = k.pctOf(k.self, k.p.keep);
-      const low = e.after <= k.pctOf(k.self, 30) || (k.e.save === 1 && e.after <= keep + 1);
-      if (k.v.judged || !low) return;
       k.v.judged = 1;
-      if (k.self.hp() < keep) k.self.setHp(keep);
-      if (k.e.save) k.proc("chặn hạ gục");
-      k.e.save = 0;
-      k.self.statuses.remove(BUFF_BANK, SHIELD_ID);
-      k.shield(k.self, k.p.shield, 2);
-      k.v.ledger = 1;
-      k.proc("sổ sinh tử");
-    },
-    afterAction(k, e) {
-      if (k.v.ledger !== 1 || k.shieldHp() <= 0) return;
-      if (!isAttack(e.skill, GHOST) || e.damage <= 0) return;
-      drain(k, e.damage, k.p.drain, "hút hồn");
-    },
-    roundEnd(k) {
-      k.e.save = 0;
-      if (k.v.ledger === 1 && k.shieldHp() <= 0) k.v.ledger = 0;
+      k.shieldAmount(k.self, e.damage - (hp - 1), 1);
+      k.proc("trụ lại");
     },
   },
 

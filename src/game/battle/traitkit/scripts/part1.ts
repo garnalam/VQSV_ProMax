@@ -1195,7 +1195,7 @@ export const PART_1: Record<number, TraitScript> = {
   // 38 Kiếm Giáp Hạn Quy
   38: {
     name: "Kiếm giáp phản chấn",
-    params: { shield: 11, burst: 75, cap: 11 },
+    params: { shield: 33, burst: 75, cap: 33 },
     text: "Sau khi bị đánh mất HP mà còn dưới 50% HP, pet nhận khiên chắn bằng {shield}% HP tối đa trong 2 lượt (3 lượt 1 lần, tối đa 2 lần mỗi trận). Khi khiên này bị đánh vỡ, kẻ phá khiên mất HP bằng {burst}% lượng khiên đã chặn (tối đa {cap}% HP tối đa của pet, mỗi trận 1 lần).",
     onDamaged(k, e) {
       if (!e.direct || !k.isFoe(e.source) || !k.ready("kiếm giáp", 3) || (k.v.giap ?? 0) >= 2)

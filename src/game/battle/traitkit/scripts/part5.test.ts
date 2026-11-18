@@ -342,20 +342,17 @@ describe("kịch bản đặc tính phần 5: chạy trong 1v1 và 2v2", () => {
     has(two, S, ["tích đà", "tiêu đà"]);
   });
 
-  it("185 Phán quyết Sổ Sinh Tử: chặn đòn hạ gục, giữ HP, khiên lớn, đòn Quỷ hút máu", () => {
+  it("185 Phán quyết Sổ Sinh Tử: ghi sổ, phán quyết đòn Quỷ hút máu, trụ lại 1 lần", () => {
     const S = 185;
-    const me = () => pet(S, { skills: sk("Độc ảnh thứ"), hpPct: 60, stats: SLOW });
-    has(duel([me()], [bruiser({ attack: 99999 })], [0]), S, [
-      "chặn hạ gục",
-      "sổ sinh tử",
-      "hút hồn",
-    ]);
-    const two = double(
-      [me(), mate()],
-      [bruiser({ attack: 99999 }), slowDummy()],
-      rounds(1, [0, 1], [0, 1]),
-    );
-    has(two, S, ["sổ sinh tử", "hút hồn"]);
+    const me = (hpPct = 60) => pet(S, { skills: sk("Độc ảnh thứ"), hpPct, stats: SLOW });
+    // Đối thủ thấp máu: phán quyết ngay đòn đầu và hút máu.
+    has(duel([me()], [wounded(30)], [0]), S, ["phán quyết", "hút hồn"]);
+    // Đối thủ đầy máu: ghi sổ đủ 3 tầng rồi phán quyết.
+    has(duel([me()], [slowDummy()], [0, 0, 0, 0]), S, ["ghi sổ", "phán quyết"]);
+    // Đòn lẽ ra hạ gục khi trên 50% HP: trụ lại.
+    has(duel([me(80)], [bruiser({ attack: 99999 })], [0]), S, ["trụ lại"]);
+    const two = double([me(), mate()], [wounded(30), slowDummy()], rounds(1, [0, 0], [0, 1]));
+    has(two, S, ["phán quyết", "hút hồn"]);
   });
 
   it("186 Địa phủ câu hồn: đối thủ dưới 50% thì hút máu; hạ gục thì hồi và ưu tiên", () => {

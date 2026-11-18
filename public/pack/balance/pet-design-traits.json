@@ -759,7 +759,7 @@
       "limits": "capsRemoved",
       "description": "Sau đòn trực tiếp làm mất HP, nhận khiên bằng 50% HP tối đa, tối đa 1 lần/2 lượt; tồn tại 2 lượt. Khiên không cộng dồn; DOT không kích.",
       "matchesJavaExport": true,
-      "summary": "Sau khi bị đánh mất HP mà còn dưới 50% HP, pet nhận khiên chắn bằng 11% HP tối đa trong 2 lượt (3 lượt 1 lần, tối đa 2 lần mỗi trận). Khi khiên này bị đánh vỡ, kẻ phá khiên mất HP bằng 75% lượng khiên đã chặn (tối đa 11% HP tối đa của pet, mỗi trận 1 lần).",
+      "summary": "Sau khi bị đánh mất HP mà còn dưới 50% HP, pet nhận khiên chắn bằng 33% HP tối đa trong 2 lượt (3 lượt 1 lần, tối đa 2 lần mỗi trận). Khi khiên này bị đánh vỡ, kẻ phá khiên mất HP bằng 75% lượng khiên đã chặn (tối đa 33% HP tối đa của pet, mỗi trận 1 lần).",
       "kit": true
     },
     {
@@ -3117,7 +3117,7 @@
       "limits": "capsRemoved",
       "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn tối đa 3 tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
       "matchesJavaExport": true,
-      "summary": "Mỗi lần bị đánh trúng, pet tích 1 tầng Triều (tối đa 3, mất khi rời sân). Cuối mỗi lượt, pet hồi 3% HP tối đa cho mỗi tầng Triều đang có.",
+      "summary": "Mỗi lần bị đánh trúng, pet tích 1 tầng Triều (tối đa 3, mất khi rời sân). Cuối mỗi lượt, pet hồi 9% HP tối đa cho mỗi tầng Triều đang có.",
       "kit": true
     },
     {
@@ -3135,7 +3135,7 @@
       "limits": "capsRemoved",
       "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn tối đa 3 tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
       "matchesJavaExport": true,
-      "summary": "Mỗi lần bị đánh trúng tích 1 tầng Triều (tối đa 3); cuối lượt hồi 3% HP tối đa mỗi tầng. Yếu Tắc Hải Thành · Tỏa tiêu toàn bộ Triều: mỗi tầng giúp đòn đó gây thêm 15% sát thương.",
+      "summary": "Mỗi lần bị đánh trúng tích 1 tầng Triều (tối đa 3); cuối lượt hồi 9% HP tối đa mỗi tầng. Yếu Tắc Hải Thành · Tỏa tiêu toàn bộ Triều: mỗi tầng giúp đòn đó gây thêm 15% sát thương.",
       "kit": true
     },
     {
@@ -3153,7 +3153,7 @@
       "limits": "capsRemoved",
       "description": "Dùng chiêu Power 0: dự trữ 30% HP tối đa, cộng dồn tối đa 3 tầng, 4 lượt. Chiêu hồi tiếp theo dùng hết dự trữ; đổi pet/tẩy buff xóa, không tự hồi mỗi lượt.",
       "matchesJavaExport": true,
-      "summary": "Mỗi lần pet bị đánh trúng, và lần đầu mỗi lượt đồng đội bị đánh trúng, pet tích 1 tầng Triều (tối đa 3). Mỗi tầng giúp pet giảm 8% sát thương nhận. Cuối lượt, khi đã đủ 3 tầng, Triều rút: pet tiêu hết Triều, pet và đồng đội mỗi bên hồi 3% HP tối đa cho mỗi tầng đã tiêu.",
+      "summary": "Mỗi lần pet bị đánh trúng, và lần đầu mỗi lượt đồng đội bị đánh trúng, pet tích 1 tầng Triều (tối đa 3). Mỗi tầng giúp pet giảm 8% sát thương nhận. Cuối lượt, khi đã đủ 3 tầng, Triều rút: pet tiêu hết Triều, pet và đồng đội mỗi bên hồi 9% HP tối đa cho mỗi tầng đã tiêu.",
       "kit": true
     },
     {
@@ -3396,7 +3396,7 @@
       "key": "PD-TRAIT-CV-085",
       "pet": "Quỷ Vương Địa Phủ",
       "name": "Phán quyết Sổ Sinh Tử",
-      "group": "Phòng thủ / hỗ trợ",
+      "group": "Tấn công",
       "type": "threshold_guard_once",
       "factor": 10,
       "sourceValue": 14,
@@ -3405,7 +3405,7 @@
       "limits": "capsRemoved",
       "description": "Khi HP từ trên 30% xuống 30% hoặc thấp hơn nhưng chưa gục: nhận khiên 140% HP tối đa trong 2 lượt. Không cứu một đòn chí tử.",
       "matchesJavaExport": true,
-      "summary": "Mỗi trận 1 lần, khi HP tụt xuống 30% trở xuống (kể cả đòn lẽ ra hạ gục khi đang trên 50% HP), pet giữ lại ít nhất 40% HP và nhận khiên chắn 120% HP tối đa trong 2 lượt. Khi còn khiên, đòn hệ Quỷ hút 50% sát thương. Chiêu gỡ buff phá được khiên.",
+      "summary": "Mỗi đòn tấn công trúng ghi tên đối thủ vào Sổ Sinh Tử (1 tầng, tối đa 3, giữ 3 lượt); mỗi tầng giúp đòn của pet lên đối thủ đó gây thêm 10% sát thương. Đòn hệ Quỷ vào đối thủ đủ 3 tầng hoặc còn từ 40% HP trở xuống là Phán quyết (cứ 2 lượt 1 lần): tiêu hết tầng, gây thêm 40% sát thương và hút 50% sát thương gây ra. Mỗi trận 1 lần, đòn lẽ ra hạ gục pet khi còn trên 50% HP thì pet trụ lại với 1 HP.",
       "kit": true
     },
     {
