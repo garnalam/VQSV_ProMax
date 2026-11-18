@@ -1337,7 +1337,7 @@ function petEditor(save: GameSave): HTMLElement {
       bank.length
         ? el("div", { className: "table-scroll" }, el("table", {}, head(), el("tbody", {}, ...banked)))
         : el("p", {}, "Trống."),
-      el("p", { className: "muted" }, "Muốn tặng pet: dùng Gửi quà (pet được tạo đúng cách trong game, có thiên phú và shiny ngẫu nhiên). Sửa cấp/kỹ năng pet trong tab JSON nếu thật cần."),
+      el("p", { className: "muted" }, "Muốn tặng pet: dùng Gửi quà (pet được tạo đúng cách trong game, có thiên phú và shiny ngẫu nhiên, chọn được số sao). Sửa cấp/kỹ năng pet trong tab JSON nếu thật cần."),
     );
   };
   render();

@@ -5,7 +5,7 @@ export type AdminGrantRequest =
   | { action: "addItem"; kind: AdminItemKind; id: number; quantity: number }
   | { action: "setCurrency"; money: number; badges: number }
   | { action: "buffPet"; slot: number }
-  | { action: "addPet"; speciesId: number };
+  | { action: "addPet"; speciesId: number; quality?: number };
 
 export type AdminItemKind = "BAG" | "EQUIPMENT" | "MATERIAL" | "SPECIAL";
 
@@ -23,6 +23,8 @@ export type AdminGrant =
       shiny: boolean;
       /** The talent roll's entropy, a decimal 64-bit integer drawn by the server. */
       talentSeed: string;
+      /** Phẩm chất (stars, 1..5) the admin chose; absent = the species default. */
+      quality?: number;
     };
 
 /** The server refused (not an admin, a bad request, no connection). */

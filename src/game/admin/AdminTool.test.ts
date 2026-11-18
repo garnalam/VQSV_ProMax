@@ -231,6 +231,20 @@ describe("Admin Tool grants on a live session", () => {
     expect(world.collection.collected(species)).toBe(true);
     expect(world.pets).toHaveLength(1);
 
+    // The admin's chosen stars replace the species default, and the stats follow them.
+    const starred = host.applyAdminGrant({
+      action: "addPet",
+      speciesId: species,
+      nature: 2,
+      shiny: false,
+      talentSeed: "42",
+      quality: 5,
+    });
+    expect(starred).toContain("5 sao");
+    const five = world.campaign.petBank.at(-1)!;
+    expect(five.quality).toBe(5);
+    expect(five.maxHp).toBe(assets.petStats.coreStats(species, five.level, 5, 2).hp);
+
     const before = world.campaign.petBank.length;
     expect(
       host.applyAdminGrant({

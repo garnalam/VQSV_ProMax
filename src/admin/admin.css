@@ -85,7 +85,7 @@ tr.clickable:hover td { background: #f4f9f8; }
 .subtabs button.active { background: #fff; border-color: var(--accent); color: var(--accent); font-weight: 600; }
 .reward-editor { display: grid; gap: 8px; }
 .reward-editor .line { display: grid; grid-template-columns: minmax(0, 1fr) 90px auto; gap: 6px; }
-.reward-editor .pet-line { grid-template-columns: minmax(0, 1fr) 140px auto; }
+.reward-editor .pet-line { grid-template-columns: minmax(0, 1fr) 120px 140px auto; }
 .reward-editor .money { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .warn { background: #fff7e6; border: 1px solid #f1d7a5; color: #6b4a0e; border-radius: 6px; padding: 7px 10px; font-size: 13px; }
 .audit li { padding: 3px 0; border-bottom: 1px dashed var(--line); list-style: none; }
@@ -95,5 +95,7 @@ tr.clickable:hover td { background: #f4f9f8; }
 @media (max-width: 760px) {
   .grid2, .grid4 { grid-template-columns: 1fr; }
   .wrap { width: calc(100% - 20px); }
-  .reward-editor .line, .reward-editor .pet-line { grid-template-columns: 1fr 80px auto; }
+  .reward-editor .line { grid-template-columns: 1fr 80px auto; }
+  .reward-editor .pet-line { grid-template-columns: 1fr 1fr auto; }
+  .reward-editor .pet-line input { grid-column: 1 / -1; }
 }

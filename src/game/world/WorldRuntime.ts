@@ -1619,11 +1619,13 @@ export class WorldRuntime {
   }
   /**
    * Admin Tool: a hatched pet with the nature (7..9 shiny) and the talent entropy the server drew.
-   * The talent goes through the same weighted pool and sanitizer as every other roll.
+   * The talent goes through the same weighted pool and sanitizer as every other roll. `quality`
+   * (the stars, 1..5) replaces the species default when the admin chose one.
    */
-  createAdminPet(speciesId: number, nature: number, talentEntropy: bigint): SavedPet | undefined {
+  createAdminPet(speciesId: number, nature: number, talentEntropy: bigint, quality?: number): SavedPet | undefined {
     const pet = this.createHatchedPet(speciesId);
     if (!pet) return undefined;
+    if (quality !== undefined) pet.quality = this.sources.petStats.resolveQuality(speciesId, quality);
     const stats = this.sources.petStats.coreStats(speciesId, pet.level, pet.quality, nature);
     pet.nature = nature;
     pet.maxHp = stats.hp;

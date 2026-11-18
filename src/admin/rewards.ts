@@ -7,12 +7,14 @@ export type Rewards = {
   money: number;
   badges: number;
   items: { kind: AdminItemKind; id: number; quantity: number }[];
-  pets: { speciesId: number; shiny: "never" | "random" | "always" }[];
+  /** `stars`: phẩm chất 1..5; absent = the species default. */
+  pets: { speciesId: number; shiny: "never" | "random" | "always"; stars?: number }[];
 };
 
 export const emptyRewards = (): Rewards => ({ money: 0, badges: 0, items: [], pets: [] });
 
 const SHINY_LABELS = { never: "Thường", random: "50% shiny", always: "Chắc chắn shiny" } as const;
+const STAR_CHOICES = [1, 2, 3, 4, 5] as const;
 
 export function rewardSummary(
   rewards: Rewards,
@@ -24,7 +26,9 @@ export function rewardSummary(
   if (rewards.badges) parts.push(`${number.format(rewards.badges)} huy hiệu`);
   for (const item of rewards.items) parts.push(`${item.quantity}× ${itemName(item.kind, item.id)}`);
   for (const pet of rewards.pets)
-    parts.push(`${speciesName(pet.speciesId)}${pet.shiny === "never" ? "" : ` (${SHINY_LABELS[pet.shiny]})`}`);
+    parts.push(
+      `${speciesName(pet.speciesId)}${pet.stars ? ` ${pet.stars}★` : ""}${pet.shiny === "never" ? "" : ` (${SHINY_LABELS[pet.shiny]})`}`,
+    );
   return parts.join(", ") || "—";
 }
 
@@ -38,7 +42,7 @@ export function rewardEditor(
   const itemLines = el("div", { className: "reward-editor" });
   const petLines = el("div", { className: "reward-editor" });
   const items: { pick: HTMLInputElement; quantity: HTMLInputElement }[] = [];
-  const pets: { pick: HTMLInputElement; shiny: HTMLSelectElement }[] = [];
+  const pets: { pick: HTMLInputElement; shiny: HTMLSelectElement; stars: HTMLSelectElement }[] = [];
 
   const addItem = (value?: Rewards["items"][number]) => {
     if (items.length >= 20) return;
@@ -72,9 +76,15 @@ export function rewardEditor(
         el("option", { value: key, selected: key === (value?.shiny ?? "never") }, label),
       ),
     );
+    const stars = el(
+      "select",
+      { title: "Số sao (phẩm chất)" },
+      el("option", { value: "", selected: !value?.stars }, "Sao mặc định"),
+      ...STAR_CHOICES.map((n) => el("option", { value: String(n), selected: value?.stars === n }, n + " sao")),
+    );
     const remove = el("button", { type: "button" }, "✕");
-    const line = el("div", { className: "line pet-line" }, pick, shiny, remove);
-    const entry = { pick, shiny };
+    const line = el("div", { className: "line pet-line" }, pick, stars, shiny, remove);
+    const entry = { pick, shiny, stars };
     remove.onclick = () => {
       pets.splice(pets.indexOf(entry), 1);
       line.remove();
@@ -101,7 +111,7 @@ export function rewardEditor(
     itemLines,
     el("div", {}, moreItem),
     petLines,
-    el("div", {}, morePet, " ", el("small", {}, "Pet vào ngân hàng sủng vật, có thiên phú ngẫu nhiên.")),
+    el("div", {}, morePet, " ", el("small", {}, "Pet vào ngân hàng sủng vật, có thiên phú ngẫu nhiên; chọn số sao 1–5 hoặc để mặc định theo loài.")),
   );
   const value = (): Rewards => {
     const loaded = catalog();
@@ -122,7 +132,9 @@ export function rewardEditor(
         .map((line) => {
           const speciesId = loaded!.parseSpecies(line.pick.value);
           if (speciesId === undefined) throw new Error(`Không nhận ra pet "${line.pick.value}". Hãy chọn trong gợi ý.`);
-          return { speciesId, shiny: line.shiny.value as Rewards["pets"][number]["shiny"] };
+          const shiny = line.shiny.value as Rewards["pets"][number]["shiny"],
+            stars = Number(line.stars.value);
+          return stars ? { speciesId, shiny, stars } : { speciesId, shiny };
         }),
     };
   };

@@ -11,6 +11,9 @@ export const MAX_REWARD_ITEMS = 20;
 export const MAX_REWARD_PETS = 6;
 const PLAIN_NATURE = 2;
 const SHINY_NATURES = [7, 8, 9];
+/** Phẩm chất (the stars a pet shows): 1..5; a gift pet without stars hatches at its species default. */
+export const MIN_STARS = 1;
+export const MAX_STARS = 5;
 
 function int(value, min, max) {
   const number = typeof value === 'number' ? value : typeof value === 'string' && value.trim() ? Number(value) : NaN;
@@ -18,7 +21,7 @@ function int(value, min, max) {
 }
 
 /**
- * `{ money, badges, items: [{ kind, id, quantity }], pets: [{ speciesId, shiny }] }` checked and
+ * `{ money, badges, items: [{ kind, id, quantity }], pets: [{ speciesId, shiny, stars? }] }` checked and
  * cleaned, or null. An empty gift is refused.
  */
 export function normalizeRewards(input) {
@@ -41,20 +44,24 @@ export function normalizeRewards(input) {
   for (const pet of rawPets) {
     const speciesId = int(pet?.speciesId, 0, 99999);
     const shiny = String(pet?.shiny ?? 'never');
-    if (speciesId === null || ADMIN_BOSS_SPECIES.has(speciesId) || !SHINY_MODES.has(shiny)) return null;
-    pets.push({ speciesId, shiny });
+    const rawStars = pet?.stars ?? 0;
+    const stars = rawStars === 0 || rawStars === '' || rawStars === null ? 0 : int(rawStars, MIN_STARS, MAX_STARS);
+    if (speciesId === null || ADMIN_BOSS_SPECIES.has(speciesId) || !SHINY_MODES.has(shiny) || stars === null) return null;
+    pets.push(stars ? { speciesId, shiny, stars } : { speciesId, shiny });
   }
   if (!money && !badges && !items.length && !pets.length) return null;
   return { money, badges, items, pets };
 }
 
 /** Each pet's random parts, drawn now: which shiny nature (if any) and the talent's entropy. */
-function drawPet({ speciesId, shiny }) {
+function drawPet({ speciesId, shiny, stars }) {
   const random = randomBytes(12);
   const isShiny = shiny === 'always' || (shiny === 'random' && (random[0] & 1) === 1);
   const nature = isShiny ? SHINY_NATURES[random[1] % SHINY_NATURES.length] : PLAIN_NATURE;
   const talentSeed = (random.readBigUInt64BE(4) & 0x7fffffffffffffffn).toString();
-  return { action: 'addPet', speciesId, nature, shiny: isShiny, talentSeed };
+  const grant = { action: 'addPet', speciesId, nature, shiny: isShiny, talentSeed };
+  if (stars) grant.quality = stars;
+  return grant;
 }
 
 /** The grants a claimed gift hands the game, in the order it applies them. */
