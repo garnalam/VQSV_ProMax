@@ -118,9 +118,13 @@ export function fillCanvas(g: CanvasRenderingContext2D): void {
 }
 
 /** A capture of the whole canvas (`battleBackground`) put back over the whole canvas. */
-export function drawCanvasCopy(g: CanvasRenderingContext2D, image: CanvasImageSource): void {
+export function drawCanvasCopy(g: CanvasRenderingContext2D, image: CanvasImageSource, offsetX = 0): void {
   g.save();
   g.setTransform(1, 0, 0, 1, 0, 0);
-  g.drawImage(image, 0, 0, g.canvas.width, g.canvas.height);
+  if (offsetX !== 0) {
+    g.fillStyle = "#000";
+    g.fillRect(0, 0, g.canvas.width, g.canvas.height);
+  }
+  g.drawImage(image, offsetX, 0, g.canvas.width, g.canvas.height);
   g.restore();
 }

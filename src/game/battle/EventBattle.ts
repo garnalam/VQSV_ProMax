@@ -18,6 +18,7 @@ import { enumName } from "./ai/BattleAiEncounterCatalog";
 import { BattleDefinitionRegistry, type BattleDefinition } from "./BattleDefinition";
 import { BattleRuntime } from "./BattleRuntime";
 import { BATTLE_SEATS } from "./BattleSeats";
+import { KIM_DIEM_INTRO_TICKS } from "./KimDiemPresentation";
 import type { BattleCharms, BattleKind, BattleSetup, CombatantSetup } from "./engine/BattleTypes";
 import { ENCOUNTER_NATURE_FALLBACK } from "./engine/BattleTypes";
 import { settleBattle } from "./engine/BattleSettlement";
@@ -385,6 +386,7 @@ export function createSourceTrainerBattle(
     sceneId?: number;
     /** Authored boss stats (Kim Diễm Long Vương) instead of the species' own. */
     encounterStats?: CombatantSetup["stats"];
+    kimDiemIntro?: boolean;
     boss?: BattleSetup["boss"];
     /** A share of the stats by species (Đại Điện's hidden Divine pets keep their seal). */
     enemyStatPercent?: (speciesId: number) => number;
@@ -438,6 +440,7 @@ export function createSourceTrainerBattle(
       playerSetup,
       enemy,
       npcEntry: true,
+      kimDiemIntro: request.kimDiemIntro,
       // `RuntimeProfile(-1, ...)`: no source actor, so `enterNpcVsEntry` shows the first enemy
       // pet's visual on the card (`enemyRender.visualId`).
       presentation: {
@@ -462,6 +465,7 @@ export function createSourceTrainerBattle(
         settleBattle(core, party, inventory, services.progression, services.petBank?.()),
       entryPresentation: true,
       shopCurrency,
+      kimDiemIntro: request.kimDiemIntro,
     },
   );
 }
@@ -549,6 +553,7 @@ function coreDefinition(input: {
   playerSetup: CombatantSetup;
   enemy: CombatantSetup[];
   npcEntry: boolean;
+  kimDiemIntro?: boolean;
   presentation?: { playerActorSpriteId: number; enemyActorSpriteId: number };
   partySize: number;
   captureAllowed: boolean;
@@ -561,7 +566,12 @@ function coreDefinition(input: {
       player: combatant("player", playerSetup, { ...BATTLE_SEATS.player }),
       enemy: combatant("enemy", enemy[0], { ...BATTLE_SEATS.enemy }),
     },
-    phases: input.npcEntry
+    phases: input.kimDiemIntro
+      ? [
+          { start: 0, key: "P0_ENTRY" },
+          { start: KIM_DIEM_INTRO_TICKS, key: "P1_DISPATCH" },
+        ]
+      : input.npcEntry
       ? [
           { start: 0, key: "NPC_VS_ENTRY" },
           { start: 23, key: "P0_ENTRY" },

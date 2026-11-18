@@ -68,6 +68,11 @@ import type { GameSave } from "../persistence/SaveRepository";
 import type { SaveRepository } from "../persistence/SaveRepository";
 import { SaveService } from "../persistence/SaveService";
 import { BattleRenderer } from "../rendering/BattleRenderer";
+import {
+  KIM_DIEM_WORLD_VISUAL,
+  kimDiemImpactShake,
+  kimDiemWorldFrame,
+} from "../game/battle/KimDiemPresentation";
 import type { DoubleBattleRuntime } from "../game/battle/DoubleBattleRuntime";
 import { doubleBattleFallTicks } from "../game/battle/DoubleEventBattle";
 import {
@@ -971,12 +976,25 @@ export class NewGameScreen implements Screen {
     }
     if (!frame) return;
     const image = this.assets.imageFor(frame, drawMirror);
-    if (image.complete && image.naturalWidth > 0)
+    if (image.complete && image.naturalWidth > 0) {
+      const art = this.assets.shinyImage(image, actor.paletteNature, sprite, actor.paletteColor);
+      const frameX = drawMirror ? frame.mox : frame.ox;
+      const frameY = drawMirror ? frame.moy : frame.oy;
+      const x = Math.floor(at.x + actor.renderOffsetX - camera.x);
+      const y = Math.floor(at.y + actor.renderOffsetY - camera.y);
+      if (actor.sprite === KIM_DIEM_WORLD_VISUAL) {
+        const scaled = kimDiemWorldFrame(
+          frameX, frameY, drawMirror ? frame.mw : frame.w, drawMirror ? frame.mh : frame.h,
+        );
+        g.drawImage(art, x + scaled.x, y + scaled.y, scaled.width, scaled.height);
+        return;
+      }
       g.drawImage(
-        this.assets.shinyImage(image, actor.paletteNature, sprite, actor.paletteColor),
-        Math.floor(at.x + actor.renderOffsetX - camera.x + (drawMirror ? frame.mox : frame.ox)),
-        Math.floor(at.y + actor.renderOffsetY - camera.y + (drawMirror ? frame.moy : frame.oy)),
+        art,
+        x + frameX,
+        y + frameY,
       );
+    }
   }
   /** `CauVongMinigameView.render` over `RainbowMinigameArt` and the baked banks. */
   private drawCauVongMinigame(
@@ -1217,7 +1235,9 @@ export class NewGameScreen implements Screen {
         this.battleBackground.height = g.canvas.height;
         this.battleBackground.getContext("2d")!.drawImage(g.canvas, 0, 0);
       } else {
-        drawCanvasCopy(g, this.battleBackground);
+        const battle = world.battle;
+        const shake = battle?.showingKimDiemIntro ? kimDiemImpactShake(battle.tickCount) : 0;
+        drawCanvasCopy(g, this.battleBackground, Math.round(shake * r.backingScale));
       }
     } else if (eventScene) {
       // A free-world source event owns its own actor visibility, camera and op9 overlay. Rendering
@@ -2239,10 +2259,12 @@ export class NewGameScreen implements Screen {
     this.drawRoomBackdrop(g, world.sceneId, world.roomIndex);
     for (const i of [1, 2]) if (layers[i]) g.drawImage(layers[i], mapX, mapY);
     this.drawMapGutters(g, [layers[1], layers[2]], { x: -mapX, y: -mapY });
-    this.drawActorSet(g, world.actors, 1, camera, (actor) => actor.variant === 0, true);
-    this.drawActorSet(g, world.actors, 2, camera, (actor) => actor.variant === 0, false);
+    const includeActor = (actor: IntroActor) =>
+      actor.variant === 0 && !(world.battle?.kimDiemIntro && actor.sprite === KIM_DIEM_WORLD_VISUAL);
+    this.drawActorSet(g, world.actors, 1, camera, includeActor, true);
+    this.drawActorSet(g, world.actors, 2, camera, includeActor, false);
     if (layers[3]) g.drawImage(layers[3], mapX, mapY);
-    this.drawActorSet(g, world.actors, 0, camera, (actor) => actor.variant === 0, false);
+    this.drawActorSet(g, world.actors, 0, camera, includeActor, false);
     r.uiSpace();
   }
   private drawSavePrompt(g: CanvasRenderingContext2D, message: string, selected: number): void {

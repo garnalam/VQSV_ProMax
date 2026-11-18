@@ -14,6 +14,8 @@ import type { SourceSpecialPlacement } from "../game/battle/SourceSkillAnimation
 import type { GameAssets } from "../game/story/GameAssets";
 import type { SourceUiLayout, SourceUiWidget } from "./SourceUiLayout";
 import { BATTLE_SEATS } from "../game/battle/BattleSeats";
+import { kimDiemImpactShake, kimDiemIntroPose } from "../game/battle/KimDiemPresentation";
+import { drawKimDiemLanding, drawKimDiemOverlay } from "./KimDiemBattleEffects";
 import { landPanel } from "../game/battle/BattleLandscape";
 import { battleFrameX, viewport } from "../core/Viewport";
 import { BattleUiRenderer, type BattleUiHost } from "./BattleUiRenderer";
@@ -121,14 +123,27 @@ export class BattleRenderer {
     this.element(g, 18, battle.combatant("enemy").element);
     this.element(g, 17, battle.combatant("player").element);
     const { playerMarker, enemyMarker } = BATTLE_SEATS;
+    const intro = battle.showingKimDiemIntro;
+    g.save();
+    if (intro) g.translate(kimDiemImpactShake(battle.tickCount), 0);
     this.sprite(g, 294, 0, battle.tickCount, enemyMarker.x, enemyMarker.y);
     this.sprite(g, 294, 0, battle.tickCount, playerMarker.x, playerMarker.y);
     if (battle.activeMarker) {
       const marker = battle.activeMarkerSide === "player" ? playerMarker : enemyMarker;
       this.sprite(g, 294, 1, battle.tickCount, marker.x, marker.y);
     }
-    this.actorWithLEffect(g, battle, "enemy", alpha);
-    this.actorWithLEffect(g, battle, "player", alpha);
+    if (intro) {
+      const enemy = battle.combatant("enemy"), player = battle.combatant("player");
+      drawKimDiemLanding(g, battle.tickCount, enemy.origin);
+      this.sprite(g, player.spriteId, 0, battle.tickCount, player.origin.x, player.origin.y);
+      const pose = kimDiemIntroPose(battle.tickCount);
+      if (pose)
+        this.sprite(g, enemy.spriteId, pose.state, pose.elapsed, enemy.origin.x + pose.x, enemy.origin.y + pose.y);
+    } else {
+      this.actorWithLEffect(g, battle, "enemy", alpha);
+      this.actorWithLEffect(g, battle, "player", alpha);
+    }
+    g.restore();
     const summon = battle.summonVisual;
     if (summon) {
       this.sprite(g, 269, summon.recall ? 1 : 0, summon.tick, summon.x, summon.y);
@@ -218,6 +233,16 @@ export class BattleRenderer {
       const target = battle.combatant(post.target);
       this.outlined(g, post.text, target.origin.x - 32, target.origin.y - 50, 68, "#ffffff");
     }
+    if (intro)
+      drawKimDiemOverlay(
+        g,
+        battle.tickCount,
+        enemy.origin,
+        player.origin,
+        this.screen,
+        (x, y, width, color) =>
+          this.boot.panelFont.centered(g, "Long Uy — Đặc tính bị phong tỏa", x, width, y, color),
+      );
   }
   /**
    * The fight's command bar or open panel. Landscape: the command bar is laid out on the APK's
