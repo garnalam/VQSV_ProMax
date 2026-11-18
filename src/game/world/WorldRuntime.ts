@@ -821,6 +821,11 @@ export class WorldRuntime {
     | { kind: "answer"; owner: number; selected: number }
     | { kind: "result"; won: boolean; masked: boolean; key: string }
     | null = null;
+  /**
+   * Web only: a Cầu Vồng script's closing move into a room that is still loading (a vine, a lift).
+   * The script is over by then, so the move waits here, the hero held, until the room is ready.
+   */
+  private cauVongExitWaiting: { room: number; x: number; y: number; dir: number } | null = null;
   /** The Bốn Cổng fight in progress: an owner's request, the ruins' masked pair, a forest fight. */
   private fourGatesFight: { masked: boolean; key: string } | null = null;
   /** CV4b's owners (`CauVongDarkForestSourceRuntime` and the rest), built on first use. */
@@ -2585,6 +2590,12 @@ export class WorldRuntime {
     // `CauVongChapterRuntime.tick` owns Quảng Trường Cầu Vồng (`tickSquare`).
     if (this.onFreeMap && this.sceneId === 98 && this.roomIndex === CAU_VONG_SQUARE_ROOM)
       return this.tickCauVongSquare(commands);
+    // A script's closing move waits for its room to load, the hero held meanwhile.
+    if (this.onFreeMap && this.sceneId === 98 && this.cauVongExitWaiting) {
+      const exit = this.cauVongExitWaiting;
+      this.cauVongExit(exit.room, exit.x, exit.y, exit.dir);
+      return this.takeSaveRequest();
+    }
     // A finished Bốn Cổng script or fight hands its follow-up back first, wherever it ended (the
     // masked pair's in the ruins, 5).
     if (
@@ -5320,16 +5331,9 @@ export class WorldRuntime {
         return this.grantPrepPet(action.grant, action.next);
       case "fee":
         return this.academyFee();
-      case "exit": {
+      case "exit":
         // A room the pack has no map for keeps the hero where he is (as a /4 doorway does).
-        if (!this.sources.room(98, action.room)) return false;
-        if (this.sources.roomReady && !this.sources.roomReady(98, action.room)) {
-          this.sources.prepareRoom?.(98, action.room);
-          return false;
-        }
-        this.loadRoom(98, action.room, action.x, action.y, action.dir ?? 0);
-        return true;
-      }
+        return this.cauVongExit(action.room, action.x, action.y, action.dir ?? 0);
       case "say":
         this.startScript(ref, "cau-vong:opening:say", [
           { type: "text", text: action.text, speaker: "", mode: -1, wait: true, kind: "dialog" },
@@ -6401,13 +6405,7 @@ export class WorldRuntime {
         };
         return true;
       case "exit":
-        if (!this.sources.room(98, action.room)) return false;
-        if (this.sources.roomReady && !this.sources.roomReady(98, action.room)) {
-          this.sources.prepareRoom?.(98, action.room);
-          return false;
-        }
-        this.loadRoom(98, action.room, action.x, action.y, action.dir ?? this.player.direction);
-        return true;
+        return this.cauVongExit(action.room, action.x, action.y, action.dir ?? this.player.direction);
       case "cast":
         this.applyFourGatesCast();
         return false;
@@ -7035,6 +7033,25 @@ export class WorldRuntime {
     }
     this.loadRoom(98, HALL_EXIT.room, HALL_EXIT.x, HALL_EXIT.y, 0);
     return "autosave";
+  }
+  /**
+   * A Cầu Vồng script's move into another room of 98. A room the pack has no map for keeps the hero
+   * where he is (false); one still loading is waited for (`cauVongExitWaiting`), since the script
+   * that asked for the move does not ask again.
+   */
+  private cauVongExit(room: number, x: number, y: number, dir: number): boolean {
+    if (!this.sources.room(98, room)) {
+      this.cauVongExitWaiting = null;
+      return false;
+    }
+    if (this.sources.roomReady && !this.sources.roomReady(98, room)) {
+      this.sources.prepareRoom?.(98, room);
+      this.cauVongExitWaiting = { room, x, y, dir };
+      return true;
+    }
+    this.cauVongExitWaiting = null;
+    this.loadRoom(98, room, x, y, dir);
+    return true;
   }
   private leaveCauVongSquare(): boolean {
     const exit = cauVongSquareExit(this.player.x, this.player.y);
@@ -8260,6 +8277,8 @@ export class WorldRuntime {
     // the map-loading screen holds until it has arrived.
     if (this.sources.roomReady && !this.sources.roomReady(scene, room))
       this.sources.prepareRoom?.(scene, room);
+    // Any move (a warp, a door, a load) settles a script's move still waiting for its room.
+    this.cauVongExitWaiting = null;
     const previousScene = this.sceneId,
       previousRoom = this.roomIndex;
     this.sceneId = scene;

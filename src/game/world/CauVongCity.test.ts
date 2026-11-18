@@ -42,7 +42,7 @@ type CityItem = import("./CauVongCity").CityItem;
 
 const pack = await Pack.load();
 const [boot, assets] = await Promise.all([loadBootAssets(pack), GameAssets.fromPack(pack)]);
-for (const room of [0, 1, 45, 46, 47, 56]) await assets.prepareRoom(98, room);
+for (const room of [0, 1, 44, 45, 46, 47, 56]) await assets.prepareRoom(98, room);
 
 const read = (file: string) =>
   JSON.parse(readFileSync(resolve(import.meta.dirname, "../../../public/pack", file), "utf8"));
@@ -129,12 +129,20 @@ const stock = (world: World, item: CityItem) =>
     ? (world.bag.materials[String(item.id)] ?? 0)
     : (world.inventory[String(item.id)] ?? 0);
 
+/** The city's arrival plays its scene, which ends in the cafe (44); the hero is put back in 1. */
+function arriveInCity(world: World) {
+  play(world);
+  if (world.roomIndex === 1) return;
+  world.warp({ scene: 98, room: 1, x: 260, y: 300, direction: 0 });
+  play(world);
+}
+
 describe("the city's side rooms (citySideEntrance, CauVongOpeningSideQuests, tickSideRoom)", () => {
   it("enters 56, 45, 47 and 46 from the city and comes back where sideRoomExit says", () => {
     for (const [x, y, w, h, room, tx, ty] of CITY.entrances) {
       if (room === 44) continue;
       const world = enter(1, 260, 300);
-      play(world);
+      arriveInCity(world);
       world.player.x = x + w / 2;
       world.player.y = y + h / 2;
       world.tick([]);

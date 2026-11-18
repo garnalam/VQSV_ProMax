@@ -41,7 +41,7 @@ type BranchesDocument = import("./CauVongBranches").CauVongBranchesDocument;
 
 const pack = await Pack.load();
 const [boot, assets] = await Promise.all([loadBootAssets(pack), GameAssets.fromPack(pack)]);
-for (const room of [0, 1, 27, 43, 50, 67]) await assets.prepareRoom(98, room);
+for (const room of [0, 1, 27, 43, 44, 50, 67]) await assets.prepareRoom(98, room);
 
 const read = (file: string) =>
   JSON.parse(readFileSync(resolve(import.meta.dirname, "../../../public/pack", file), "utf8"));
@@ -128,6 +128,14 @@ function press(world: World, tx: number, ty: number) {
   world.player.y = ty * 20 + 19;
   world.tick(["confirm"]);
   return play(world);
+}
+
+/** The city's arrival plays its scene, which ends in the cafe (44); the hero is put back in 1. */
+function arriveInCity(world: World) {
+  play(world);
+  if (world.roomIndex === 1) return;
+  world.warp({ scene: 98, room: 1, x: 260, y: 300, direction: 0 });
+  play(world);
 }
 
 describe("the aux room 67 and its lifts (CauVongMissingBranchesRuntime)", () => {
@@ -307,7 +315,7 @@ describe("the branch treasures (CauVongBranchTreasures)", () => {
     const table = BRANCHES.treasures["1"];
     const money = table.findIndex((t) => t.reward.kind === "money");
     const world = enter(1, 260, 300);
-    play(world);
+    arriveInCity(world);
     const before = world.currency.money;
     face(world, table[money].x, table[money].y);
     expect(saw(press2(world), table[money].line!)).toBe(true);

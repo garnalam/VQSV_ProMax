@@ -316,8 +316,8 @@ describe("Bắc Hải (CV5)", () => {
       expect.objectContaining({ k: "pet", receipt: 52183, species: 183, ride: CV_WATER }),
     );
     expect(DOC.battles["1"].lossContinues).toBe(true);
-    expect(species("0")).toEqual([225, 200, 46]);
-    expect(species("match")).toEqual([123, 240, 85]);
+    expect(species("0")).toEqual([240, 276, 132]);
+    expect(species("match")).toEqual([21, 120, 71]);
     expect(DOC.boats).toHaveLength(8);
     expect(DOC.boats[0]).toMatchObject({ room: 28, offer: "28:2:0:52" });
     expect(DOC.items.ticket).toMatchObject({ id: 9005, name: "Vé tàu Bắc Hải" });
@@ -740,6 +740,30 @@ describe("Bắc Hải (CV5)", () => {
   describe("CV0': the vines and Tiểu Song", () => {
     /** The hub's first scene seen (`completed(50, 0)`). */
     const HUB: [number, number][] = [[50, 651100]];
+
+    it("a vine climbed while the hub is still loading waits for it, then arrives", () => {
+      const { world } = enter(33, 240, 260, HUB);
+      stand(world, 240, 125);
+      const sources = (world as unknown as { sources: { roomReady?: (s: number, r: number) => boolean } })
+        .sources;
+      const real = sources.roomReady;
+      let loaded = false;
+      sources.roomReady = (scene, room) =>
+        scene === 98 && room === 50 ? loaded : (real?.(scene, room) ?? true);
+      try {
+        stand(world, 250, 135, ["confirm"]);
+        pick(world, 0);
+        settle(world);
+        // The script is over; the move waits, the hero held in 33.
+        for (let i = 0; i < 10; i++) world.tick(["left"]);
+        expect([world.roomIndex, world.player.x]).toEqual([33, 250]);
+        loaded = true;
+        world.tick([]);
+        expect([world.roomIndex, world.player.x, world.player.y]).toEqual([50, 590, 179]);
+      } finally {
+        sources.roomReady = real;
+      }
+    });
 
     it("33's vine climbs to the hub, the hub's vine comes down, and a vine climbs again", () => {
       const { world } = enter(33, 240, 260, HUB);
