@@ -1,4 +1,5 @@
 import type { GameData } from "../../data/GameData";
+import { KIT_STATUS, TraitKitRuntime, type KitStatus } from "./traitkit/TraitKit";
 import {
   DesignTraitMechanics,
   normalizeCanonicalStatus,
@@ -210,6 +211,8 @@ export class DesignTraitProjection {
    */
   private randomPrefix: string | undefined;
   readonly dispatcher: TraitLifecycleDispatcher;
+  /** Kit đặc tính theo kịch bản loài: chạy chung cho 1v1 và 2v2. */
+  readonly kit: TraitKitRuntime;
 
   constructor(
     readonly mechanics: DesignTraitMechanics,
@@ -221,6 +224,20 @@ export class DesignTraitProjection {
     // The dispatcher is built here rather than handed in, because its chance seams draw through the
     // same labelled stream as the status attempt above: one fight, one stream, one prefix.
     this.dispatcher = TraitLifecycleDispatcher.withRegistry(registry, (label) => this.draw(label));
+    this.kit = new TraitKitRuntime(
+      {
+        units: () => [...this.activeUnitsBySlot.values()],
+        draw: (label) => this.draw(label),
+        skill: (id) => this.mechanics.skill(id),
+        elementOf: (id) => this.mechanics.elementOf(id),
+        definition: (bank, id) => this.requireDefinition(bank, id),
+        healProjection: (source, target, amount) => this.rawHealing(source, target, amount),
+        damage: (source, target, amount, pierce) => this.kitDamage(source, target, amount, pierce),
+        ownDot: (source, target, bank, id) => this.ownersOf(target).set(bank * 16 + id, source),
+        twoVsTwo: formation === "TWO_V_TWO",
+      },
+      (unit) => this.mechanics.script(unit),
+    );
   }
 
   /**
@@ -276,6 +293,7 @@ export class DesignTraitProjection {
     this.attachDesignDotOwner(unit);
     this.activeUnitsBySlot.set(slot, unit);
     this.refreshSignatureOpponents();
+    this.kit.enter(unit, roundIndex);
     this.dispatcher.speciesOnlySeam(unit, "ON_BATTLE_ENTER");
     this.applyPermanentStatsOnce(unit, slot, roundIndex, actionIndex);
     this.dispatcher.refreshDynamicStats(unit, roundIndex);
@@ -444,10 +462,17 @@ export class DesignTraitProjection {
       ) {
         const designDamage = this.mechanics.outgoing(source, damage);
         context = withDamage(context, this.mechanics.incoming(source, receiver, designDamage));
+        this.kit.setRound(roundIndex);
+        context = withDamage(
+          context,
+          this.kit.projectDirect(source, receiver, context.damage, _skillId),
+        );
       }
       context = withDamage(context, this.dispatcher.modifyOutgoingDirectDamage(context));
       context = withDamage(context, this.dispatcher.modifyIncomingDirectDamage(context));
     }
+    if (!context.directDamage && context.damage > 0)
+      context = withDamage(context, this.kit.projectIndirect(source, receiver, context.damage));
     // `PetTraitDamageKind.isIncomingDamage` is true for all three kinds this port can be called with;
     // only `SELF_DAMAGE`, which no ported path produces, is false.
     this.dispatcher.speciesOnlySeam(receiver, "MODIFY_INCOMING_DAMAGE");
@@ -500,6 +525,10 @@ export class DesignTraitProjection {
     reflect += this.mechanics.afterHit(attacker, receiver, skillId, committedDamage, (amount) =>
       this.rawHealing(receiver, receiver, amount),
     );
+    if (!attacker.signatureState.secondaryHit) {
+      this.kit.setRound(roundIndex);
+      reflect += this.kit.afterDirect(attacker, receiver, skillId, committedDamage);
+    }
     if (
       committedDamage > 0 &&
       !attacker.signatureState.secondaryHit &&
@@ -543,6 +572,7 @@ export class DesignTraitProjection {
         this.mechanics.afterDamage(attacker, before, (amount) =>
           this.rawHealing(attacker, attacker, amount),
         );
+        this.kit.afterDamage(receiver, attacker, before, false);
       }
     }
     this.dispatcher.refreshDynamicStats(receiver, roundIndex);
@@ -565,6 +595,7 @@ export class DesignTraitProjection {
     this.mechanics.afterDamage(receiver, hpBefore, (amount) =>
       this.rawHealing(receiver, receiver, amount),
     );
+    this.kit.afterDamage(source, receiver, hpBefore, damageKind === "DIRECT");
     this.dispatcher.afterDamage(
       damageCommitted(source, receiver, hpBefore, receiver.hp(), damageKind),
     );
@@ -595,7 +626,11 @@ export class DesignTraitProjection {
     amount: number,
   ): number {
     if (source) this.refreshSignatureOpponents();
-    const bonus = source ? this.mechanics.healingBonus(source, receiver, amount) : amount;
+    const bonus = this.kit.healIn(
+      receiver,
+      source,
+      source ? this.mechanics.healingBonus(source, receiver, amount) : amount,
+    );
     return this.dispatcher.modifyReceivedHealing(receiver, bonus);
   }
 
@@ -651,6 +686,7 @@ export class DesignTraitProjection {
         }
       }
     }
+    this.kitAfterAction(actor, target, skillId, damagingSkill, hit, committedDamage, roundIndex);
     this.mechanics.afterAction(
       actor,
       target,
@@ -692,10 +728,12 @@ export class DesignTraitProjection {
         ),
       (status, damage) => this.designDotTick(unit, status, damage, roundIndex),
     );
+    this.kit.roundEnd(unit, roundIndex);
     this.mechanics.roundEnd(unit, roundIndex, (amount) => this.rawHealing(unit, unit, amount));
     this.dispatcher.onRoundEnd(unit, roundIndex);
     this.dispatcher.refreshDynamicStats(unit, roundIndex + 1);
     if (this.mechanics.enabled(unit)) unit.restoreStatsForCheck();
+    this.kit.setRound(roundIndex + 1);
   }
 
   /**
@@ -725,6 +763,7 @@ export class DesignTraitProjection {
       previousDesign?.type === "switch_ally_shield" &&
       previous.designTraitState.ready(3);
     if (previous) {
+      this.kit.leave(previous, next, replacementAfterFaint);
       signatureClearOnSwitch(previous);
       previous.designTraitState.clearTemporary();
     }
@@ -750,6 +789,7 @@ export class DesignTraitProjection {
     this.dispatcher.onSwitchIn(next);
     if (next) {
       this.activeUnitsBySlot.set(slot, next);
+      this.kit.enter(next, roundIndex);
       this.applyPermanentStatsOnce(next, slot, roundIndex, actionIndex);
       this.dispatcher.refreshDynamicStats(next, roundIndex);
     } else {
@@ -795,6 +835,7 @@ export class DesignTraitProjection {
     const source = this.dotOwners.get(receiver)?.get(bank * 16 + id);
     if (!source || source.ownerSide === receiver.ownerSide) return;
     source.designTraitState.round = round;
+    this.kit.dotTick(source, receiver, bank, id, damage);
     this.mechanics.dotTick(source, bank === DEBUFF_BANK && id === 0, damage, (amount) =>
       this.rawHealing(source, source, amount),
     );
@@ -1066,6 +1107,63 @@ export class DesignTraitProjection {
       `SignatureSkillMechanics.${what} reached species ${unit.speciesId} without the design trait` +
         " enabled, so it would read PetDesignSkillCatalog.conditionSource; that catalogue is a later slice",
     );
+  }
+
+  /** Sát thương gián tiếp của kit: đi qua projection như một đòn phản (khiên, giảm, ngưỡng HP). */
+  private kitDamage(
+    source: DesignTraitUnit,
+    target: DesignTraitUnit,
+    amount: number,
+    pierceShield = false,
+  ): number {
+    if (!target.alive() || amount <= 0) return 0;
+    const round = this.kit.round;
+    const projected = this.beforeDamage(source, -1, target, -1, round, 0, -1, amount, "REFLECT");
+    const before = target.hp();
+    // Xuyên khiên: trừ thẳng vào máu, khiên giữ nguyên.
+    if (pierceShield) target.setHp(Math.max(0, before - Math.max(1, projected)));
+    else target.damage(projected);
+    const lost = Math.max(0, before - target.hp());
+    if (lost > 0) this.afterDamage(source, -1, target, -1, round, 0, before, "REFLECT");
+    return lost;
+  }
+
+  /** Đóng một hành động cho kit: trạng thái mới trên mục tiêu, giải trừ, gỡ buff. */
+  private kitAfterAction(
+    actor: DesignTraitUnit,
+    target: DesignTraitUnit | undefined,
+    skillId: number,
+    damaging: boolean,
+    hit: boolean,
+    damage: number,
+    roundIndex: number,
+  ): void {
+    this.kit.setRound(roundIndex);
+    const state = actor.designTraitState;
+    const newStatuses: KitStatus[] = [];
+    if (target && hit) {
+      for (const [name, slot] of Object.entries(KIT_STATUS)) {
+        if (!target.statuses.has(slot.bank, slot.id)) continue;
+        if (!state.targetStatusMask.has(slot.bank * 16 + slot.id))
+          newStatuses.push(name as KitStatus);
+      }
+    }
+    const ownSide = !!target && target.ownerSide === actor.ownerSide;
+    const cleansed = ownSide
+      ? Math.max(0, state.targetDebuffsBefore - target!.activeDebuffCount())
+      : Math.max(0, state.actorDebuffsBefore - actor.activeDebuffCount());
+    const dispelled =
+      target && !ownSide ? Math.max(0, state.targetBuffsBefore - target.activeBuffCount()) : 0;
+    this.kit.afterAction(actor, target, skillId, {
+      target,
+      hit,
+      damaging,
+      damage,
+      actedFirst: state.actedFirst,
+      newStatuses,
+      cleansed,
+      dispelled,
+    });
   }
 }
 

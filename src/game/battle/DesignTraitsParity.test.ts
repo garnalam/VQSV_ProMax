@@ -32,7 +32,7 @@ const unit = (speciesId: number, ownerSide = 0) =>
 
 describe("Test Huy characteristic runtime parity", () => {
   it.each([9, 10])("reduces species %i's first direct hit by 40 percent once each round", async (speciesId) => {
-    const rules = await loadBattleRules(data);
+    const rules = await loadBattleRules(data, { traitScripts: false });
     const create = (id: number, ownerSide: number) => rules.traits.unit({
       speciesId: id, ownerSide, formationSlot: 0,
       base: { hp: 10_000, attack: 100, defense: 100, speed: 100 },

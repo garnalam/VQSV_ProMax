@@ -53,7 +53,7 @@ const skillRules = JSON.parse(
 );
 
 const data = new GameData(await Pack.load());
-const rules = await loadBattleRules(data);
+const rules = await loadBattleRules(data, { traitScripts: false }); // golden: đặc tính cũ, không kit
 const rulebook = await BattleAiRulebook.load(data);
 const catalog = await BattleAiEncounterCatalog.load(data);
 const items = new BattleItems(await data.items());

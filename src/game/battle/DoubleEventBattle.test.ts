@@ -42,7 +42,7 @@ const golden = JSON.parse(
   ),
 ) as { scenarios: GoldenScenario[] };
 const data = new GameData(await Pack.load());
-const rules = await loadBattleRules(data);
+const rules = await loadBattleRules(data, { traitScripts: false }); // golden: đặc tính cũ, không kit
 const services = await BattleServices.load(data, rules, await PetStatCalculator.load(data));
 
 const identity = (unit: GoldenUnit) => ({

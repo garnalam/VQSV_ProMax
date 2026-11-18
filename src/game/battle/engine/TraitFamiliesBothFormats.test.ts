@@ -28,7 +28,7 @@ type DoubleEvent = import("./DoubleBattleTypes").DoubleEvent;
 type DoubleSlot = 0 | 1 | 2 | 3;
 
 const data = new GameData(await Pack.load());
-const rules = await loadBattleRules(data);
+const rules = await loadBattleRules(data, { traitScripts: false });
 const services = await BattleServices.load(data, rules, await PetStatCalculator.load(data));
 const species = (await data.species()).rows;
 const companionProfile = await data.aiProfileForTier("COMPANION");

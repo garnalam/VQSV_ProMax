@@ -3938,6 +3938,8 @@ export class WorldRuntime {
         inventory,
         script: {
           unkillable: "enemy",
+          // Trận hướng dẫn bắt Thỏ Bunny giữ đặc tính cũ (chủ dự án chọn "Giữ như cũ", 2026-11-18).
+          legacyTraits: true,
           // The lesson's first Phong ấn cầu always misses; a Tất Trung Cầu (thrown first when the
           // seal balls are gone) keeps its 100%.
           forcedCatch: (attempt, itemId) =>
@@ -7003,6 +7005,7 @@ export class WorldRuntime {
       {
         ...request,
         sceneId: this.sceneId,
+        kimDiemIntro: key === KIM_DIEM_BATTLE_KEY,
         boss: key === KIM_DIEM_BATTLE_KEY ? "kim-diem-long-vuong" : undefined,
         // ProMax: Đại Điện's (51) hidden Divine pets fight under the same seal as an owned one.
         enemyStatPercent: key.startsWith(`${SUMMON_PREFIX}51:`)

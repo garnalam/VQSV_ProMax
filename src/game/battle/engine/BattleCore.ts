@@ -107,7 +107,11 @@ export class BattleCore {
     if (setup.player.length === 0 || setup.enemy.length === 0)
       throw new Error("each side needs at least one pet");
     this.web = rules.web;
-    this.projection = rules.newTraitProjection((label) => this.random.percent(label));
+    this.projection = rules.newTraitProjection(
+      (label) => this.random.percent(label),
+      "ONE_V_ONE",
+      setup.script?.legacyTraits === true,
+    );
     this.inventory = { ...(setup.inventory ?? {}) };
     this.experience = setup.player.map(() => 0);
     this.sides = {
@@ -840,6 +844,11 @@ export class BattleCore {
    * Switches, items, catches and runs before any skill, the player's first. Skills: a pet whose
    * characteristic outranks a faster foe (HV-01) first, then the higher Linh xảo, ties by a roll.
    */
+  /** Id chiêu một lệnh chiêu sẽ dùng (kit đặc tính hỏi khi xếp lượt). */
+  private chosenSkill(unit: { skillIds: readonly number[] }, action: Action): number | undefined {
+    return action.command.kind === "skill" ? unit.skillIds[action.command.slot] : undefined;
+  }
+
   private order(actions: Action[]): Action[] {
     const tier = (action: Action) => (action.command.kind === "skill" ? 1 : 0);
     const tieRoll = this.random.percent("battle.order.tie");
@@ -850,8 +859,14 @@ export class BattleCore {
         ub = this.activeUnit(b.side),
         // Bug fix: Linh Trùng Thi Hài (held item 7) is the same priority 1 as the characteristic in
         // Java's `unifiedPlayerSkillActsFirst`; the 1v1 only read the characteristic.
-        pa = this.rules.traits.outranked(ua, ub) || ua.hasHeldItem(7) ? 1 : 0,
-        pb = this.rules.traits.outranked(ub, ua) || ub.hasHeldItem(7) ? 1 : 0;
+        pa =
+          this.projection.mechanics.outranked(ua, ub, this.chosenSkill(ua, a)) || ua.hasHeldItem(7)
+            ? 1
+            : 0,
+        pb =
+          this.projection.mechanics.outranked(ub, ua, this.chosenSkill(ub, b)) || ub.hasHeldItem(7)
+            ? 1
+            : 0;
       if (pa !== pb) return pb - pa;
       const sa = ua.currentStats.speed,
         sb = ub.currentStats.speed;
@@ -1058,7 +1073,7 @@ export class BattleCore {
       this.setup.enemy.length === 1 &&
       this.setup.enemy[0].speciesId === KIM_DIEM_LONG_VUONG_SPECIES;
     const party = setups.map((setup) => {
-      const unit = this.rules.traits.unit({
+      const unit = this.projection.mechanics.unit({
         speciesId: setup.speciesId,
         ownerSide: id === "player" ? 0 : 1,
         formationSlot: SEAT_SLOT[id],

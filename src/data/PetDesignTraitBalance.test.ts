@@ -329,7 +329,7 @@ describe("pet design trait balance", () => {
     expect(rig.balance.source.exclusiveTraits).toMatch(/Decided 2026-11-05/);
     expect(rig.traits.find((t) => t.speciesId === 274)).toMatchObject({
       pet: "Hỏa Vu Mộc Linh",
-      name: "Hỏa Tế Đoạt Tiên",
+      // `name` giờ là tên đặc tính kit (bản phác thảo v2 đã duyệt 2026-11-17), không còn tên Java.
       type: "agility_outrank_priority",
       value: 15,
       cooldownTurns: 2,
@@ -340,7 +340,7 @@ describe("pet design trait balance", () => {
     });
     expect(rig.traits.find((t) => t.speciesId === 275)).toMatchObject({
       pet: "Thiên Luân Di Lặc",
-      name: "Thiên Luân Kim Thân",
+      // `name`: tên đặc tính kit, xem trên.
       type: "hard_control_immunity",
       value: 25,
       immuneStatuses: ["dazed", "bind", "paralysis", "petrification", "confusion", "sleep"],

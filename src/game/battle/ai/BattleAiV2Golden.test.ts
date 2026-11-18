@@ -247,7 +247,7 @@ class Rig {
     mutation = mutate;
     try {
       const data = new GameData(await Pack.load());
-      const rules = await loadBattleRules(data);
+      const rules = await loadBattleRules(data, { traitScripts: false }); // golden: đặc tính cũ, không kit
       const [rulebook, catalog, golden, skills, debuffs] = await Promise.all([
         BattleAiRulebook.load(data),
         BattleAiEncounterCatalog.load(data),

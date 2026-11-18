@@ -36,7 +36,7 @@ const contract = JSON.parse(
   ),
 ) as WorldContract;
 const data = new GameData(await Pack.load());
-const rules = await loadBattleRules(data);
+const rules = await loadBattleRules(data, { traitScripts: false }); // golden: đặc tính cũ, không kit
 const petStats = await PetStatCalculator.load(data);
 const services = await BattleServices.load(data, rules, petStats);
 services.seedSource = () => 3;

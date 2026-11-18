@@ -229,7 +229,12 @@ export class BattleServices {
           : undefined;
     return {
       trait: trait
-        ? { name: trait.name, description: trait.summary ?? trait.description }
+        ? {
+            name: trait.name,
+            description:
+              (trait.summary ?? trait.description) +
+              (trait.summary2v2 ? ` 2v2: ${trait.summary2v2}` : ""),
+          }
         : undefined,
       talent: talent ? { name: talent.name, description: talent.description } : undefined,
       held,

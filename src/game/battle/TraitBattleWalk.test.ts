@@ -205,7 +205,7 @@ class TraitBattleWalk {
     mutation = mutate;
     try {
       const data = new GameData(await Pack.load());
-      const [table, rules] = await Promise.all([data.goldenTraitBattle(), loadBattleRules(data)]);
+      const [table, rules] = await Promise.all([data.goldenTraitBattle(), loadBattleRules(data, { traitScripts: false })]);
       const bare = table.battles.find((row) => row.talent === 0);
       if (!bare)
         throw new Error("the table has no talent-0 row, so the unprojected build is unknown");

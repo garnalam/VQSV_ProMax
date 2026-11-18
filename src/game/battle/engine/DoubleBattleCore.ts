@@ -498,7 +498,7 @@ export class DoubleBattleCore {
           action.actor.alive() &&
           target.alive() &&
           action.actor.ownerSide !== target.ownerSide &&
-          this.rules.traits.outranked(action.actor, target);
+          this.projection.mechanics.outranked(action.actor, target, action.skillId);
       this.traitPriority.set(action.actorSlot, granted ? 1 : 0);
     }
     this.actions.sort((a, b) => this.compareQueuedActionOrder(a, b));
@@ -642,6 +642,16 @@ export class DoubleBattleCore {
     }
     actor.skillPp[skillIndex] = Math.max(0, actor.skillPp[skillIndex] - this.web.ppCost(actor));
     actor.selectedSkillId = skillId;
+    // Kit đặc tính: pet cùng phe với mục tiêu có thể hút đòn đơn mục tiêu về mình (khiêu khích).
+    if (!control.selfHit) {
+      const guard = this.projection.kit.redirect(actor, this.unit(target), skillId);
+      if (guard)
+        for (const s of [0, 1, 2, 3] as const)
+          if (this.unit(s) === guard) {
+            target = s;
+            break;
+          }
+    }
     const receiver = control.selfHit ? slot : target;
     if (control.selfHit) this.selfHit(slot, skillId);
     else this.strike(action, target, skillId, undefined);
@@ -1720,7 +1730,7 @@ export class DoubleBattleCore {
   // ------------------------------------------------------------------ helpers
 
   private build(pet: CombatantSetup, ownerSide: number): DesignTraitUnit {
-    const unit = this.rules.traits.unit({
+    const unit = this.projection.mechanics.unit({
       speciesId: pet.speciesId,
       ownerSide,
       formationSlot: -1,

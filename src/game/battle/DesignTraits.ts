@@ -11,6 +11,7 @@ import {
   type StatusEffects,
   type StatusUnitSeed,
 } from "./StatusState";
+import { kitState, type TraitScript } from "./traitkit/TraitKit";
 
 /** `PetDesignTraitMechanics.SOURCE_BASE`: a characteristic status names its source by species. */
 export const DESIGN_TRAIT_SOURCE_BASE = 3000;
@@ -145,6 +146,11 @@ export class DesignTraitCatalog {
     return new DesignTraitCatalog(
       rows.map((row) => ({ speciesId: row.speciesId, type: row.type, value: row.value })),
     );
+  }
+
+  /** Kit đặc tính: loài có kịch bản riêng mang họ `scripted`, các họ cũ không chạy cho nó nữa. */
+  markScripted(speciesIds: Iterable<number>): void {
+    for (const id of speciesIds) this.specs.set(id, { speciesId: id, type: "scripted", value: 0 });
   }
 
   /** `PetDesignTraitCatalog.bySpecies`: undefined for a species the workbook does not cover. */
@@ -559,6 +565,24 @@ export class DesignTraitMechanics {
    * builds ends the way `BattleUnit.fromSpeciesInternal` does with `restoreStatsForCheck()`, and that
    * call belongs to whoever builds for a fight, not here.
    */
+  /** Kịch bản đặc tính theo loài (kit 2026-11-17). Rỗng với các bộ máy dựng cho test đối chiếu Java. */
+  private readonly scripts = new Map<number, TraitScript>();
+
+  installScripts(scripts: ReadonlyMap<number, TraitScript>): void {
+    for (const [id, script] of scripts) this.scripts.set(id, script);
+    this.catalog.markScripted(scripts.keys());
+  }
+
+  /** Kịch bản của pet này, khi đặc tính đang bật. */
+  script(unit: DesignTraitUnit | undefined): TraitScript | undefined {
+    if (!unit || this.spec(unit)?.type !== "scripted") return undefined;
+    return this.scripts.get(unit.speciesId);
+  }
+
+  elementOf(speciesId: number): number {
+    return this.speciesElement.get(speciesId) ?? -1;
+  }
+
   unit(seed: DesignTraitUnitSeed): DesignTraitUnit {
     const unit = new DesignTraitUnit(this.effects, seed);
     unit.attach(this);
@@ -583,6 +607,7 @@ export class DesignTraitMechanics {
   /** TL-01 Thiên Luân Kim Thân: whether a status may take hold of this pet at all. */
   admits(unit: DesignTraitUnit, definition: StatusDefinition): boolean {
     const spec = this.spec(unit);
+    if (spec?.type === "scripted") return kitState(unit).runtime?.admits(unit, definition) ?? true;
     if (spec?.type !== "hard_control_immunity") return true;
     return !(spec.immuneStatuses ?? []).some((name) =>
       (CONTROL_STATUS_SLOTS[name] ?? []).some(
@@ -595,8 +620,15 @@ export class DesignTraitMechanics {
    * HV-01 Hỏa Tế Đoạt Tiên: "nếu đối thủ có Linh xảo cao hơn sau buff/debuff, được ưu tiên hành
    * động" — the turn order asks this; the window is shut while the cooldown runs.
    */
-  outranked(unit: DesignTraitUnit, opponent: StatusUnit | undefined): boolean {
+  outranked(unit: DesignTraitUnit, opponent: StatusUnit | undefined, skillId?: number): boolean {
     const spec = this.spec(unit);
+    if (spec?.type === "scripted")
+      return (
+        !!opponent &&
+        opponent.ownerSide !== unit.ownerSide &&
+        opponent instanceof DesignTraitUnit &&
+        (kitState(unit).runtime?.priority(unit, opponent, skillId) ?? false)
+      );
     return (
       spec?.type === "agility_outrank_priority" &&
       !!opponent &&
@@ -667,6 +699,11 @@ export class DesignTraitMechanics {
 
     const spec = this.spec(actor);
     if (!spec) return;
+    if (spec.type === "scripted") {
+      if (!actor.signatureState.secondaryHit)
+        kitState(actor).runtime?.beginAction(actor, target, skillId, actedFirst);
+      return;
+    }
     const skill = this.skills.get(skillId);
     if (!skill || skill.powerPercent <= 0 || actor.signatureState.secondaryHit) return;
     const charge = actor.statuses.get(BUFF_BANK, FAMILY_CHARGE_ID);
@@ -786,6 +823,8 @@ export class DesignTraitMechanics {
   defenseIgnore(actor: DesignTraitUnit, target: DesignTraitUnit | undefined): number {
     const spec = this.spec(actor);
     if (!spec || !target || actor.signatureState.secondaryHit) return 0;
+    if (spec.type === "scripted")
+      return kitState(actor).runtime?.pierce(actor, target, actor.selectedSkillId) ?? 0;
     if (
       spec.type === "faster_target_pierce" &&
       target.currentStats.speed > actor.currentStats.speed
@@ -969,6 +1008,8 @@ export class DesignTraitMechanics {
   ): number {
     const spec = this.spec(source);
     if (!spec || !target || requested <= 0 || !source.designTraitState.actionOpen) return requested;
+    if (spec.type === "scripted")
+      return kitState(source).runtime?.healOut(source, target, requested) ?? requested;
     const skill = this.skills.get(source.selectedSkillId);
     if (!skill || skill.powerPercent !== 0) return requested;
     const state = source.designTraitState;
@@ -1187,6 +1228,10 @@ export class DesignTraitMechanics {
     const spec = this.spec(unit);
     if (!spec) return 0;
     const base = unit.baseStats[stat];
+    if (spec.type === "scripted") {
+      const percent = kitState(unit).runtime?.statBonus(unit, stat) ?? 0;
+      return percent === 0 ? 0 : Math.trunc((base * percent) / 100);
+    }
     if (stat === "defense" && spec.type === "hp_band_defense" && this.above(unit, 60)) {
       return percentOfBase(base, spec.value);
     }

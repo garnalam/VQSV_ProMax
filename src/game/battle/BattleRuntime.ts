@@ -86,6 +86,7 @@ export type CoreBattleBinding = {
   settle?: () => BattleSettlementReport;
   /** Play the shared source entry deployment before opening the command bar. */
   entryPresentation?: boolean;
+  kimDiemIntro?: boolean;
   shopCurrency?: { money: number; badges: number };
 };
 
@@ -232,6 +233,7 @@ export class BattleRuntime {
   private readonly services: BattleServices | undefined;
   private readonly settle: (() => BattleSettlementReport) | undefined;
   private readonly entryPresentation: boolean;
+  readonly kimDiemIntro: boolean;
   private readonly shopCurrency: { money: number; badges: number } | undefined;
   /** Presentation gate only; the battle/core remains on its ordinary fight request. */
   private entryDeploying = false;
@@ -314,6 +316,7 @@ export class BattleRuntime {
     this.services = binding?.services;
     this.settle = binding?.settle;
     this.entryPresentation = binding?.entryPresentation === true;
+    this.kimDiemIntro = binding?.kimDiemIntro === true;
     this.shopCurrency = binding?.shopCurrency;
     for (const skill of skills) this.skills.set(skill.id, skill);
     if (ownedPet) {
@@ -335,7 +338,12 @@ export class BattleRuntime {
       if (!rules) {
         throw new Error("an interactive battle is scored by the engine, so it needs its rules");
       }
-      this.traitProjection = rules.newTraitProjection((label) => this.random.percent(label));
+      // Trận hướng dẫn giữ đặc tính cũ (chủ dự án chọn giữ nhịp bắt Thỏ Bunny như bản gốc).
+      this.traitProjection = rules.newTraitProjection(
+        (label) => this.random.percent(label),
+        "ONE_V_ONE",
+        true,
+      );
       this.sides = {
         player: this.createUnit(rules, "player"),
         enemy: this.createUnit(rules, "enemy"),
@@ -354,6 +362,9 @@ export class BattleRuntime {
   }
   get sequenceTick(): number {
     return Math.max(0, this.tickCount - 1);
+  }
+  get showingKimDiemIntro(): boolean {
+    return this.kimDiemIntro && this.entryDeploying;
   }
   get phase(): BattlePhaseDefinition {
     if (this.interactiveStage === "skillAction")
@@ -865,11 +876,7 @@ export class BattleRuntime {
     }
     if (stage === "petList") {
       const buttons = landPetStateButtons() ?? PET_STATE;
-      const page = petStatePageAt(
-        { tab: this.ui.tab ?? 0, talent: this.ui.talent === true },
-        x,
-        y,
-      );
+      const page = petStatePageAt({ tab: this.ui.tab ?? 0, talent: this.ui.talent === true }, x, y);
       if (page) {
         this.ui.tab = page.tab;
         this.ui.talent = page.talent;
@@ -1813,7 +1820,7 @@ export class BattleRuntime {
       const dispatch =
         this.definition.phases.find((phase) => phase.key === "P1_DISPATCH")?.start ?? 0;
       const local = this.tickCount - this.entryStart() - SWITCH_IN_HOLD;
-      if (local === 0 || local === 10) this.cues.push("switch");
+      if (!this.kimDiemIntro && (local === 0 || local === 10)) this.cues.push("switch");
       if (this.tickCount >= dispatch) {
         this.entryDeploying = false;
       }
@@ -2362,7 +2369,7 @@ export class BattleRuntime {
    */
   private createUnit(rules: BattleRules, side: BattleSide): DesignTraitUnit {
     const combatant = this.combatant(side);
-    const unit = rules.traits.unit({
+    const unit = (this.traitProjection?.mechanics ?? rules.traits).unit({
       speciesId: combatant.speciesId,
       ownerSide: side === "player" ? 0 : 1,
       formationSlot: 0,

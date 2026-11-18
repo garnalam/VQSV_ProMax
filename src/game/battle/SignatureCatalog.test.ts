@@ -35,7 +35,7 @@ type DesignTraitUnit = import("./DesignTraits").DesignTraitUnit;
 type PackSkill = import("../../data/GameData").PackSkill;
 
 const data = new GameData(await Pack.load());
-const rules = await loadBattleRules(data);
+const rules = await loadBattleRules(data, { traitScripts: false });
 const records = await data.petDesignSkills();
 
 /** Every roll answers `value`; crit and jitter stay off and every hit lands. */

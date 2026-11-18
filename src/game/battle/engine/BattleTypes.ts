@@ -109,10 +109,12 @@ export type BattleSetup = {
   /**
    * A story fight's script on top of the rules. `unkillable`: that side's pets stop at 1 HP (the
    * Scene 1 bunny has to stay catchable). `forcedCatch`: the result of throw number `attempt` (from
-   * 1), or `undefined` to roll it.
+   * 1), or `undefined` to roll it. `legacyTraits`: pets run the old trait families instead of the
+   * trait-kit scripts (the Scene 1 bunny lesson keeps its original pace).
    */
   script?: {
     unkillable?: SideId;
+    legacyTraits?: boolean;
     forcedCatch?: (attempt: number, itemId: number) => boolean | undefined;
   };
   /**

@@ -514,6 +514,10 @@ export type PackDesignTraitBalance = {
   description: string;
   /** Owner 2026-11-15: the same rule in plain words, shown to the player in place of `description`. */
   summary?: string;
+  /** Kit đặc tính 2026-11-17: phần đặc tính làm trong trận 2v2, khi khác 1v1. */
+  summary2v2?: string;
+  /** Kit đặc tính 2026-11-17: loài chạy kịch bản riêng; `value`/`unit` là số cũ, không hiển thị. */
+  kit?: boolean;
   matchesJavaExport: boolean;
   /** HV-01 / TL-01: the form characteristic a mutation pet fights with instead of its workbook row. */
   exclusiveTrait?: string;

@@ -3,6 +3,7 @@ import type { GameData } from "../../data/GameData";
 import { DamageCalculator } from "./DamageCalculator";
 import { DesignTraitProjection } from "./DesignTraitProjection";
 import { DesignTraitCatalog, DesignTraitMechanics } from "./DesignTraits";
+import { TRAIT_SCRIPTS } from "./traitkit/scripts";
 import { TraitMechanicRegistry } from "./PhysicalTraits";
 import { StatusPresentationProjector } from "./StatusPresentation";
 import { StatusEffects, type StatusRandom } from "./StatusState";
@@ -51,12 +52,15 @@ export type BattleRules = {
   newTraitProjection: (
     random: StatusRandom,
     formation?: "ONE_V_ONE" | "TWO_V_TWO",
+    /** Đặc tính họ cũ thay cho kịch bản kit (trận hướng dẫn bắt Thỏ Bunny giữ như bản gốc). */
+    legacy?: boolean,
   ) => DesignTraitProjection;
 };
 
 export async function loadBattleRules(
   data: GameData,
-  options: { web?: boolean } = {},
+  /** `traitScripts: false`: các họ đặc tính cũ (test đối chiếu họ cũ); mặc định chạy kịch bản kit. */
+  options: { web?: boolean; traitScripts?: boolean } = {},
 ): Promise<BattleRules> {
   // The characteristic engine is built on the status catalog, so that one is loaded first. A Thực
   // Loại producer freezes its delayed hit with the damage formula, so the catalog gets that hook.
@@ -71,6 +75,7 @@ export async function loadBattleRules(
     mechanics,
     traitRegistry,
     traitMechanics,
+    legacyTraitMechanics,
     fx,
     signatureFx,
     sourceFx,
@@ -80,11 +85,14 @@ export async function loadBattleRules(
     data.statusMechanics(),
     TraitMechanicRegistry.load(data),
     DesignTraitMechanics.load(data, status, web ? await webTraitCatalog(data) : undefined),
+    DesignTraitMechanics.load(data, status, web ? await webTraitCatalog(data) : undefined),
     data.skillFx().then((document) => new SkillFx(document)),
     data.signatureFx().then((document) => new SignatureFx(document)),
     data.sourceSkillAnimations().then((document) => new SourceSkillAnimation(document)),
     data.stateOneLEffect(),
   ]);
+  // Kit đặc tính (2026-11-17): luật web chạy kịch bản riêng của từng loài thay cho các họ cũ.
+  if (web && options.traitScripts !== false) traitMechanics.installScripts(TRAIT_SCRIPTS);
   const damage = web ? javaDamage.withWebRules(web) : javaDamage;
   return {
     damage,
@@ -97,9 +105,9 @@ export async function loadBattleRules(
     presentation: new StatusPresentationProjector(mechanics.statusPresentation),
     traits: traitMechanics,
     traitRegistry,
-    newTraitProjection: (random, formation = "ONE_V_ONE") =>
+    newTraitProjection: (random, formation = "ONE_V_ONE", legacy = false) =>
       new DesignTraitProjection(
-        traitMechanics,
+        legacy ? legacyTraitMechanics : traitMechanics,
         // `PetTraitBattleProjection.production(formation)`: 1v1 fights, or the simultaneous 2v2.
         formation,
         random,

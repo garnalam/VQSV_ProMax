@@ -26,7 +26,7 @@ type BattleEvent = import("./BattleTypes").BattleEvent;
 type Core = InstanceType<typeof BattleCore>;
 
 const data = new GameData(await Pack.load());
-const rules = await loadBattleRules(data);
+const rules = await loadBattleRules(data, { traitScripts: false }); // golden: đặc tính cũ, không kit
 const items = new BattleItems(await data.items());
 const species = (await data.species()).rows;
 const deps = { items, relationClass: (id: number) => species[id]?.relationClass ?? 0 };

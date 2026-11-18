@@ -51,7 +51,7 @@ async function makeFight(
   try {
     const gameData = new GameData(await Pack.load());
     const [rules, goldenTable] = await Promise.all([
-      loadBattleRules(gameData),
+      loadBattleRules(gameData, { traitScripts: false }),
       gameData.goldenTraitBattle(),
     ]);
     const petStats = await PetStatCalculator.load(gameData);

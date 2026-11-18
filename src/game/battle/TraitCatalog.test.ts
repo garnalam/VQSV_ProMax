@@ -34,7 +34,7 @@ type Balance = import("../../data/GameData").PackDesignTraitBalance;
 type Projection = import("./DesignTraitProjection").DesignTraitProjection;
 
 const data = new GameData(await Pack.load());
-const rules = await loadBattleRules(data);
+const rules = await loadBattleRules(data, { traitScripts: false });
 const balance = (await data.designTraitBalance()).traits;
 const records = await data.petDesignSkills();
 const await_talents = await data.physicalTraits();
