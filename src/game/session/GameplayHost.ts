@@ -420,12 +420,11 @@ export class GameplayHost {
     },
   });
   /**
-   * Owner (2026-11-17): Safari is switched off for players for now; only an admin account (the
-   * server-checked role that also shows "Admin Tool") sees its button and menu row and can start a
-   * run. A run a player already has in the save still resumes, so it can be finished and left.
+   * Owner (2026-11-18): Safari is open to every account again (it was admin-only from 2026-11-17).
+   * The captain's "Khu Safari" row and the one-run-a-day rule apply to everyone alike.
    */
   get safariEnabled(): boolean {
-    return this.hooks.admin?.enabled() ?? false;
+    return true;
   }
   get safariSaving(): boolean {
     return this.saves.pending > 0;

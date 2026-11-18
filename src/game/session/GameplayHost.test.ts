@@ -59,9 +59,6 @@ const [boot, assets] = await Promise.all([loadBootAssets(pack), GameAssets.fromP
 const sources = gameplaySources(assets, boot),
   contract = assets.worldContract;
 
-/** An account whose server role is admin: it sees Safari, which is admin-only for now. */
-const ADMIN = { enabled: () => true, open: () => {} };
-
 function session(
   start: SessionStart,
   repository = new SaveRepository(new MemorySaveStore()),
@@ -121,8 +118,8 @@ const freeWorld = (): SessionStart => ({
 });
 
 describe("Safari integration", () => {
-  it("opens from a wharf captain, persists its fee and restores the same run and room", async () => {
-    const { host, saves, repository } = session(freeWorld(), undefined, ADMIN);
+  it("opens from a wharf captain for a player account, persists its fee and restores the run", async () => {
+    const { host, saves, repository } = session(freeWorld());
     const world = host.world!;
     world.currency.badges = 50;
     const location = world.snapshot().location;
@@ -140,7 +137,7 @@ describe("Safari integration", () => {
     expect(saved.meta?.safari?.balls).toBe(30);
     expect(saved.currency?.badges).toBe(30);
     expect(saved.location).toEqual(location);
-    // Reloaded on a player account: a run already in the save still resumes and can be left.
+    // Reloaded: a run already in the save resumes and can be left.
     const restored = session({ kind: "resume", save: saved }, repository);
     expect(restored.host.safari.run).toEqual(host.safari.run);
     restored.host.step(["back"]);
@@ -160,7 +157,7 @@ describe("Safari integration", () => {
   });
 
   it("saves a captured pet and the final ball in the same snapshot", async () => {
-    const { host, saves, repository } = session(freeWorld(), undefined, ADMIN);
+    const { host, saves, repository } = session(freeWorld());
     host.world!.currency.badges = 50;
     host.safari.open();
     host.safari.enter(42);

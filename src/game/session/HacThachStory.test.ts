@@ -443,7 +443,10 @@ describe(
 
       // Web rule (owner): Java falls back to a 1v1 here; the web refuses the gym fight instead.
       for (const [label, pets] of [
-        ["one living pet", (save: GameSave) => save.pets.map((pet, i) => (i === 0 ? pet : { ...pet, currentHp: 0 }))],
+        [
+          "one living pet",
+          (save: GameSave) => save.pets.map((pet, i) => (i === 0 ? pet : { ...pet, currentHp: 0 })),
+        ],
         ["a one-pet party", (save: GameSave) => save.pets.slice(0, 1)],
       ] as const)
         it(`with ${label} the gym refuses the fight (no 1v1) and says two pets are needed`, async () => {
@@ -524,13 +527,15 @@ describe(
       expect(closed.panel.mode).toBe("wharf");
       expect(closed.panel.wharf).toMatchObject({
         title: "Hắc Thạch Mã Đầu",
-        labels: ["Bắc Bích Thủy Thành", "Hắc Long Thần Điện", "Không ra hàng"],
+        // Safari is open to every account (2026-11-18): the captain offers it above "Không ra hàng".
+        labels: ["Bắc Bích Thủy Thành", "Hắc Long Thần Điện", "Khu Safari", "Không ra hàng"],
       });
-      expect(closed.panel.wharfLayoutName).toBe("wharf1");
+      expect(closed.panel.wharfLayoutName).toBe("wharf2");
       closed.step(["confirm"]);
       expect(closed.panel.wharfMessage?.text).toBe("Đường thủy chưa mở");
       closed.step(["confirm"]);
       expect(closed.panel.wharfMessage).toBeNull();
+      closed.step(["down"]);
       closed.step(["down"]);
       closed.step(["down"]);
       closed.step(["confirm"]);

@@ -139,7 +139,7 @@ describe("Admin Tool menu row", () => {
     expect(admin.visible).toBe(false);
   });
 
-  it("keeps Safari to admin accounts for now: no captain row, no new run", () => {
+  it("opens Safari to every account: captain row and a new run, admin or not", () => {
     const dock = { index: 0, title: "Bến", labels: ["A", "Không ra hàng"], routes: [[]] };
     expect(MENU_LABELS).not.toContain("Safari");
     const normal = new WorldPanel(),
@@ -156,9 +156,9 @@ describe("Admin Tool menu row", () => {
     expect(normal.visible).toBe(false);
 
     const player = session().host;
-    expect(player.safariEnabled).toBe(false);
+    expect(player.safariEnabled).toBe(true);
     player.safari.open();
-    expect(player.safari.visible).toBe(false);
+    expect(player.safari.visible).toBe(true);
 
     const admin = session({ enabled: () => true, open: () => {} }).host;
     expect(admin.safariEnabled).toBe(true);
