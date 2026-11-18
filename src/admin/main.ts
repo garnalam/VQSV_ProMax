@@ -106,6 +106,8 @@ const ACTIONS: Record<string, string> = {
   "live:worldFlag": "Đổi cờ cốt truyện",
   "live:dismount": "Cho xuống thú cưỡi",
   "live:clearSkills": "Xoá hàng chờ học chiêu",
+  "live:storyRewind": "Chơi lại cốt truyện",
+  "live:cancelStoryRewind": "Huỷ chơi lại cốt truyện",
 };
 const gib = (bytes: number) => number.format(bytes / 1024 ** 3) + " GiB";
 
@@ -609,7 +611,8 @@ const ONLINE_MS = 45_000;
 const COMMAND_NAMES: Record<string, string> = {
   reload: "Tải lại game", message: "Tin nhắn", teleport: "Dịch chuyển", unstuck: "Đặt lại chỗ đứng",
   mainTask: "Bước nhiệm vụ chính", eventState: "Sự kiện", branchTask: "Nhiệm vụ phụ", worldFlag: "Cờ cốt truyện",
-  dismount: "Xuống thú cưỡi", clearSkills: "Xoá hàng chờ học chiêu",
+  dismount: "Xuống thú cưỡi", clearSkills: "Xoá hàng chờ học chiêu", storyRewind: "Chơi lại cốt truyện",
+  cancelStoryRewind: "Huỷ chơi lại cốt truyện",
 };
 const COMMAND_STATUS: Record<string, string> = {
   pending: "Chờ game nhận", delivered: "Game đã nhận", done: "Xong", failed: "Lỗi", cancelled: "Đã huỷ",
@@ -855,6 +858,36 @@ async function liveSection(user: UserRow): Promise<HTMLElement> {
       el("div", { className: "row" }, flagInput,
         button("Bật", () => send("worldFlag", { flag: Number(flagInput.value), on: true }, `Bật cờ ${flagInput.value}?${warn}`)),
         button("Tắt", () => send("worldFlag", { flag: Number(flagInput.value), on: false }, `Tắt cờ ${flagInput.value}?${warn}`))),
+    );
+
+    // ---- replay the story from a step (StoryJournal)
+    const journal = ((save as { storyJournal?: { steps?: { seq: number; label: string; at: number }[] } }).storyJournal?.steps ?? []).slice().reverse();
+    const pendingRewind = (save as { storyRewind?: { seq?: number; cauVongStart?: boolean } }).storyRewind;
+    const stepSelect = el(
+      "select",
+      { style: "min-width:22rem" },
+      ...journal.map((step) => el("option", { value: String(step.seq) }, `#${step.seq} · ${step.label} · ${new Date(step.at).toLocaleString("vi-VN")}`)),
+    );
+    const replayNote = " Mọi sự kiện, trận đánh và quà (vật phẩm, tiền) từ chặng đó trở đi trở về như chưa chơi; pet, thú cưỡi và thú triệu hồi người chơi đã có được giữ nguyên.";
+    section.append(
+      el("h3", {}, "Chơi lại cốt truyện từ một chặng"),
+      pendingRewind
+        ? el("p", {}, `Đang chờ người chơi vào game để lùi về ${pendingRewind.cauVongStart ? "đầu Cầu Vồng" : `chặng #${pendingRewind.seq}`}. `,
+            button("Huỷ lệnh này", () => send("cancelStoryRewind", {}, `Huỷ lệnh chơi lại cốt truyện của ${user.email}?${warn}`)))
+        : "",
+      journal.length
+        ? el("div", { className: "row" }, stepSelect,
+            button("Chơi lại từ chặng này", () => {
+              const seq = Number(stepSelect.value);
+              const step = journal.find((s) => s.seq === seq);
+              return send("storyRewind", { seq }, `Đưa ${user.email} về đầu chặng #${seq} (${step?.label ?? ""})?${replayNote}${warn}`);
+            }, "danger"))
+        : el("p", {}, "Save này chưa có nhật ký cốt truyện (chỉ ghi từ bản cập nhật này trở đi)."),
+      progress >= 48
+        ? el("div", { className: "actions" },
+            button("Về đầu Cầu Vồng", () => send("storyRewind", { target: "cv-start" }, `Đưa ${user.email} về quảng trường Cầu Vồng và chơi lại toàn bộ cốt truyện Cầu Vồng?${replayNote}${warn}`), "danger"))
+        : "",
+      el("small", {}, "Lệnh có hiệu lực khi người chơi tải save tiếp theo (game đang mở sẽ tự tải lại)."),
     );
 
     // ---- stuck in a state

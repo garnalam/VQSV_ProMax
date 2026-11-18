@@ -21,6 +21,11 @@ export const giftReceiptKey = (
 
 export class EventStateLedger {
   private readonly states = new Map<string, number>();
+  /**
+   * Web only: told of every key the game writes, with its value before (`StoryJournal`). Restoring a
+   * save is not reported.
+   */
+  observer?: (key: string, before: number | undefined) => void;
 
   sourceEventState(sceneId: number, roomIndex: number, groupIndex: number): number {
     return this.states.get(eventStateKey(sceneId, roomIndex, groupIndex)) ?? EVENT_STATE_FRESH;
@@ -77,6 +82,7 @@ export class EventStateLedger {
   }
 
   markGiftReceived(key: string): void {
+    if (!this.states.has(key)) this.observer?.(key, undefined);
     this.states.set(key, EVENT_STATE_RETIRED);
   }
 
@@ -98,7 +104,10 @@ export class EventStateLedger {
 
   /** Web-only: a group back to fresh (state 0), for a room puzzle the web lets the player redo. */
   resetEvent(sceneId: number, roomIndex: number, groupIndex: number): void {
-    this.states.delete(eventStateKey(sceneId, roomIndex, groupIndex));
+    const key = eventStateKey(sceneId, roomIndex, groupIndex);
+    if (!this.states.has(key)) return;
+    this.observer?.(key, this.states.get(key));
+    this.states.delete(key);
   }
 
   private setSourceEventState(
@@ -107,6 +116,10 @@ export class EventStateLedger {
     groupIndex: number,
     state: number,
   ): void {
-    this.states.set(eventStateKey(sceneId, roomIndex, groupIndex), state);
+    const key = eventStateKey(sceneId, roomIndex, groupIndex),
+      before = this.states.get(key);
+    if (before === state) return;
+    this.observer?.(key, before);
+    this.states.set(key, state);
   }
 }

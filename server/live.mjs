@@ -137,6 +137,32 @@ export const SAVE_COMMANDS = {
       },
     };
   },
+  storyRewind(p) {
+    const cauVong = p?.target === 'cv-start';
+    if (!cauVong && !int(p?.seq, 1, 1_000_000_000)) refuse('Chặng cốt truyện không hợp lệ.');
+    return {
+      describe: cauVong ? 'chơi lại từ đầu Cầu Vồng' : `chơi lại từ chặng #${p.seq}`,
+      apply(save) {
+        // The game applies it on its next load (StoryJournal.applyStoryRewind): it undoes the
+        // story ledger from that step on, keeps the pets the player owns, and seats the hero.
+        if (cauVong) {
+          if (!(Number(save.progress?.mainTaskProgress) >= 48)) refuse('Người chơi này chưa tới Cầu Vồng.');
+          save.storyRewind = { cauVongStart: true };
+        } else {
+          const steps = Array.isArray(save.storyJournal?.steps) ? save.storyJournal.steps : [];
+          if (!steps.some(step => step?.seq === p.seq)) refuse('Save không còn chặng này trong nhật ký cốt truyện.');
+          save.storyRewind = { seq: p.seq };
+        }
+        return save;
+      },
+    };
+  },
+  cancelStoryRewind() {
+    return {
+      describe: 'huỷ lệnh chơi lại cốt truyện',
+      apply(save) { delete save.storyRewind; return save; },
+    };
+  },
   clearSkills() {
     return {
       describe: 'xoá hàng chờ học chiêu',

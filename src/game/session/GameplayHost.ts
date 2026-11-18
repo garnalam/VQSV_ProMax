@@ -112,7 +112,14 @@ import {
   type TaskBoardSource,
   type TaskRow,
 } from "../quest/TaskBoard";
-import { openingBranchRows, openingQuestDetail } from "../world/CauVongOpening";
+import {
+  currentOpeningQuest,
+  openingBranchRows,
+  openingQuestDetail,
+} from "../world/CauVongOpening";
+import { rewardKeyPredicate } from "../world/CauVongRewardKeys";
+import type { EventStateLedger } from "../world/EventStateLedger";
+import { applyStoryRewind, StoryJournal } from "../story/StoryJournal";
 import { EVENT_STATE_COMPLETE } from "../world/EventStateLedger";
 import { WorldRuntime, type WorldAction, type WorldSources } from "../world/WorldRuntime";
 import { worldPointerMask } from "../world/WorldPointer";
@@ -458,6 +465,9 @@ export class GameplayHost {
     events: {},
   };
   private readonly services: StorySceneServices;
+  /** Web only: the story steps and the ledger keys each changed (`StoryJournal`, admin rewind). */
+  private journal = new StoryJournal();
+  private journalLedger: EventStateLedger | null = null;
   /** An op45 task announced before the first world exists, applied when one is built. */
   private pendingTaskProgress: number | null = null;
   /** Source groups a route played before the first world existed, applied when one is built. */
@@ -1057,6 +1067,9 @@ export class GameplayHost {
           : [],
     };
     if (start.kind === "resume") {
+      // An admin rewind (`storyRewind`) is applied before anything reads the save.
+      start = { ...start, save: applyStoryRewind(start.save, this.rewardKey()) };
+      this.journal = new StoryJournal(start.save.storyJournal);
       this.story = new StoryRuntime(this.runtime, sources.events);
       const world = this.story.enterWorld(this.createWorld(start.save));
       const record = start.save.story.quest as Parameters<StoryDirector["restore"]>[0];
@@ -1502,6 +1515,78 @@ export class GameplayHost {
     for (const signal of signals) this.runActions(director.signal(signal));
     if (roomChanged) this.runActions(this.unstickAction(world));
     if (this.pendingWarp && world.warp(this.pendingWarp.to)) this.pendingWarp = null;
+    this.trackStoryStep(world);
+  }
+
+  /** The story journal (admin rewind): watch the ledger, and open an entry when the step changes. */
+  private trackStoryStep(world: WorldRuntime): void {
+    const ledger = world.eventState;
+    if (this.journalLedger !== ledger) {
+      this.journalLedger = ledger;
+      ledger.observer = (key, before) => this.journal.note(key, before);
+    }
+    const step = this.storyStep(world);
+    if (!step || step.id === this.journal.current?.id) return;
+    const quest = this.director ? { ...this.director.snapshot() } : undefined;
+    this.journal.begin({
+      id: step.id,
+      label: step.label,
+      at: Date.now(),
+      location: {
+        sceneId: world.sceneId,
+        roomIndex: world.roomIndex,
+        x: world.player.x,
+        y: world.player.y,
+        direction: world.player.direction,
+      },
+      quest,
+      mainTask: world.questState.mainTaskProgress,
+      activeTask: world.flags.activeTask,
+    });
+  }
+
+  /** The step the story is at: the Liệt Hỏa node, then from task 48 the Cầu Vồng guidance line. */
+  private storyStep(world: WorldRuntime): { id: string; label: string } | null {
+    const director = this.director;
+    if (!director) return null;
+    const quests = this.sources.world.cauVongOpening?.quests;
+    if (quests && this.mainTaskIndex() >= OPENING_QUEST_TASK) {
+      const done = ([room, event]: [number, number]) =>
+        world.eventState.sourceEventStateComplete(98, room, event);
+      const row = currentOpeningQuest(quests, done);
+      if (row) {
+        const detail = openingQuestDetail(row, done);
+        return { id: `cv:${row.title}|${detail}`, label: `${row.title}: ${detail}` };
+      }
+      return { id: "cv:end", label: "Cầu Vồng: đã xong cốt truyện" };
+    }
+    const node = director.node;
+    const task = node.mainTask ?? director.mainTask;
+    return { id: `lh:${node.id}`, label: `Nhiệm vụ ${task + 1}: ${node.title ?? node.id}` };
+  }
+
+  /** Ledger keys a rewind keeps: the pets the player already owns (`CauVongRewardKeys`). */
+  private rewardKey(): (key: string) => boolean {
+    const w = this.sources.world;
+    return rewardKeyPredicate(
+      [
+        w.cauVongSquare,
+        w.cauVongCues,
+        w.cauVongHall,
+        w.cauVongLocke,
+        w.cauVongOpening,
+        w.cauVongPrep,
+        w.cauVongAcademy,
+        w.cauVongShops,
+        w.cauVongFourGates,
+        w.cauVongForest,
+        w.cauVongLab,
+        w.cauVongNorthSea,
+        w.cauVongCity,
+        w.cauVongBranches,
+        w.cauVongSummoning,
+      ].filter((doc) => doc !== undefined),
+    );
   }
 
   /** Event groups the ledger completed since the director last looked. */
@@ -1581,6 +1666,7 @@ export class GameplayHost {
     uids(save.meta?.campaign?.petBank, world.campaign.petBank);
     save.ledger = this.ledger.snapshot();
     if (this.director) save.story.quest = { ...this.director.snapshot() };
+    save.storyJournal = this.journal.snapshot();
     return save;
   }
 

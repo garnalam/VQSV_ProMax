@@ -3,6 +3,7 @@ import type { WorldFlagsSnapshot } from "../../game/world/WorldFlags";
 import type { CampaignState } from "../../game/campaign/CampaignSystems";
 import type { TowerState } from "../../game/meta/BondingTower";
 import type { SafariRun } from "../../game/meta/Safari";
+import type { StoryJournalSnapshot, StoryRewindRequest } from "../../game/story/StoryJournal";
 
 /** Bump together with a new entry in `migrations.ts`. */
 export const CURRENT_SAVE_VERSION = 34;
@@ -74,6 +75,10 @@ export type GameSave = {
   story: Record<string, StoryRecord>;
   world?: WorldFlagsSnapshot;
   eventStates?: EventStateSnapshot;
+  /** Web only: each story step and the ledger keys it changed (`StoryJournal`, admin rewind). */
+  storyJournal?: StoryJournalSnapshot;
+  /** Web only: a rewind the admin asked for, applied the next time the save loads. */
+  storyRewind?: StoryRewindRequest;
   /**
    * The bag. `items` are the consumables (db.mid group 4). The other lists are the original's M
    * (equipment ids), N (materials by id) and O (special item ids); absent means empty, so saves
@@ -372,6 +377,39 @@ function isMeta(value: unknown): boolean {
 }
 
 /** Structural validation of the current schema. Anything older goes through `upgradeSave`. */
+// The story journal's shape (`StoryJournal`); kept here so the backend loads no game code.
+export function isStoryJournal(value: unknown): value is StoryJournalSnapshot {
+  if (!value || typeof value !== "object") return false;
+  const steps = (value as { steps?: unknown }).steps;
+  return (
+    Array.isArray(steps) &&
+    steps.every(
+      (step) =>
+        !!step &&
+        typeof step === "object" &&
+        Number.isInteger(step.seq) &&
+        typeof step.id === "string" &&
+        typeof step.label === "string" &&
+        Array.isArray(step.added) &&
+        step.added.every((key: unknown) => typeof key === "string") &&
+        Array.isArray(step.changed) &&
+        step.changed.every(
+          (entry: unknown) =>
+            Array.isArray(entry) && typeof entry[0] === "string" && (entry[1] === 3 || entry[1] === 4),
+        ) &&
+        !!step.location &&
+        Number.isInteger(step.location.sceneId) &&
+        Number.isInteger(step.location.roomIndex),
+    )
+  );
+}
+
+export function isStoryRewindRequest(value: unknown): value is StoryRewindRequest {
+  if (!value || typeof value !== "object") return false;
+  const request = value as { seq?: unknown; cauVongStart?: unknown };
+  return Number.isInteger(request.seq) || request.cauVongStart === true;
+}
+
 export function isGameSave(value: unknown): value is GameSave {
   if (!record(value)) return false;
   const { location, resume, progress, inventory, pets } = value;
@@ -399,6 +437,8 @@ export function isGameSave(value: unknown): value is GameSave {
       (states) =>
         record(states) && Object.values(states).every((state) => state === 3 || state === 4),
     ) &&
+    optional(value.storyJournal, isStoryJournal) &&
+    optional(value.storyRewind, isStoryRewindRequest) &&
     record(inventory) &&
     record(inventory.items) &&
     Object.values(inventory.items).every((count) => integer(count) && count >= 0) &&

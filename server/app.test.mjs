@@ -468,6 +468,18 @@ test('live channel: admin commands reach the game, admin save edits win over an 
   assert.equal(edited.story.quest.branch, '7:3,12:1');
   assert.deepEqual(edited.world.sourceWorldFlags, [44]);
   assert.deepEqual(edited.pendingSkillLearns, []);
+
+  // Story rewind: only a step the save's journal has, Cầu Vồng only once reached; the game applies it.
+  assert.equal((await command('storyRewind', { seq: 0 })).status, 400);
+  assert.equal((await command('storyRewind', { seq: 3 })).status, 400);
+  assert.equal((await command('storyRewind', { target: 'cv-start' })).status, 400);
+  assert.equal((await command('mainTask', { progress: 48 })).status, 200);
+  assert.equal((await command('storyRewind', { target: 'cv-start' })).status, 200);
+  const rewinding = await (await as(admin, `/admin/users/${player.user.id}/save`)).json();
+  assert.deepEqual(rewinding.storyRewind, { cauVongStart: true });
+  assert.equal((await command('cancelStoryRewind', {})).status, 200);
+  assert.equal('storyRewind' in (await (await as(admin, `/admin/users/${player.user.id}/save`)).json()), false);
+  assert.equal((await command('mainTask', { progress: 9 })).status, 200);
   assert.equal((await command('eventState', { scene: 4, room: 5, group: 6, state: 'fresh' })).status, 200);
   assert.equal((await (await as(admin, `/admin/users/${player.user.id}/save`)).json()).eventStates['4:5:6'], undefined);
 
