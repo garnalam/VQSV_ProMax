@@ -1,3 +1,4 @@
+import { applyEggPetBuff, eggPetBuff } from "../../pet/EggPetBuff";
 import { giveShinyColor } from "../../../rendering/ShinyDesigns";
 import type {
   GameData,
@@ -260,13 +261,13 @@ export class BattleServices {
     const row = this.speciesRows.get(pet.speciesId),
       // `DivinePetSeal.scale`: an owned Divine pet fights at 30% (120% once the golden title is won).
       percent = this.divinePercent?.(pet.speciesId) ?? 100,
-      stats = applyTowerBond(
-        DivinePetSeal.scaleStats(
-          this.petStats.coreStats(pet.speciesId, pet.level, pet.quality, pet.nature ?? 0),
-          percent,
-        ),
-        pet.towerBond,
+      // `EggPetBuff`: an owned egg pet's own buff, after the Divine seal (the two never overlap).
+      egg = this.ownedEggBuff ? eggPetBuff(pet.speciesId) : undefined,
+      core = DivinePetSeal.scaleStats(
+        this.petStats.coreStats(pet.speciesId, pet.level, pet.quality, pet.nature ?? 0),
+        percent,
       ),
+      stats = applyTowerBond(egg ? applyEggPetBuff(pet.speciesId, core) : core, pet.towerBond),
       skillIds = pet.skillIds?.length
         ? [...pet.skillIds]
         : this.progression.initialSkills(pet.speciesId, pet.level),
@@ -284,7 +285,7 @@ export class BattleServices {
       stats,
       wideStats: pet.towerBond ? true : undefined,
       hp:
-        percent === 100
+        percent === 100 && !egg
           ? (pet.currentHp ?? stats.hp)
           : DivinePetSeal.carryHp(pet.currentHp, pet.maxHp, stats.hp),
       skillIds,
@@ -334,6 +335,8 @@ export class BattleServices {
   badgeRows: ReadonlyMap<number, BadgeParams> = new Map();
   /** `DivinePetSeal.percent` of an owned species, which the world hands over with the badges. */
   divinePercent?: (speciesId: number) => number;
+  /** `EggPetBuff`: the world's owned pets take their egg buff; opponents and companions do not. */
+  ownedEggBuff?: boolean;
   /** `session.progression.badges`, which the world hands over once it has restored them. */
   badges?: BadgeStates;
 

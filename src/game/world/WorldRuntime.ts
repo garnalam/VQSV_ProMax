@@ -1,3 +1,4 @@
+import { applyEggPetBuff, eggPetBuff } from "../pet/EggPetBuff";
 import type { SourceRoutePatch } from "../story/SourceOpcodeInterpreter";
 import { defaultShinyColor, giveShinyColor } from "../../rendering/ShinyDesigns";
 import {
@@ -1043,6 +1044,9 @@ export class WorldRuntime {
         achieved: (badgeId) => this.flags.badges.achieved(badgeId),
         enhanced: (badgeId) => this.flags.badges.enhanced(badgeId),
       };
+    // `EggPetBuff`: owned egg pets fight with their own buff; HP follows its maximum.
+    if (sources.battle) sources.battle.ownedEggBuff = true;
+    this.synchronizeEggPets();
     // `DivinePetSeal`: every owned Divine pet's stats follow the North Sea title, in any campaign.
     if (sources.cauVongNorthSea) {
       this.divineSeal = new DivinePetSeal(sources.cauVongNorthSea.divine);
@@ -1914,6 +1918,24 @@ export class WorldRuntime {
     return this.divineSeal?.percent(speciesId, this.divineReleased()) ?? 100;
   }
 
+  /**
+   * `EggPetBuff`, like `DivinePetSeal.synchronize`: an owned egg pet's `maxHp` is its buffed
+   * maximum; when that changes (a level, an evolution, a full heal that wrote the plain one), HP keeps
+   * its fraction and a KO stays KO.
+   */
+  private synchronizeEggPets(): void {
+    const stats = this.sources.battle?.petStats;
+    if (!stats) return;
+    for (const pet of [...this.pets, ...this.meta.campaign.petBank]) {
+      if (!eggPetBuff(pet.speciesId)) continue;
+      const core = stats.coreStats(pet.speciesId, pet.level, pet.quality, pet.nature ?? 0),
+        newMax = towerBondStat(applyEggPetBuff(pet.speciesId, core).hp, pet.towerBond);
+      if (pet.maxHp === newMax) continue;
+      if (pet.currentHp !== undefined)
+        pet.currentHp = DivinePetSeal.carryHp(pet.currentHp, pet.maxHp, newMax);
+      pet.maxHp = newMax;
+    }
+  }
   /** `DivinePetSeal.synchronize(session)` over the roster and the bank. */
   private synchronizeDivineSeal(): void {
     const seal = this.divineSeal,
@@ -2269,6 +2291,7 @@ export class WorldRuntime {
     this.tickCount++;
     // `VqsvGameRuntime.tick`: `DivinePetSeal.synchronize(session)` before anything reads a pet.
     this.synchronizeDivineSeal();
+    this.synchronizeEggPets();
     if (this.sceneId === 98) this.tickCauVongPresentation();
     // Every owned pet is collected (`markCollected` on a grant, a hatch, an evolution...).
     for (const pet of this.pets) this.collectOwned(pet);

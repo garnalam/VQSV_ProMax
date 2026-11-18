@@ -38,6 +38,7 @@ const { SaveRepository } = await import("../../persistence/SaveRepository");
 const { NewGameScreen } = await import("../../screens/NewGameScreen");
 const { applyUrlParityCheckpoint } = await import("../../dev/parityCheckpoints");
 const { DivinePetSeal } = await import("./DivinePetSeal");
+const { applyEggPetBuff, eggPetBuff } = await import("./EggPetBuff");
 const { worldPetCard } = await import("./PetScreen");
 type SavedPet = import("../../persistence/save/GameSave").SavedPet;
 
@@ -155,6 +156,7 @@ describe("DivinePetSeal", () => {
     const other = Array.from({ length: 279 }, (_, id) => id + 1).find(
       (id) =>
         !SEA.divine.species.includes(id) &&
+        !eggPetBuff(id) &&
         w.battleServices!.petStats.coreStats(id, 60, 3, 0).hp > 0,
     )!;
     const { pet, core, services } = own(w, other, (max) => max - 7);
@@ -163,5 +165,26 @@ describe("DivinePetSeal", () => {
     expect(pet).toEqual(snapshot);
     expect(services.partyMember(pet).stats).toEqual(core);
     expect(worldPetCard(pet, 1, services).pet!.divineSealed).toBe(false);
+  });
+
+  // Web only (owner 2026-11-18): an owned egg pet fights with its own buff, an opponent of its species at 100%.
+  it("raises an owned egg pet by its own buff, HP fraction kept, opponents untouched", () => {
+    const w = world();
+    // 162 Heo đốm (weak, the biggest buff) and 223, an earlier form that takes 225's buff.
+    for (const egg of [162, 223]) {
+      expect(eggPetBuff(egg)).toBeDefined();
+      const { pet, core, services } = own(w, egg, (max) => Math.floor(max / 2));
+      w.tick([]);
+      const buffed = applyEggPetBuff(egg, core);
+      expect(buffed.speed - core.speed).toBe(eggPetBuff(egg)!.speed);
+      expect(buffed.attack).toBeGreaterThan(core.attack);
+      expect(pet.maxHp).toBe(buffed.hp);
+      expect(pet.currentHp).toBe(
+        DivinePetSeal.carryHp(Math.floor(core.hp / 2), core.hp, buffed.hp),
+      );
+      expect(services.partyMember(pet).stats).toEqual(buffed);
+      expect(worldPetCard(pet, 1, services).pet!.divineSealed).toBe(false);
+      expect(services.encounterPet(egg, 60, 3, 0).stats).toEqual(core);
+    }
   });
 });
