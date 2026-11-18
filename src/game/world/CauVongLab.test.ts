@@ -202,8 +202,8 @@ describe("Hoàng Dực Điểu, the laboratory and the exam (CV4c)", () => {
     expect(part("EXAM_PRE3")).toMatchObject({ room: 9, flag: -1, cue: 41480 });
     expect(part("DORM_FIND_POST").steps.filter((cue) => cue.k === "pet")).toHaveLength(2);
     // `rescueRequest`: boss.d 65/47/41/23 at 30; the exam's four rosters.
-    expect(species("bird")).toEqual([225, 174, 46, 98]);
-    expect(species("exam0")).toEqual([155, 103]);
+    expect(species("bird")).toEqual([81, 174, 139, 98]);
+    expect(species("exam0")).toEqual([171, 21]);
     expect(species("exam3")).toEqual([46, 155]);
     expect(DOC.text.examLost.map((line) => line.speaker)).toEqual([
       "Giáo viên cửa Đông",

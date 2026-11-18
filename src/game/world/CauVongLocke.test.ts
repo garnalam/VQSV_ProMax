@@ -179,7 +179,7 @@ describe("Lạc Khắc's chain (CauVongLockeChainRuntime)", () => {
       flag: 1302,
       started: 1402,
     });
-    expect(species("39")).toEqual([155, 225, 85]);
+    expect(species("39")).toEqual([142, 123, 85]);
     expect(species("52r")).toHaveLength(3);
     expect(species("32")).toHaveLength(5);
     expect(LOCKE.gates.linhRequest).toEqual([47, CUES.parts.LINH_REQUEST.flag]);

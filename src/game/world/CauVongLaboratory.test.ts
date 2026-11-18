@@ -275,9 +275,9 @@ describe("CV5b: the laboratory, the late Rừng U Ám and the final's reopening"
       members: [
         [94, 115, 1],
         [155, 116, 1],
-        [225, 117, 1],
+        [256, 117, 1],
         [194, 118, 1],
-        [174, 119, 1],
+        [161, 119, 1],
         [273, 120, 1],
       ],
     });

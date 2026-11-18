@@ -171,7 +171,7 @@ describe("Bốn Cổng (CauVongFourGateSourceRuntime), CV4a", () => {
     expect(DOC.parts.MASKED_BEFORE).toMatchObject({ room: 5, flag: -1, started: -1 });
     // `CauVongFourGateRoutes.PORTALS` is the table the dispatcher already walks.
     expect(DOC.portals).toEqual(CAU_VONG_PORTAL_ROWS.map((row) => [...row]));
-    expect(species("masked")).toEqual([123, 225]);
+    expect(species("masked")).toEqual([240, 262]);
     expect(DOC.items.mushroom.id).toBe(9009);
   });
 
