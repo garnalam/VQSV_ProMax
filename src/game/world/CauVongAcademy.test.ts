@@ -183,7 +183,7 @@ describe("Cầu Vồng CV3 (nhập học và đời sống Học viện)", () =>
     // The ceremony's three gifts, each once under its own receipt.
     const gifts = ACADEMY.parts.CEREMONY.steps.flatMap((c) => (c.k === "award" ? [c.receipt] : []));
     expect(gifts).toEqual([150, 151, 152]);
-    expect(ACADEMY.battles.prelim0.members).toEqual([[105, 59, 1]]);
+    expect(ACADEMY.battles.prelim0.members).toEqual([[103, 59, 1]]);
     expect(ACADEMY.battles.arena2.members).toEqual([[107, 63, 1]]);
     expect(ACADEMY.battles.roster47.members).toHaveLength(3);
     expect(ACADEMY.doors["2"].map(([, , room]) => room)).toEqual([3, 3, 8, 8, 7, 7]);

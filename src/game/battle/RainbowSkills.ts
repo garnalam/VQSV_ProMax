@@ -416,10 +416,10 @@ export class RainbowSkills {
       sourceSkill: skill.runtimeId,
     });
     const planted = target.statuses.get(RAINBOW_BANK, id);
-    if (planted) {
-      planted.sourceSide = attacker.ownerSide;
-      planted.sourceSlot = attacker.formationSlot;
-    }
+    // Đặc tính miễn hiệu ứng xấu có thể chặn ngay lúc gắn: khi đó coi như không trúng.
+    if (!planted) return false;
+    planted.sourceSide = attacker.ownerSide;
+    planted.sourceSlot = attacker.formationSlot;
     return true;
   }
 

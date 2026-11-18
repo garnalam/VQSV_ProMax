@@ -190,7 +190,7 @@ describe("Rừng U Ám, 60, cửa Bắc and the rocks (CV4b)", () => {
       { k: "cameraToPlayer" },
     ]);
     // `boss.d 84/44/51` at 29/30/30 (`rescueBattleRequest`).
-    expect(species("rescue")).toEqual([184, 144, 151]);
+    expect(species("rescue")).toEqual([155, 235, 85]);
     expect(species("5")).toHaveLength(5);
     expect(Object.keys(DOC.rocks)).toEqual(["6", "10", "24", "52"]);
     expect(DOC.doors["39"].filter((d) => d[2] === 40)).toHaveLength(3);

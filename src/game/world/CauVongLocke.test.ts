@@ -73,9 +73,9 @@ function enter(room: number, x: number, y: number, flags: [number, number][] = [
   for (let tick = 0; tick < 3000 && world.eventVisible; tick++)
     world.tick(world.eventScene?.textReady ? ["confirm"] : []);
   for (const [r, event] of flags) world.eventState.op14CompleteEvent(98, r, event);
-  // A party that can stand Lạc Khắc's level-80+ roster: the tests are about the chain, not damage.
+  // A party that can stand Lạc Khắc's level-80+ roster (level 150: the rebuilt decks fell a level-100 party in one tick): the tests are about the chain, not damage.
   for (const pet of world.pets) {
-    pet.level = 100;
+    pet.level = 150;
     pet.currentHp = undefined;
   }
   world.warp({ scene: 98, room, x, y, direction: 0 });
@@ -95,7 +95,9 @@ function play(world: World, lose = false, limit = 30000) {
   const seen: string[] = [];
   const fights: number[][] = [];
   let quiet = 0,
-    last: unknown = null;
+    last: unknown = null,
+    stall = 0,
+    lastRound: number | undefined;
   for (let tick = 0; tick < limit; tick++) {
     const battle = world.battle;
     if (battle) {
@@ -112,7 +114,16 @@ function play(world: World, lose = false, limit = 30000) {
         if (foe?.alive()) foe.setHp(1);
         if (mine?.alive()) mine.setHp(mine.maxHp());
       }
-      world.tick(["confirm"]);
+      // Bùa NPC có thể phong ấn ô chiêu đầu: lượt không chạy thì chuyển sang chiêu kế tiếp.
+      const round = (battle.core as { round?: number } | undefined)?.round;
+      stall = round === lastRound ? stall + 1 : 0;
+      lastRound = round;
+      const picking = (battle as { ui?: { mode?: string; selectedIndex?: number } }).ui;
+      world.tick(
+        stall > 400 && picking?.mode === "CHOICE_SKILL" && picking.selectedIndex === 0
+          ? ["down"]
+          : ["confirm"],
+      );
       continue;
     }
     const scene = world.eventScene;
@@ -168,7 +179,7 @@ describe("Lạc Khắc's chain (CauVongLockeChainRuntime)", () => {
       flag: 1302,
       started: 1402,
     });
-    expect(species("39")).toEqual([131, 154, 165]);
+    expect(species("39")).toEqual([155, 225, 85]);
     expect(species("52r")).toHaveLength(3);
     expect(species("32")).toHaveLength(5);
     expect(LOCKE.gates.linhRequest).toEqual([47, CUES.parts.LINH_REQUEST.flag]);

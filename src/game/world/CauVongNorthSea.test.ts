@@ -316,8 +316,8 @@ describe("Bắc Hải (CV5)", () => {
       expect.objectContaining({ k: "pet", receipt: 52183, species: 183, ride: CV_WATER }),
     );
     expect(DOC.battles["1"].lossContinues).toBe(true);
-    expect(species("0")).toEqual([181, 165, 171]);
-    expect(species("match")).toEqual([177, 173, 171]);
+    expect(species("0")).toEqual([225, 200, 46]);
+    expect(species("match")).toEqual([123, 240, 85]);
     expect(DOC.boats).toHaveLength(8);
     expect(DOC.boats[0]).toMatchObject({ room: 28, offer: "28:2:0:52" });
     expect(DOC.items.ticket).toMatchObject({ id: 9005, name: "Vé tàu Bắc Hải" });
