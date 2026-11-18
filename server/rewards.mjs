@@ -23,7 +23,8 @@ function int(value, min, max) {
 }
 
 /**
- * `{ money, badges, items: [{ kind, id, quantity }], pets: [{ speciesId, shiny, stars?, talent? }] }` checked and
+ * `{ money, badges, items: [{ kind, id, quantity }], pets: [{ speciesId, shiny, nature?, stars?, talent? }] }` checked
+ * (`nature` 7, 8 or 9 picks which shiny an `always` pet is; any other shiny mode refuses it) and
  * cleaned, or null. An empty gift is refused.
  */
 export function normalizeRewards(input) {
@@ -51,9 +52,20 @@ export function normalizeRewards(input) {
     // No talent (absent, null or "") is a random one; 0 is a real talent (Bình hòa).
     const rawTalent = pet?.talent;
     const talent = rawTalent === undefined || rawTalent === null || rawTalent === '' ? undefined : int(rawTalent, 0, MAX_TALENT_ID);
-    if (speciesId === null || ADMIN_BOSS_SPECIES.has(speciesId) || !SHINY_MODES.has(shiny) || stars === null || talent === null)
+    const rawNature = pet?.nature;
+    const nature =
+      rawNature === undefined || rawNature === null || rawNature === '' || rawNature === 0
+        ? undefined
+        : SHINY_NATURES.includes(Number(rawNature)) && shiny === 'always'
+          ? Number(rawNature)
+          : null;
+    if (
+      speciesId === null || ADMIN_BOSS_SPECIES.has(speciesId) || !SHINY_MODES.has(shiny) ||
+      stars === null || talent === null || nature === null
+    )
       return null;
     const clean = { speciesId, shiny };
+    if (nature !== undefined) clean.nature = nature;
     if (stars) clean.stars = stars;
     if (talent !== undefined) clean.talent = talent;
     pets.push(clean);
@@ -63,10 +75,10 @@ export function normalizeRewards(input) {
 }
 
 /** Each pet's random parts, drawn now: which shiny nature (if any) and the talent's entropy. */
-function drawPet({ speciesId, shiny, stars, talent }) {
+function drawPet({ speciesId, shiny, nature: chosen, stars, talent }) {
   const random = randomBytes(12);
   const isShiny = shiny === 'always' || (shiny === 'random' && (random[0] & 1) === 1);
-  const nature = isShiny ? SHINY_NATURES[random[1] % SHINY_NATURES.length] : PLAIN_NATURE;
+  const nature = isShiny ? (chosen ?? SHINY_NATURES[random[1] % SHINY_NATURES.length]) : PLAIN_NATURE;
   const talentSeed = (random.readBigUInt64BE(4) & 0x7fffffffffffffffn).toString();
   const grant = { action: 'addPet', speciesId, nature, shiny: isShiny, talentSeed };
   if (stars) grant.quality = stars;

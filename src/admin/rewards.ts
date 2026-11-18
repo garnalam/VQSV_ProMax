@@ -9,13 +9,31 @@ export type Rewards = {
   items: { kind: AdminItemKind; id: number; quantity: number }[];
   /** `stars`: phẩm chất 1..5; absent = the species default. */
   /** `talent`: a physical trait runtime id; absent = random. */
-  pets: { speciesId: number; shiny: "never" | "random" | "always"; stars?: number; talent?: number }[];
+  /** `nature`: 7, 8 or 9, which shiny an "always" pet is; absent = one of the three at random. */
+  pets: {
+    speciesId: number;
+    shiny: "never" | "random" | "always";
+    nature?: number;
+    stars?: number;
+    talent?: number;
+  }[];
 };
 
 export const emptyRewards = (): Rewards => ({ money: 0, badges: 0, items: [], pets: [] });
 
 const SHINY_LABELS = { never: "Thường", random: "50% shiny", always: "Chắc chắn shiny" } as const;
 const STAR_CHOICES = [1, 2, 3, 4, 5] as const;
+/** What each shiny nature does to the stats (`applyNatureType`): hp, attack, speed. */
+const SHINY_KINDS = [
+  { nature: 7, short: "Linh xảo", label: "Shiny 7 · Linh xảo +7 (HP −20%, công −10%)" },
+  { nature: 8, short: "Sát thương", label: "Shiny 8 · Sát thương +30% (HP −20%, Linh xảo −2)" },
+  { nature: 9, short: "HP", label: "Shiny 9 · HP +30% (công −10%, Linh xảo −2)" },
+] as const;
+
+const shinyText = (pet: Rewards["pets"][number]): string => {
+  const kind = SHINY_KINDS.find((row) => row.nature === pet.nature);
+  return pet.shiny === "always" && kind ? `Shiny ${kind.nature} · ${kind.short}` : SHINY_LABELS[pet.shiny];
+};
 
 export function rewardSummary(
   rewards: Rewards,
@@ -29,7 +47,7 @@ export function rewardSummary(
   for (const item of rewards.items) parts.push(`${item.quantity}× ${itemName(item.kind, item.id)}`);
   for (const pet of rewards.pets)
     parts.push(
-      `${speciesName(pet.speciesId)}${pet.stars ? ` ${pet.stars}★` : ""}${pet.shiny === "never" ? "" : ` (${SHINY_LABELS[pet.shiny]})`}` +
+      `${speciesName(pet.speciesId)}${pet.stars ? ` ${pet.stars}★` : ""}${pet.shiny === "never" ? "" : ` (${shinyText(pet)})`}` +
         (pet.talent === undefined ? "" : ` [${talentName(pet.talent)}]`),
     );
   return parts.join(", ") || "—";
@@ -50,6 +68,7 @@ export function rewardEditor(
     shiny: HTMLSelectElement;
     stars: HTMLSelectElement;
     talent: HTMLSelectElement;
+    kind: HTMLSelectElement;
   }[] = [];
 
   const addItem = (value?: Rewards["items"][number]) => {
@@ -101,9 +120,21 @@ export function rewardEditor(
         ? [el("option", { value: String(value.talent), selected: true }, `Thiên phú #${value.talent}`)]
         : []),
     );
+    const kind = el(
+      "select",
+      { title: "Loại shiny" },
+      el("option", { value: "", selected: value?.nature === undefined }, "Shiny 7/8/9 ngẫu nhiên"),
+      ...SHINY_KINDS.map((row) =>
+        el("option", { value: String(row.nature), selected: value?.nature === row.nature }, row.label),
+      ),
+    );
+    // Only a sure shiny can be told which one it is.
+    const syncKind = () => (kind.hidden = shiny.value !== "always");
+    shiny.onchange = syncKind;
+    syncKind();
     const remove = el("button", { type: "button" }, "✕");
-    const line = el("div", { className: "line pet-line" }, pick, stars, talent, shiny, remove);
-    const entry = { pick, shiny, stars, talent };
+    const line = el("div", { className: "line pet-line" }, pick, stars, talent, shiny, kind, remove);
+    const entry = { pick, shiny, stars, talent, kind };
     remove.onclick = () => {
       pets.splice(pets.indexOf(entry), 1);
       line.remove();
@@ -156,6 +187,7 @@ export function rewardEditor(
             pet: Rewards["pets"][number] = { speciesId, shiny };
           if (stars) pet.stars = stars;
           if (line.talent.value !== "") pet.talent = Number(line.talent.value);
+          if (shiny === "always" && line.kind.value !== "") pet.nature = Number(line.kind.value);
           return pet;
         }),
     };

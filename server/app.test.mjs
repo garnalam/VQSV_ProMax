@@ -239,11 +239,13 @@ test('gift codes: admins create them, players redeem each once, limits and windo
   const two = await f.register('two@example.com');
   const create = json => as(admin, '/admin/giftcodes', { method: 'POST', json });
   const redeem = (who, code, free = 10) => as(who, '/gifts/redeem', { method: 'POST', json: { code, bankFree: free } });
-  const rewards = { money: 500, items: [{ kind: 'BAG', id: 3, quantity: 2 }], pets: [{ speciesId: 68, shiny: 'always', stars: 5, talent: 0 }] };
+  const rewards = { money: 500, items: [{ kind: 'BAG', id: 3, quantity: 2 }], pets: [{ speciesId: 68, shiny: 'always', nature: 9, stars: 5, talent: 0 }] };
 
   assert.equal((await as(one, '/admin/giftcodes', { method: 'POST', json: { code: 'TEST1', description: 'x', rewards } })).status, 403);
   assert.equal((await create({ code: 'ab', description: 'x', rewards })).status, 400);
   assert.equal((await create({ code: 'BOSS', description: 'x', rewards: { pets: [{ speciesId: 278 }] } })).status, 400);
+  assert.equal((await create({ code: 'NAT8R', description: 'x', rewards: { pets: [{ speciesId: 68, shiny: 'random', nature: 8 }] } })).status, 400);
+  assert.equal((await create({ code: 'NAT5A', description: 'x', rewards: { pets: [{ speciesId: 68, shiny: 'always', nature: 5 }] } })).status, 400);
   assert.equal((await create({ code: 'TAL1K', description: 'x', rewards: { pets: [{ speciesId: 68, talent: 1000 }] } })).status, 400);
   assert.equal((await create({ code: 'STAR6', description: 'x', rewards: { pets: [{ speciesId: 68, stars: 6 }] } })).status, 400);
   assert.equal((await create({ code: 'EMPTY', description: 'x', rewards: {} })).status, 400);
@@ -260,7 +262,7 @@ test('gift codes: admins create them, players redeem each once, limits and windo
   ]);
   assert.equal(body.grants[2].action, 'addPet');
   assert.equal(body.grants[2].shiny, true);
-  assert.ok([7, 8, 9].includes(body.grants[2].nature));
+  assert.equal(body.grants[2].nature, 9);
   assert.match(body.grants[2].talentSeed, /^\d+$/);
   assert.equal(body.grants[2].quality, 5);
   assert.equal(body.grants[2].talentId, 0);
