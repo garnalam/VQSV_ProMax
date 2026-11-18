@@ -9,6 +9,12 @@ import type { SavedPet } from "../../persistence/save/GameSave";
 export const QUALITY_MIN = 1;
 export const QUALITY_MAX = 5;
 export const ROLL_BOUND = 10_000;
+/**
+ * Web only (owner, 2026-11-18): "Bùa bảo vệ nâng phẩm", a material sold for Lượng. While the bag
+ * holds one, the Nâng phẩm screen puts it in its charm slot for an attempt that could lose a star;
+ * that attempt uses it up, and a failure keeps the stars.
+ */
+export const QUALITY_GUARD_MATERIAL_ID = 7000;
 
 /** `RATE_BASIS_POINTS[mainQuality][fodderQuality]`. */
 const RATE_BASIS_POINTS: readonly (readonly number[])[] = [
@@ -59,15 +65,19 @@ export type QualityAttempt =
       qualityAfter: number;
       consumedCount: number;
       returnedEquipmentIds: number[];
+      /** Web only: a guard charm was used, so a failure kept the stars. */
+      guarded: boolean;
     };
 
 const validQuality = (quality: number) =>
   Number.isInteger(quality) && quality >= QUALITY_MIN && quality <= QUALITY_MAX;
 
-/** Failed attempts keep 1–3 stars; a 4-star main pet loses one. */
-export function qualityAfterFailure(before: number): number {
-  return before < 4 ? before : Math.max(QUALITY_MIN, before - 1);
+/** Failed attempts keep 1–3 stars; a 4-star main pet loses one, unless a guard charm protects it. */
+export function qualityAfterFailure(before: number, guarded = false): number {
+  return guarded || before < 4 ? before : Math.max(QUALITY_MIN, before - 1);
 }
+/** Web only: whether a failure at `quality` would lose a star, the only case a guard charm is used. */
+export const qualityCanDrop = (quality: number) => qualityAfterFailure(quality) < quality;
 export function rateBasisPoints(mainQuality: number, fodderQuality: number): number {
   if (
     mainQuality < QUALITY_MIN ||
@@ -158,6 +168,7 @@ export function attemptQualityUpgrade(
   main: SavedPet,
   fodders: readonly SavedPet[],
   roll: number,
+  guarded = false,
 ): QualityAttempt {
   const validation = validateQualityUpgrade(rules, roster, bank, main, fodders);
   if (!validation.valid) return { outcome: "INVALID", reason: validation.reason };
@@ -166,7 +177,7 @@ export function attemptQualityUpgrade(
     oldMaxHp = rules.maxHp(main),
     oldHp = Math.max(0, Math.min(oldMaxHp, main.currentHp ?? oldMaxHp)),
     succeeded = roll < validation.rateBasisPoints,
-    qualityAfter = succeeded ? qualityBefore + 1 : qualityAfterFailure(qualityBefore),
+    qualityAfter = succeeded ? qualityBefore + 1 : qualityAfterFailure(qualityBefore, guarded),
     returnedEquipmentIds: number[] = [];
   for (const fodder of fodders) {
     const held = fodder.heldEquipmentId ?? -1;
@@ -200,6 +211,7 @@ export function attemptQualityUpgrade(
     qualityAfter,
     consumedCount: fodders.length,
     returnedEquipmentIds,
+    guarded,
   };
 }
 

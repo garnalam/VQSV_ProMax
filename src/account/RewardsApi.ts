@@ -45,6 +45,11 @@ export class RewardsApi {
     return (await this.call<{ mail: MailGift[] }>("/mail")).mail;
   }
 
+  /** The "Ủng hộ" panel's rates, as the admin set them (server/donate.mjs). */
+  async donateRates(): Promise<{ vnd: number; luong: number }[]> {
+    return (await this.call<{ rates: { vnd: number; luong: number }[] }>("/donate")).rates;
+  }
+
   async claim(id: number, bankFree: number): Promise<ClaimedGift> {
     return this.call<ClaimedGift>(`/mail/${id}/claim`, { bankFree });
   }

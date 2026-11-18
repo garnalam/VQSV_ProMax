@@ -193,9 +193,12 @@ describe("Admin Tool grants on a live session", () => {
     ).toContain("Đã thêm 12");
     expect(world.inventory[String(bagItem.id)]).toBe(12);
     host.applyAdminGrant({ action: "setCurrency", money: 123456, badges: 789 });
-    expect(world.currency).toEqual({ money: 123456, badges: 789 });
+    expect(world.currency).toEqual({ money: 123456, badges: 789, luong: 0 });
+    // Lượng (web only): an admin gift adds to the wallet, which the save keeps.
+    host.applyAdminGrant({ action: "addCurrency", money: 0, badges: 0, luong: 50 });
+    expect(world.currency.luong).toBe(50);
     await vi.waitFor(async () =>
-      expect((await repository.load())?.currency).toEqual({ money: 123456, badges: 789 }),
+      expect((await repository.load())?.currency).toEqual({ money: 123456, badges: 789, luong: 50 }),
     );
   });
 

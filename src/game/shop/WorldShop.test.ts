@@ -102,7 +102,9 @@ describe("WorldItemShopService / WorldPetRecoveryService", () => {
 
 describe("town service NPCs (VqsvSourceNpcDispatchFlow)", () => {
   it("bakes every Liệt Hỏa merchant, clerk and envoy", () => {
-    const services = assets.npcServices!.services.filter((service) => service.continuation !== "NONE");
+    const services = assets.npcServices!.services.filter(
+      (service) => service.continuation !== "NONE",
+    );
     // 26 merchants, clerks and envoys, and the five wharf captains (Q0–Q4).
     expect(services).toHaveLength(31);
     expect(
@@ -295,7 +297,8 @@ describe("portable shop stock (ExportWebShopStock)", () => {
     const stock = assets.shopStock!,
       items = stockOffers(stock, false),
       materials = stockOffers(stock, true);
-    expect([items.length, materials.length]).toEqual([24, 33]);
+    // 24 baked rows less Đại sư cầu, which no shop sells (owner 2026-11-18).
+    expect([items.length, materials.length]).toEqual([23, 33]);
     expect([items[0].name, items[0].unitPrice, items[0].currency]).toEqual([
       "Phong ấn cầu",
       75,

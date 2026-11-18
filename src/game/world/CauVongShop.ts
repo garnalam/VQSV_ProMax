@@ -1,3 +1,4 @@
+import { isRetiredShopRow } from "../shop/RetiredShopItems";
 import type { InputCommand } from "../../core/input/GameCommand";
 
 /**
@@ -178,12 +179,17 @@ export const shopTitle = (category: number) =>
  */
 export const SHOP_PET_BANK_ROW = "Ngân hàng sủng vật";
 const SHOP_SELL_ROW = "Bán vật phẩm";
-export const shopMainMenu = (category: number): string[] =>
-  category === 0
-    ? ["Mua vật phẩm", SHOP_SELL_ROW, SHOP_PET_BANK_ROW, "Rời đi"]
+/** Web only (owner 2026-11-18): the "Ủng hộ" panel and the Shop Donate, for an online account. */
+export const SHOP_DONATE_ROW = "Donate";
+export const SHOP_DONATE_SHOP_ROW = "Shop Donate";
+export const shopMainMenu = (category: number, donate = false): string[] => {
+  const extra = donate ? [SHOP_DONATE_ROW, SHOP_DONATE_SHOP_ROW] : [];
+  return category === 0
+    ? ["Mua vật phẩm", SHOP_SELL_ROW, SHOP_PET_BANK_ROW, ...extra, "Rời đi"]
     : category === 3
       ? ["Mua / trao đổi", "Rời đi"]
-      : ["Mua / trao đổi", SHOP_PET_BANK_ROW, "Rời đi"];
+      : ["Mua / trao đổi", SHOP_PET_BANK_ROW, ...extra, "Rời đi"];
+};
 
 /** What the panel reads from the world while it is open. */
 export type CauVongShopSource = {
@@ -209,9 +215,18 @@ export class CauVongShopPanelState {
   offers: CauVongShopOffer[] = [];
   /** Set when the panel closed on the pet bank row: the host opens the bank in its place. */
   bankRequested = false;
+  /** Web only: the Donate rows are listed (an online account). */
+  donate = false;
+  /** Web only: the Donate row asked for the "Ủng hộ" panel; the shop stays open under it. */
+  supportRequested = false;
+  /** Web only: the panel closed on the Shop Donate row: the host opens it in its place. */
+  donateShopRequested = false;
 
-  open(category: number, doc: CauVongShopsDocument | undefined): void {
+  open(category: number, doc: CauVongShopsDocument | undefined, donate = false): void {
     this.category = category;
+    this.donate = donate;
+    this.supportRequested = false;
+    this.donateShopRequested = false;
     this.single = category === 3;
     this.selling = false;
     this.offers = this.buyOffers(doc);
@@ -224,11 +239,15 @@ export class CauVongShopPanelState {
   }
   private buyOffers(doc: CauVongShopsDocument | undefined): CauVongShopOffer[] {
     if (!doc) return [];
-    return this.single ? [doc.mutation] : (doc.stock[this.category] ?? []);
+    return this.single
+      ? [doc.mutation]
+      : (doc.stock[this.category] ?? []).filter(
+          (row) => !isRetiredShopRow({ kind: row.kind, name: row.name, id: row.runtimeId }),
+        );
   }
   /** Rows of the current list (the main menu's, or the offers). */
   get size(): number {
-    return this.menu === 0 ? shopMainMenu(this.category).length : this.offers.length;
+    return this.menu === 0 ? shopMainMenu(this.category, this.donate).length : this.offers.length;
   }
 
   /** `tick`: true once the panel closes. */
@@ -278,9 +297,17 @@ export class CauVongShopPanelState {
         else if (pressed.includes("confirm")) {
           if (this.menu === 0) {
             if (this.selected === size - 1) return true;
-            const row = shopMainMenu(this.category)[this.selected];
+            const row = shopMainMenu(this.category, this.donate)[this.selected];
             if (row === SHOP_PET_BANK_ROW) {
               this.bankRequested = true;
+              return true;
+            }
+            if (row === SHOP_DONATE_ROW) {
+              this.supportRequested = true;
+              return false;
+            }
+            if (row === SHOP_DONATE_SHOP_ROW) {
+              this.donateShopRequested = true;
               return true;
             }
             this.selling = row === SHOP_SELL_ROW;

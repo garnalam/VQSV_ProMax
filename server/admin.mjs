@@ -1,3 +1,4 @@
+import { DEFAULT_DONATE_RATES, DONATE_RATES_KEY, normalizeDonateRates } from './donate.mjs';
 import { createReadStream, statSync, statfsSync } from 'node:fs';
 import { chmod, rename, rm } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -95,6 +96,16 @@ export function adminRoutes({ store, databasePath, reply, fail, readJson, readBo
         'content-disposition': `attachment; filename="vqsv-game-${new Date(backupAt()).toISOString().slice(0, 10)}.sqlite"`,
       });
       return createReadStream(backupPath).pipe(response);
+    }
+
+    // ---- support rates (server/donate.mjs)
+    if (pathname === '/api/admin/donate' && method === 'GET')
+      return reply(response, 200, { rates: store.setting(DONATE_RATES_KEY, DEFAULT_DONATE_RATES) });
+    if (pathname === '/api/admin/donate' && method === 'PUT') {
+      const rates = normalizeDonateRates((await readJson(request))?.rates);
+      if (!rates) fail(400, 'rates', 'Tỷ giá không hợp lệ: 1–10 dòng, số tiền ≥ 1.000đ và không trùng, số Lượng ≥ 1.');
+      store.saveSetting(account.id, DONATE_RATES_KEY, rates, now());
+      return reply(response, 200, { rates });
     }
 
     // ---- gift codes

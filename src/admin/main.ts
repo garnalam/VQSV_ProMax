@@ -1,3 +1,4 @@
+import { donateView } from "./donate";
 import "./admin.css";
 import type { AdminItemKind } from "../account/AdminApi";
 import { defaultFetch } from "../account/RemoteAccountService";
@@ -24,6 +25,7 @@ type UserRow = {
   hasPrevious: number;
   money: number | null;
   badges: number | null;
+  luong: number | null;
   mainTask: number | null;
   playTime: number | null;
   sceneId: number | null;
@@ -92,6 +94,7 @@ const ACTIONS: Record<string, string> = {
   giftcode_create: "Tạo giftcode",
   giftcode_edit: "Sửa giftcode",
   giftcode_delete: "Xóa giftcode",
+  setting_donate_rates: "Sửa tỷ giá ủng hộ",
   mail: "Gửi quà",
   mail_recall: "Thu hồi quà",
   "live:reload": "Buộc tải lại game",
@@ -260,6 +263,8 @@ async function show(name: string): Promise<void> {
             ? await codesView()
             : name === "mail"
               ? await mailView()
+              : name === "donate"
+              ? await donateView({ api, button, message, reload })
               : name === "alerts"
                 ? await alertsView()
                 : name === "online"
@@ -440,7 +445,7 @@ async function playersView(): Promise<HTMLElement> {
     sort: players.sort,
   });
   const { users, hasMore }: { users: UserRow[]; hasMore: boolean } = await api("/admin/users?" + query);
-  const search = el("input", { type: "search", placeholder: "Tìm theo email", value: players.search });
+  const search = el("input", { type: "search", placeholder: "Tìm theo email hoặc mã ủng hộ (VQSV …)", value: players.search });
   const sort = el(
     "select",
     {},
@@ -466,10 +471,10 @@ async function playersView(): Promise<HTMLElement> {
     const row = el(
       "tr",
       { className: "clickable" },
-      el("td", {}, user.email, ...statusBadges(user), el("small", {}, "Tạo " + dateTime(user.createdAt))),
+      el("td", {}, user.email, ...statusBadges(user), el("small", {}, "Tạo " + dateTime(user.createdAt) + " · mã " + user.id.replace(/-/g, "").slice(0, 8).toUpperCase())),
       el("td", { className: "num" }, user.mainTask ?? "—"),
       el("td", { className: "num" }, user.topLevel ?? "—", el("small", {}, `${user.partySize ?? 0} đội · ${user.bankSize ?? 0} ngân hàng`)),
-      el("td", { className: "num" }, money(user.money), el("small", {}, `${user.badges ?? 0} huy hiệu`)),
+      el("td", { className: "num" }, money(user.money), el("small", {}, `${user.badges ?? 0} huy hiệu · ${user.luong ?? 0} Lượng`)),
       el("td", { className: "num" }, playTime(user.playTime)),
       el("td", {}, user.revision ? dateTime(user.updatedAt) : "Chưa có save", user.revision ? el("small", {}, "v" + user.revision) : ""),
     );
@@ -1223,6 +1228,7 @@ function basicEditor(save: GameSave): HTMLElement {
       { className: "grid4" },
       numberField("Tiền", currency.money, (v) => (currency.money = v)),
       numberField("Huy hiệu (tiền huy hiệu)", currency.badges, (v) => (currency.badges = v)),
+      numberField("Lượng (quà ủng hộ)", currency.luong ?? 0, (v) => (currency.luong = Math.max(0, v))),
       numberField("Bước xua đuổi pet (repel)", Math.max(0, save.repelSteps), (v) => (save.repelSteps = v || -1), 100000),
       pass ? numberField("XP Thẻ Fan Cứng", pass.xp, (v) => (pass.xp = v), 10_000_000) : el("span"),
     ),
@@ -1502,7 +1508,7 @@ async function mailView(): Promise<HTMLElement> {
   const [{ mail }] = await Promise.all([api("/admin/mail") as Promise<{ mail: SentMail[] }>, ensureCatalog().catch(() => null)]);
   const everyone = el("input", { type: "radio", name: "target", checked: mailTarget === "all" });
   const one = el("input", { type: "radio", name: "target", checked: mailTarget !== "all" });
-  const email = el("input", { type: "search", placeholder: "Email người nhận", value: mailTarget === "all" ? "" : mailTarget.email });
+  const email = el("input", { type: "search", placeholder: "Email hoặc mã ủng hộ (VQSV …)", value: mailTarget === "all" ? "" : mailTarget.email });
   const found = el("small", {}, mailTarget === "all" ? "" : "Người nhận: " + mailTarget.email);
   let target: { id: string; email: string } | null = mailTarget === "all" ? null : mailTarget;
   email.onchange = async () => {

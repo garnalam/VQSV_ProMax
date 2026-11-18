@@ -1,3 +1,4 @@
+import { LUONG_ICON_KEY, setLuongIconSource } from "../rendering/LuongIcon";
 import { WHARF_BOAT_SPRITE, WHARF_OCEAN_MAP, type WharfTravel } from "../game/world/WharfTravel";
 import { drawSafari } from "../rendering/SafariRenderer";
 import type { BootAssets } from "../pack/boot";
@@ -140,6 +141,8 @@ export class NewGameScreen implements Screen {
   speed: { enabled: () => boolean; toggle: () => void } | null = null;
   /** Set by the app for an admin account: opens the Admin Tool over this session. */
   admin: { open: (host: GameplayHost) => void } | null = null;
+  /** Set by the app for an online account: the "Ủng hộ" panel the merchants' Donate row opens. */
+  support: { open: () => void } | null = null;
   /** Set by the app for an online account: server gift codes. */
   rewards: { redeem: (code: string, bankFree: number) => Promise<ClaimedGift> } | null = null;
   /** The three-step JavaSE settings meter, wired to the app's persisted audio mixer. */
@@ -191,6 +194,11 @@ export class NewGameScreen implements Screen {
     );
     this.battleRenderer = new BattleRenderer(assets, boot);
     this.petUi = new BattleUiRenderer(assets, boot);
+    this.host.panel.donateSource = {
+      enabled: () => this.support !== null,
+      openSupport: () => this.support?.open(),
+    };
+    setLuongIconSource(() => this.assets.pack.imageElement(LUONG_ICON_KEY));
   }
   /** The scene on screen when no world is: a director cutscene, else the opening. */
   private get runtime(): StorySceneRuntime {
@@ -984,16 +992,15 @@ export class NewGameScreen implements Screen {
       const y = Math.floor(at.y + actor.renderOffsetY - camera.y);
       if (actor.sprite === KIM_DIEM_WORLD_VISUAL) {
         const scaled = kimDiemWorldFrame(
-          frameX, frameY, drawMirror ? frame.mw : frame.w, drawMirror ? frame.mh : frame.h,
+          frameX,
+          frameY,
+          drawMirror ? frame.mw : frame.w,
+          drawMirror ? frame.mh : frame.h,
         );
         g.drawImage(art, x + scaled.x, y + scaled.y, scaled.width, scaled.height);
         return;
       }
-      g.drawImage(
-        art,
-        x + frameX,
-        y + frameY,
-      );
+      g.drawImage(art, x + frameX, y + frameY);
     }
   }
   /** `CauVongMinigameView.render` over `RainbowMinigameArt` and the baked banks. */
@@ -1590,6 +1597,7 @@ export class NewGameScreen implements Screen {
           {
             font: this.boot.panelFont,
             fx: (name) => this.assets.pack.imageElement(`quality-fx.${name}`),
+            guardIcon: () => this.assets.pack.imageElement("items.icons/QUALITY-GUARD-CHARM.png"),
             pet: (pet) => this.host.petLook(pet),
             sprite: (spriteId, x, y, w, h, at, nature, shinyColor) => {
               const visual = this.assets.shinySprite(spriteId, nature, shinyColor),
@@ -1724,6 +1732,7 @@ export class NewGameScreen implements Screen {
         icon: (index) => this.boot.cell(258, index),
         cell: (index) => this.boot.cell(257, index),
         unifiedIcon: (index) => this.assets.pack.imageElement(`shop-icons.${index}`),
+        image: (key) => this.assets.pack.imageElement(key),
       });
       if (panel.portableShopMessage)
         this.petUi.drawWarningBox(
@@ -2261,7 +2270,8 @@ export class NewGameScreen implements Screen {
     for (const i of [1, 2]) if (layers[i]) g.drawImage(layers[i], mapX, mapY);
     this.drawMapGutters(g, [layers[1], layers[2]], { x: -mapX, y: -mapY });
     const includeActor = (actor: IntroActor) =>
-      actor.variant === 0 && !(world.battle?.kimDiemIntro && actor.sprite === KIM_DIEM_WORLD_VISUAL);
+      actor.variant === 0 &&
+      !(world.battle?.kimDiemIntro && actor.sprite === KIM_DIEM_WORLD_VISUAL);
     this.drawActorSet(g, world.actors, 1, camera, includeActor, true);
     this.drawActorSet(g, world.actors, 2, camera, includeActor, false);
     if (layers[3]) g.drawImage(layers[3], mapX, mapY);

@@ -50,7 +50,7 @@ export function drawCauVongShop(
     g.fillRect(10, 195, 220, 29);
     text(shop.selling ? "Xác nhận bán" : "Xác nhận mua", 49, 204, 0xffffff);
   } else {
-    const main = shopMainMenu(shop.category),
+    const main = shopMainMenu(shop.category, shop.donate),
       size = shop.menu === 0 ? main.length : shop.offers.length;
     for (let i = shop.scroll; i < Math.min(size, shop.scroll + 7); i++) {
       const y = 48 + (i - shop.scroll) * 25;

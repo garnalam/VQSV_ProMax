@@ -114,7 +114,7 @@ describe("the unified Item catalog behind the bag (VqsvSourceOps)", () => {
     bag = new BagCatalog(catalog.document, unified);
 
   it("bakes the JavaSE records, 25 aliases and their icons", () => {
-    expect(unified.records).toHaveLength(88);
+    expect(unified.records).toHaveLength(89);
     expect(unified.byRuntime("EQUIPMENT", 6000)).toMatchObject({
       key: "KIM-DIEM-VICTORY-EQUIPMENT",
       icon: "icons/KIM-DIEM-VICTORY-EQUIPMENT.png",

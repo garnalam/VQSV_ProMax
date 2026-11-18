@@ -14,7 +14,7 @@ export type AdminGrant =
   | { action: "addItem"; kind: AdminItemKind; id: number; quantity: number }
   | { action: "setCurrency"; money: number; badges: number }
   /** A gift from the server (gift code or mailbox): money and badges added to what the save has. */
-  | { action: "addCurrency"; money: number; badges: number }
+  | { action: "addCurrency"; money: number; badges: number; luong?: number }
   | { action: "buffPet"; slot: number; levels: number }
   | {
       action: "addPet";

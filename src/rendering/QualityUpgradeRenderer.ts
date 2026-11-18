@@ -21,6 +21,8 @@ export type QualityUpgradeArt = {
   font: PanelFontRenderer;
   /** A `quality-fx` frame by name ("star-state-1", "energy-core-03"...). */
   fx: (name: string) => HTMLImageElement | undefined;
+  /** Web only: the guard charm's icon (`items.icons/QUALITY-GUARD-CHARM.png`). */
+  guardIcon?: () => HTMLImageElement | undefined;
   /** The pet's species name and idle sprite. */
   pet: (pet: SavedPet) => { name: string; spriteId: number };
   /**
@@ -175,7 +177,7 @@ export function drawQualityUpgrade(
     );
   } else
     centered(
-      `Thành công: +${Math.min(5, before + 1)}   |   Thất bại: +${qualityAfterFailure(before)}`,
+      `Thành công: +${Math.min(5, before + 1)}   |   Thất bại: +${qualityAfterFailure(before, s.guardActive)}`,
       12,
       237,
       216,
@@ -199,6 +201,7 @@ export function drawQualityUpgrade(
         : 4477786,
   );
   roundStroke(g, 70, 251, 99, 27, 7, canUpgrade ? 16045679 : 7307656);
+  guardSlot();
   centered(
     s.phase === 1 ? "ĐANG CƯỜNG HÓA" : s.phase === 2 ? (ready ? "TIẾP TỤC" : "...") : "NÂNG PHẨM",
     73,
@@ -223,6 +226,24 @@ export function drawQualityUpgrade(
   );
   softkey(181, 291, 58, 25, s.phase !== 1 && s.phase !== 2 ? "Quay lại" : "", 2651542);
 
+  /**
+   * Web only: the charm slot left of the button — the guard charm's icon and how many the bag
+   * holds; lit while it protects this attempt, dim when the bag has none or none is needed.
+   */
+  function guardSlot() {
+    const count = s.guardCount,
+      active = s.guardActive;
+    roundFill(g, 12, 251, 54, 28, 7, active ? 6105616 : 2572620);
+    roundStroke(g, 12, 251, 53, 27, 7, active ? 16045679 : 7307656);
+    const icon = art.guardIcon?.();
+    if (icon && icon.complete && icon.naturalWidth > 0) {
+      g.save();
+      if (!active) g.globalAlpha = 0.4;
+      g.drawImage(icon, 14, 253, 24, 24);
+      g.restore();
+    }
+    tiny(`x${count}`, 40, 259, 26, active ? 0xffffff : 8360858);
+  }
   /** `drawQualityStarGroup`. */
   function starGroup(x: number, y: number, quality: number, target: boolean) {
     const count = Math.max(1, Math.min(5, quality));

@@ -34,6 +34,8 @@ describe("PetQualityUpgradeService rules", () => {
     expect(combinedRateBasisPoints(rules, pet(2, 1), [pet(2, 1), pet(2, 1)])).toBe(8000);
     expect(qualityAfterFailure(3)).toBe(3);
     expect(qualityAfterFailure(4)).toBe(3);
+    // Web only: the guard charm keeps a 4★ pet at 4★.
+    expect(qualityAfterFailure(4, true)).toBe(4);
     expect([qualityPercent(1800), qualityPercent(1260), qualityPercent(5)]).toEqual([
       "18%",
       "12,6%",

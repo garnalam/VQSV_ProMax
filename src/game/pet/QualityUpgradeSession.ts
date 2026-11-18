@@ -3,6 +3,7 @@ import type { SavedPet } from "../../persistence/save/GameSave";
 import {
   CHARGE_COMMIT_TICK,
   QUALITY_MAX,
+  qualityCanDrop,
   ROLL_BOUND,
   attemptQualityUpgrade,
   contributionBasisPoints,
@@ -29,6 +30,8 @@ export type QualitySessionWorld = {
   roll: () => number;
   /** Web only: an attempt went through (either way); the host saves it at once. */
   attempted?: () => void;
+  /** Web only: the bag's "Bùa bảo vệ nâng phẩm" (`QUALITY_GUARD_MATERIAL_ID`). */
+  guard?: { count: () => number; consume: () => void };
 };
 
 export class QualityUpgradeSession {
@@ -47,6 +50,8 @@ export class QualityUpgradeSession {
   candidates: SavedPet[] = [];
   /** Set once the screen hands back to the pet list. */
   closed = false;
+  /** Web only: the guard charm locked in for the attempt that is charging or shown. */
+  private guardLocked = false;
 
   constructor(
     private readonly world: QualitySessionWorld,
@@ -66,6 +71,18 @@ export class QualityUpgradeSession {
       this.result !== null &&
       this.ticks >= resultDurationTicks(this.result.outcome === "SUCCESS")
     );
+  }
+  /** Web only: how many guard charms the bag holds. */
+  get guardCount(): number {
+    return Math.max(0, this.world.guard?.count() ?? 0);
+  }
+  /**
+   * Web only: the charm slot is filled — the bag holds a charm and a failure would lose a star
+   * (a 4-star main pet). During and after an attempt, whether that attempt used one.
+   */
+  get guardActive(): boolean {
+    if (this.phase !== 0) return this.guardLocked;
+    return this.guardCount > 0 && qualityCanDrop(this.main.quality);
   }
   /** `qualityUpgradeCandidateRateBasisPoints`. */
   candidateRate(pet: SavedPet): number {
@@ -97,7 +114,11 @@ export class QualityUpgradeSession {
       const done = this.result ? resultDurationTicks(this.result.outcome === "SUCCESS") : 0;
       if (this.ticks >= done && this.result)
         this.status =
-          this.result.outcome === "SUCCESS" ? "Nâng phẩm thành công!" : "Nâng phẩm thất bại";
+          this.result.outcome === "SUCCESS"
+            ? "Nâng phẩm thành công!"
+            : this.result.guarded
+              ? "Thất bại, bùa bảo vệ giữ nguyên sao"
+              : "Nâng phẩm thất bại";
       if (has("confirm") && this.ticks >= done) this.closed = true;
       return;
     }
@@ -213,6 +234,7 @@ export class QualityUpgradeSession {
     }
     this.rateBasisPoints = v.rateBasisPoints;
     this.status = "Đang khóa thẻ nâng phẩm...";
+    this.guardLocked = this.guardCount > 0 && qualityCanDrop(this.main.quality);
     this.phase = 1;
     this.ticks = 0;
   }
@@ -227,14 +249,18 @@ export class QualityUpgradeSession {
         this.main,
         this.selected(),
         roll,
+        this.guardLocked && this.guardCount > 0,
       );
     if (attempt.outcome === "INVALID") {
+      this.guardLocked = false;
       this.phase = 0;
       this.ticks = 0;
       this.status = qualityReason(attempt.reason);
       return;
     }
     this.result = attempt;
+    this.guardLocked = attempt.guarded;
+    if (attempt.guarded) this.world.guard?.consume();
     this.world.attempted?.();
     this.phase = 2;
     this.ticks = 0;

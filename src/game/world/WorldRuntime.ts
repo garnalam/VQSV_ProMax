@@ -684,7 +684,8 @@ export class WorldRuntime {
   readonly bag: { equipment: number[]; materials: Record<string, number>; specials: number[] };
   readonly pets: SavedPet[];
   companionPetSlot = -1;
-  readonly currency: { money: number; badges: number };
+  /** `luong` (web only): "Lượng", the supporters' thank-you currency an admin sends. */
+  readonly currency: { money: number; badges: number; luong: number };
   readonly meta: NonNullable<GameSave["meta"]>;
   /** `progression.collection`: the Đồ giám, seen and collected species. */
   readonly collection: PetCollection;
@@ -963,7 +964,11 @@ export class WorldRuntime {
       (pet, index) => this.normalizePet(pet, index),
     );
     this.companionPetSlot = save?.companionPetSlot ?? -1;
-    this.currency = { money: save?.currency?.money ?? 0, badges: save?.currency?.badges ?? 0 };
+    this.currency = {
+      money: save?.currency?.money ?? 0,
+      badges: save?.currency?.badges ?? 0,
+      luong: Math.max(0, save?.currency?.luong ?? 0),
+    };
     this.repelSteps = Math.max(-1, Math.trunc(save?.repelSteps ?? 0));
     this.pendingSkillLearns = (save?.pendingSkillLearns ?? []).filter(
       (entry) => entry.petSlot < this.pets.length,

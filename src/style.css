@@ -1233,3 +1233,181 @@ body {
 #app[data-layout="landscape"].pad-hidden .pad-zone {
   display: none;
 }
+
+/* Web only: the "Ủng hộ" button (a Lượng ingot) and its QR panel. */
+#support {
+  position: absolute;
+  right: calc(env(safe-area-inset-right) + 54px);
+  top: calc(env(safe-area-inset-top) + 10px);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid #6b5212;
+  border-radius: 8px;
+  background: rgba(30, 30, 30, 0.7);
+  cursor: pointer;
+  touch-action: manipulation;
+  z-index: 20;
+}
+#support[hidden] {
+  display: none;
+}
+#support img {
+  width: 24px;
+  height: 24px;
+  image-rendering: pixelated;
+}
+#app[data-layout="portrait"] #support {
+  top: auto;
+  bottom: calc(env(safe-area-inset-bottom) + 10px);
+}
+#app[data-layout="landscape"] #support {
+  top: calc(env(safe-area-inset-top) + 4px);
+  right: auto;
+  left: calc(50% - 56px);
+  width: 32px;
+  height: 32px;
+  opacity: 0.7;
+}
+#support-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.55);
+}
+#support-panel[hidden] {
+  display: none;
+}
+#support-panel .support-box {
+  width: min(360px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 14px 16px 16px;
+  border: 2px solid #c9a227;
+  border-radius: 10px;
+  background: #2a2110;
+  color: #fbf3d9;
+  font-size: 14px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+}
+#support-panel .support-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+#support-panel h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #ffe27a;
+}
+#support-panel .support-close,
+#support-panel .support-copy {
+  border: 0;
+  border-radius: 6px;
+  background: #8a6a12;
+  color: #fff;
+  cursor: pointer;
+}
+#support-panel .support-close {
+  width: 32px;
+  height: 32px;
+}
+#support-panel .support-copy {
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+#support-panel .support-wallet {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #ffd84a;
+}
+#support-panel .support-wallet img {
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+}
+#support-panel .support-qr {
+  display: block;
+  width: min(300px, 100%);
+  margin: 4px auto 4px;
+  border-radius: 8px;
+  background: #fff;
+}
+#support-panel .support-qr-box {
+  display: flex;
+  justify-content: center;
+}
+#support-panel canvas.support-qr {
+  width: min(240px, 100%);
+  height: auto;
+  image-rendering: pixelated;
+}
+#support-panel .support-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  margin: 8px 0 4px;
+}
+#support-panel a.support-copy {
+  text-decoration: none;
+}
+#support-panel .support-link {
+  color: #ffd84a;
+  font-size: 13px;
+}
+#support-panel .support-rate-title {
+  margin: 4px 0 2px;
+  font-weight: bold;
+  color: #ffe27a;
+}
+#support-panel .support-rates {
+  margin: 0 0 8px;
+  padding-left: 20px;
+  color: #ffe9a8;
+}
+#support-panel .support-hint {
+  margin: 0 0 8px;
+  text-align: center;
+  font-size: 12px;
+  color: #d9cba3;
+}
+#support-panel a[hidden],
+#support-panel .support-hint[hidden],
+#support-panel .support-qr[hidden],
+#support-panel .support-missing[hidden] {
+  display: none;
+}
+#support-panel .support-missing {
+  text-align: center;
+  color: #ffb4a0;
+}
+#support-panel .support-note-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+#support-panel .support-note {
+  flex: 1;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: #120d04;
+  color: #ffe9a8;
+  word-break: break-all;
+  user-select: all;
+}
+#support-panel .support-info {
+  margin-bottom: 0;
+  font-size: 12px;
+  color: #d9cba3;
+}

@@ -7,6 +7,7 @@ import { dirname } from 'node:path';
 const SAVE_SUMMARY = `
   json_extract(s.current_json,'$.currency.money') AS money,
   json_extract(s.current_json,'$.currency.badges') AS badges,
+  json_extract(s.current_json,'$.currency.luong') AS luong,
   json_extract(s.current_json,'$.progress.mainTaskProgress') AS mainTask,
   json_extract(s.current_json,'$.playTimeMillis') AS playTime,
   json_extract(s.current_json,'$.location.sceneId') AS sceneId,
@@ -85,6 +86,9 @@ export class Store {
         status TEXT NOT NULL DEFAULT 'pending', delivered_at INTEGER, done_at INTEGER, result TEXT
       );
       CREATE INDEX IF NOT EXISTS admin_commands_user ON admin_commands(user_id, status, id);
+      CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at INTEGER NOT NULL
+      );
       CREATE TABLE IF NOT EXISTS presence (
         user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
         seen_at INTEGER NOT NULL, since_at INTEGER NOT NULL, info TEXT
@@ -224,6 +228,8 @@ export class Store {
     `).get();
   }
   adminUsers(search, page, sort = 'new') {
+    // "VQSV 1A2B3C4D", a supporter's transfer note: the account id's first 8 hex digits.
+    const code = String(search).trim().replace(/^vqsv\s*/i, '').toUpperCase();
     const order = USER_SORTS[sort] ?? USER_SORTS.new;
     return this.db.prepare(`
       SELECT * FROM (
@@ -231,9 +237,9 @@ export class Store {
                a.locked_at AS lockedAt,s.revision,s.updated_at AS updatedAt,
                s.previous_json IS NOT NULL AS hasPrevious, ${SAVE_SUMMARY}
         FROM users u LEFT JOIN account_access a ON a.user_id=u.id LEFT JOIN saves s ON s.user_id=u.id
-        WHERE instr(u.email,?)>0
+        WHERE instr(u.email,?)>0 OR (length(?)>0 AND instr(upper(replace(u.id,'-','')),?)=1)
       ) ORDER BY ${order},createdAt DESC,id LIMIT 26 OFFSET ?
-    `).all(search, page * 25);
+    `).all(search, code, code, page * 25);
   }
   adminUser(id) {
     return this.db.prepare(`
@@ -300,6 +306,18 @@ export class Store {
     });
   }
   // ---- gift codes
+  /** A JSON setting an admin edits (the support rates...), or `fallback`. */
+  setting(key, fallback) {
+    const row = this.db.prepare('SELECT value FROM settings WHERE key=?').get(key);
+    if (!row) return fallback;
+    try { return JSON.parse(row.value); } catch { return fallback; }
+  }
+  saveSetting(admin, key, value, now) {
+    const json = JSON.stringify(value);
+    this.db.prepare(`INSERT INTO settings (key,value,updated_at) VALUES (?,?,?)
+      ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at`).run(key, json, now);
+    this.logAdmin(admin, null, 'setting_' + key, now, null, json.slice(0, 500));
+  }
   giftCodes() {
     return this.db.prepare(`
       SELECT g.code,g.description,g.rewards_json AS rewardsJson,g.max_uses AS maxUses,g.starts_at AS startsAt,

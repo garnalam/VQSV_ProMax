@@ -299,6 +299,12 @@ test('mailbox: gifts to one player or everyone, claimed once, recalled while unc
   assert.equal((await as(two, `/mail/${inbox[0].id}/claim`, { method: 'POST', json: {} })).status, 404);
   const claimed = await (await as(one, `/mail/${inbox[0].id}/claim`, { method: 'POST', json: {} })).json();
   assert.deepEqual(claimed.grants, [{ action: 'addCurrency', money: 0, badges: 3 }]);
+  // Lượng (web only): a supporter's thank-you, kept only when given.
+  assert.equal((await send({ target: two.user.id, title: 'x', rewards: { luong: -1 } })).status, 400);
+  assert.equal((await (await send({ target: two.user.id, title: 'Cảm ơn', rewards: { luong: 50 } })).json()).recipients, 1);
+  const thanks = (await (await as(two, '/mail')).json()).mail.find(m => m.title === 'Cảm ơn');
+  const thanked = await (await as(two, `/mail/${thanks.id}/claim`, { method: 'POST', json: {} })).json();
+  assert.deepEqual(thanked.grants, [{ action: 'addCurrency', money: 0, badges: 0, luong: 50 }]);
   assert.equal((await as(one, `/mail/${inbox[0].id}/claim`, { method: 'POST', json: {} })).status, 404);
   assert.equal((await as(one, `/mail/${inbox[1].id}/claim`, { method: 'POST', json: { bankFree: 0 } })).status, 409);
   assert.equal((await as(one, `/mail/${inbox[1].id}/claim`, { method: 'POST', json: { bankFree: 1 } })).status, 200);
@@ -327,6 +333,10 @@ test('the admin page edits saves safely and manages sessions and passwords', asy
   assert.deepEqual([detail.money, detail.topLevel, detail.partySize, detail.sessions], [999, 7, 1, 1]);
   const sorted = (await (await as(admin, '/admin/users?sort=money')).json()).users;
   assert.equal(sorted[0].email, 'player@example.com');
+  // A supporter's transfer note 'VQSV <8 hex digits of the id>' finds the account.
+  const byCode = (await (await as(admin, '/admin/users?q=' + encodeURIComponent('VQSV ' + player.user.id.replace(/-/g, '').slice(0, 8).toUpperCase()))).json()).users;
+  assert.deepEqual(byCode.map(u => u.email), ['player@example.com']);
+  assert.equal((await (await as(admin, '/admin/users?q=VQSV%20ZZZZ')).json()).users.length, 0);
   const stats = (await (await as(admin, '/admin/overview')).json()).stats;
   assert.equal(stats.leaders.money[0].money, 999);
   assert.equal(stats.activity.active24h, 1);
@@ -524,4 +534,16 @@ test('live channel: admin commands reach the game, admin save edits win over an 
   assert.equal((await beat())[0].kind, 'reload');
   f.advance(60_000);
   assert.equal((await (await as(admin, '/admin/online')).json()).online.length, 0);
+});
+
+test('donate rates: admins edit them, players read them, bad tables are refused', async t => {
+  const { f, admin, as } = await withAdmin(t);
+  const one = await f.register('one@example.com');
+  assert.deepEqual((await (await as(one, '/donate')).json()).rates, [{ vnd: 10000, luong: 10 }, { vnd: 20000, luong: 30 }]);
+  assert.equal((await as(one, '/admin/donate', { method: 'PUT', json: { rates: [{ vnd: 10000, luong: 1 }] } })).status, 403);
+  assert.equal((await as(admin, '/admin/donate', { method: 'PUT', json: { rates: [] } })).status, 400);
+  assert.equal((await as(admin, '/admin/donate', { method: 'PUT', json: { rates: [{ vnd: 500, luong: 1 }] } })).status, 400);
+  assert.equal((await as(admin, '/admin/donate', { method: 'PUT', json: { rates: [{ vnd: 10000, luong: 1 }, { vnd: 10000, luong: 2 }] } })).status, 400);
+  assert.equal((await as(admin, '/admin/donate', { method: 'PUT', json: { rates: [{ vnd: 50000, luong: 80 }, { vnd: 10000, luong: 12 }] } })).status, 200);
+  assert.deepEqual((await (await as(one, '/donate')).json()).rates, [{ vnd: 10000, luong: 12 }, { vnd: 50000, luong: 80 }]);
 });

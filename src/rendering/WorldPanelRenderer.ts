@@ -315,6 +315,32 @@ export function drawSoftkey(
   g.restore();
 }
 
+/**
+ * A row button: the cell as it is, or, for a row wider than the art (web only: the item merchant's
+ * Donate rows), its two ends kept and the middle column stretched between them.
+ */
+function drawRowCell(
+  g: CanvasRenderingContext2D,
+  art: WorldPanelArt,
+  cell: number,
+  x: number,
+  y: number,
+  w: number,
+): void {
+  const image = cellImage(art, cell);
+  if (!image) return;
+  const iw = image.width,
+    ih = image.height;
+  if (w <= iw) {
+    g.drawImage(image, x, y);
+    return;
+  }
+  const half = Math.floor(iw / 2);
+  g.drawImage(image, 0, 0, half, ih, x, y, half, ih);
+  g.drawImage(image, half, 0, 1, ih, x + half, y, w - 2 * half, ih);
+  g.drawImage(image, iw - half, 0, half, ih, x + w - half, y, half, ih);
+}
+
 export function drawRows(
   g: CanvasRenderingContext2D,
   art: WorldPanelArt,
@@ -322,11 +348,19 @@ export function drawRows(
   widgets: readonly number[],
   labels: readonly string[],
   selected: number,
+  stretch = false,
 ): void {
   for (let index = 0; index < widgets.length; index++) {
     const widget = layout.widget(widgets[index]);
     if (!widget) continue;
-    drawCellTopLeft(g, art, rowCell(widget, index === selected), widget.x, widget.y);
+    drawRowCell(
+      g,
+      art,
+      rowCell(widget, index === selected),
+      widget.x,
+      widget.y,
+      stretch ? widget.w : 0,
+    );
     drawText(
       g,
       art,

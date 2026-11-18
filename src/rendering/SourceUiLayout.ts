@@ -35,6 +35,10 @@ export class SourceUiLayout {
   widget(id: number): SourceUiWidget | undefined {
     return this.widgets.get(id);
   }
+  /** Every widget, for a layout derived from this one (`WorldShopDonateMenu`). */
+  all(): SourceUiWidget[] {
+    return [...this.widgets.values()];
+  }
   /** `VqsvUiLayout.text(id, fallback)`: the binary `.ui` label when the widget carries one. */
   text(id: number, fallback: string): string {
     const widget = this.widgets.get(id);

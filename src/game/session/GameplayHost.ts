@@ -1,3 +1,5 @@
+import { donateOffers } from "../shop/DonateShop";
+import { QUALITY_GUARD_MATERIAL_ID } from "../pet/QualityUpgrade";
 import { cornerShift, fromUi, viewport } from "../../core/Viewport";
 import { SafariSession } from "../world/SafariSession";
 import type { SafariMap } from "../meta/Safari";
@@ -72,6 +74,7 @@ import {
   adminSpeciesChoices,
   experienceForLevels,
   grantItem,
+  ADMIN_MAX_CURRENCY,
   setCurrency,
   ADMIN_BOSS_SPECIES,
   type AdminItemChoice,
@@ -670,6 +673,9 @@ export class GameplayHost {
         this.world
           ? purchaseOffer(offer, this.portableShopInventory(this.world), quantity)
           : "full",
+      luong: () => this.world?.currency.luong ?? 0,
+      donateOffers: () =>
+        donateOffers(this.sources.world.bagItems, this.sources.world.campaignSystems?.eggs ?? []),
     };
     this.panel.worldShopSource = {
       sellRows: () => {
@@ -1342,10 +1348,19 @@ export class GameplayHost {
           world.currency.money + grant.money,
           world.currency.badges + grant.badges,
         );
+        world.currency.luong = Math.max(
+          0,
+          Math.min(ADMIN_MAX_CURRENCY, world.currency.luong + Math.trunc(grant.luong ?? 0)),
+        );
         const money = world.currency.money - before.money,
-          badges = world.currency.badges - before.badges;
+          badges = world.currency.badges - before.badges,
+          luong = world.currency.luong - before.luong;
         message =
-          [money ? `+${money} tiền` : "", badges ? `+${badges} huy hiệu` : ""]
+          [
+            money ? `+${money} tiền` : "",
+            badges ? `+${badges} huy hiệu` : "",
+            luong ? `+${luong} Lượng` : "",
+          ]
             .filter(Boolean)
             .join(", ") + ".";
         break;
@@ -1363,7 +1378,13 @@ export class GameplayHost {
         if (ADMIN_BOSS_SPECIES.has(grant.speciesId)) return "Không được thêm pet boss.";
         const bank = world.campaign.petBank;
         if (bank.length >= world.petBankCapacity()) return "Ngân hàng sủng vật đã đầy.";
-        const pet = world.createAdminPet(grant.speciesId, grant.nature, BigInt(grant.talentSeed), grant.quality, grant.talentId);
+        const pet = world.createAdminPet(
+          grant.speciesId,
+          grant.nature,
+          BigInt(grant.talentSeed),
+          grant.quality,
+          grant.talentId,
+        );
         if (!pet) return "Không tạo được pet này.";
         pet.slot = bank.length;
         bank.push(pet);
@@ -2037,6 +2058,7 @@ export class GameplayHost {
       equipment: world.bag.equipment,
       materials: world.bag.materials,
       currency: world.currency,
+      specials: world.bag.specials,
     };
   }
 
@@ -2389,6 +2411,15 @@ export class GameplayHost {
         roll: () => freshRoll(ROLL_BOUND),
         // The result is saved at once, so a reload can neither undo a failure nor repeat a roll.
         attempted: () => this.saves.save(this.snapshot(world)),
+        guard: {
+          count: () => world.bag.materials[String(QUALITY_GUARD_MATERIAL_ID)] ?? 0,
+          consume: () => {
+            const key = String(QUALITY_GUARD_MATERIAL_ID),
+              left = (world.bag.materials[key] ?? 0) - 1;
+            if (left > 0) world.bag.materials[key] = left;
+            else delete world.bag.materials[key];
+          },
+        },
       },
       main,
     );

@@ -6,6 +6,8 @@ import { el, number } from "./dom";
 export type Rewards = {
   money: number;
   badges: number;
+  /** "Lượng": the supporters' thank-you currency; absent = none. */
+  luong?: number;
   items: { kind: AdminItemKind; id: number; quantity: number }[];
   /** `stars`: phẩm chất 1..5; absent = the species default. */
   /** `talent`: a physical trait runtime id; absent = random. */
@@ -44,6 +46,7 @@ export function rewardSummary(
   const parts: string[] = [];
   if (rewards.money) parts.push(`${number.format(rewards.money)} tiền`);
   if (rewards.badges) parts.push(`${number.format(rewards.badges)} huy hiệu`);
+  if (rewards.luong) parts.push(`${number.format(rewards.luong)} Lượng`);
   for (const item of rewards.items) parts.push(`${item.quantity}× ${itemName(item.kind, item.id)}`);
   for (const pet of rewards.pets)
     parts.push(
@@ -60,6 +63,7 @@ export function rewardEditor(
 ): { element: HTMLElement; value: () => Rewards } {
   const moneyInput = el("input", { type: "number", min: "0", value: String(initial.money || "") , placeholder: "0" });
   const badgeInput = el("input", { type: "number", min: "0", value: String(initial.badges || ""), placeholder: "0" });
+  const luongInput = el("input", { type: "number", min: "0", value: String(initial.luong || ""), placeholder: "0" });
   const itemLines = el("div", { className: "reward-editor" });
   const petLines = el("div", { className: "reward-editor" });
   const items: { pick: HTMLInputElement; quantity: HTMLInputElement }[] = [];
@@ -157,6 +161,7 @@ export function rewardEditor(
       { className: "money" },
       el("label", { className: "field" }, "Tiền", moneyInput),
       el("label", { className: "field" }, "Huy hiệu", badgeInput),
+      el("label", { className: "field" }, "Lượng", luongInput),
     ),
     itemLines,
     el("div", {}, moreItem),
@@ -170,6 +175,9 @@ export function rewardEditor(
     return {
       money: Math.max(0, Math.trunc(Number(moneyInput.value) || 0)),
       badges: Math.max(0, Math.trunc(Number(badgeInput.value) || 0)),
+      ...(Math.trunc(Number(luongInput.value) || 0) > 0
+        ? { luong: Math.trunc(Number(luongInput.value)) }
+        : {}),
       items: items
         .filter((line) => line.pick.value.trim())
         .map((line) => {

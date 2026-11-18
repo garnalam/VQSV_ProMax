@@ -555,7 +555,8 @@ describe("Cầu Vồng CV3b: the campus shop (43), the arena merchant and the la
       1,
     ]);
     expect(panel.cauVongShop.offers.map((offer) => offer.name)).toEqual(
-      SHOPS.stock[2].map((offer) => offer.name),
+      // Less Đại sư cầu, which no shop sells (owner 2026-11-18).
+      SHOPS.stock[2].map((offer) => offer.name).filter((name) => name !== "Đại sư cầu"),
     );
   });
 });

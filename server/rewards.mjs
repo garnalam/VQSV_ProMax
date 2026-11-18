@@ -23,7 +23,7 @@ function int(value, min, max) {
 }
 
 /**
- * `{ money, badges, items: [{ kind, id, quantity }], pets: [{ speciesId, shiny, nature?, stars?, talent? }] }` checked
+ * `{ money, badges, luong?, items: [{ kind, id, quantity }], pets: [{ speciesId, shiny, nature?, stars?, talent? }] }` checked
  * (`nature` 7, 8 or 9 picks which shiny an `always` pet is; any other shiny mode refuses it) and
  * cleaned, or null. An empty gift is refused.
  */
@@ -31,6 +31,9 @@ export function normalizeRewards(input) {
   if (typeof input !== 'object' || input === null) return null;
   const money = int(input.money ?? 0, 0, MAX_CURRENCY);
   const badges = int(input.badges ?? 0, 0, MAX_CURRENCY);
+  // "Lượng" (web only): the thank-you currency for supporters; kept only when given.
+  const luong = int(input.luong ?? 0, 0, MAX_CURRENCY);
+  if (luong === null) return null;
   const rawItems = input.items ?? [];
   const rawPets = input.pets ?? [];
   if (money === null || badges === null || !Array.isArray(rawItems) || !Array.isArray(rawPets)) return null;
@@ -70,8 +73,8 @@ export function normalizeRewards(input) {
     if (talent !== undefined) clean.talent = talent;
     pets.push(clean);
   }
-  if (!money && !badges && !items.length && !pets.length) return null;
-  return { money, badges, items, pets };
+  if (!money && !badges && !luong && !items.length && !pets.length) return null;
+  return luong ? { money, badges, luong, items, pets } : { money, badges, items, pets };
 }
 
 /** Each pet's random parts, drawn now: which shiny nature (if any) and the talent's entropy. */
@@ -89,8 +92,11 @@ function drawPet({ speciesId, shiny, nature: chosen, stars, talent }) {
 /** The grants a claimed gift hands the game, in the order it applies them. */
 export function rewardGrants(rewards) {
   const grants = [];
-  if (rewards.money || rewards.badges)
-    grants.push({ action: 'addCurrency', money: rewards.money, badges: rewards.badges });
+  if (rewards.money || rewards.badges || rewards.luong) {
+    const grant = { action: 'addCurrency', money: rewards.money, badges: rewards.badges };
+    if (rewards.luong) grant.luong = rewards.luong;
+    grants.push(grant);
+  }
   for (const item of rewards.items) grants.push({ action: 'addItem', ...item });
   for (const pet of rewards.pets) grants.push(drawPet(pet));
   return grants;

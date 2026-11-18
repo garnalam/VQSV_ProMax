@@ -93,7 +93,7 @@ export type GameSave = {
   /** JavaSE `session.pets.companionPetSlot`; -1 means no world companion. */
   companionPetSlot?: number;
   /** JavaSE inventory currency, used by skill relearn and shops. */
-  currency?: { money: number; badges: number };
+  currency?: { money: number; badges: number; luong?: number };
   /**
    * JavaSE `progression.collection.snapshot()`: the Đồ giám state, 0 unseen, 1 seen, 2 collected —
    * species 0..280, then a 512-entry block per shiny nature 7..9 (ProMax) and per shiny colour
@@ -457,7 +457,15 @@ export function isGameSave(value: unknown): value is GameSave {
     ) &&
     optional(value.companionPetSlot, (v) => integer(v) && v >= -1) &&
     // `CurrencyEngine.adjustRaw` (op31) may leave a balance below zero, so only integers are required.
-    optional(value.currency, (v) => record(v) && integer(v.money) && integer(v.badges)) &&
+    optional(
+      value.currency,
+      (v) =>
+        record(v) &&
+        integer(v.money) &&
+        integer(v.badges) &&
+        // Web only: "Lượng", the thank-you currency an admin sends to supporters.
+        optional(v.luong, (n) => integer(n) && n >= 0),
+    ) &&
     optional(value.playTimeMillis, (v) => integer(v) && v >= 0) &&
     integer(value.repelSteps) &&
     value.repelSteps >= -1 &&

@@ -1,3 +1,4 @@
+import { DEFAULT_DONATE_RATES, DONATE_RATES_KEY } from './donate.mjs';
 import { createServer } from 'node:http';
 import { isGameSave } from '../src/persistence/save/GameSave.ts';
 import { Store } from './store.mjs';
@@ -175,6 +176,9 @@ export function createApplication({ databasePath, origin, secureCookies = true, 
         return reply(response, 200, { code, description: result.description, grants: rewardGrants(result.rewards) });
       }
       if (path === '/api/mail' && method === 'GET') return reply(response, 200, { mail: store.inbox(account.id) });
+      // The "Ủng hộ" panel's rates (server/donate.mjs).
+      if (path === '/api/donate' && method === 'GET')
+        return reply(response, 200, { rates: store.setting(DONATE_RATES_KEY, DEFAULT_DONATE_RATES) });
       // The live channel (server/live.mjs): the game's heartbeat, and the admin commands it ran.
       if (path === '/api/live' && method === 'POST') {
         const input = await readJson(request);

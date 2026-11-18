@@ -37,6 +37,7 @@ import { AdminApi } from "../account/AdminApi";
 import { ADMIN_RELOAD_EVENT, RemoteAccountService } from "../account/RemoteAccountService";
 import { RewardsApi } from "../account/RewardsApi";
 import { GiftMailbox } from "./GiftMailbox";
+import { SupportPanel } from "./SupportPanel";
 import { LiveChannel } from "./LiveChannel";
 import { importJavaSave, parseJavaProperties } from "../persistence/save/JavaSaveImport";
 import { importCatalogFor } from "../persistence/save/JavaSaveCatalog";
@@ -82,6 +83,8 @@ export class GameApp {
         )
       : null;
   private reloading = false;
+  /** The "Ủng hộ" button and its QR panel (online accounts only, web only). */
+  private support: SupportPanel | null = null;
   private speedX2 = readSpeedPreference();
   private audio: AudioManager | null = null;
   private assets: BootAssets | null = null;
@@ -222,6 +225,17 @@ export class GameApp {
     if (this.account) {
       this.mailbox?.start();
       this.live?.start();
+      if (this.rewards) {
+        this.support ??= new SupportPanel(
+          document.getElementById("app") ?? document.body,
+          () => this.account?.id ?? null,
+          () => this.gameplay?.host?.world?.currency.luong ?? null,
+          () => this.rewards!.donateRates(),
+        );
+        this.support.setVisible(true);
+        const support = this.support;
+        screen.support = { open: () => support.show() };
+      }
     }
     return screen;
   }

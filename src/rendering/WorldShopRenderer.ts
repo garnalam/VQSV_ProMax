@@ -1,4 +1,6 @@
-import { WORLD_SHOP_LABELS, WORLD_SHOP_ROW_WIDGETS } from "../game/shop/WorldShop";
+import { WORLD_SHOP_DONATE_LABELS } from "./WorldShopDonateMenu";
+import { LUONG_SHOP_CELL } from "./LuongIcon";
+import { WORLD_SHOP_LABELS } from "../game/shop/WorldShop";
 import {
   CONVENIENCE_ROW_WIDGETS,
   PET_BANK_LABELS,
@@ -50,7 +52,7 @@ const hex = (value: number) => `#${((value & 0xffffff) | 0x1000000).toString(16)
 
 /** `VqsvShopCurrencyRenderer.iconCell`: sheet-257 cell for a currency code. */
 export const shopCurrencyCell = (currency: number) =>
-  currency === 1 ? 83 : currency === 2 ? 74 : 84;
+  currency === 1 ? 83 : currency === 2 ? 74 : currency === 3 ? LUONG_SHOP_CELL : 84;
 
 /** `drawMenuFrame`: the three bands and the frame cell (`shop.ui` has no widget 13). */
 function drawMenuFrame(
@@ -74,6 +76,7 @@ export function drawShopMenu(
   widgets: readonly number[],
   labels: readonly string[],
   selected: number,
+  stretch = false,
 ): void {
   drawMenuFrame(g, art, layout);
   drawTextWide(
@@ -86,7 +89,7 @@ export function drawShopMenu(
     layout.w(5, 120),
     widgetColor(layout.widget(5), 0xd0010e),
   );
-  drawRows(g, art, layout, widgets, labels, selected);
+  drawRows(g, art, layout, widgets, labels, selected, stretch);
   drawSoftkey(g, art, layout, 10, layout.text(10, "Xác định"), 0xffffff);
   drawSoftkey(g, art, layout, 11, layout.text(11, "Quay lại"), 0xffffff);
 }
@@ -435,17 +438,20 @@ export function drawWorldShop(
   layouts: WorldShopLayouts,
   art: WorldShopArt,
 ): void {
-  if (panel.mode === "worldShop")
+  if (panel.mode === "worldShop") {
+    const menu = panel.worldShopMenu(layouts.shop);
     drawShopMenu(
       g,
       art,
-      layouts.shop,
+      menu.layout,
       "Thương điếm",
-      WORLD_SHOP_ROW_WIDGETS,
-      WORLD_SHOP_LABELS,
+      menu.widgets,
+      panel.worldShopDonate ? WORLD_SHOP_DONATE_LABELS : WORLD_SHOP_LABELS,
       panel.selected,
+      panel.worldShopDonate,
     );
-  else if (panel.mode === "worldShopRecover") drawRecoverConfirm(g, panel, art, layouts.msgRecover);
+  } else if (panel.mode === "worldShopRecover")
+    drawRecoverConfirm(g, panel, art, layouts.msgRecover);
   else {
     drawSellList(g, panel, art, layouts.shopbuy);
     const row = panel.worldShopSellRow;

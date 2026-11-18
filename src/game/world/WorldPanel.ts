@@ -1,3 +1,9 @@
+import {
+  WORLD_SHOP_DONATE_ROW,
+  WORLD_SHOP_DONATE_SHOP_ROW,
+  WORLD_SHOP_DONATE_WIDGETS,
+  worldShopDonateLayout,
+} from "../../rendering/WorldShopDonateMenu";
 import type { WharfDock } from "./NpcServices";
 import { wharfRoute, type WharfRoute } from "./WharfTravel";
 import type { TaskOptionView } from "../quest/TaskOption";
@@ -566,6 +572,9 @@ export class WorldPanel {
     offers: (material: boolean) => PortableShopOffer[];
     quote: (offer: PortableShopOffer, quantity: number) => PurchaseQuote;
     purchase: (offer: PortableShopOffer, quantity: number) => "purchased" | "full" | "insufficient";
+    /** Web only: the Lượng wallet and the Shop Donate's stock (`DonateShop`). */
+    luong?: () => number;
+    donateOffers?: () => PortableShopOffer[];
   } = {
     money: () => 0,
     badges: () => 0,
@@ -576,10 +585,22 @@ export class WorldPanel {
     purchase: () => "full",
   };
   portableShopMaterial = false;
+  /** Web only: the `shopbuy` list shows the Shop Donate (Lượng prices). */
+  portableShopDonate = false;
+  /**
+   * Web only (owner 2026-11-18): an online account's "Ủng hộ" panel (DOM, over the game) and
+   * whether the merchants list Donate / Shop Donate. The screen sets it.
+   */
+  donateSource: { enabled: () => boolean; openSupport: () => void } = {
+    enabled: () => false,
+    openSupport: () => {},
+  };
   portableShopQuantity = 1;
   portableShopMessage: BagMessage | null = null;
   get portableShopOffers(): PortableShopOffer[] {
-    return this.portableShopSource.offers(this.portableShopMaterial);
+    return this.portableShopDonate
+      ? (this.portableShopSource.donateOffers?.() ?? [])
+      : this.portableShopSource.offers(this.portableShopMaterial);
   }
   get portableShopOffer(): PortableShopOffer | undefined {
     return this.portableShopOffers[this.selected];
@@ -597,15 +618,17 @@ export class WorldPanel {
     this.portableShopMessage = null;
   }
   /** Where Back leaves the `shopbuy` list (`portableShopReturnToSourceWorldShop` / `...Convenience`). */
-  portableShopReturn: "portable" | "worldShop" | "convenience" = "portable";
+  portableShopReturn: "portable" | "worldShop" | "convenience" | "cauVongShop" = "portable";
   private openPortableShopBuy(
     material: boolean,
-    returnTo: "portable" | "worldShop" | "convenience" = "portable",
+    returnTo: "portable" | "worldShop" | "convenience" | "cauVongShop" = "portable",
+    donate = false,
   ): void {
     this.visible = true;
     this.mode = "portableShopBuy";
     this.portableShopReturn = returnTo;
     this.portableShopMaterial = material;
+    this.portableShopDonate = donate;
     this.selected = 0;
     this.listScroll = 0;
     this.openedTicks = 0;
@@ -639,7 +662,14 @@ export class WorldPanel {
     else if (pressed.includes("down"))
       this.select(clamp(this.selected + 1, 0, Math.max(0, rows.length - 1)));
     else if (pressed.includes("back")) {
-      if (this.portableShopReturn === "worldShop") this.returnToWorldShop(0);
+      const donate = this.portableShopDonate;
+      this.portableShopDonate = false;
+      if (this.portableShopReturn === "cauVongShop") {
+        this.cauVongShop.donateShopRequested = false;
+        this.mode = "cauVongShop";
+        this.openedTicks = 0;
+      } else if (this.portableShopReturn === "worldShop")
+        this.returnToWorldShop(donate ? WORLD_SHOP_DONATE_SHOP_ROW : 0);
       else if (this.portableShopReturn === "convenience") {
         this.mode = "convenience";
         this.selected = 3;
@@ -678,11 +708,13 @@ export class WorldPanel {
       this.portableShopMessage = {
         text:
           result === "purchased"
-            ? `Mua ${offer.name} thành công, số lượng ${this.portableShopQuantity}`
+            ? `Mua ${offer.name} thành công, số lượng ${this.portableShopQuantity * Math.max(1, offer.pack ?? 1)}`
             : result === "insufficient"
               ? offer.currency === "money"
                 ? "Kim tiền chưa đủ"
-                : "Số lượng Huy hiệu chưa đủ"
+                : offer.currency === "luong"
+                  ? "Lượng chưa đủ"
+                  : "Số lượng Huy hiệu chưa đủ"
               : "Số lượng vật phẩm đã đầy",
         prompt: BAG_PROMPT,
       };
@@ -1378,7 +1410,7 @@ export class WorldPanel {
     this.pressed.length = 0;
     this.mode = "cauVongShop";
     this.openedTicks = 0;
-    this.cauVongShop.open(category, this.cauVongShopSource.doc());
+    this.cauVongShop.open(category, this.cauVongShopSource.doc(), this.donateSource.enabled());
   }
 
   // ------------------------------------------------------------------ Cầu Vồng incubator
@@ -1414,6 +1446,24 @@ export class WorldPanel {
     this.openedTicks = 0;
     this.worldShopMessage = null;
   }
+  /** Web only: the Shop Donate in the `shopbuy` list; Back returns to the merchant it came from. */
+  openDonateShop(returnTo: "worldShop" | "cauVongShop"): void {
+    this.openPortableShopBuy(false, returnTo, true);
+    this.portableShopMessage = null;
+  }
+  /** Web only: the Liệt Hỏa item merchant lists Donate / Shop Donate (an online account). */
+  get worldShopDonate(): boolean {
+    return this.worldShopRoute === "item" && this.donateSource.enabled();
+  }
+  get worldShopRowCount(): number {
+    return this.worldShopDonate ? WORLD_SHOP_DONATE_WIDGETS.length : WORLD_SHOP_ROW_WIDGETS.length;
+  }
+  /** The merchant menu's layout and row widgets, with the donate rows when they are listed. */
+  worldShopMenu(layout: SourceUiLayout): { layout: SourceUiLayout; widgets: readonly number[] } {
+    return this.worldShopDonate
+      ? { layout: worldShopDonateLayout(layout), widgets: WORLD_SHOP_DONATE_WIDGETS }
+      : { layout, widgets: WORLD_SHOP_ROW_WIDGETS };
+  }
   private returnToWorldShop(row: number): void {
     this.mode = "worldShop";
     this.selected = row;
@@ -1444,12 +1494,17 @@ export class WorldPanel {
     }
     if (this.mode === "worldShop") {
       // `tickSourceWorldShop`.
-      if (pressed.includes("up")) this.select(clamp(this.selected - 1, 0, 3));
-      else if (pressed.includes("down")) this.select(clamp(this.selected + 1, 0, 3));
-      else if (pressed.includes("back") || (pressed.includes("confirm") && this.selected === 3))
+      const last = this.worldShopRowCount - 1;
+      if (pressed.includes("up")) this.select(clamp(this.selected - 1, 0, last));
+      else if (pressed.includes("down")) this.select(clamp(this.selected + 1, 0, last));
+      else if (pressed.includes("back") || (pressed.includes("confirm") && this.selected === last))
         this.close();
       else if (pressed.includes("confirm")) {
-        if (this.selected === 0)
+        if (this.worldShopDonate && this.selected === WORLD_SHOP_DONATE_ROW)
+          this.donateSource.openSupport();
+        else if (this.worldShopDonate && this.selected === WORLD_SHOP_DONATE_SHOP_ROW)
+          this.openDonateShop("worldShop");
+        else if (this.selected === 0)
           this.openPortableShopBuy(this.worldShopRoute === "material", "worldShop");
         else if (this.selected === 1) {
           this.mode = "worldShopSell";
@@ -1555,8 +1610,9 @@ export class WorldPanel {
     }
     if (this.mode === "worldShop") {
       // `widgetRowAt("shop.ui", SOURCE_WORLD_SHOP_ROW_WIDGETS, x, y, 92)`.
-      for (let slot = 0; slot < WORLD_SHOP_ROW_WIDGETS.length; slot++) {
-        const row = layout.widget(WORLD_SHOP_ROW_WIDGETS[slot]);
+      const menu = this.worldShopMenu(layout);
+      for (let slot = 0; slot < menu.widgets.length; slot++) {
+        const row = menu.layout.widget(menu.widgets[slot]);
         if (
           row &&
           x >= row.x - 4 &&
@@ -3460,7 +3516,11 @@ export class WorldPanel {
     if (this.mode === "cauVongShop") {
       if (this.cauVongShop.tick(pressed, this.cauVongShopSource)) {
         if (this.cauVongShop.bankRequested) this.openPetBank();
+        else if (this.cauVongShop.donateShopRequested) this.openDonateShop("cauVongShop");
         else this.close();
+      } else if (this.cauVongShop.supportRequested) {
+        this.cauVongShop.supportRequested = false;
+        this.donateSource.openSupport();
       }
       return;
     }
@@ -4112,8 +4172,9 @@ export class WorldPanel {
     }
     if (this.mode === "worldShop") {
       if (this.worldShopMessage) return;
-      for (let slot = 0; slot < WORLD_SHOP_ROW_WIDGETS.length; slot++) {
-        const row = layout.widget(WORLD_SHOP_ROW_WIDGETS[slot]);
+      const menu = this.worldShopMenu(layout);
+      for (let slot = 0; slot < menu.widgets.length; slot++) {
+        const row = menu.layout.widget(menu.widgets[slot]);
         if (
           row &&
           x >= row.x - 4 &&

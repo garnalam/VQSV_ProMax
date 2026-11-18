@@ -1,4 +1,6 @@
 import { drawShopConfirmOverlay, shopCurrencyCell } from "./WorldShopRenderer";
+import { withLuong } from "./LuongIcon";
+import { DONATE_SHOP_TITLE } from "../game/shop/DonateShop";
 import type { WorldPanel } from "../game/world/WorldPanel";
 import { SHOP_UI } from "../game/world/WorldPanel";
 import type { PanelFontRenderer } from "./PanelFontRenderer";
@@ -30,6 +32,8 @@ export type PortableShopArt = {
   cell?: (index: number) => HTMLImageElement | undefined;
   /** `shop-icons.<n>`: a unified item icon. */
   unifiedIcon?: (index: number) => HTMLImageElement | undefined;
+  /** Web only: a pack image by key (an authored item's own icon, `offer.iconKey`). */
+  image?: (key: string) => HTMLImageElement | undefined;
 };
 
 /** `PORTABLE_SHOP_LABELS` and the tags/colours `renderPortableShop` gives each counter. */
@@ -59,7 +63,7 @@ function currencyAmount(
   color: number,
 ): void {
   const text = String(amount),
-    icon = cell?.(shopCurrencyCell(currency)),
+    icon = withLuong(cell)(shopCurrencyCell(currency)),
     textY = y + Math.max(0, Math.trunc((h - font.height) / 2));
   if (!icon || !icon.complete || icon.naturalWidth <= 0) {
     font.drawTagged(g, text, x, textY, hex(color));
@@ -262,28 +266,51 @@ function drawBuy(g: CanvasRenderingContext2D, panel: WorldPanel, art: PortableSh
   const { font } = art,
     material = panel.portableShopMaterial,
     accent = material ? 0x7b58a1 : 0x2e9c7b;
-  shopPanelBase(g, font, material ? "CỬA HÀNG TÀI LIỆU" : "THƯƠNG ĐIẾM BÌNH DÂN", accent);
+  const donate = panel.portableShopDonate;
+  shopPanelBase(
+    g,
+    font,
+    donate ? DONATE_SHOP_TITLE : material ? "CỬA HÀNG TÀI LIỆU" : "THƯƠNG ĐIẾM BÌNH DÂN",
+    accent,
+  );
   fillRoundRect(g, WALLET.x, WALLET.y, WALLET.w, WALLET.h, 6, "#235f60");
-  bagText(g, font, "KIM TIỀN", WALLET.x + 8, WALLET.y + 5, 48, 0xbfe9e2);
-  bagText(
-    g,
-    font,
-    String(panel.portableShopSource.money()),
-    WALLET.x + 59,
-    WALLET.y + 5,
-    48,
-    0xf2c862,
-  );
-  bagText(g, font, "HUY HIỆU", WALLET.x + 116, WALLET.y + 5, 51, 0xbfe9e2);
-  bagText(
-    g,
-    font,
-    String(panel.portableShopSource.badges()),
-    WALLET.x + 171,
-    WALLET.y + 5,
-    23,
-    0xf2c862,
-  );
+  if (donate) {
+    // Web only: the Shop Donate's wallet is the Lượng balance.
+    bagText(g, font, "LƯỢNG", WALLET.x + 8, WALLET.y + 5, 48, 0xbfe9e2);
+    currencyAmount(
+      g,
+      font,
+      art.cell,
+      panel.portableShopSource.luong?.() ?? 0,
+      3,
+      WALLET.x + 59,
+      WALLET.y,
+      80,
+      WALLET.h,
+      0xf2c862,
+    );
+  } else {
+    bagText(g, font, "KIM TIỀN", WALLET.x + 8, WALLET.y + 5, 48, 0xbfe9e2);
+    bagText(
+      g,
+      font,
+      String(panel.portableShopSource.money()),
+      WALLET.x + 59,
+      WALLET.y + 5,
+      48,
+      0xf2c862,
+    );
+    bagText(g, font, "HUY HIỆU", WALLET.x + 116, WALLET.y + 5, 51, 0xbfe9e2);
+    bagText(
+      g,
+      font,
+      String(panel.portableShopSource.badges()),
+      WALLET.x + 171,
+      WALLET.y + 5,
+      23,
+      0xf2c862,
+    );
+  }
   const offers = panel.portableShopOffers,
     size = offers.length,
     first = Math.max(0, Math.min(panel.listScroll, Math.max(0, size - 5)));
@@ -316,8 +343,9 @@ function drawBuy(g: CanvasRenderingContext2D, panel: WorldPanel, art: PortableSh
     const offer = offers[index],
       iconX = SHOP_UI.listX + 9,
       iconY = y + 3,
-      unified =
-        offer.unifiedIcon !== undefined && offer.unifiedIcon !== null
+      unified = offer.iconKey
+        ? art.image?.(offer.iconKey)
+        : offer.unifiedIcon !== undefined && offer.unifiedIcon !== null
           ? art.unifiedIcon?.(offer.unifiedIcon)
           : undefined;
     // `UnifiedItemIconRenderer.draw`, else the sheet-258 cell.
@@ -442,7 +470,7 @@ export function drawPortableShop(
     drawShopConfirmOverlay(
       g,
       art.font,
-      art.cell,
+      withLuong(art.cell),
       panel.portableShopQuantity,
       quote?.total ?? 0,
       offer?.currencyCode ?? (offer?.currency === "badges" ? 1 : 0),
