@@ -3,7 +3,17 @@ import type { EvolutionSession } from "../game/pet/EvolutionSession";
 
 export type EvolutionArt = {
   font: PanelFontRenderer;
-  sprite: (id: number, x: number, y: number, w: number, h: number, tick: number) => void;
+  /** A pet frame; `nature` 7..9 with `shinyColor` draws it in its shiny colours. */
+  sprite: (
+    id: number,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    tick: number,
+    nature?: number,
+    shinyColor?: number,
+  ) => void;
   icon: (materialId: number, x: number, y: number) => void;
 };
 const color = (n: number) => `#${n.toString(16).padStart(6, "0")}`;
@@ -138,7 +148,7 @@ function card(
     target ? 2585684 : 2319745,
   );
   const sprite = target ? v.newSprite : v.oldSprite;
-  if (sprite >= 0) art.sprite(sprite, x + 15, 87, 59, 40, tick);
+  if (sprite >= 0) art.sprite(sprite, x + 15, 87, 59, 40, tick, v.pet.nature, v.pet.shinyColor);
   centered(g, art, target ? v.newName : v.oldName, x + 4, 119, 81, 1523279);
   centered(g, art, `Lv ${v.pet.level}`, x + 4, 129, 81, 4355206);
 }

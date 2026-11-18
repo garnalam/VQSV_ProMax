@@ -239,7 +239,8 @@ function fillDatalists(loaded: AdminCatalog): void {
 const itemName = (kind: AdminItemKind, id: number) =>
   catalog?.itemName(kind, id) ?? `${kind} #${id}`;
 const speciesName = (id: number) => catalog?.speciesName(id) ?? `Pet #${id}`;
-const summary = (rewards: Rewards) => rewardSummary(rewards, itemName, speciesName);
+const talentName = (id: number) => catalog?.talentName(id) ?? `Thiên phú #${id}`;
+const summary = (rewards: Rewards) => rewardSummary(rewards, itemName, speciesName, talentName);
 
 async function show(name: string): Promise<void> {
   tab = name;
@@ -1337,7 +1338,7 @@ function petEditor(save: GameSave): HTMLElement {
       bank.length
         ? el("div", { className: "table-scroll" }, el("table", {}, head(), el("tbody", {}, ...banked)))
         : el("p", {}, "Trống."),
-      el("p", { className: "muted" }, "Muốn tặng pet: dùng Gửi quà (pet được tạo đúng cách trong game, có thiên phú và shiny ngẫu nhiên, chọn được số sao). Sửa cấp/kỹ năng pet trong tab JSON nếu thật cần."),
+      el("p", { className: "muted" }, "Muốn tặng pet: dùng Gửi quà (pet được tạo đúng cách trong game, chọn được số sao và thiên phú, shiny ngẫu nhiên hoặc chắc chắn). Sửa cấp/kỹ năng pet trong tab JSON nếu thật cần."),
     );
   };
   render();

@@ -5,7 +5,7 @@ export type AdminGrantRequest =
   | { action: "addItem"; kind: AdminItemKind; id: number; quantity: number }
   | { action: "setCurrency"; money: number; badges: number }
   | { action: "buffPet"; slot: number }
-  | { action: "addPet"; speciesId: number; quality?: number };
+  | { action: "addPet"; speciesId: number; quality?: number; talentId?: number };
 
 export type AdminItemKind = "BAG" | "EQUIPMENT" | "MATERIAL" | "SPECIAL";
 
@@ -25,6 +25,8 @@ export type AdminGrant =
       talentSeed: string;
       /** Phẩm chất (stars, 1..5) the admin chose; absent = the species default. */
       quality?: number;
+      /** The talent the admin chose (physical trait runtime id); absent = rolled from talentSeed. */
+      talentId?: number;
     };
 
 /** The server refused (not an admin, a bad request, no connection). */

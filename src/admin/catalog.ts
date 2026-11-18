@@ -6,6 +6,7 @@ import {
   type AdminItemChoice,
   type AdminSpeciesChoice,
 } from "../game/admin/AdminTool";
+import { GameData } from "../data/GameData";
 import { GameAssets } from "../game/story/GameAssets";
 import { Pack } from "../pack/Pack";
 
@@ -30,6 +31,9 @@ export type AdminCatalog = {
   mainTasks: { index: number; name: string }[];
   branchTasks: { id: number; name: string }[];
   branchName: (id: number) => string;
+  /** The talents a pet can roll (physical traits with a roll weight), for the gift's talent choice. */
+  talents: { id: number; name: string }[];
+  talentName: (id: number) => string;
 };
 
 export async function loadAdminCatalog(): Promise<AdminCatalog> {
@@ -52,7 +56,13 @@ export async function loadAdminCatalog(): Promise<AdminCatalog> {
     .sort((a, b) => a[0] - b[0] || a[1] - b[1])
     .map(([scene, room]) => ({ scene, room, label: roomLabel(scene, room) }));
   const quests = assets.quests;
+  const talents = (await new GameData(pack).physicalTraits())
+    .filter((row) => row.rollWeight > 0)
+    .map((row) => ({ id: row.runtimeId, name: row.name }));
+  const talentById = new Map(talents.map((row) => [row.id, row.name]));
   return {
+    talents,
+    talentName: (id) => talentById.get(id) ?? `Thiên phú #${id}`,
     rooms,
     roomLabel,
     mainTasks: (quests?.mainTasks ?? []).map((task, index) => ({ index, name: task.name })),

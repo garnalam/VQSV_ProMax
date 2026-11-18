@@ -61,13 +61,18 @@ export function normalizeAdminGrant(body) {
       const speciesId = adminInt(body.speciesId, 0, 99999);
       // Optional stars (phẩm chất 1..5); without them the pet hatches at its species default.
       const quality = body.quality === undefined || body.quality === null || body.quality === 0 ? 0 : adminInt(body.quality, 1, 5);
-      if (speciesId === null || ADMIN_BOSS_SPECIES.has(speciesId) || quality === null) return null;
+      // Optional talent (physical trait runtime id); absent = rolled from talentSeed.
+      const talentId = body.talentId === undefined || body.talentId === null || body.talentId === "" ? undefined : adminInt(body.talentId, 0, 999);
+      if (speciesId === null || ADMIN_BOSS_SPECIES.has(speciesId) || quality === null || talentId === null) return null;
       const random = crypto.getRandomValues(new Uint32Array(4));
       const shiny = (random[0] & 1) === 1;
       const nature = shiny ? ADMIN_SHINY_NATURES[random[1] % ADMIN_SHINY_NATURES.length] : ADMIN_PLAIN_NATURE;
       // 63 random bits as a decimal string: the client's talent roll takes a 64-bit entropy.
       const talentSeed = ((BigInt(random[2] & 0x7fffffff) << 32n) | BigInt(random[3])).toString();
-      return quality ? { action: "addPet", speciesId, nature, shiny, talentSeed, quality } : { action: "addPet", speciesId, nature, shiny, talentSeed };
+      const grant = { action: "addPet", speciesId, nature, shiny, talentSeed };
+      if (quality) grant.quality = quality;
+      if (talentId !== undefined) grant.talentId = talentId;
+      return grant;
     }
     default:
       return null;

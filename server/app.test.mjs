@@ -173,6 +173,9 @@ test('the in-game Admin Tool: grants are refused to players and normalized for a
   assert.equal(pet.grant.speciesId, 68);
   assert.match(pet.grant.talentSeed, /^\d+$/);
   assert.equal(pet.grant.quality, undefined);
+  assert.equal(pet.grant.talentId, undefined);
+  assert.equal((await (await grant({ action: 'addPet', speciesId: 68, talentId: 3 })).json()).grant.talentId, 3);
+  assert.equal((await grant({ action: 'addPet', speciesId: 68, talentId: -1 })).status, 400);
   assert.equal((await (await grant({ action: 'addPet', speciesId: 68, quality: 4 })).json()).grant.quality, 4);
   assert.equal((await grant({ action: 'addPet', speciesId: 68, quality: 9 })).status, 400);
   assert.equal((await grant({ action: 'addPet', speciesId: 278 })).status, 400);
@@ -236,11 +239,12 @@ test('gift codes: admins create them, players redeem each once, limits and windo
   const two = await f.register('two@example.com');
   const create = json => as(admin, '/admin/giftcodes', { method: 'POST', json });
   const redeem = (who, code, free = 10) => as(who, '/gifts/redeem', { method: 'POST', json: { code, bankFree: free } });
-  const rewards = { money: 500, items: [{ kind: 'BAG', id: 3, quantity: 2 }], pets: [{ speciesId: 68, shiny: 'always', stars: 5 }] };
+  const rewards = { money: 500, items: [{ kind: 'BAG', id: 3, quantity: 2 }], pets: [{ speciesId: 68, shiny: 'always', stars: 5, talent: 0 }] };
 
   assert.equal((await as(one, '/admin/giftcodes', { method: 'POST', json: { code: 'TEST1', description: 'x', rewards } })).status, 403);
   assert.equal((await create({ code: 'ab', description: 'x', rewards })).status, 400);
   assert.equal((await create({ code: 'BOSS', description: 'x', rewards: { pets: [{ speciesId: 278 }] } })).status, 400);
+  assert.equal((await create({ code: 'TAL1K', description: 'x', rewards: { pets: [{ speciesId: 68, talent: 1000 }] } })).status, 400);
   assert.equal((await create({ code: 'STAR6', description: 'x', rewards: { pets: [{ speciesId: 68, stars: 6 }] } })).status, 400);
   assert.equal((await create({ code: 'EMPTY', description: 'x', rewards: {} })).status, 400);
   assert.equal((await create({ code: 'tet2027', description: 'Lì xì Tết', rewards, maxUses: 1 })).status, 201);
@@ -259,6 +263,7 @@ test('gift codes: admins create them, players redeem each once, limits and windo
   assert.ok([7, 8, 9].includes(body.grants[2].nature));
   assert.match(body.grants[2].talentSeed, /^\d+$/);
   assert.equal(body.grants[2].quality, 5);
+  assert.equal(body.grants[2].talentId, 0);
   assert.equal((await (await redeem(one, 'TET2027')).json()).code, 'already');
   assert.equal((await (await redeem(two, 'TET2027')).json()).code, 'used_up');
 

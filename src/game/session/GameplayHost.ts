@@ -1363,7 +1363,7 @@ export class GameplayHost {
         if (ADMIN_BOSS_SPECIES.has(grant.speciesId)) return "Không được thêm pet boss.";
         const bank = world.campaign.petBank;
         if (bank.length >= world.petBankCapacity()) return "Ngân hàng sủng vật đã đầy.";
-        const pet = world.createAdminPet(grant.speciesId, grant.nature, BigInt(grant.talentSeed), grant.quality);
+        const pet = world.createAdminPet(grant.speciesId, grant.nature, BigInt(grant.talentSeed), grant.quality, grant.talentId);
         if (!pet) return "Không tạo được pet này.";
         pet.slot = bank.length;
         bank.push(pet);

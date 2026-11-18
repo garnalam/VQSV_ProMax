@@ -245,6 +245,16 @@ describe("Admin Tool grants on a live session", () => {
     expect(five.quality).toBe(5);
     expect(five.maxHp).toBe(assets.petStats.coreStats(species, five.level, 5, 2).hp);
 
+    // A chosen talent replaces the roll; one the roll cannot give falls back to the roll.
+    const rolled = world.campaign.petBank.at(-1)!.physicalTraitId,
+      seed = "42",
+      // Talents 1 and 2 are both rollable (weight 1 in pet-physical-traits.json).
+      chosen = rolled === 1 ? 2 : 1;
+    host.applyAdminGrant({ action: "addPet", speciesId: species, nature: 2, shiny: false, talentSeed: seed, talentId: chosen });
+    expect(world.campaign.petBank.at(-1)!.physicalTraitId).toBe(chosen);
+    host.applyAdminGrant({ action: "addPet", speciesId: species, nature: 2, shiny: false, talentSeed: seed, talentId: 999 });
+    expect(world.campaign.petBank.at(-1)!.physicalTraitId).toBe(rolled);
+
     const before = world.campaign.petBank.length;
     expect(
       host.applyAdminGrant({

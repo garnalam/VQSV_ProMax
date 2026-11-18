@@ -1567,12 +1567,13 @@ export class NewGameScreen implements Screen {
                 height,
               );
             },
-            sprite: (spriteId, x, y, w, h, at) => {
-              const frame = this.assets.frame(spriteId, 0, at),
-                bounds = this.assets.animationBounds(spriteId, 0);
+            sprite: (spriteId, x, y, w, h, at, nature, shinyColor) => {
+              const visual = this.assets.shinySprite(spriteId, nature, shinyColor),
+                frame = this.assets.frame(visual, 0, at),
+                bounds = this.assets.animationBounds(visual, 0);
               if (!frame || !bounds) return;
-              const image = this.assets.imageFor(frame);
-              if (!image.complete || image.naturalWidth === 0) return;
+              const image = this.assets.petImage(frame, visual, nature, false, shinyColor);
+              if (!image) return;
               g.drawImage(
                 image,
                 x + (w - bounds.width) / 2 - bounds.x + frame.ox,

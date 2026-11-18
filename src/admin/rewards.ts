@@ -8,7 +8,8 @@ export type Rewards = {
   badges: number;
   items: { kind: AdminItemKind; id: number; quantity: number }[];
   /** `stars`: phẩm chất 1..5; absent = the species default. */
-  pets: { speciesId: number; shiny: "never" | "random" | "always"; stars?: number }[];
+  /** `talent`: a physical trait runtime id; absent = random. */
+  pets: { speciesId: number; shiny: "never" | "random" | "always"; stars?: number; talent?: number }[];
 };
 
 export const emptyRewards = (): Rewards => ({ money: 0, badges: 0, items: [], pets: [] });
@@ -20,6 +21,7 @@ export function rewardSummary(
   rewards: Rewards,
   itemName: (kind: AdminItemKind, id: number) => string,
   speciesName: (id: number) => string,
+  talentName: (id: number) => string = (id) => `thiên phú #${id}`,
 ): string {
   const parts: string[] = [];
   if (rewards.money) parts.push(`${number.format(rewards.money)} tiền`);
@@ -27,7 +29,8 @@ export function rewardSummary(
   for (const item of rewards.items) parts.push(`${item.quantity}× ${itemName(item.kind, item.id)}`);
   for (const pet of rewards.pets)
     parts.push(
-      `${speciesName(pet.speciesId)}${pet.stars ? ` ${pet.stars}★` : ""}${pet.shiny === "never" ? "" : ` (${SHINY_LABELS[pet.shiny]})`}`,
+      `${speciesName(pet.speciesId)}${pet.stars ? ` ${pet.stars}★` : ""}${pet.shiny === "never" ? "" : ` (${SHINY_LABELS[pet.shiny]})`}` +
+        (pet.talent === undefined ? "" : ` [${talentName(pet.talent)}]`),
     );
   return parts.join(", ") || "—";
 }
@@ -42,7 +45,12 @@ export function rewardEditor(
   const itemLines = el("div", { className: "reward-editor" });
   const petLines = el("div", { className: "reward-editor" });
   const items: { pick: HTMLInputElement; quantity: HTMLInputElement }[] = [];
-  const pets: { pick: HTMLInputElement; shiny: HTMLSelectElement; stars: HTMLSelectElement }[] = [];
+  const pets: {
+    pick: HTMLInputElement;
+    shiny: HTMLSelectElement;
+    stars: HTMLSelectElement;
+    talent: HTMLSelectElement;
+  }[] = [];
 
   const addItem = (value?: Rewards["items"][number]) => {
     if (items.length >= 20) return;
@@ -82,9 +90,20 @@ export function rewardEditor(
       el("option", { value: "", selected: !value?.stars }, "Sao mặc định"),
       ...STAR_CHOICES.map((n) => el("option", { value: String(n), selected: value?.stars === n }, n + " sao")),
     );
+    const known = catalog()?.talents ?? [];
+    const talent = el(
+      "select",
+      { title: "Thiên phú" },
+      el("option", { value: "", selected: value?.talent === undefined }, "Thiên phú ngẫu nhiên"),
+      ...known.map((row) => el("option", { value: String(row.id), selected: value?.talent === row.id }, row.name)),
+      // A saved choice the catalog does not list (not loaded yet) is kept as it was.
+      ...(value?.talent !== undefined && !known.some((row) => row.id === value.talent)
+        ? [el("option", { value: String(value.talent), selected: true }, `Thiên phú #${value.talent}`)]
+        : []),
+    );
     const remove = el("button", { type: "button" }, "✕");
-    const line = el("div", { className: "line pet-line" }, pick, stars, shiny, remove);
-    const entry = { pick, shiny, stars };
+    const line = el("div", { className: "line pet-line" }, pick, stars, talent, shiny, remove);
+    const entry = { pick, shiny, stars, talent };
     remove.onclick = () => {
       pets.splice(pets.indexOf(entry), 1);
       line.remove();
@@ -111,7 +130,7 @@ export function rewardEditor(
     itemLines,
     el("div", {}, moreItem),
     petLines,
-    el("div", {}, morePet, " ", el("small", {}, "Pet vào ngân hàng sủng vật, có thiên phú ngẫu nhiên; chọn số sao 1–5 hoặc để mặc định theo loài.")),
+    el("div", {}, morePet, " ", el("small", {}, "Pet vào ngân hàng sủng vật, chọn số sao 1–5 và thiên phú, hoặc để mặc định (sao theo loài, thiên phú ngẫu nhiên).")),
   );
   const value = (): Rewards => {
     const loaded = catalog();
@@ -133,8 +152,11 @@ export function rewardEditor(
           const speciesId = loaded!.parseSpecies(line.pick.value);
           if (speciesId === undefined) throw new Error(`Không nhận ra pet "${line.pick.value}". Hãy chọn trong gợi ý.`);
           const shiny = line.shiny.value as Rewards["pets"][number]["shiny"],
-            stars = Number(line.stars.value);
-          return stars ? { speciesId, shiny, stars } : { speciesId, shiny };
+            stars = Number(line.stars.value),
+            pet: Rewards["pets"][number] = { speciesId, shiny };
+          if (stars) pet.stars = stars;
+          if (line.talent.value !== "") pet.talent = Number(line.talent.value);
+          return pet;
         }),
     };
   };
